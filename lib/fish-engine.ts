@@ -1,5 +1,5 @@
 export type Team = 0 | 1;
-export type StrategyId = "hunter" | "diversifier" | "detective" | "bluffer" | "random";
+export type StrategyId = "fishbot" | "hunter" | "diversifier" | "detective" | "bluffer" | "random";
 
 export type Strategy = {
   id: StrategyId;
@@ -12,11 +12,72 @@ export type Strategy = {
 };
 
 export const STRATEGIES: Record<StrategyId, Strategy> = {
+  fishbot: { id: "fishbot", name: "FishBot v0.2", short: "FishBot", description: "One-ply belief search maximizing expected card, information, set, and turn value.", icon: "ƒ", declarationThreshold: .96, risk: .02 },
   hunter: { id: "hunter", name: "Focused hunter", short: "Focus", description: "Builds momentum in one half-suit and keeps pressing it.", icon: "◎", declarationThreshold: .82, risk: .16 },
   diversifier: { id: "diversifier", name: "Adaptive diversifier", short: "Diversify", description: "Switches half-suits to preserve options and spread information.", icon: "↝", declarationThreshold: .88, risk: .12 },
   detective: { id: "detective", name: "Bayesian detective", short: "Infer", description: "Targets the card-location hypothesis with the best posterior odds.", icon: "⌁", declarationThreshold: .92, risk: .06 },
   bluffer: { id: "bluffer", name: "Misdirection artist", short: "Bluff", description: "Uses deliberate diversions after revealing moments to distort tells.", icon: "◇", declarationThreshold: .76, risk: .28 },
   random: { id: "random", name: "Unpredictable novice", short: "Random", description: "Chooses legal asks with little memory—the experimental control.", icon: "✦", declarationThreshold: .68, risk: .42 },
+};
+
+export type PolicyTechnical = {
+  class: string;
+  objective: string;
+  askFormula: string;
+  reactsToAsk: string;
+  declarationRule: string;
+  limitations: string;
+};
+
+export const POLICY_TECHNICAL: Record<StrategyId, PolicyTechnical> = {
+  fishbot: {
+    class: "Deterministic one-ply belief search",
+    objective: "Maximize expected utility over every legal card–target pair, then subtract the strongest estimated reply after a miss.",
+    askFormula: "13·P(hit) + 4.5·binary entropy + 3.2·set progress + 1.6·target evidence + 2.2·turn retention − 3.8·P(miss)·reply threat",
+    reactsToAsk: "Every public ask increments asker/half-suit evidence. A failed ask also exposes the next actor; FishBot recomputes all card posteriors and their best reply from that new public history.",
+    declarationRule: "Declare only when geometric mean team ownership and exact teammate-allocation confidence clear a dynamic 94–97% threshold.",
+    limitations: "First search-based computer, not solved play: one-ply search, approximate posteriors, and no teammate convention learning or equilibrium guarantee.",
+  },
+  hunter: {
+    class: "Weighted heuristic",
+    objective: "Finish one selected half-suit before spreading attention elsewhere.",
+    askFormula: "9·P(hit) + 1.97·cards held in set + 6.2 if focused set − 1.1 if not + small seeded tie-break",
+    reactsToAsk: "After receiving the turn on a miss, adds 1.1 to asks in the same half-suit; public asks also alter ownership weights.",
+    declarationRule: "Declare above 82% team/allocation confidence with moderate risk tolerance.",
+    limitations: "Can reveal a stable target and overcommit when missing cards are probably held by teammates.",
+  },
+  diversifier: {
+    class: "Weighted heuristic",
+    objective: "Preserve several live half-suits and make consecutive intentions harder to read.",
+    askFormula: "9·P(hit) + set progress + 2.1 for switching half-suits − 3.6 for repeating the last personal target",
+    reactsToAsk: "Uses public asks as ownership evidence but weakly penalizes an immediate same-suit response.",
+    declarationRule: "Declare above 88% confidence with low risk tolerance.",
+    limitations: "May abandon a nearly complete set and create more public information than it converts.",
+  },
+  detective: {
+    class: "Posterior-greedy heuristic",
+    objective: "Ask the card–player pair with the strongest inferred location.",
+    askFormula: "21·P(hit) + 0.85·target asks in this half-suit + set progress + seeded tie-break",
+    reactsToAsk: "Each ask raises unresolved-card weight for that asker in that half-suit by 0.38, capped at +3.0.",
+    declarationRule: "Declare above 92% confidence; this is the most cautious heuristic baseline.",
+    limitations: "Greedy inference ignores the strategic value of a miss and only approximates card-count constraints.",
+  },
+  bluffer: {
+    class: "Behavioral heuristic",
+    objective: "Trade some card-acquisition value for ambiguity after a revealing interaction.",
+    askFormula: "11·P(hit) + set progress + 4.8 for a diversion after being asked − 6.8 for same-suit response + noise",
+    reactsToAsk: "When a miss transfers the turn to it, strongly prefers a different half-suit if psychological tells are enabled.",
+    declarationRule: "Declare above 76% confidence with high risk tolerance.",
+    limitations: "Bundles bluffing with declaration aggression, so ablation is required before attributing outcomes to misdirection.",
+  },
+  random: {
+    class: "Control policy",
+    objective: "Provide a low-information baseline by sampling uniformly from legal asks.",
+    askFormula: "Uniform random legal card–target pair",
+    reactsToAsk: "No intentional reaction; public information only constrains which options remain plausible.",
+    declarationRule: "Declare above 68% confidence with very high risk tolerance.",
+    limitations: "Not intended as credible play; useful for measuring how much value a policy adds over legality alone.",
+  },
 };
 
 export type Card = { id: number; set: number; rank: string; suit: string; label: string; compact: string };
@@ -79,10 +140,35 @@ export type GameAction = {
   cardCounts: number[];
   hands?: number[][];
   confidence?: number;
+  pivotalScore?: number;
+  pivotalReasons?: string[];
+  decision?: DecisionTrace;
+};
+
+export type DecisionFeatures = {
+  hitProbability: number;
+  informationGain: number;
+  setProgress: number;
+  targetEvidence: number;
+  replyThreat: number;
+  expectedUtility: number;
+};
+
+export type DecisionTrace = {
+  policy: StrategyId;
+  policyScore: number;
+  fishbotScore: number;
+  regret: number;
+  reactingToPreviousAsk: boolean;
+  features: DecisionFeatures;
+  alternatives: { card: number; target: number; score: number }[];
 };
 
 export type GameSummary = {
   seed: number;
+  strategies: [StrategyId, StrategyId];
+  psychologicalTells: boolean;
+  declarationsEnabled: boolean;
   winner: Team;
   score: [number, number];
   asks: number;
@@ -95,11 +181,27 @@ export type GameSummary = {
   actions: number;
   interest: number;
   tag: string;
+  pivotalCount: number;
+  peakPivotal: number;
+  teamAsks: [number, number];
+  teamHits: [number, number];
+  teamDeclarations: [number, number];
+  teamCorrectDeclarations: [number, number];
+  informationGain: [number, number];
+  decisionRegret: [number, number];
+  reactionAsks: number;
+  reactionHits: number;
+  maxHitStreak: number;
+  firstDeclarationAction: number;
+  initialHands?: number[][];
   log?: GameAction[];
 };
 
 export type BatchResult = {
   games: number;
+  seed: number;
+  psychologicalTells: boolean;
+  declarationsEnabled: boolean;
   strategies: [StrategyId, StrategyId];
   teamAWins: number;
   teamBWins: number;
@@ -110,6 +212,17 @@ export type BatchResult = {
   declarationAccuracy: number;
   diversionRate: number;
   avgLeadChanges: number;
+  winRateCI: [number, number];
+  teamAskAccuracy: [number, number];
+  teamDeclarationAccuracy: [number, number];
+  avgInformationGain: [number, number];
+  avgDecisionRegret: [number, number];
+  reactionAccuracy: number;
+  avgPivotalMoments: number;
+  avgMaxHitStreak: number;
+  medianActions: number;
+  p90Actions: number;
+  scoreDistribution: number[];
   outliers: GameSummary[];
   elapsedMs: number;
 };
@@ -134,10 +247,26 @@ type State = {
   lastLead: number;
   focus: (number | null)[];
   lastAsk: { actor: number; target: number; set: number; success: boolean } | null;
+  eventCount: number;
+  pivotalCount: number;
+  peakPivotal: number;
+  teamAsks: [number, number];
+  teamHits: [number, number];
+  teamDeclarations: [number, number];
+  teamCorrectDeclarations: [number, number];
+  informationGain: [number, number];
+  decisionRegret: [number, number];
+  reactionAsks: number;
+  reactionHits: number;
+  hitStreak: number;
+  maxHitStreak: number;
+  streakActor: number;
+  firstDeclarationAction: number;
 };
 
 const TEAM: Team[] = [0, 1, 0, 1, 0, 1];
 export const PLAYER_NAMES = ["Mara", "Theo", "Iris", "Jonah", "Sage", "Nico"];
+export const PIVOTAL_THRESHOLD = 4.5;
 
 class RNG {
   private x: number;
@@ -172,7 +301,18 @@ function ownerProbability(memory: Memory, observer: number, card: number, owner:
   return total ? mine / total : (observer === owner ? 0 : .2);
 }
 
+type AskOption = { card: number; target: number; set: number; probability: number };
+type ScoredAsk = AskOption & { decision: DecisionTrace };
+
+function binaryEntropy(p: number) {
+  if (p <= 0 || p >= 1) return 0;
+  return -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+}
+
 function record(state: State, action: Omit<GameAction, "index" | "score" | "cardCounts" | "hands">) {
+  state.eventCount++;
+  if ((action.pivotalScore ?? 0) >= PIVOTAL_THRESHOLD) state.pivotalCount++;
+  state.peakPivotal = Math.max(state.peakPivotal, action.pivotalScore ?? 0);
   if (!state.opts.detailed) return;
   state.log.push({
     ...action,
@@ -183,7 +323,7 @@ function record(state: State, action: Omit<GameAction, "index" | "score" | "card
   });
 }
 
-function legalCandidates(state: State, actor: number) {
+function legalCandidates(state: State, actor: number): AskOption[] {
   const memory = state.memories[actor];
   const candidates: { card: number; target: number; set: number; probability: number }[] = [];
   const heldSets = new Set([...state.hands[actor]].map(c => CARDS[c].set).filter(s => state.activeSets[s]));
@@ -203,11 +343,33 @@ function legalCandidates(state: State, actor: number) {
   return candidates;
 }
 
-function chooseAsk(state: State, actor: number) {
+function fishbotFeatures(state: State, actor: number, option: AskOption, knownReplyThreat?: number): DecisionFeatures {
+  const memory = state.memories[actor];
+  let held = 0;
+  let knownFriendly = 0;
+  for (const card of HALF_SUITS[option.set].cards) {
+    if (state.hands[actor].has(card)) held++;
+    const known = memory.knownOwner[card];
+    if (known >= 0 && TEAM[known] === TEAM[actor]) knownFriendly++;
+  }
+  const replyThreat = knownReplyThreat ?? legalCandidates(state, option.target).reduce((best, candidate) => Math.max(best, candidate.probability), 0);
+  const hitProbability = option.probability;
+  const informationGain = binaryEntropy(hitProbability);
+  const setProgress = Math.min(1, (held + knownFriendly * .45) / 6);
+  const targetEvidence = Math.min(1, memory.signals[option.target][option.set] / 4);
+  const expectedUtility = 13 * hitProbability
+    + 4.5 * informationGain
+    + 3.2 * setProgress
+    + 1.6 * targetEvidence
+    + 2.2 * hitProbability
+    - 3.8 * (1 - hitProbability) * replyThreat;
+  return { hitProbability, informationGain, setProgress, targetEvidence, replyThreat, expectedUtility };
+}
+
+function chooseAsk(state: State, actor: number): ScoredAsk | null {
   const strategy = STRATEGIES[state.opts.strategies[TEAM[actor]]];
   const legal = legalCandidates(state, actor);
   if (!legal.length) return null;
-  if (strategy.id === "random") return legal[state.rng.int(legal.length)];
   const heldBySet = Array(9).fill(0);
   const teamKnown = Array(9).fill(0);
   for (const c of state.hands[actor]) heldBySet[CARDS[c].set]++;
@@ -219,10 +381,19 @@ function chooseAsk(state: State, actor: number) {
     state.focus[actor] = [...new Set(legal.map(x => x.set))].sort((a, b) => heldBySet[b] - heldBySet[a])[0];
   }
   const responding = state.lastAsk && state.lastAsk.target === actor && !state.lastAsk.success;
-  let best = legal[0];
+  const replyThreats = new Map<number, number>();
+  for (const target of new Set(legal.map(option => option.target))) {
+    replyThreats.set(target, legalCandidates(state, target).reduce((best, candidate) => Math.max(best, candidate.probability), 0));
+  }
+  const evaluate = (option: AskOption) => fishbotFeatures(state, actor, option, replyThreats.get(option.target));
+  const fishRanked = legal.map(option => ({ option, features: evaluate(option) }))
+    .sort((a, b) => b.features.expectedUtility - a.features.expectedUtility || a.option.card - b.option.card || a.option.target - b.option.target);
+  let best = strategy.id === "random" ? legal[state.rng.int(legal.length)] : legal[0];
   let bestScore = -Infinity;
   for (const option of legal) {
-    let score = option.probability * 9 + heldBySet[option.set] * .72 + teamKnown[option.set] * .25 + state.rng.next() * .7;
+    const features = evaluate(option);
+    let score = option.probability * 9 + heldBySet[option.set] * .72 + teamKnown[option.set] * .25 + (strategy.id === "fishbot" ? 0 : state.rng.next() * .7);
+    if (strategy.id === "fishbot") score = features.expectedUtility;
     if (strategy.id === "hunter") {
       score += option.set === state.focus[actor] ? 6.2 : -1.1;
       score += heldBySet[option.set] * 1.25;
@@ -240,12 +411,26 @@ function chooseAsk(state: State, actor: number) {
       if (responding && state.opts.psychologicalTells) score += option.set === state.lastAsk!.set ? -6.8 : 4.8;
       score += option.probability * 2 + state.rng.next() * 2.8;
     }
-    if (responding && state.opts.psychologicalTells && strategy.id !== "bluffer") {
+    if (responding && state.opts.psychologicalTells && strategy.id !== "bluffer" && strategy.id !== "fishbot") {
       score += option.set === state.lastAsk!.set ? 1.1 : -.25;
     }
-    if (score > bestScore) { bestScore = score; best = option; }
+    if (strategy.id !== "random" && score > bestScore) { bestScore = score; best = option; }
   }
-  return best;
+  if (strategy.id === "random") bestScore = 0;
+  const selectedFish = evaluate(best);
+  const topFish = fishRanked[0].features.expectedUtility;
+  return {
+    ...best,
+    decision: {
+      policy: strategy.id,
+      policyScore: bestScore,
+      fishbotScore: selectedFish.expectedUtility,
+      regret: Math.max(0, topFish - selectedFish.expectedUtility),
+      reactingToPreviousAsk: Boolean(responding),
+      features: selectedFish,
+      alternatives: fishRanked.slice(0, 3).map(item => ({ card: item.option.card, target: item.option.target, score: item.features.expectedUtility })),
+    },
+  };
 }
 
 function predictionForSet(state: State, actor: number, set: number) {
@@ -268,11 +453,14 @@ function predictionForSet(state: State, actor: number, set: number) {
 
 function bestDeclaration(state: State, actor: number, forced = false) {
   const strategy = STRATEGIES[state.opts.strategies[TEAM[actor]]];
+  const informationExhausted = strategy.id === "fishbot" && legalCandidates(state, actor).every(option => option.probability <= .001);
   let best: { set: number; owners: number[]; confidence: number; teamConfidence: number } | null = null;
   for (let set = 0; set < 9; set++) {
     if (!state.activeSets[set]) continue;
     const pred = predictionForSet(state, actor, set);
-    const threshold = forced ? .38 : strategy.declarationThreshold;
+    const lead = state.score[TEAM[actor]] - state.score[(1 - TEAM[actor]) as Team];
+    const fishbotThreshold = lead >= 2 ? .97 : lead <= -2 ? .94 : .96;
+    const threshold = forced ? .38 : state.eventCount >= 280 ? .5 : informationExhausted ? .72 : strategy.id === "fishbot" ? fishbotThreshold : strategy.declarationThreshold;
     if (pred.teamConfidence < threshold || pred.confidence < threshold - strategy.risk * .22) continue;
     if (!best || pred.confidence > best.confidence) best = { set, ...pred };
   }
@@ -292,23 +480,34 @@ function declareSet(state: State, actor: number, declaration: NonNullable<Return
   const correct = cards.every((card, i) => state.hands[declaration.owners[i]].has(card) && TEAM[declaration.owners[i]] === team);
   const awarded: Team = correct ? team : (1 - team) as Team;
   state.declarations++;
+  state.teamDeclarations[team]++;
+  if (correct) state.teamCorrectDeclarations[team]++;
+  if (state.firstDeclarationAction < 0) state.firstDeclarationAction = state.eventCount;
   if (!correct) state.failedDeclarations++;
   state.score[awarded]++;
   const beforeLead = state.lastLead;
   const diff = state.score[0] - state.score[1];
   const lead = Math.sign(diff);
-  if (beforeLead && lead && beforeLead !== lead) state.leadChanges++;
+  const changedLead = Boolean(beforeLead && lead && beforeLead !== lead);
+  if (changedLead) state.leadChanges++;
   if (lead) state.lastLead = lead;
   state.maxDeficit[0] = Math.max(state.maxDeficit[0], state.score[1] - state.score[0]);
   state.maxDeficit[1] = Math.max(state.maxDeficit[1], state.score[0] - state.score[1]);
   state.activeSets[declaration.set] = false;
   for (const card of cards) for (const hand of state.hands) hand.delete(card);
   const assignments = declaration.owners.map((p, i) => `${CARDS[cards[i]].compact}→${PLAYER_NAMES[p]}`).join(", ");
+  const pivotalReasons = [
+    !correct ? "incorrect allocation awards the set to the opponent" : "set changes the score",
+    ...(changedLead ? ["lead changes teams"] : []),
+    ...(declaration.confidence < .85 ? ["high-risk confidence threshold"] : []),
+  ];
   record(state, {
     type: "declare", actor, set: declaration.set, team,
     success: correct, confidence: declaration.confidence,
     text: `${PLAYER_NAMES[actor]} ${correct ? "wins" : "misdeclares"} ${HALF_SUITS[declaration.set].name}`,
     annotation: `${forced ? "Forced endgame · " : ""}${Math.round(declaration.confidence * 100)}% belief confidence · ${assignments}`,
+    pivotalScore: !correct ? 10 : 2 + (changedLead ? 3 : 0) + (declaration.confidence < .85 ? 2 : 0),
+    pivotalReasons,
   });
 }
 
@@ -333,11 +532,15 @@ export function simulateGame(options: GameOptions): GameSummary {
   const deck = rng.shuffle(Array.from({ length: 54 }, (_, i) => i));
   const hands = Array.from({ length: 6 }, () => new Set<number>());
   deck.forEach((card, i) => hands[i % 6].add(card));
+  const initialHands = hands.map(hand => [...hand].sort((a, b) => a - b));
   const dealer = rng.int(6);
   const state: State = {
     rng, opts: options, hands, memories: [], activeSets: Array(9).fill(true), score: [0, 0], turn: (dealer + 1) % 6,
     log: [], asks: 0, successes: 0, declarations: 0, failedDeclarations: 0, diversions: 0, leadChanges: 0,
     maxDeficit: [0, 0], lastLead: 0, focus: Array(6).fill(null), lastAsk: null,
+    eventCount: 0, pivotalCount: 0, peakPivotal: 0, teamAsks: [0, 0], teamHits: [0, 0],
+    teamDeclarations: [0, 0], teamCorrectDeclarations: [0, 0], informationGain: [0, 0], decisionRegret: [0, 0],
+    reactionAsks: 0, reactionHits: 0, hitStreak: 0, maxHitStreak: 0, streakActor: -1, firstDeclarationAction: -1,
   };
   state.memories = Array.from({ length: 6 }, (_, p) => makeMemory(p, hands));
   const maxActions = options.maxActions ?? 360;
@@ -391,7 +594,13 @@ export function simulateGame(options: GameOptions): GameSummary {
     const actor = state.turn;
     const previous = state.lastAsk;
     const success = state.hands[ask.target].has(ask.card);
+    const heldBefore = [...state.hands[actor]].filter(card => CARDS[card].set === ask.set).length;
+    const reacting = Boolean(previous && previous.target === actor && !previous.success);
     state.asks++;
+    state.teamAsks[team]++;
+    state.informationGain[team] += ask.decision.features.informationGain;
+    state.decisionRegret[team] += ask.decision.regret;
+    if (reacting) { state.reactionAsks++; if (success) state.reactionHits++; }
     if (previous && previous.target === actor && !previous.success && previous.set !== ask.set) state.diversions++;
     for (const memory of state.memories) {
       memory.excluded[ask.card][actor] = 1;
@@ -399,18 +608,39 @@ export function simulateGame(options: GameOptions): GameSummary {
     }
     if (success) {
       state.successes++;
+      state.teamHits[team]++;
+      state.hitStreak = state.streakActor === actor ? state.hitStreak + 1 : 1;
+      state.streakActor = actor;
+      state.maxHitStreak = Math.max(state.maxHitStreak, state.hitStreak);
       state.hands[ask.target].delete(ask.card);
       state.hands[actor].add(ask.card);
       revealTransfer(state, ask.card, actor);
     } else {
+      state.hitStreak = 0;
+      state.streakActor = -1;
       for (const memory of state.memories) memory.excluded[ask.card][ask.target] = 1;
       state.turn = ask.target;
     }
     const isDiversion = previous && previous.target === actor && !previous.success && previous.set !== ask.set;
+    const surprise = success ? (1 - ask.probability) * 4 : ask.probability * 3;
+    const progressImpact = success && heldBefore >= 3 ? 2.5 : success && heldBefore === 2 ? 1 : 0;
+    const replyImpact = !success ? ask.decision.features.replyThreat * 2 : 0;
+    const regretImpact = Math.min(3, ask.decision.regret * .45);
+    const pivotalScore = surprise + progressImpact + replyImpact + regretImpact + (reacting ? .8 : 0);
+    const pivotalReasons = [
+      ...(surprise >= 1.8 ? [success ? "unexpected card location confirmed" : "high-probability ask misses"] : []),
+      ...(progressImpact >= 2 ? ["transfer materially advances a half-suit"] : []),
+      ...(replyImpact >= 1.2 ? ["miss gives a dangerous responder the turn"] : []),
+      ...(regretImpact >= 1 ? ["large gap from FishBot's preferred ask"] : []),
+      ...(reacting ? [isDiversion ? "response diverts to a different half-suit" : "direct response to the previous ask"] : []),
+    ];
     record(state, {
       type: "ask", actor, target: ask.target, card: ask.card, set: ask.set, success, team,
       text: `${PLAYER_NAMES[actor]} asks ${PLAYER_NAMES[ask.target]} for ${CARDS[ask.card].compact}`,
       annotation: `${success ? "Card transferred; turn retained" : "Miss; turn changes hands"}${isDiversion ? " · diversion detected" : ""}`,
+      pivotalScore,
+      pivotalReasons,
+      decision: ask.decision,
     });
     state.lastAsk = { actor, target: ask.target, set: ask.set, success };
   }
@@ -431,12 +661,18 @@ export function simulateGame(options: GameOptions): GameSummary {
 
   const winner: Team = state.score[1] > state.score[0] ? 1 : 0;
   const maxComeback = state.maxDeficit[winner];
-  const interest = state.asks / 14 + state.leadChanges * 8 + maxComeback * 7 + state.failedDeclarations * 10 + state.diversions * .7 + Math.abs(4.5 - state.score[0]) * -.3;
+  const interest = state.pivotalCount * 3 + state.peakPivotal * 2 + state.leadChanges * 8 + maxComeback * 7 + state.failedDeclarations * 10 + state.diversions * .35 - Math.abs(4.5 - state.score[0]) * .3;
   const bare = {
-    seed: options.seed, winner, score: state.score, asks: state.asks, successfulAsks: state.successes,
+    seed: options.seed, strategies: options.strategies, psychologicalTells: options.psychologicalTells,
+    declarationsEnabled: options.declarations, winner, score: state.score, asks: state.asks, successfulAsks: state.successes,
     declarations: state.declarations, failedDeclarations: state.failedDeclarations, diversions: state.diversions,
-    leadChanges: state.leadChanges, maxComeback, actions: state.log.length || loops, interest,
-    ...(options.detailed ? { log: state.log } : {}),
+    leadChanges: state.leadChanges, maxComeback, actions: state.eventCount || loops, interest,
+    pivotalCount: state.pivotalCount, peakPivotal: state.peakPivotal,
+    teamAsks: state.teamAsks, teamHits: state.teamHits, teamDeclarations: state.teamDeclarations,
+    teamCorrectDeclarations: state.teamCorrectDeclarations, informationGain: state.informationGain,
+    decisionRegret: state.decisionRegret, reactionAsks: state.reactionAsks, reactionHits: state.reactionHits,
+    maxHitStreak: state.maxHitStreak, firstDeclarationAction: state.firstDeclarationAction < 0 ? state.eventCount : state.firstDeclarationAction,
+    ...(options.detailed ? { log: state.log, initialHands } : {}),
   };
   return { ...bare, tag: classify(bare) };
 }
@@ -447,29 +683,68 @@ function mixSeed(base: number, i: number) {
   return x >>> 0;
 }
 
+function wilson(successes: number, total: number): [number, number] {
+  if (!total) return [0, 0];
+  const z = 1.96;
+  const p = successes / total;
+  const denominator = 1 + z * z / total;
+  const center = (p + z * z / (2 * total)) / denominator;
+  const margin = z * Math.sqrt((p * (1 - p) + z * z / (4 * total)) / total) / denominator;
+  return [Math.max(0, center - margin), Math.min(1, center + margin)];
+}
+
+function percentile(sorted: number[], p: number) {
+  if (!sorted.length) return 0;
+  return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))];
+}
+
 export function runBatch(games: number, options: Omit<GameOptions, "seed" | "detailed"> & { seed?: number }): BatchResult {
   const started = performance.now();
   const base = options.seed ?? 20260820;
   let teamAWins = 0, scoreA = 0, scoreB = 0, actions = 0, asks = 0, hits = 0, declarations = 0, failedDeclarations = 0, diversions = 0, leadChanges = 0;
+  let reactionAsks = 0, reactionHits = 0, pivotalMoments = 0, maxHitStreaks = 0;
+  const teamAsks: [number, number] = [0, 0], teamHits: [number, number] = [0, 0];
+  const teamDeclarations: [number, number] = [0, 0], teamCorrectDeclarations: [number, number] = [0, 0];
+  const informationGain: [number, number] = [0, 0], decisionRegret: [number, number] = [0, 0];
+  const gameLengths: number[] = [];
+  const scoreDistribution = Array(10).fill(0);
   const outliers: GameSummary[] = [];
   for (let i = 0; i < games; i++) {
     const game = simulateGame({ ...options, seed: mixSeed(base, i), detailed: false });
     if (game.winner === 0) teamAWins++;
     scoreA += game.score[0]; scoreB += game.score[1]; actions += game.actions; asks += game.asks; hits += game.successfulAsks;
     declarations += game.declarations; failedDeclarations += game.failedDeclarations; diversions += game.diversions; leadChanges += game.leadChanges;
+    reactionAsks += game.reactionAsks; reactionHits += game.reactionHits; pivotalMoments += game.pivotalCount; maxHitStreaks += game.maxHitStreak;
+    gameLengths.push(game.actions); scoreDistribution[game.score[0]]++;
+    for (const team of [0, 1] as Team[]) {
+      teamAsks[team] += game.teamAsks[team]; teamHits[team] += game.teamHits[team];
+      teamDeclarations[team] += game.teamDeclarations[team]; teamCorrectDeclarations[team] += game.teamCorrectDeclarations[team];
+      informationGain[team] += game.informationGain[team]; decisionRegret[team] += game.decisionRegret[team];
+    }
     outliers.push(game);
     outliers.sort((a, b) => b.interest - a.interest);
     if (outliers.length > 10) outliers.pop();
   }
+  gameLengths.sort((a, b) => a - b);
   return {
-    games, strategies: options.strategies, teamAWins, teamBWins: games - teamAWins, winRateA: teamAWins / games,
+    games, seed: base, psychologicalTells: options.psychologicalTells, declarationsEnabled: options.declarations,
+    strategies: options.strategies, teamAWins, teamBWins: games - teamAWins, winRateA: teamAWins / games,
     avgScore: [scoreA / games, scoreB / games], avgActions: actions / games, askAccuracy: asks ? hits / asks : 0,
     declarationAccuracy: declarations ? (declarations - failedDeclarations) / declarations : 1,
-    diversionRate: asks ? diversions / asks : 0, avgLeadChanges: leadChanges / games, outliers,
+    diversionRate: asks ? diversions / asks : 0, avgLeadChanges: leadChanges / games,
+    winRateCI: wilson(teamAWins, games),
+    teamAskAccuracy: [teamAsks[0] ? teamHits[0] / teamAsks[0] : 0, teamAsks[1] ? teamHits[1] / teamAsks[1] : 0],
+    teamDeclarationAccuracy: [teamDeclarations[0] ? teamCorrectDeclarations[0] / teamDeclarations[0] : 1, teamDeclarations[1] ? teamCorrectDeclarations[1] / teamDeclarations[1] : 1],
+    avgInformationGain: [teamAsks[0] ? informationGain[0] / teamAsks[0] : 0, teamAsks[1] ? informationGain[1] / teamAsks[1] : 0],
+    avgDecisionRegret: [teamAsks[0] ? decisionRegret[0] / teamAsks[0] : 0, teamAsks[1] ? decisionRegret[1] / teamAsks[1] : 0],
+    reactionAccuracy: reactionAsks ? reactionHits / reactionAsks : 0,
+    avgPivotalMoments: pivotalMoments / games, avgMaxHitStreak: maxHitStreaks / games,
+    medianActions: percentile(gameLengths, .5), p90Actions: percentile(gameLengths, .9), scoreDistribution,
+    outliers,
     elapsedMs: performance.now() - started,
   };
 }
 
-export function replayGame(summary: GameSummary, strategies: [StrategyId, StrategyId], psychologicalTells: boolean, declarations: boolean) {
-  return simulateGame({ seed: summary.seed, strategies, psychologicalTells, declarations, detailed: true });
+export function replayGame(summary: GameSummary) {
+  return simulateGame({ seed: summary.seed, strategies: summary.strategies, psychologicalTells: summary.psychologicalTells, declarations: summary.declarationsEnabled, detailed: true });
 }

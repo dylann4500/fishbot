@@ -19,7 +19,7 @@ Run a full pairwise strategy matrix:
 npm run research -- --games=1000
 ```
 
-The browser interface supports 100–5,000 games per experiment. The engine is in `lib/fish-engine.ts`; the empirical assumptions and path toward equilibrium play are documented in `docs/METHODOLOGY.md`. Reproducible results from the initial 85,000-game study are in `docs/BASELINE_FINDINGS.md`.
+The browser interface supports 100–5,000 games per experiment. The engine is in `lib/fish-engine.ts`; FishBot v0.2 is specified in `docs/FISHBOT_V02.md`, and the path toward equilibrium play is documented in `docs/METHODOLOGY.md`. Reproducible findings from the initial 85,000-game study and the 46,000-game v0.2 study are in `docs/BASELINE_FINDINGS.md` and `docs/V02_FINDINGS.md`.
 
 ## Design principles
 

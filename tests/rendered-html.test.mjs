@@ -21,8 +21,9 @@ test("server-renders the FishLab research workbench", async () => {
   assert.match(html, /<title>FishLab — What does optimal Fish look like\?<\/title>/i);
   assert.match(html, /What does/);
   assert.match(html, /optimal/);
-  assert.match(html, /Experiment setup/);
+  assert.match(html, /Experiment configuration/);
   assert.match(html, /Bayesian detective/);
+  assert.match(html, /FishBot v0\.2/);
   assert.match(html, /Canadian Fish/);
   assert.match(html, /https?:\/\/fishlab\.test\/og\.png/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|SkeletonPreview/);
@@ -38,8 +39,9 @@ test("ships the complete simulation and removes starter artifacts", async () => 
   ]);
   assert.match(engine, /export function simulateGame/);
   assert.match(engine, /export function runBatch/);
-  assert.match(client, /Outlier library/);
-  assert.match(client, /Research lens/);
+  assert.match(client, /Outliers and replay candidates/);
+  assert.match(client, /Pivotal only/);
+  assert.match(client, /What each computer actually does/);
   assert.match(methodology, /Monte Carlo CFR/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton|site-creator-vinext-starter/);
   assert.equal(socialCard, undefined);

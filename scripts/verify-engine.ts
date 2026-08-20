@@ -6,7 +6,7 @@ assert.equal(new Set(CARDS.map(card => card.id)).size, 54, "card ids must be uni
 assert.equal(HALF_SUITS.length, 9, "deck must contain nine half-suits");
 assert.ok(HALF_SUITS.every(set => set.cards.length === 6), "each half-suit must contain six cards");
 
-const strategies: StrategyId[] = ["hunter", "diversifier", "detective", "bluffer", "random"];
+const strategies: StrategyId[] = ["fishbot", "hunter", "diversifier", "detective", "bluffer", "random"];
 let checkedAsks = 0;
 for (let i = 0; i < 250; i++) {
   const config = {
@@ -30,6 +30,9 @@ for (let i = 0; i < 250; i++) {
     checkedAsks++;
     assert.notEqual(action.actor % 2, action.target! % 2, "asks must target the opposing team");
     assert.ok(action.card !== undefined && action.set !== undefined);
+    assert.ok(action.decision, "every ask must retain an explainable decision trace");
+    assert.ok(Number.isFinite(action.decision!.features.expectedUtility));
+    assert.ok(action.decision!.alternatives.length >= 1);
     assert.equal(CARDS[action.card!].set, action.set);
     const actorHand = action.hands![action.actor];
     assert.ok(actorHand.some(card => CARDS[card].set === action.set && card !== action.card), "asker must hold another card in the half-suit");
