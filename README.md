@@ -1,6 +1,28 @@
 # FishLab
 
-FishLab is an interactive Canadian Fish simulation and research workbench. FishBot v0.3 uses count-conditioned card beliefs and held-out empirical tuning. The lab runs seeded batches between strategy archetypes, reports comparative metrics, surfaces unusual games, and reconstructs every action with an omniscient research replay.
+FishLab is a Canadian Fish simulation and research workbench. The current agent
+is **FishBot v0.4**, built on an exact posterior over the initial deal and a
+declaration rule derived from optimal stopping; it lives in the C++ engine under
+`engine/`. The browser lab (`app/`, `lib/fish-engine.ts`) hosts the earlier v0.3
+population and the interactive replay.
+
+## FishBot v0.4 (current)
+
+Because every card movement in Fish is public, the entire hidden state is the
+initial deal. That makes the posterior exactly computable, including the
+certificate that an ask carries about the asker's own hand, and it yields a
+theorem: a half-suit held entirely by one team can never be asked in by the
+other, so it can never be taken back, so waiting to claim it is free. See
+`docs/FISHBOT_V04.md` for the specification and `paper/fishbot_v04.tex` for the
+full study.
+
+```bash
+cd engine && make
+./fish verify   --games=600                     # rules + belief soundness audit
+./fish selftest --games=40                      # exact vs exact vs sampled posteriors
+./fish match --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210
+./experiments.sh                                # the full battery
+```
 
 ## Run locally
 
@@ -21,7 +43,7 @@ npm run research -- --games=1000
 
 The browser interface supports 100–5,000 games per experiment. The engine is in `lib/fish-engine.ts`; FishBot v0.2 is specified in `docs/FISHBOT_V02.md`, and the path toward equilibrium play is documented in `docs/METHODOLOGY.md`. Reproducible findings from the initial 85,000-game study and the 46,000-game v0.2 study are in `docs/BASELINE_FINDINGS.md` and `docs/V02_FINDINGS.md`.
 
-FishBot v0.3 is specified in `docs/FISHBOT_V03.md`; its held-out results are in `docs/V03_FINDINGS.md`. The complete paper is available as `paper/fishbot_v03.tex`, an Overleaf-ready Markdown wrapper at `paper/FISHBOT_V03_OVERLEAF.md`, and a verified PDF at `output/pdf/fishbot_v03.pdf`.
+FishBot v0.3 is specified in `docs/FISHBOT_V03.md`; its held-out results are in `docs/V03_FINDINGS.md`. The v0.3 paper is `paper/fishbot_v03.tex` with a verified PDF at `output/pdf/fishbot_v03.pdf`. FishBot v0.4 is specified in `docs/FISHBOT_V04.md`, its study design in `docs/V04_FINDINGS.md`, its generated result tables in `docs/V04_RESULTS.md`, and its paper in `paper/fishbot_v04.tex` (single-file Overleaf copy: `paper/fishbot_v04_standalone.tex`, built PDF: `output/pdf/fishbot_v04.pdf`).
 
 ## Reproduce v0.3
 

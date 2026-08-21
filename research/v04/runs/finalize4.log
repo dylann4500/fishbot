@@ -1,0 +1,88 @@
+### selecting on the validation bank
+gen   6  softmin 0.6028  min 0.7410  v03=0.741  lockout=0.798  detective=0.751  v02=0.837
+gen   7  softmin 0.5998  min 0.7330  v03=0.733  lockout=0.782  detective=0.760  v02=0.841
+gen   8  softmin 0.6096  min 0.7560  v03=0.756  lockout=0.802  detective=0.765  v02=0.819
+gen   9  softmin 0.6039  min 0.7580  v03=0.758  lockout=0.772  detective=0.776  v02=0.808
+gen  10  softmin 0.6053  min 0.7270  v03=0.727  lockout=0.791  detective=0.779  v02=0.845
+gen  11  softmin 0.6006  min 0.7370  v03=0.737  lockout=0.789  detective=0.760  v02=0.827
+
+selected generation 8 with validation soft-min 0.6096
+allparams=11.50600|3.29480|3.19780|1.68810|2.13330|4.07050|1.46790|1.42810|-3.09780|-0.85360|-2.02190|1.16600|1.26970|0.91420|-2.65340|-0.80450|1.90400|0.04730|1.41080|-0.99900|0.81770|0.79690|0.33250|6.24900|2.86760|6.04320|0.76670|0.79250|-0.03420|0.26380|0.13280|5.62390|3.35800|2.61270
+### freezing
+frozen into /Users/dylan/Documents/GitHub/fish optimization/engine/src/v04.hpp
+### round-trip check (allparams must reproduce the frozen defaults)
+  self-match win rate 0.5 (0.5 == identical policies)
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+
+=== E1 verify ===
+audit violations: 0 / 23594580 checks
+set-conservation failures: 0
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+
+=== E2 belief validation ===
+checks                    293524
+block build failures      0
+block vs card DP (no C5)  max abs diff 3.414e-15
+block vs exact sampling   max abs diff 4.066e-02
+sinkhorn vs block  max 0.4982  mean 0.01705
+SELFTEST PASS
+0.0000
+
+=== E3 head-to-head (held-out bank, 6-rotation duplicate) ===
+  vs v03
+  vs lockout
+  vs detective
+  vs v02
+  vs diversifier
+  vs hunter
+  vs bluffer
+  vs random
+
+=== E4 population matrix ===
+
+=== E5 ablations ===
+
+=== E6 calibration ===
+ask  n=56204 brier=0.12971 logloss=0.37905 ece=0.02881 meanPred=0.5338 meanObs=0.5504
+   [0.0,0.1) n=  6341 pred=0.0291 obs=0.0126
+   [0.1,0.2) n=  4711 pred=0.1557 obs=0.1407
+
+=== E7 rule variants ===
+
+=== E8 v0.3 port validation under legacy rules ===
+
+=== E9 throughput ===
+v0.4 self-play      162.792 games/s over 400 games
+v0.4 exact posterior 11.9096 games/s over 120 games
+v0.3 self-play      6954.22 games/s over 800 games
+
+=== E12 exactness under an unfitted policy ===
+greedy + fast  posterior vs v03: {"a":"v04:weights=12|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0,value=0,topk=0,ptheta=0,pphi=0,belief=fast","b":
+
+greedy + block posterior vs v03: {"a":"v04:weights=12|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0,value=0,topk=0,ptheta=0,pphi=0,belief=block","b"
+
+
+=== E13 termination ===
+# limit-hit rate by opponent: {'v04': 0, 'v03': 0, 'lockout': 0, 'detective': 0, 'v02': 0, 'diversifier': 0, 'hunter': 0, 'bluffer': 0, 'random': 0}
+
+=== E14 value function ===
+rows=405348  R2=0.2909  rmse=0.3047
+done
+=== fitting an exploiter against v04 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v04","a":"v04:allparams=11.71453|3.49138|3.43828|1.05565|2.47206|4.47486|0.47509|1.38288|-3.20344|-0.83443|-2.05647|0.59551|1.12356|0.78118|-3.17593|-0.56193|1.53129|0.48318|1.77437|-1.28945|0.68292|0.77232|0.46462|6.46815|2.39289|5.82682|0.79440|0.87721|-0.02009|0.48385|0.00981|6.15931|3.18122|2.40731","b":"v04:mgate=0.008","deals":600,"games":3600,"winRateA":0.511944,"ci":[0.496667,0.527222],"wilsonCI":[0.495612,0.528251],"meanSetsA":4.55,"meanSetsB":4.45,"askAccA":0.314273,"askAccB":0.313,"declAccA":0.881879,"declAccB":0.871801,"declPerGameA":4.48222,"declPerGameB":4.47222,"forcedAccA":0,"forcedAccB":0,"forcedPerGameA":0.0216667,"outOfTurnA":3.32389,"outOfTurnB":3.34222,"lockHoldA":8.84589,"lockHoldB":7.90695,"eventsPerGame":152.464,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":24.1522}
+=== fitting an exploiter against v03 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v03","a":"v04:allparams=10.83234|2.96697|2.04612|1.52290|2.75411|3.42299|0.92075|0.94346|-2.90013|-0.74977|-1.81289|1.56749|1.57988|0.62291|-2.29403|-0.50558|2.18707|0.46021|2.19171|-1.28480|0.69945|0.71596|0.12683|6.38840|2.78813|5.79243|1.28473|0.49602|0.01018|0.62029|0.00000|6.12917|3.22671|2.26359","b":"v03","deals":600,"games":3600,"winRateA":0.773056,"ci":[0.759722,0.786667],"wilsonCI":[0.759086,0.786443],"meanSetsA":5.54722,"meanSetsB":3.45278,"askAccA":0.523325,"askAccB":0.504203,"declAccA":0.989944,"declAccB":0.789535,"declPerGameA":4.69611,"declPerGameB":4.26833,"forcedAccA":0,"forcedAccB":0,"forcedPerGameA":0.0355556,"outOfTurnA":4.18472,"outOfTurnB":3.22944,"lockHoldA":14.8785,"lockHoldB":16.4938,"eventsPerGame":106.965,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":7.76982}
+=== fitting an exploiter against detective ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"detective","a":"v04:allparams=11.53161|2.87447|3.00381|1.02463|1.88818|4.22676|1.44884|1.02695|-3.35162|-1.66681|-1.70384|1.39385|0.88620|0.53026|-1.91524|-1.00492|2.00542|0.17848|1.35665|-1.01480|0.75558|0.56373|0.51599|5.89225|2.81326|6.27168|1.02760|0.71924|-0.00702|0.35202|0.12644|6.55296|3.76586|2.74472","b":"detective","deals":600,"games":3600,"winRateA":0.764722,"ci":[0.751111,0.778056],"wilsonCI":[0.750589,0.778292],"meanSetsA":5.47083,"meanSetsB":3.52917,"askAccA":0.5516,"askAccB":0.508904,"declAccA":0.981796,"declAccB":0.95029,"declPerGameA":5.18806,"declPerGameB":2.87222,"forcedAccA":0,"forcedAccB":0.746089,"forcedPerGameA":0.0163889,"outOfTurnA":3.635,"outOfTurnB":1.73972,"lockHoldA":4.93658,"lockHoldB":16.1793,"eventsPerGame":104.032,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":6.88717}
+tables, numbers and docs/V04_RESULTS.md written
+note: Running xdvipdfmx ...
+note: Writing `../output/pdf/fishbot_v04_standalone.pdf` (246.646484375 KiB)
+note: Skipped writing 2 intermediate files (use --keep-intermediates to keep them)
+### finalize4 done

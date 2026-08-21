@@ -1,0 +1,68 @@
+\section{Evaluation protocol}
+\label{sec:protocol}
+
+Fish has a single chance node --- the deal --- followed by a fully public
+transcript. That is close to the best case for variance reduction, and we
+exploit it.
+
+\subsection{Six-rotation duplicate blocks}
+
+Because seats alternate teams, the cyclic group of six seat rotations of a fixed
+deal forms a balanced block: the three odd rotations exchange which team holds
+which hand-triple, and the even rotations permute hands within a team. Playing
+all six rotations of every deal means each policy holds every hand-triple exactly
+once, so the intrinsic luck of the deal cancels out of the comparison rather than
+being averaged down. This is strictly stronger than the two-orientation swap used
+for v0.3, which balances only the team label.
+
+\subsection{Clustered inference}
+
+The six rotations of one deal are one correlated cluster, so resampling
+\emph{games} would understate the variance. All bootstrap intervals in this paper
+resample \emph{deals}: for a single arm we report a cluster bootstrap of the
+per-deal win count, and for a comparison between two configurations played on the
+same deals we report a paired bootstrap of the per-deal difference. Wilson
+intervals are also given for continuity with the v0.3 paper; where the two
+disagree, the bootstrap is the one to trust.
+
+\subsection{Seed separation}
+
+Fitting used base seeds $20260821$, $770077$, $313131$, $888111$ and $606111$
+across five rounds, and the shipping configuration was selected on a further
+validation bank ($1357911$). Every number reported in \S\ref{sec:results}
+onwards comes from banks disjoint from all six --- $90210$ for the head-to-head,
+$515151$ for the matrix, $606060$ for the ablations, $717171$ for calibration,
+$828282$--$848484$ for the rule dialects, $20260820$ for the v0.3 port
+validation, and $515253$/$6543210$ for the exploitability probe --- and the
+configuration was frozen before any of them were run.
+
+\subsection{Metrics}
+
+Win rate is primary but insufficient on its own, for the reason
+\S\ref{sec:results} makes concrete: a policy can win by declaring better while
+asking worse. We therefore report, for every matchup:
+
+\begin{description}[style=nextline]
+  \item[Mean half-suits.] Out of nine; the margin, not just the sign.
+  \item[Ask accuracy.] Fraction of asks that transfer a card.
+  \item[Declaration accuracy and rate.] Voluntary declarations per game and the
+        fraction scored correctly. Forced endgame declarations are counted
+        separately in the win-rate tables; the calibration study pools the two,
+        which is a negligible contamination at well under a tenth of a forced
+        declaration per game.
+  \item[Out-of-turn declarations.] Per game; zero under the v0.3 rule dialect.
+  \item[Forecast calibration.] Brier score, log loss, expected calibration error
+        and a ten-bin reliability table for the policy's own $\Pr[\text{hit}]$
+        and $\Pr[\text{allocation correct}]$ predictions. A policy whose
+        declaration probabilities are miscalibrated is making its stopping
+        decision on a corrupted scale, so this is a first-class result rather
+        than a diagnostic.
+  \item[Worst-case profile.] The minimum win rate across the opponent panel, not
+        only the mean. A policy that averages well but collapses against one
+        playstyle has not answered the question this project asks.
+  \item[Local best response.] An explicit exploiter, fitted \emph{against} a
+        frozen configuration inside the same policy class, gives an upper bound
+        estimate on how much a well-informed adversary who has studied the bot
+        can win. This is the closest available proxy for exploitability in a
+        game where exact best-response computation is out of reach.
+\end{description}

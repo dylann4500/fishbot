@@ -1,0 +1,182 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Engine and belief validation}
+\label{sec:results-verify}
+
+The verification sweep plays every ordered pair of the eight policies with the
+knowledge audit of \S\ref{sec:engine} active. Across
+\numAuditChecks\ soundness checks it recorded
+\numAuditViolations\ violations: no agent ever excluded the true
+holder of a card, no derived capacity ever disagreed with the truth, and no
+ask-legality certificate was ever violated by the actual deal. Card conservation
+and exact nine-half-suit resolution hold in every game, and replays are
+bit-identical under a fixed seed at a fixed thread count. The action cap fires on
+a handful of the verification sweep's deals --- that sweep deliberately includes
+pathological policy pairings --- and on none of the head-to-head deals reported
+below.
+
+The belief engines were then checked against each other and against ground
+truth. With no ask-legality certificate live, the block-enumeration posterior and
+the card-level capacity dynamic program agree to
+$\numBeliefVsCardDP$ --- machine precision, as they must, since
+they compute the same quantity two different ways. With certificates live, the
+block posterior agrees with exact rejection sampling from the constraint-
+satisfying distribution to $\numBeliefVsSampling$, which is Monte
+Carlo error at the sample sizes used. The fast approximation of \S\ref{sec:fast}
+has mean absolute marginal error $\numSinkhornMean$ but a
+maximum of $\numSinkhornMax$: accurate on average, with a heavy
+tail exactly where the position is sharp.
+
+\subsection{Validating the v0.3 port}
+
+Every comparison in this paper is against a re-implementation of FishBot v0.3 in
+the new engine, so that re-implementation has to be shown faithful. Run under the
+v0.3 rule dialect on the v0.3 seed bank, the port reproduces six of the seven
+published figures within their confidence intervals (Table~\ref{tab:port}); the
+seventh, against the misdirection artist, misses by half a point at the top of
+the scale, where both figures are above 98\%.
+
+\begin{table}[ht]
+\centering
+\caption{FishBot v0.3 as published versus the C++ port, under the v0.3 rule
+dialect. Published values are from \cite{fishbot03}.}
+\label{tab:port}
+\small
+\input{tables/port}
+\end{table}
+
+\subsection{Held-out head-to-head}
+
+Table~\ref{tab:h2h} gives the primary result: FishBot v0.4 against the whole
+population on an untouched seed bank, with every deal played in all six seat
+rotations.
+
+\begin{table}[ht]
+\centering
+\caption{FishBot v0.4 on the held-out bank, six-rotation duplicate blocks,
+\numHtHGames\ games per row.}
+\label{tab:h2h}
+\small
+\input{tables/headtohead}
+\end{table}
+
+The number that matters for the question this project asks is not the mean but
+the minimum: FishBot v0.4's \emph{worst} result against any policy in the
+population is \numWorstCase\%. Against the strongest predecessor it wins
+\numVsVthree\% (95\% CI \numVsVthreeCI), taking \numVsVthreeSets\ of the nine
+half-suits on average. For scale, FishBot v0.3's own worst result against the
+three credible challengers of its study was 56.50\% \cite{fishbot03}.
+
+Ask accuracy does not explain any of this, and the clearest evidence is the row
+where it goes backwards. Against the turn-starvation lockout policy v0.4 converts
+a far \emph{lower} fraction of its asks than against any other opponent, and yet
+beats it by a wider margin than it beats either of the other two policies of
+comparable strength. Two things are
+happening. The lockout policy is built to refuse the turn to a dangerous
+opponent, which means it hands v0.4 positions in which the remaining asks are
+genuinely poor; and v0.4's edge is concentrated not in converting asks but in
+declaring --- it claims at roughly \numVsVthreeDeclAcc\% accuracy while FishBot v0.3, on those
+same games, claims correctly only \numVthreeDeclObs\% of the time, and every
+failed claim is a half-suit handed to the opponents. A policy can ask worse and still win, provided
+it never gives a set away.
+
+The rule permitting a claim at any moment is used heavily: v0.4 makes
+\numVsVthreeOOT\ out-of-turn declarations per game against v0.3.
+\S\ref{sec:robustness} isolates how much of the margin depends on it.
+
+\subsection{Population ratings}
+
+Table~\ref{tab:elo} converts the round-robin of Table~\ref{tab:matrix} into
+Bradley--Terry ratings.
+
+\begin{table}[ht]
+\centering
+\caption{Bradley--Terry ratings over the round-robin, expressed in Elo with
+FishBot v0.3 at zero.}
+\label{tab:elo}
+\small
+\input{tables/elo}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Round-robin win rates (\%), row policy against column policy, six
+rotations per deal.}
+\label{tab:matrix}
+\scriptsize
+\input{tables/matrix}
+\end{table}
+
+The shape of Table~\ref{tab:elo} is worth a sentence. FishBot v0.3, the
+turn-starvation lockout and the posterior detective are separated by four Elo
+points --- for practical purposes they are the same strength, which is what one
+would expect of three policies that all reduce to ``ask where the posterior is
+highest, and be careful about claiming''. FishBot v0.4 sits $\numElo$ Elo
+clear of that group. The gap is not a refinement of the same idea; it comes from
+replacing the posterior itself and from what the exact posterior makes possible
+at the moment of the claim.
+
+\subsection{Throughput}
+
+The fitted configuration plays roughly twenty times faster than the same policy
+driven by the exact block posterior
+(\path{research/v04/results/E9-throughput.txt}), which is why the exact engine is
+used to validate probabilities and to serve as an ablation rather than to run in
+the inner loop. Both are far slower than FishBot v0.3, which does no exact
+inference at all; the absolute rates are fast enough that every experiment in
+this paper is a matter of minutes.
+
+\subsection{Calibration}
+
+A stopping rule is only as good as the probabilities it stops on, so the
+policy's own forecasts are a first-class result rather than a diagnostic.
+Table~\ref{tab:calib} gives the aggregate scores and Table~\ref{tab:reliability}
+the decile breakdown.
+
+\begin{table}[ht]
+\centering
+\caption{Reliability of the policies' own probability forecasts on held-out
+games. FishBot v0.3 does not expose an ask forecast, so only its declaration
+confidence is comparable.}
+\label{tab:calib}
+\small
+\input{tables/calibration}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Reliability of both forecasts, by decile of the predicted probability.
+The declaration column is where \eqref{eq:stop} operates, and it is sparse
+everywhere except the top bin.}
+\label{tab:reliability}
+\small
+\input{tables/reliability}
+\end{table}
+
+Declaration forecasts are calibrated to within $\numDeclECE$ expected
+calibration error, with realised accuracy \numDeclObs\%.
+
+That aggregate needs a qualification, because it is dominated by one bin. Roughly
+nine tenths of the agent's declaration forecasts sit above $0.99$, where it is
+almost perfectly calibrated; the sparse middle bins, between $0.6$ and $0.9$, are
+underconfident by eight to nineteen points. Those are exactly the forecasts at
+which \eqref{eq:stop} has a decision to make rather than a formality to
+discharge. The direction is the safe one --- the agent claims less often than it
+should, not more --- and it is consistent with the ablation finding that moving
+the declaration threshold between $0.80$ and $0.99$ changes nothing measurable,
+since so little mass lies between them. But the honest statement is that the
+calibration result licenses the \emph{scale} the stopping rule operates on, not
+its behaviour in the region where it is actually deciding.
+
+The comparison with the predecessor is the sharpest single diagnostic in the
+study, and it explains the declaration-accuracy gap in Table~\ref{tab:h2h}
+mechanically rather than by appeal to a better policy. FishBot v0.3's
+declaration confidence is a geometric mean of per-card marginals; on the same
+games it predicts \numVthreeDeclPred\% and achieves \numVthreeDeclObs\%, an
+expected calibration error of $\numVthreeDeclECE$ --- roughly eight times v0.4's,
+and in the dangerous direction. A policy that believes it is 95\% sure when it is
+84\% sure will keep making claims it should not make, whatever threshold sits on
+top. Replacing that estimate with the exact joint probability \eqref{eq:q2} is
+the change that matters; the stopping rule above it is a refinement whose
+separate contribution this study does not establish (\S\ref{sec:ablations}).

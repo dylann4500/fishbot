@@ -1,0 +1,62 @@
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+
+=== E1 verify ===
+audit violations: 0 / 25920504 checks
+set-conservation failures: 0
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+
+=== E2 belief validation ===
+checks                    266054
+block build failures      0
+block vs card DP (no C5)  max abs diff 3.414e-15
+block vs exact sampling   max abs diff 4.453e-02
+sinkhorn vs block  max 0.4987  mean 0.02072
+SELFTEST PASS
+0.0000
+
+=== E3 head-to-head (held-out bank, 6-rotation duplicate) ===
+  vs v03
+  vs lockout
+  vs detective
+  vs v02
+  vs diversifier
+  vs hunter
+  vs bluffer
+  vs random
+
+=== E4 population matrix ===
+
+=== E5 ablations ===
+
+=== E6 calibration ===
+ask  n=58636 brier=0.12444 logloss=0.36383 ece=0.02585 meanPred=0.5206 meanObs=0.5381
+   [0.0,0.1) n=  8043 pred=0.0271 obs=0.0160
+   [0.1,0.2) n=  6662 pred=0.1573 obs=0.2137
+
+=== E7 rule variants ===
+
+=== E8 v0.3 port validation under legacy rules ===
+
+=== E9 throughput ===
+v0.4 self-play      156.825 games/s over 400 games
+v0.4 exact posterior 7.54866 games/s over 120 games
+v0.3 self-play      6907.31 games/s over 800 games
+done
+=== fitting an exploiter against v04 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v04","a":"v04:allparams=11.42032|2.71314|3.25502|2.00627|1.95973|4.56107|1.38206|1.06423|-3.30919|-1.40288|-1.87977|0.32966|1.14064|0.62445|-1.91795|-0.91350|1.96568|0.37109|1.24903|-1.08420|0.75128|0.66678|0.47722|6.72694|2.52915|6.16443|0.41762|0.30329|-0.02417|0.26224|0.22838|6.20620|2.87042|3.30843","b":"v04:mgate=0.008","deals":600,"games":3600,"winRateA":0.496667,"ci":[0.480346,0.512994],"meanSetsA":4.48389,"meanSetsB":4.51611,"askAccA":0.366127,"askAccB":0.366783,"declAccA":0.930075,"declAccB":0.933437,"declPerGameA":4.47306,"declPerGameB":4.48611,"forcedAccA":0.0344828,"forcedAccB":0.011236,"forcedPerGameA":0.0161111,"outOfTurnA":3.13583,"outOfTurnB":3.66,"lockHoldA":13.6263,"lockHoldB":11.8677,"eventsPerGame":145.579,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":20.7997}
+=== fitting an exploiter against v03 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v03","a":"v04:allparams=11.11510|2.76555|4.68328|1.91918|2.03077|4.66975|0.47014|0.98891|-2.59884|-2.05732|-2.73503|0.67547|1.31743|0.33465|-3.69723|0.04933|2.43537|0.01063|2.11404|-1.14496|0.55000|0.76244|0.60000|6.81068|2.70542|5.56636|0.00000|0.95000|0.00975|0.00000|0.30098|6.07876|3.73286|3.67087","b":"v03","deals":600,"games":3600,"winRateA":0.723056,"ci":[0.708206,0.73743],"meanSetsA":5.34944,"meanSetsB":3.65056,"askAccA":0.47521,"askAccB":0.495286,"declAccA":0.989209,"declAccB":0.713864,"declPerGameA":3.96417,"declPerGameB":4.99083,"forcedAccA":0,"forcedAccB":0,"forcedPerGameA":0.045,"outOfTurnA":2.90528,"outOfTurnB":3.56278,"lockHoldA":9.21017,"lockHoldB":17.3959,"eventsPerGame":118.528,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":7.83381}
+=== fitting an exploiter against detective ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"detective","a":"v04:allparams=11.96599|2.61197|3.09309|2.08094|1.65703|4.06999|0.70165|1.29078|-4.09186|-1.26824|-1.83760|0.18675|0.87947|0.97178|-1.58369|-1.66150|1.92292|1.31608|1.00446|-0.99541|0.55000|0.99999|0.60000|7.04957|2.67655|6.47731|0.70324|0.74126|-0.05000|0.88166|0.25489|5.83196|3.16942|3.95941","b":"detective","deals":600,"games":3600,"winRateA":0.685278,"ci":[0.669917,0.700244],"meanSetsA":5.16472,"meanSetsB":3.83528,"askAccA":0.538542,"askAccB":0.515752,"declAccA":0.984025,"declAccB":0.953816,"declPerGameA":4.86861,"declPerGameB":3.27194,"forcedAccA":0,"forcedAccB":0.735662,"forcedPerGameA":0.0166667,"outOfTurnA":3.23083,"outOfTurnB":1.78444,"lockHoldA":7.88694,"lockHoldB":15.2719,"eventsPerGame":108.906,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":6.82655}
+tables, numbers and docs/V04_RESULTS.md written
+note: Running xdvipdfmx ...
+note: Writing `../output/pdf/fishbot_v04_standalone.pdf` (237.4970703125 KiB)
+note: Skipped writing 2 intermediate files (use --keep-intermediates to keep them)
+### finalize3 done

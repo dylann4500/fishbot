@@ -1,0 +1,3 @@
+v0.4 self-play      162.792 games/s over 400 games
+v0.4 exact posterior 11.9096 games/s over 120 games
+v0.3 self-play      6954.22 games/s over 800 games

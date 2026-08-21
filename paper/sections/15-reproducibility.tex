@@ -1,0 +1,28 @@
+\section{Reproducibility}
+\label{sec:repro}
+
+The engine is a single C++20 translation unit in \path{engine/src}; the policy
+is \path{engine/src/v04.hpp}, the belief engines are \path{engine/src/belief.hpp}
+(constraints, fast posterior) and \path{engine/src/blockdp.hpp} (exact posterior),
+the v0.3 population is ported in \path{engine/src/baselines.hpp}, and the game
+driver is \path{engine/src/game.hpp}. Build with \verb|make| in \path{engine/}.
+
+\begin{verbatim}
+./fish verify   --games=600            # rules, information safety, belief soundness
+./fish selftest --games=40             # exact vs exact vs sampled posteriors
+./fish match    --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210
+./fish matrix   --policies=v04,v03,... --games=200 --rotations=6
+./fish ablate   --ref=v04 --variants="..." --panel=v03,lockout,detective,v02
+./fish calibrate --a=v04 --b=v03 --games=600
+./fish fitvalue --a=v04 --b=v04 --games=400      # ridge-fit the value function
+./fish tune     --panel=... --full --gens=42     # cross-entropy policy fitting
+./experiments.sh                                 # the whole battery
+\end{verbatim}
+
+Every policy is a string: \verb|v04:belief=block,decl=0.95,topk=6| constructs the
+exact-posterior variant with those settings, and \verb|allparams=| accepts the
+full fitted vector, so every configuration in every table can be reconstructed
+from the artifact files. Results land in \path{research/v04/results/} as JSON;
+\path{engine/build_tables.py} turns them into the tables of this paper. Fitting
+traces are in \path{research/v04/runs/}, and the literature survey the design was
+drawn from is in \path{research/v04/lit/}.

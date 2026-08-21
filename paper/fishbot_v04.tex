@@ -1,0 +1,70 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.82in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\definecolor{fishgreen}{HTML}{0B5D46}
+\definecolor{fishlight}{HTML}{EAF4EF}
+\definecolor{fishgray}{HTML}{4B5954}
+\hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{4.5pt}
+\setlength{\parskip}{5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{FishBot v0.4}
+\rhead{Exact belief, optimal stopping, duplicate evaluation}
+\cfoot{\thepage}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\title{\textbf{FishBot v0.4: Exact Public-Belief Inference and Declaration\\ as Optimal Stopping in Six-Player Canadian Fish}\\[4pt]
+\large A rules-exact engine, a tractable exact posterior, and a duplicate-block evaluation protocol}
+\author{FishLab Research Project}
+\date{\today}
+
+\input{numbers}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-rules}
+\input{sections/03-related}
+\input{sections/04-engine}
+\input{sections/05-belief}
+\input{sections/06-theory}
+\input{sections/07-policy}
+\input{sections/08-fitting}
+\input{sections/09-protocol}
+\input{sections/10-results}
+\input{sections/11-ablations}
+\input{sections/12-robustness}
+\input{sections/13-playbook}
+\input{sections/14-limitations}
+\input{sections/15-reproducibility}
+\input{sections/16-conclusion}
+\input{sections/bibliography}
+
+\end{document}

@@ -1,0 +1,49 @@
+\section{Limitations and threats to validity}
+\label{sec:limitations}
+
+\begin{itemize}
+  \item \textbf{The posterior is exact with respect to the rules, not to the
+        opponents.} Constraints (C1)--(C5) are logical consequences of the
+        rules and hold against any opponent whatsoever. The uniform prior over
+        deals consistent with them is not, however, the full Bayesian posterior:
+        that would additionally weight each deal by how likely the observed
+        actions are under the opponents' actual policies, which is playstyle
+        dependent. We implement and fit the natural correction \eqref{eq:prior}
+        and find it adds nothing once the certificates are enforced, but that is
+        evidence about this opponent population, not a theorem.
+  \item \textbf{Population dependence.} Being best in this population is not
+        being unexploitable. Our local best-response probe searches one policy
+        class with one optimiser; a differently-shaped adversary could do better.
+  \item \textbf{No equilibrium claim.} Fish with three-player teams and no
+        communication channel calls for a team-maxmin equilibrium with
+        correlation, not a Nash equilibrium, and we compute neither. Nothing here
+        bounds exploitability.
+  \item \textbf{Fitted on simulated opponents.} There are no expert human game
+        logs and no independently authored Fish engines to test against. Every
+        opponent in this study was written by us or ported from v0.3, which is a
+        real limit on external validity.
+  \item \textbf{The value function is linear.} Ridge-fitted on 405{,}000
+        self-play decision points it reaches $R^2 = 0.29$ against the final
+        half-suit differential
+        (\path{research/v04/results/E14-valuefit-stats.txt}), which caps how much
+        the one-ply lookahead and the stopping rule built on it can extract, and
+        is consistent with the ablations being unable to separate either from
+        zero.
+  \item \textbf{Termination is imposed, not derived.} Theorem~\ref{thm:locked}
+        makes patience correct, and \S\ref{sec:termination} shows that correct
+        patience on both sides deadlocks. Our escalation rule terminates every
+        game in this study, but its horizons are hand-set constants, not the
+        output of any analysis, and a differently-tuned pair of policies could
+        still find a cycle inside them.
+  \item \textbf{The exploitability probe is a lower bound.} It searches one
+        parametric policy class with one optimiser for a fixed budget. That it
+        fails to beat FishBot v0.4 is evidence, not a bound; a differently-shaped
+        adversary, or a larger budget, could succeed.
+  \item \textbf{Ablation interaction.} Features are correlated; a term can look
+        unnecessary because a correlated term substitutes for it. The paired
+        design controls the deals, not the collinearity.
+  \item \textbf{Rule dialect.} Results are for the 54-card, nine-half-suit form
+        with wrong declarations awarded to the opponents and no prearranged
+        conventions. \S\ref{sec:robustness} measures sensitivity to some of
+        these, not all.
+\end{itemize}

@@ -1,0 +1,89 @@
+\section{Introduction}
+
+Canadian Fish --- Literature in most of the published literature --- is a
+six-player, two-team card game of imperfect information. On your turn you name a
+card and an opponent; if they hold it you take it and continue, and if they do
+not, the turn is theirs. At any moment either team may claim a half-suit by
+naming which teammate holds each of its six cards, and any error in that claim
+hands the half-suit to the opponents. Everything that happens is public.
+
+The game has almost no computational literature. There is no arXiv paper on it,
+no engine, and one open-source learning agent that plays a different variant.
+That absence is not because the game is easy: it has six players, two teams that
+cannot communicate, an information set of astronomical size, and a horizon of
+sixty to a hundred and twenty decisions. It is closer to Bridge or Skat than to
+anything solved.
+
+FishBot v0.3 \cite{fishbot03} was the first serious attempt: a transparent
+one-ply utility policy over an approximate posterior, fitted on 126{,}600
+simulated games and evaluated on held-out seeds. It established that remembering
+public asks and reconciling them against card counts dominate everything else,
+and it left three things open --- an approximate belief model, a confidence
+threshold in place of a declaration policy, and a simulator that did not
+implement the rule allowing a claim at any moment.
+
+This paper closes all three. The route runs through one structural observation.
+
+\begin{quote}
+\emph{Cards in Fish move only through publicly observed transfers. Therefore a
+card whose location has never been revealed is still with whoever was dealt it,
+and the entire hidden state of the game is the initial deal.}
+\end{quote}
+
+The consequences are unusually strong. Inference becomes a degree-constrained
+counting problem over a capacity vector, which we solve exactly --- exact
+marginals, exact probabilities for a named allocation, and rejection-free
+sampling --- for a few hundred thousand arithmetic operations
+(\S\ref{sec:belief}). The one constraint that resists a product form, the
+certificate that an ask carries about the asker's own hand, is confined to a
+single half-suit and can therefore be enumerated inside it exactly rather than
+approximated. And a one-line reading of ask legality yields a strategic result
+that no previous agent implements: a half-suit held entirely by one team can
+never be asked in by the other, so it can never be taken back, so waiting to
+claim it is free (\S\ref{sec:theory}). Declaration stops being a threshold and
+becomes an optimal-stopping problem.
+
+\subsection*{Claims}
+
+This paper defends four bounded claims.
+
+\begin{enumerate}
+  \item \textbf{The exact posterior is computable and is computed.} Belief
+        marginals, the probability of a named allocation, and consistent deal
+        samples are exact with respect to every deduction the rules license, and
+        the implementation is validated against brute force, against an
+        independent dynamic program, and against exact rejection sampling.
+  \item \textbf{A half-suit held entirely by one team cannot be taken back}
+        (Theorem~\ref{thm:locked}), so declaration is optimal stopping rather
+        than a threshold. The agent that follows declares near-perfectly; we are
+        explicit in \S\ref{sec:ablations} that the ablations credit the exact
+        allocation probability rather than the stopping rule itself.
+  \item \textbf{FishBot v0.4 is the strongest policy in the tested population},
+        and --- the point of the exercise --- it is strongest against
+        \emph{every} member of that population, not merely on average.
+  \item \textbf{The forecasts it stops on are calibrated}, which is what makes
+        the third claim a statement about decision quality rather than about
+        one seed bank.
+  \item \textbf{It is much harder to counter than its predecessor.} An adversary
+        fitted specifically to beat it, in the same policy class and with the
+        same optimiser and budget, does not reach 50\% against it; the identical
+        procedure beats FishBot v0.3 comfortably. This is a lower bound on
+        exploitability rather than a bound, and we say so, but the comparison
+        between the two figures is the meaningful part.
+\end{enumerate}
+
+A sixth result was not among the claims we set out to make and is reported
+because it is a fact about the game rather than about the agent: because a
+half-suit frozen by Theorem~\ref{thm:locked} also admits no further information
+about itself, two policies that both correctly decline to cash an uncertain one
+deadlock permanently, and the rules as usually stated therefore do not guarantee
+termination against deterministic play (\S\ref{sec:termination}).
+
+This paper does not claim a Nash or team equilibrium, an exploitability bound, or
+that Fish is solved. \S\ref{sec:limitations} is explicit about what remains, including
+the one caveat that most constrains the word ``exact'': the posterior is exact
+with respect to the \emph{rules}, and a fully Bayesian agent would additionally
+weight deals by how likely the observed actions are under each opponent's
+particular playstyle. We implement that correction, fit it, and report that it
+adds nothing once the rule-based certificates are enforced --- which is evidence
+about this population rather than a general theorem.

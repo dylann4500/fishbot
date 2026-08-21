@@ -1,0 +1,5 @@
+ask  n=0 brier=0.00000 logloss=0.00000 ece=0.00000 meanPred=0.0000 meanObs=0.0000
+decl n=4984 brier=0.13389 logloss=0.39895 ece=0.12572 meanPred=0.9459 meanObs=0.8202
+   [0.7,0.8) n=   403 pred=0.7895 obs=0.1935
+   [0.8,0.9) n=   452 pred=0.8459 obs=0.3341
+   [0.9,1.0) n=  4129 pred=0.9722 obs=0.9346

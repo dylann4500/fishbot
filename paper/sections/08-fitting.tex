@@ -1,0 +1,69 @@
+\section{Fitting}
+\label{sec:fitting}
+
+\subsection{A population-robust objective}
+
+The question this project set out to answer is not ``which policy has the best
+average score against a fixed pool'' but ``is there a single policy that is best
+across playstyles''. A mean win rate answers the first and hides the second, so
+we fit against a soft minimum over the opponent panel $\mathcal{O}$:
+\begin{equation}
+  \mathrm{score}(w) \;=\; -\frac{1}{\beta}\,
+     \log \sum_{o \in \mathcal{O}} \exp\bigl(-\beta\, \mathrm{wr}_o(w)\bigr),
+  \qquad \beta = 8,
+  \label{eq:softmin}
+\end{equation}
+which tends to $\min_o \mathrm{wr}_o$ as $\beta$ grows and is smooth enough for a
+noisy optimiser. The panel $\mathcal{O}$ holds six policies: FishBot v0.3, the
+turn-starvation lockout, the posterior detective, FishBot v0.2, the adaptive
+diversifier and the focused hunter. The misdirection artist and the random
+control are deliberately \emph{excluded} so that they remain held-out opponents,
+as are all rule variants.
+
+\subsection{Optimiser}
+
+We use the cross-entropy method with a diagonal Gaussian: a population of
+candidates is sampled around the incumbent mean, the elite fraction is retained,
+and the mean and per-coordinate standard deviation are smoothed toward the elite
+statistics. CEM was chosen over gradient-free alternatives because the objective
+is a noisy win rate --- exactly the regime in which methods that trust small
+differences fail. Two devices keep the noise manageable. First, every candidate
+in a generation is evaluated on \emph{identical} seed banks, so comparisons
+within a generation are paired. Second, the banks are redrawn between
+generations, so the fit cannot lock onto a particular set of deals.
+
+The parameter vector is fitted jointly and has 34 coordinates: the twenty ask
+weights of Table~\ref{tab:features}, the declaration threshold and the locked
+threshold, the ask floor, the patience pool size, the opponent-card floor, the
+value and linear mixing weights of \eqref{eq:askutil}, the minimum team
+probability, the stopping margin $\varepsilon$, the two policy-prior coefficients
+$\theta, \phi$ of \eqref{eq:prior}, and the three two-ply parameters of
+\S\ref{sec:twoply}. Bounds are imposed per coordinate so that probabilities stay
+probabilities.
+
+\subsection{Schedule}
+
+Round one fitted the twenty ask weights alone with the fast posterior, on a
+four-opponent panel. Round two started from round one's mean and fitted all 31
+coordinates on the six-opponent panel. The value function was fitted separately
+by ridge regression on self-play decision points, as described in
+\S\ref{sec:value}, and then held fixed while the policy weights were fitted
+around it. Fitting used base seeds $20260821$, $770077$ and $313131$. The shipping
+configuration was then chosen on a further validation bank ($1357911$) that the
+search itself never saw, because the per-generation best reported by the
+optimiser is a maximum over a population evaluated on shared seeds and is
+therefore upward biased; generation \numSelectedGen\ won that selection. Every
+seed bank used in \S\ref{sec:results} onwards is disjoint from all of these,
+and the configuration was frozen before any of them was run.
+
+Table~\ref{tab:params} lists the frozen values.
+
+\begin{table}[ht]
+\centering
+\caption{The frozen FishBot v0.4 configuration. Note that the locked-half-suit
+threshold and the patience switch are inert while the stopping rule is active
+(\S\ref{sec:ablations}), so no meaning should be read into their fitted values.}
+\label{tab:params}
+\footnotesize
+\input{tables/params}
+\end{table}

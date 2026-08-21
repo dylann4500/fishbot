@@ -1,0 +1,64 @@
+### selecting on the validation bank
+gen   9  softmin 0.5262  min 0.6620  v03=0.662  lockout=0.721  detective=0.679  v02=0.757
+gen  10  softmin 0.5327  min 0.6590  v03=0.659  lockout=0.732  detective=0.690  v02=0.771
+gen  11  softmin 0.5319  min 0.6680  v03=0.668  lockout=0.722  detective=0.684  v02=0.770
+gen  12  softmin 0.5409  min 0.6810  v03=0.681  lockout=0.735  detective=0.683  v02=0.785
+gen  13  softmin 0.5379  min 0.6820  v03=0.682  lockout=0.731  detective=0.682  v02=0.771
+gen  14  softmin 0.5417  min 0.6800  v03=0.680  lockout=0.731  detective=0.691  v02=0.782
+
+selected generation 14 with validation soft-min 0.5417
+allparams=11.21090|3.28080|3.18950|1.67850|2.08720|3.90660|0.90100|1.18840|-2.99660|-1.03940|-2.24920|0.67500|1.19420|1.02040|-2.48710|-0.34130|1.90970|-0.07090|1.73100|-0.90660|0.78680|0.88320|0.26990|6.11690|3.20740|6.01180|0.84850|0.79950|0.00550|0.27120|0.12950|5.80280|3.45060|3.15110
+### freezing into V04Config
+frozen into /Users/dylan/Documents/GitHub/fish optimization/engine/src/v04.hpp
+### sanity check
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+### experiment battery
+
+=== E1 verify ===
+audit violations: 0 / 26129052 checks
+set-conservation failures: 0
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+
+=== E2 belief validation ===
+checks                    276332
+block build failures      0
+block vs card DP (no C5)  max abs diff 3.414e-15
+block vs exact sampling   max abs diff 4.775e-02
+sinkhorn vs block  max 0.5119  mean 0.01687
+SELFTEST PASS
+0.0000
+
+=== E3 head-to-head (held-out bank, 6-rotation duplicate) ===
+  vs v03
+  vs lockout
+  vs detective
+  vs v02
+  vs diversifier
+  vs hunter
+  vs bluffer
+  vs random
+
+=== E4 population matrix ===
+
+=== E5 ablations ===
+
+=== E6 calibration ===
+ask  n=57344 brier=0.12827 logloss=0.37409 ece=0.02535 meanPred=0.5286 meanObs=0.5428
+   [0.0,0.1) n=  7116 pred=0.0283 obs=0.0176
+   [0.1,0.2) n=  6254 pred=0.1591 obs=0.2277
+
+=== E7 rule variants ===
+
+=== E8 v0.3 port validation under legacy rules ===
+
+=== E9 throughput ===
+v0.4 self-play      132.694 games/s over 400 games
+v0.4 exact posterior 11.3369 games/s over 120 games
+v0.3 self-play      6791.62 games/s over 800 games
+done
+### exploitability probe
+=== fitting an exploiter against v04 ===

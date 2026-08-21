@@ -1,0 +1,6 @@
+# compiled engine binaries
+fish
+fish[0-9]
+fish_*
+*.o
+*.dSYM/

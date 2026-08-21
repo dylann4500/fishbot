@@ -1,0 +1,118 @@
+\section{What a human should take from this}
+\label{sec:playbook}
+
+FishBot v0.4 maintains a $54 \times 6$ posterior and evaluates a hundred-odd
+candidate asks per turn. A person cannot. But the mechanisms the ablations
+identify as decisive are not the expensive ones, and three of them are cheap
+enough to run at a table.
+
+\subsection{The deduction that pays for itself}
+
+\textbf{An ask is a confession.} When somebody asks for the queen of hearts, they
+have told the table two things: they do not hold the queen, and they \emph{do}
+hold at least one other high heart. The second is the one people forget, and
+together with card counting it is where essentially all of the agent's strength
+lives: strip either from FishBot and it drops from winning roughly three games in
+four to losing three in four. It applies to teammates as
+much as to opponents, and it does not expire: the cards it refers to cannot move
+except by a public ask.
+
+\textbf{A miss is a second confession.} It rules the named card out of the target
+permanently, for the same reason.
+
+Keep these as exclusions, not impressions. ``Somebody wanted low clubs'' is worth
+little; ``the 7 of clubs is not with Iris, not with Theo, and Sage holds one of
+the other five'' is worth a great deal, because it combines with counting.
+
+\subsection{Counting closes the deductions}
+
+Card counts are public, and they are the constraint that turns partial exclusions
+into certainties. If a player has four cards and you have located four of them,
+they hold nothing else --- every unresolved card is excluded from them at once.
+Run this after every transfer, on the two players whose counts changed. Most of
+FishBot's ``impossible'' deductions come from nothing more sophisticated than
+this.
+
+\subsection{The claim you should not make}
+
+\textbf{If your team holds all six cards of a half-suit, nobody can take it.} An
+opponent needs a card of a half-suit to ask in it, and they have none. The set is
+frozen until it is claimed (Theorem~\ref{thm:locked}), and if an opponent claims
+it they must be wrong, which hands it to you. It follows that claiming early
+buys you no safety --- and costs you a little, because the six cards leaving play
+sharpens everyone's count of what remains. So:
+
+Two qualifications, because the simulator does not simply endorse patience. The
+fitted agent is in fact the \emph{less} patient of the two policies we measured
+(\S\ref{sec:theory}), and the ``cash locked half-suits immediately'' switch is
+inert in the shipped configuration, so no experiment here isolates the value of
+waiting. What the rules do guarantee is the safety, not the profit.
+
+\begin{itemize}
+  \item If you are sure your side has all six but unsure which teammate has what,
+        you are under no time pressure --- nobody can take it. Use that freedom
+        to resolve the split rather than guessing, but do not sit on it out of
+        principle: the cards buy you nothing at the table, and the point only
+        scores once you claim.
+  \item If a half-suit is \emph{not} yet fully yours, the calculus reverses:
+        waiting risks an opponent asking one of your cards away, so a confident
+        claim is right.
+  \item Do not sit on a hand that is entirely locked cards. Those cards license
+        only asks that are certain to fail, so your turn is worth nothing.
+        Cash the half-suit, empty your hand, and hand the turn to a teammate who
+        can use it.
+\end{itemize}
+
+\subsection{Choosing the ask}
+
+Rank candidates roughly in this order, which is what the fitted weights do:
+
+\begin{enumerate}
+  \item \textbf{Certainty first.} A card you have located is free: you take it and
+        you keep the turn. Take every one of these before anything speculative.
+  \item \textbf{Then the run, not the card.} Because a hit keeps the turn, the
+        value of an ask is the length of the sequence it starts. Prefer a likely
+        card that leaves another likely card behind it over an equally likely
+        card that leaves nothing.
+  \item \textbf{Then the lock.} An ask that would complete your team's ownership
+        of a half-suit is worth more than its hit probability suggests, because
+        it converts a contested set into a frozen one.
+  \item \textbf{Then, who receives the miss.} You are choosing your successor as
+        much as your card. Avoid handing the turn to the player who is visibly
+        loaded in a half-suit where your side is exposed.
+  \item \textbf{And what you are giving away.} Your first ask in a half-suit
+        announces that you hold one of its cards. If you are choosing between two
+        near-equal asks, prefer the one in a half-suit you have already revealed.
+\end{enumerate}
+
+\subsection{Declaring, concretely}
+
+Before you claim, say the six cards and a name for each, out loud in your head.
+Separate ``our side has it'' from ``I know which of us has it'' --- they are
+different claims and only the second is enough. If either is shaky and the
+half-suit is already locked, wait; if it is not locked, weigh the claim against
+the chance an opponent takes a card first.
+
+\subsection{The endgame nobody plans for}
+
+When one team runs out of cards, the other must claim every remaining half-suit
+with no more asking. Two consequences follow that most players get wrong.
+
+First, \textbf{running out of cards is not a defeat.} A cardless player cannot be
+asked, so nothing can be taken from them, and a cardless \emph{team} forces the
+opponents to declare everything --- which they will sometimes get wrong, handing
+you the set. Both of these are consequences of the rules rather than findings of
+this study: we did not isolate the value of emptying a hand deliberately, and we
+flag it as an option worth knowing rather than a measured recommendation.
+
+Second, when it is your team that must claim everything, \textbf{claim your
+surest half-suit first.} A correct claim announces the exact split of six cards,
+which changes everyone's counts and can settle the half-suit you were unsure of.
+Order matters, and the safe claim first is the right order.
+
+\subsection{What the simulator does not support}
+
+The v0.3 study found no reliable benefit from deliberate misdirection, and
+nothing in this study changes that. FishBot v0.4 has no bluffing rule and beats
+the misdirection archetype essentially always. Theatre that does not change what
+you know or who holds the turn is not worth paying for.

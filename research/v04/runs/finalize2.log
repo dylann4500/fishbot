@@ -1,0 +1,80 @@
+### selecting on the validation bank
+gen   6  softmin 0.5482  min 0.6740  v03=0.674  lockout=0.740  detective=0.715  v02=0.781
+gen   7  softmin 0.5521  min 0.6880  v03=0.688  lockout=0.745  detective=0.700  v02=0.795
+gen   8  softmin 0.5527  min 0.6880  v03=0.688  lockout=0.735  detective=0.714  v02=0.787
+gen   9  softmin 0.5503  min 0.6770  v03=0.677  lockout=0.756  detective=0.699  v02=0.796
+gen  10  softmin 0.5582  min 0.6900  v03=0.690  lockout=0.758  detective=0.710  v02=0.793
+gen  11  softmin 0.5550  min 0.6910  v03=0.691  lockout=0.750  detective=0.707  v02=0.787
+
+selected generation 10 with validation soft-min 0.5582
+allparams=11.31630|3.14410|3.42760|1.71100|2.07380|4.23480|1.24970|1.22720|-2.88660|-1.01670|-2.16790|1.14020|1.29650|1.04570|-2.65820|-0.59760|1.94310|0.05190|1.54350|-0.84870|0.77900|0.88760|0.29130|5.93010|2.86880|5.98980|0.65590|0.75820|0.01150|0.21750|0.07620|5.79480|3.27790|2.85560
+### freezing into V04Config
+frozen into /Users/dylan/Documents/GitHub/fish optimization/engine/src/v04.hpp
+### sanity check
+action-limit games: 0
+determinism: PASS
+VERIFY PASS
+### experiment battery
+
+=== E1 verify ===
+audit violations: 0 / 26039772 checks
+set-conservation failures: 0
+action-limit games: 6
+determinism: PASS
+VERIFY PASS
+
+=== E2 belief validation ===
+checks                    266054
+block build failures      0
+block vs card DP (no C5)  max abs diff 3.414e-15
+block vs exact sampling   max abs diff 4.453e-02
+sinkhorn vs block  max 0.4987  mean 0.02072
+SELFTEST PASS
+0.0000
+
+=== E3 head-to-head (held-out bank, 6-rotation duplicate) ===
+  vs v03
+  vs lockout
+  vs detective
+  vs v02
+  vs diversifier
+  vs hunter
+  vs bluffer
+  vs random
+
+=== E4 population matrix ===
+
+=== E5 ablations ===
+
+=== E6 calibration ===
+ask  n=58665 brier=0.12438 logloss=0.36365 ece=0.02585 meanPred=0.5203 meanObs=0.5379
+   [0.0,0.1) n=  8071 pred=0.0270 obs=0.0160
+   [0.1,0.2) n=  6663 pred=0.1573 obs=0.2137
+
+=== E7 rule variants ===
+
+=== E8 v0.3 port validation under legacy rules ===
+
+=== E9 throughput ===
+v0.4 self-play      123.81 games/s over 400 games
+v0.4 exact posterior 6.09626 games/s over 120 games
+v0.3 self-play      6366.55 games/s over 800 games
+done
+### exploitability probe
+=== fitting an exploiter against v04 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v04","a":"v04:allparams=10.99806|3.16257|3.12985|1.68640|1.86372|3.98282|1.09269|1.44920|-3.15569|-1.48794|-1.91919|0.55222|1.27968|0.50413|-2.02810|-0.16471|1.85182|0.15402|1.50243|-1.05017|0.73462|0.77935|0.25026|6.71559|2.71998|5.78044|0.73853|0.35047|-0.01441|0.40754|0.04028|6.24905|3.76181|3.29871","b":"v04:mgate=0.008","deals":600,"games":3600,"winRateA":0.496944,"ci":[0.480624,0.513272],"meanSetsA":4.49889,"meanSetsB":4.50111,"askAccA":0.289906,"askAccB":0.291667,"declAccA":0.986509,"declAccB":0.987431,"declPerGameA":3.89139,"declPerGameB":4,"forcedAccA":0.0903775,"forcedAccB":0.0402844,"forcedPerGameA":0.5225,"outOfTurnA":2.64139,"outOfTurnB":3.26611,"lockHoldA":12.6767,"lockHoldB":11.926,"eventsPerGame":173.29,"limitHitRate":0.185556,"auditViolations":0,"auditChecks":0,"seconds":28.4026}
+=== fitting an exploiter against v03 ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"v03","a":"v04:allparams=11.11510|2.76555|4.68328|1.91918|2.03077|4.66975|0.47014|0.98891|-2.59884|-2.05732|-2.73503|0.67547|1.31743|0.33465|-3.69723|0.04933|2.43537|0.01063|2.11404|-1.14496|0.55000|0.76244|0.60000|6.81068|2.70542|5.56636|0.00000|0.95000|0.00975|0.00000|0.30098|6.07876|3.73286|3.67087","b":"v03","deals":600,"games":3600,"winRateA":0.725556,"ci":[0.710744,0.739886],"meanSetsA":5.35972,"meanSetsB":3.64028,"askAccA":0.473961,"askAccB":0.49412,"declAccA":0.99165,"declAccB":0.712967,"declPerGameA":3.95889,"declPerGameB":4.99556,"forcedAccA":0,"forcedAccB":0,"forcedPerGameA":0.0455556,"outOfTurnA":2.89972,"outOfTurnB":3.56583,"lockHoldA":9.29102,"lockHoldB":17.3963,"eventsPerGame":118.862,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":8.03847}
+=== fitting an exploiter against detective ===
+  exploiter fitted; re-measuring on a fresh bank
+{"probe":"detective","a":"v04:allparams=11.96599|2.61197|3.09309|2.08094|1.65703|4.06999|0.70165|1.29078|-4.09186|-1.26824|-1.83760|0.18675|0.87947|0.97178|-1.58369|-1.66150|1.92292|1.31608|1.00446|-0.99541|0.55000|0.99999|0.60000|7.04957|2.67655|6.47731|0.70324|0.74126|-0.05000|0.88166|0.25489|5.83196|3.16942|3.95941","b":"detective","deals":600,"games":3600,"winRateA":0.6875,"ci":[0.672166,0.702435],"meanSetsA":5.17417,"meanSetsB":3.82583,"askAccA":0.534526,"askAccB":0.511847,"declAccA":0.984451,"declAccB":0.94834,"declPerGameA":4.85917,"declPerGameB":3.29611,"forcedAccA":0.015625,"forcedAccB":0.73396,"forcedPerGameA":0.0177778,"outOfTurnA":3.22333,"outOfTurnB":1.80333,"lockHoldA":8.06712,"lockHoldB":15.3468,"eventsPerGame":109.554,"limitHitRate":0.000277778,"auditViolations":0,"auditChecks":0,"seconds":8.3189}
+### tables
+tables, numbers and docs/V04_RESULTS.md written
+### paper
+warning: warnings were issued by the TeX engine; use --print and/or --keep-logs for details.
+note: Running xdvipdfmx ...
+note: Writing `../output/pdf/fishbot_v04_standalone.pdf` (223.376953125 KiB)
+note: Skipped writing 2 intermediate files (use --keep-intermediates to keep them)
+### finalize done

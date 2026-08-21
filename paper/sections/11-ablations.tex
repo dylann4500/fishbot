@@ -1,0 +1,107 @@
+\section{Which mechanisms matter}
+\label{sec:ablations}
+
+Every ablation plays the same deals against the same panel as the reference
+configuration, so each row is a matched comparison and the interval is a paired
+bootstrap over deals.
+
+\begin{table}[ht]
+\centering
+\caption{Paired ablations. Positive ``full $-$ ablated'' means the complete
+FishBot v0.4 won more often than the modified policy on identical deals.}
+\label{tab:ablations}
+\small
+\input{tables/ablations}
+\end{table}
+
+Table~\ref{tab:ablations} separates cleanly into three groups, and the honest summary is that
+one group dominates and most of the rest is not individually established.
+
+\paragraph{The belief is almost the whole agent.} Removing the ask-legality
+certificates (C5) --- keeping exact capacities, exact exclusions, and everything
+else about the policy --- costs more than forty win-rate points. Removing
+capacity conditioning (C4) as well costs more again. Nothing else in the table is
+within an order of magnitude of these. This is the same conclusion the v0.3 study
+reached about ask history, arrived at from the opposite direction: v0.3 fitted an
+exponential weight on public ask counts and found it decisive; v0.4 replaces the
+weight with the logical certificate that produces it, and finds the certificate
+decisive. Fitting v0.3's soft weight \emph{on top of} the certificate is worth
+nothing measurable, which is the evidence that the certificate subsumes it.
+
+\paragraph{Beyond the belief itself, two terms are separated from zero.} The
+fitted policy prior \eqref{eq:prior} --- the soft weight saying that a player who
+has taken many turns without asking in a half-suit probably has none of it --- is
+worth a few points, which is a change from the earlier version of this study: an
+audit found the prior was reaching the declaration estimator but not the ask
+posterior, and once connected it became measurable. And among the twenty ask
+features, only lock completion, $\prod_{d \in S \setminus \{c\}} \Pr[d \text{ is
+ours}]$ --- the probability that this one ask converts a contested half-suit into
+a frozen one --- has an interval excluding zero.
+
+Everything else is inside noise, including the raw hit-probability weight. That
+last result is worth stating plainly rather than hiding: zeroing $w_0$ barely
+changes the policy, because the squared-hit term, the certainty indicator, the
+runway term and the value lookahead all carry the same signal. Correlated
+features substitute for one another, and a paired design controls the deals, not
+the collinearity.
+
+Three entries have negative point estimates --- removing the reply-threat weight,
+the runway weight, or the value lookahead each nominally \emph{improves} the
+policy --- and no interval excludes zero. We keep all three, because dropping a
+component on the strength of a non-significant ablation is selection on noise,
+and because the shipping configuration was chosen on a validation bank rather
+than on this one. But we report the sign.
+
+\paragraph{The declaration \emph{probability} matters; the stopping rule on top
+of it is not separately established.} FishBot v0.4 declares at
+\numVsVthreeDeclAcc\% accuracy against v0.3's \numVthreeDeclObs\% on the same
+games (\S\ref{sec:results}), and that gap is worth a large number of half-suits
+per game. But the ablations locate the credit in the estimate of the allocation
+probability --- which is part of the belief, and falls under the first paragraph
+--- not in the stopping rule that consumes it. Replacing \eqref{eq:stop} with a
+fixed confidence threshold, and moving that threshold from $0.80$ to $0.99$, both
+change the win rate by amounts indistinguishable from zero. One entry is exactly
+zero by construction and is reported for completeness: the ``cash locked
+half-suits immediately'' switch is inert whenever the stopping rule is active,
+because the stopping rule decides first. The locked threshold of
+Table~\ref{tab:params} is inert for the same reason, which is worth knowing
+before reading a value into it.
+
+So Theorem~\ref{thm:locked} is a correct and, as far as we can tell, previously
+unstated fact about the game, and the policy that follows from it declares
+extremely accurately --- but this study does not establish that the
+optimal-stopping formulation beats a well-calibrated threshold. What it does
+establish is that both need a good joint probability underneath them.
+
+\paragraph{Exactness makes the numbers right and the play slightly worse.} This
+is the result we least expected. Substituting the exact block posterior for the
+fast approximation it validates costs measurable win rate, and the effect
+survives the obvious controls. About two thirds of the gap is the policy prior,
+which the block engine does not carry --- hence the matched row, the fast
+posterior with that prior switched off --- but a residual of two to three points
+remains after that correction, in the same direction. Repeating the substitution
+under a deliberately \emph{unfitted} policy (pure posterior-greedy asking, no
+value lookahead, no two-ply refinement, no prior, so neither belief has been
+fitted to) reproduces the direction on a smaller margin
+(\path{research/v04/results/E12-exactness.txt}). So this is not simply the ask
+weights having absorbed Sinkhorn's biases.
+
+Two mechanisms are consistent with what we see and we cannot separate them here.
+The declaration thresholds were fitted against the approximate estimator, and the
+exact one has a different distribution, so the block variant runs a correctly
+computed probability into a threshold calibrated for something else. And an ask
+is chosen by a ranking over roughly forty candidates, which tolerates a great
+deal of noise in the scores that produce it --- the positions where Sinkhorn is
+worst are sharp, nearly resolved ones, which are exactly the positions where the
+ranking is not close.
+
+This is a cleaner instance of a phenomenon Rebstock et al.\ report in Skat, where
+a \emph{cheating} inference module played worse than an ordinary one: better
+beliefs do not monotonically produce better play, because the policy above them
+is fitted rather than optimal. Fish is an unusually good place to observe it,
+because belief quality here is exactly and independently controllable. The
+experiment that would settle it --- refit the entire policy against the exact
+posterior and compare the two fitted agents --- is the obvious next one, and we
+have not run it. We ship the fast posterior because it is both stronger here and
+roughly twenty times cheaper in whole-game throughput, while noting that the
+exact engine is what licenses every probability statement in this paper.

@@ -1,0 +1,174 @@
+\section{FishBot v0.4}
+\label{sec:policy}
+
+\subsection{Overview}
+
+FishBot v0.4 is a deterministic, fully inspectable policy with four parts: an
+exact constraint tracker, a posterior over deals (\S\ref{sec:belief}), a scored
+choice over legal asks, and a decision-theoretic declaration module
+(\S\ref{sec:theory}). It sees only its own hand and the public record. There is
+no neural network, no tree search, and no private channel between teammates;
+everything a teammate learns, an opponent learns at the same instant.
+
+\subsection{Choosing an ask}
+
+Every legal pair $a = (c, t)$ of named card and opposing target is scored as
+\begin{equation}
+  U(a) \;=\; \lambda_{\mathrm{lin}} \sum_{k=0}^{19} w_k\, \varphi_k(a)
+       \;+\; \lambda_{\mathrm{val}}\,\Bigl[\, p\, V(s^{+}_a) + (1-p)\, V(s^{-}_a) \Bigr],
+  \label{eq:askutil}
+\end{equation}
+where $p = \mu_{c,t}$ is the exact posterior that $t$ holds $c$, $\varphi$ is the
+feature vector of Table~\ref{tab:features}, $V$ is the value function of
+\S\ref{sec:value}, and $s^{\pm}_a$ are the positions after a hit and after a
+miss. The bracketed term is a one-ply expectimax: a hit moves the card into our
+hand and retains the turn, while a miss excludes the target --- which
+renormalises that card's ownership over the remaining candidates, so a miss is
+informative as well as costly --- and hands the turn over. Ties break
+deterministically by card then target index, and the chosen ask's $p$ is retained
+as a forecast for the calibration study.
+
+\begin{table}[ht]
+\centering
+\caption{Ask features. All are normalised to roughly $[0,1]$ so that fitted
+weights are comparable. $S$ is the named card's half-suit.}
+\label{tab:features}
+\small
+\begin{tabular}{rlp{0.62\linewidth}}
+\toprule
+$k$ & Name & Definition \\
+\midrule
+0  & hit probability     & $p = \mu_{c,t}$, exact posterior that the target holds the card \\
+1  & squared hit         & $p^2$; lets the fit curve the trade-off between certainty and value \\
+2  & certain hit         & $\mathbf{1}[p > 0.9995]$ \\
+3  & own progress        & cards of $S$ in hand, over six \\
+4  & team control        & expected fraction of $S$ held by our team \\
+5  & lock completion     & $\prod_{d \in S \setminus \{c\}} \Pr[d \text{ is ours}]$: the chance this ask alone locks the half-suit \\
+6  & continuation        & best posterior on any other missing card of $S$ \\
+7  & completion bonus    & $1$ at four or more cards of $S$ in hand, $0.35$ at three \\
+8  & reply threat        & $(1-p)\cdot$ the best ask the target could make against us if handed the turn \\
+9  & information leak    & $1$ if our team has never publicly revealed an interest in $S$ \\
+10 & target hand size    & target's public card count over nine \\
+11 & empties the target  & $p$ if the target holds exactly one card, else $0$ \\
+12 & repeats our suit    & $1$ if this repeats our own previous half-suit \\
+13 & known team cards    & publicly located cards of $S$ on our team, over six \\
+14 & location entropy    & $H_2(p)$ \\
+15 & team owns $S$       & $\prod_{d \in S}\Pr[d \text{ is ours}]$ before the ask; an independence proxy, not the exact \eqref{eq:q3} \\
+16 & exposure on a miss  & $(1-p)\cdot$ our cards visible in half-suits the target has asked in \\
+17 & trailing pressure   & $p$ when behind by two or more half-suits \\
+18 & runway              & expected length of the run this ask begins, from the best remaining per-card posteriors \\
+19 & leak magnitude      & feature 9 scaled by how much of $S$ we hold \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Feature 18 deserves a note. A hit retains the turn, so the value of an ask is not
+one card but the expected length of the run it starts. Because a legal ask
+already requires a card of that half-suit in hand, a hit cannot open a half-suit
+that was previously unavailable; the continuation is therefore well approximated
+by the best remaining per-card posteriors, nested as
+$p\,(1 + q_1(1 + q_2(1 + q_3)))$ with $q_1 \ge q_2 \ge q_3$ the next-best
+probabilities.
+
+\subsection{An exact two-ply refinement}
+\label{sec:twoply}
+
+Equation~\eqref{eq:askutil} evaluates both branches of an ask against the
+\emph{current} posterior, and features 6 and 18 approximate what happens after
+it. For the leading candidates we can afford to stop approximating. We rank all
+legal asks by \eqref{eq:askutil}, keep the top $K$, and for each of those
+re-derive the posterior on both branches --- a hit resolves the card to our hand
+and adjusts two card counts; a miss adds an exclusion --- and then measure
+\begin{align}
+  \mathrm{follow}(a) &= \max_{a'} \mu'_{a'}
+    \quad \text{over our legal asks in the post-hit position;} \\
+  \mathrm{threat}(a) &= \max_{H} \Bigl( \Pr\nolimits'\bigl[t \text{ holds a card of } H\bigr]\cdot
+        \max_{c \in H} \Pr\nolimits'\bigl[c \text{ is ours}\bigr] \Bigr)
+    \quad \text{in the post-miss position,}
+\end{align}
+scoring the candidate as
+$U(a) + \lambda_{\mathrm{chain}}\, p\,\mathrm{follow}(a)
+      - \lambda_{\mathrm{threat}}\,(1-p)\,\mathrm{threat}(a)$.
+Both $\lambda$ and $K$ are fitted. Note what this is \emph{not}: it is not a
+determinized search. Sampling a deal and searching it would be worse than
+useless here, because a clairvoyant player in Fish never fails an ask and never
+mis-declares, so the perfect-information game is degenerate and averaging over
+determinizations collapses toward ``ask for the card most likely to be there''
+(\S\ref{sec:related}). The refinement above stays inside the belief.
+
+\subsection{The value function}
+\label{sec:value}
+
+$V$ maps a public belief state to an estimate of the final half-suit
+differential, scaled to $[-1,1]$ and signed from the evaluating team's point of
+view. It is linear in sixteen features: a bias; the current score differential; the
+summed expected control $\sum_H (2e_H - 1)$ and a sharpened version of it, where
+$e_H$ is the expected fraction of half-suit $H$ our team holds; the signed count
+of half-suits locked for us minus those locked against us; side to move; the card
+differential between the teams; the size of the unresolved pool; the number of
+live half-suits; the interaction of side-to-move with control; our own hand size;
+our smallest friendly hand; the counts of contested half-suits leaning each way;
+total contested mass $\sum_H e_H(1-e_H)$; and the interaction of side-to-move
+with the unresolved pool.
+
+$V$ is fitted by ridge regression on self-play, labelling every decision point
+with the eventual differential. Features are collected from \emph{all six seats}
+at each decision, not only the mover: the side-to-move feature is otherwise
+constant at $+1$ and its coefficient --- which is precisely what the miss branch
+of \eqref{eq:askutil} and the stopping rule \eqref{eq:stop} depend on --- would
+be unidentified.
+
+\subsection{Declaring}
+
+At every public event, each agent is offered the chance to declare. Running the
+exact posterior six times per event is far too costly, so a capacity-only gate
+runs first: for each live half-suit we form $\prod_{c \in S} \Pr[c \text{ is
+ours}]$ from capacities and supports alone, with no dynamic program, and skip
+half-suits that cannot plausibly be ours. Half-suits that survive the gate are then scored. Which estimator is used
+depends on the belief mode, and it matters that the shipping configuration uses
+the fast one: under \texttt{belief=block} the exact queries \eqref{eq:q2} and
+\eqref{eq:q3} are read straight off the block tables, but the shipped
+configuration computes $\Pr[\text{allocation}]$ by sequential conditioning ---
+fix one card, decrement that owner's capacity, refit, multiply --- which is exact
+in structure and approximate only in the marginal solver, and it names the
+allocation by taking the most likely teammate for each card under the
+unconditioned marginals. The exact engine's role is to establish how good those
+approximations are (\S\ref{sec:results-verify}) and to serve as the ablation
+they are measured against, not to run in the shipped inner loop.
+
+Four fitted quantities decide when the stopping rule is overridden rather than
+consulted. The policy declares itself \emph{pressed} when the unresolved pool
+has fallen below \texttt{patiencePool} cards, or the opposing team holds fewer
+than \texttt{oppCardFloor} cards between them, or its own best available ask has
+posterior below \texttt{askFloor}, or the public event count has passed the
+forcing horizon. When pressed, a plain probability threshold replaces
+\eqref{eq:stop}. The third of these is a softened form of the dead-ask trigger
+that \S\ref{sec:termination} reports as harmful in its hard form: as a
+\emph{fitted} floor combined with a threshold rather than an unconditional
+force, the optimiser kept it, and it sits at a value where it fires rarely.
+
+Above all of this sits the escalation of \S\ref{sec:termination}, which
+exists because Theorem~\ref{thm:locked} makes it possible for two patient
+policies to deadlock permanently. Below a forcing horizon on the public event
+count, \eqref{eq:stop} has the last word; above it, the policy cashes any
+half-suit it is better than even money on; above a second horizon it cashes its
+best candidate regardless, and the gates are relaxed to match so that a half-suit
+the policy is unsure of can still be named.
+
+\subsection{Turn gifts and the forced endgame}
+
+When a declaration leaves a player cardless and the turn reaches them, they hand
+it to the teammate with the strongest publicly-estimable ask: for each live
+teammate $u$ we score $\max_H \Pr[u \text{ holds a card of } H] \cdot \max_{c \in
+H} \Pr[c \text{ is with an opponent}]$, which uses only public information and
+our own hand.
+
+When a whole team is cardless, the other team must declare everything with no
+further asking, and may exchange only willingness. We implement exactly that: the
+team sweeps a descending ladder of confidence thresholds
+$(0.995, 0.98, 0.95, 0.90, 0.80, 0.65, 0.50)$ and, at each level, any willing
+player declares any half-suit they are willing to declare. This recovers most of
+``the best-informed player goes first'' while exchanging nothing but a bit per
+half-suit, and it matters because each correct declaration announces an exact
+allocation, which sharpens the capacity constraints for the declarations that
+follow.

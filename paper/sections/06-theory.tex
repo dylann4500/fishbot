@@ -1,0 +1,162 @@
+\section{When to declare: a structural result and an optimal-stopping rule}
+\label{sec:theory}
+
+\subsection{A half-suit held by one team cannot be taken back}
+
+Every prior Fish agent we are aware of, including FishBot v0.3, declares as soon
+as its confidence clears a threshold. A threshold is a defensible rule --- our
+own ablations cannot separate it from the alternative --- but it is answering the
+wrong question, because under the real rules the risk it is guarding against does
+not always exist. The reason is a one-line consequence of ask legality.
+
+\begin{theorem}[Locked half-suits are safe]
+\label{thm:locked}
+Suppose every card of half-suit $S$ is held by members of team $T$. Then no
+member of the opposing team can ever legally ask for a card of $S$, so no card of
+$S$ can change hands, and $S$ remains wholly held by $T$ for as long as it stays
+undeclared. Moreover any declaration of $S$ by the opposing team is necessarily
+incorrect and awards $S$ to $T$.
+\end{theorem}
+
+\begin{proof}
+A legal ask for a card of $S$ requires the asker to hold another card of $S$.
+Since all six cards of $S$ are held by members of $T$, every opposing player is
+void in $S$ and no such ask is available to them --- and a player holding no
+cards at all has no legal ask of any kind. Cards move only through successful
+asks, so no card of $S$ can leave $T$; the only asks in $S$ available to anyone
+are asks by members of $T$ directed at opponents, which are guaranteed misses and
+transfer nothing. Ownership of $S$ is therefore frozen. For the second part, a
+declaration must assign every card of $S$ to a teammate of the declarer; an
+opposing declarer would be assigning cards held by $T$ to members of the other
+team, which is false, so the declaration fails and $S$ is awarded to $T$.
+\end{proof}
+
+The theorem deliberately does not assert that the probability of a correct claim
+rises monotonically. It does not: with $\Pr_t[A] = N_t(A)/Z_t$ and both counts
+shrinking as constraints accumulate, a deduction elsewhere in the deal can
+eliminate more completions of the true allocation than of a rival and drive the
+ratio down. What \emph{is} monotone is the support --- the set of allocations of
+$S$ extendable to a deal consistent with the public history is non-increasing ---
+and that is all the argument below needs.
+
+\begin{corollary}[Waiting is risk-free]
+\label{cor:wait}
+For a locked half-suit the ``steal'' term in the declaration trade-off is
+identically zero: the only ways $S$ can leave the undeclared state are a
+declaration by $T$, or a declaration by the opposing team which by
+Theorem~\ref{thm:locked} awards $S$ to $T$ anyway. Declaring immediately can
+therefore never protect the half-suit; the only reasons to declare are the point
+itself and whatever positional effects the removal of six cards has.
+\end{corollary}
+
+Theorem~\ref{thm:locked} is the reason declaration timing is a genuine decision
+rather than a threshold. Two effects push in opposite directions.
+
+\paragraph{Waiting hides information.} Declaring a half-suit resolves six cards
+that were, from an opponent's point of view, part of the unresolved pool. By
+\eqref{eq:capacity} that tightens every opponent's capacity constraint on the
+cards that remain. Holding the cards keeps those six slots absorbing probability
+mass the opponents cannot allocate.
+
+It is worth being precise about what a locked half-suit does and does not admit,
+because the tempting statement is wrong. Asks inside it transfer no card --- the
+target is void --- but they are still \emph{legal} for the owning team and they
+still carry the certificate \eqref{eq:disj}, which is information about which
+teammate holds what. Develin notes the same thing from the human side: asks
+inside a half-suit your team already owns are a channel the opponents cannot
+use. So the allocation of a locked half-suit can be sharpened deliberately, at
+the price of a turn; it also sharpens for free as other cards resolve and the
+capacities tighten. FishBot v0.4 does not exploit the deliberate version, and
+\S\ref{sec:limitations} lists it as the clearest unexploited idea we know of.
+
+\paragraph{Waiting wastes turns.} A card of a locked half-suit is nearly dead
+weight: it licenses only asks that are certain to fail. A player whose hand is
+mostly locked cards has a turn worth little, whereas a player who declares and
+empties their hand exits the asking cycle and hands the turn to a teammate who
+can use it. Cards also invite being asked.
+
+\subsection{Declaration as optimal stopping}
+
+We therefore treat declaration as a stopping problem against a value function
+rather than a confidence threshold. Let $V(\cdot)$ be the static evaluation of
+\S\ref{sec:value}, in units of final set differential scaled to $[-1,1]$, and let
+$q_t = \Pr[\text{the MAP allocation of } S \text{ is exactly right}]$ from
+\eqref{eq:q2}. Declaring replaces the half-suit's contribution to the position
+by a scored point, correct with probability $q_t$:
+\begin{equation}
+  \text{declare } S \iff
+  q_t\, V\bigl(s \ominus S,\, \Delta{+}1\bigr) + (1 - q_t)\, V\bigl(s \ominus S,\, \Delta{-}1\bigr)
+  \;>\; V(s) + \varepsilon,
+  \label{eq:stop}
+\end{equation}
+where $s \ominus S$ is the position with $S$ removed --- six fewer cards in the
+team's hands, six fewer unresolved slots, one fewer live half-suit --- and
+$\varepsilon$ is a fitted margin. The immediate expected score change is
+$2q_t - 1$; but because a fitted $V$ already credits expected control of $S$, the
+$2q_t - 1$ term largely cancels and \eqref{eq:stop} is decided by exactly the
+positional terms Corollary~\ref{cor:wait} says are the real considerations. When
+$q_t = 1$ and $S$ is locked, \eqref{eq:stop} reduces to a comparison between the
+information value of the six absorbing slots and the turn efficiency of a
+lighter hand.
+
+The behaviour this produces is measurable, and it does not go the way we first
+guessed. In the held-out head-to-head, the fitted v0.4 sits on a half-suit that
+has become provably locked for \numLockHoldFour\ public events before cashing
+it, while FishBot v0.3 sits on one for \numLockHoldThree\ --- v0.4 is the
+\emph{less} patient of the two. (Both figures are purely observational: the
+moment a half-suit becomes locked is computed from ground truth after the fact
+and is never available to either policy. Both are also conditioned on the
+declaration being correct, and the two policies declare correctly at very
+different rates, so the two averages are taken over differently selected
+subsets --- the direction of the difference is safe, its exact size is not.)
+
+The explanation is that the two policies wait for different reasons. FishBot
+v0.3 waits because it cannot resolve the allocation: its confidence is a
+geometric mean of per-card marginals and it needs many more public events before
+that clears its threshold. FishBot v0.4 knows the exact allocation probability
+\eqref{eq:q2} much sooner, so once the stopping rule is satisfied it cashes.
+Theorem~\ref{thm:locked} says waiting is \emph{risk-free}; it does not say
+waiting is profitable, and the fitted policy's answer is that the information the
+six absorbing slots hide is not worth the turn efficiency they cost. That is an
+empirical answer to an open question, not a theorem, and it is specific to this
+opponent population.
+
+\subsection{Termination is a property of the policy, not of the rules}
+\label{sec:termination}
+
+Corollary~\ref{cor:wait} has a consequence that only shows up when both sides
+act on it. Nothing in the rules of Fish compels anyone to declare. Consider a
+position in which every live half-suit is wholly owned by one team or the other,
+but at least one team cannot resolve which of its members holds which card. By
+Theorem~\ref{thm:locked} no card can move: every opponent is void in every live
+half-suit, so every legal ask is a guaranteed miss. The public state is
+therefore frozen, no further information can ever arrive, and the allocation that
+was uncertain stays uncertain. Two policies that both correctly refuse to cash an
+uncertain half-suit will sit in that position forever.
+
+This is not hypothetical. An earlier fitted configuration, played against a copy
+of itself, failed to terminate in 21\% of deals; raising the action cap from 400
+asks to 1000 left the figure at 21\%, which distinguishes a genuine cycle from
+slow convergence. Against differently-shaped opponents the same configuration terminated far more
+reliably, because an opponent that is not a near-copy breaks the symmetry;
+\path{research/v04/results/E13-termination.jsonl} reports the rate against every
+member of the population.
+
+The fix has to come from the policy, and the obvious version of it is wrong. The
+natural test --- ``declare when no productive ask remains'' --- also fires in
+ordinary early positions, where a player who happens to hold only cards their own
+team already owns still has every reason to wait; wiring it in cost 28 win-rate
+points against FishBot v0.3. What works is a graduated escalation on the public
+event count: at ordinary pressure the stopping rule \eqref{eq:stop} decides; past
+a forcing horizon the policy cashes any half-suit it is better than even money
+on; past a second horizon it cashes its best candidate whatever the probability,
+on the grounds that an unclaimed half-suit scores nothing at all. With this rule
+every game in every experiment in this paper terminates through play, and the
+action cap is never reached.
+
+We take the underlying observation to be a fact about the rules rather than about
+our agent: the 54-card Fish rules as usually stated do not guarantee termination
+against deterministic play, and a tournament form of the game would want an
+explicit forced-claims provision. The suggestion is not new --- the rules
+literature records such a proposal \cite{pagat} --- but the reason it is
+necessary is, as far as we can tell, unstated.

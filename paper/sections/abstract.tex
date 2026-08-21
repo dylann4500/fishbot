@@ -1,0 +1,39 @@
+We present FishBot v0.4, an agent for the six-player, 54-card Canadian Fish
+variant with nine six-card half-suits and exact teammate-allocation
+declarations. The work rests on a structural observation: because every card
+movement in Fish is publicly observed, a card whose location has never been
+revealed is still with whoever was dealt it, so the entire hidden state of the
+game is the initial deal. Inference therefore reduces to a degree-constrained
+counting problem whose layer index is determined by its own state, and we solve
+it exactly --- exact ownership marginals, the exact joint probability of a named
+half-suit allocation, and exact deal sampling --- in a few hundred thousand
+arithmetic operations. The one disjunctive constraint, the certificate that an
+ask carries about the asker's own hand, is confined to a single half-suit and is
+handled exactly by enumerating that half-suit rather than by approximation;
+ablations show it is by a wide margin the single most valuable thing the agent
+knows. A one-line consequence of ask legality gives a strategic result that no
+prior Fish agent implements: a half-suit held entirely by one team can never be
+asked in by the other, so it can never be taken back, so waiting to claim it
+carries no risk. Declaration becomes an optimal-stopping problem rather than a
+confidence threshold --- though our ablations locate the credit in the exact
+allocation probability rather than in the stopping rule that consumes it, and we
+say so. The same theorem has a consequence we did not anticipate: with every
+opponent void in every live half-suit, no ask can move a card, and two policies
+that both correctly refuse to cash an uncertain half-suit will cycle rather than
+finish, so the rules as usually stated do not guarantee termination against
+deterministic play. We also correct four rule omissions in the predecessor
+simulator, most importantly that a claim is legal at any moment. On an untouched
+seed bank played in six-rotation duplicate blocks, FishBot v0.4 beats FishBot
+v0.3 \numVsVthree\% of the time (95\% CI \numVsVthreeCI, a cluster bootstrap over
+deals) and wins at least \numWorstCase\% against every policy in the population
+--- the worst case, not the average, because the question the project asks is
+whether one policy can be best across playstyles. Its declaration forecasts are
+calibrated to \numDeclECE\ expected calibration error, against \numVthreeDeclECE\
+for its predecessor, which is what makes the accuracy gap between them a fact
+about estimation rather than about nerve. An adversary fitted specifically to
+beat the frozen agent, inside the same policy class and with the same optimiser,
+fails to establish any advantage over it, while the same procedure beats FishBot
+v0.3 comfortably --- a lower bound on exploitability rather than a bound, but the
+comparison is the point. We are precise about the one place approximation
+remains: the posterior is exact with respect to the rules, not with respect to
+opponents' playstyles.
