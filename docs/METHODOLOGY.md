@@ -23,9 +23,15 @@ Fish is a partially observable, team-based stochastic game. “Optimal” theref
 
 Use paired seeds when comparing two configurations so each policy sees the same sequence of deals. Change one factor at a time. Report a confidence interval (or a bootstrap interval) alongside win rate before treating a small difference as meaningful. Test both seat orientations because first-player and team-label effects can otherwise masquerade as strategy effects. Keep a held-out bank of seeds for final comparisons.
 
+## Current v0.3 methodology
+
+FishBot v0.3 adds public hand-count conditioning, a literature-derived lockout challenger, deterministic candidate search, separate train/validation/test seed banks, and paired mechanism ablations. Direct policy claims pool both team orientations. The 250-game ordered matrix is descriptive; primary claims use 2,000-game held-out matchups with Wilson intervals.
+
+The strongest current evidence supports exact ask-history inference and count reconciliation. Smaller one-ply utility terms interact and are not individually established.
+
 ## Path toward stronger play
 
-The current archetypes are transparent heuristics, which makes them good experimental instruments. The next technical step is self-play policy optimization over a compact information state. Outcome-sampling Monte Carlo CFR is a better fit than a chess search tree because Fish has hidden cards and strategic signaling. A practical sequence is:
+The archetypes and v0.3 are transparent numeric policies, which makes them useful experimental instruments. The next technical step is self-play policy optimization over a compact information state. Outcome-sampling Monte Carlo CFR is a better fit than a chess search tree because Fish has hidden cards and strategic signaling. A practical sequence is:
 
 1. Encode public history and each player’s private hand as an information set.
 2. Train a value/policy model from millions of fast deterministic self-play games.
@@ -35,4 +41,4 @@ The current archetypes are transparent heuristics, which makes them good experim
 
 ## Current limitations
 
-The belief updater uses a tractable weighted posterior rather than exact Bayesian conditioning over every legal deal. It treats asks as soft evidence that the asker is active in a half-suit but does not enumerate all card-count constraints. Agents do not communicate with teammates beyond the public actions allowed by the rules. The model is therefore a serious baseline and research workbench, not yet a proof of equilibrium or “solved Fish.”
+The belief updater uses alternating scaling rather than exact Bayesian conditioning over every legal deal. It enforces public card counts but not every higher-order dependency. Agents do not learn conventions with teammates beyond inference from ordinary public actions. The model is therefore a serious baseline and research workbench, not a proof of equilibrium or “solved Fish.”

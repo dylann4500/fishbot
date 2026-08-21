@@ -12,6 +12,11 @@
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "research": "tsx scripts/run-research.ts",
+    "optimize:fishbot": "tsx scripts/optimize-fishbot.ts",
+    "evaluate:fishbot": "tsx scripts/evaluate-fishbot.ts",
+    "refine:fishbot": "tsx scripts/refine-fishbot.ts",
+    "ablations:fishbot": "tsx scripts/paired-ablations.ts",
+    "paper:markdown": "tsx scripts/wrap-paper-markdown.ts",
     "verify:engine": "tsx scripts/verify-engine.ts"
   },
   "dependencies": {

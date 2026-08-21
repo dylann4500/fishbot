@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-08-21T00:34:50.960Z",
+  "source": "/Users/dylan/Documents/GitHub/fish optimization/research/results/final-evaluation.json",
+  "baseSeed": 1831565813,
+  "gamesPerStratum": 500,
+  "opponents": [
+    "detective",
+    "lockout"
+  ],
+  "results": [
+    {
+      "name": "full",
+      "fullMinusAblatedWinRate": 0,
+      "confidenceInterval": [
+        0,
+        0
+      ],
+      "discordantGames": 0,
+      "byOpponent": {
+        "detective": 0,
+        "lockout": 0
+      }
+    },
+    {
+      "name": "no-count-conditioning",
+      "fullMinusAblatedWinRate": 0.052,
+      "confidenceInterval": [
+        0.021777404819742822,
+        0.08222259518025718
+      ],
+      "discordantGames": 956,
+      "byOpponent": {
+        "detective": 0.041,
+        "lockout": 0.063
+      }
+    },
+    {
+      "name": "no-ask-history",
+      "fullMinusAblatedWinRate": 0.3875,
+      "confidenceInterval": [
+        0.36007612154426755,
+        0.4149238784557325
+      ],
+      "discordantGames": 1083,
+      "byOpponent": {
+        "detective": 0.373,
+        "lockout": 0.402
+      }
+    },
+    {
+      "name": "no-continuation",
+      "fullMinusAblatedWinRate": 0.0035,
+      "confidenceInterval": [
+        -0.01165344461308442,
+        0.01865344461308442
+      ],
+      "discordantGames": 239,
+      "byOpponent": {
+        "detective": 0.009,
+        "lockout": -0.002
+      }
+    },
+    {
+      "name": "no-team-control",
+      "fullMinusAblatedWinRate": -0.008,
+      "confidenceInterval": [
+        -0.03291196041434386,
+        0.01691196041434386
+      ],
+      "discordantGames": 646,
+      "byOpponent": {
+        "detective": 0.001,
+        "lockout": -0.017
+      }
+    },
+    {
+      "name": "no-completion",
+      "fullMinusAblatedWinRate": 0.0115,
+      "confidenceInterval": [
+        -0.005214127414484168,
+        0.028214127414484168
+      ],
+      "discordantGames": 291,
+      "byOpponent": {
+        "detective": 0.005,
+        "lockout": 0.018
+      }
+    },
+    {
+      "name": "no-reply-risk",
+      "fullMinusAblatedWinRate": 0.003,
+      "confidenceInterval": [
+        -0.010582037721724339,
+        0.01658203772172434
+      ],
+      "discordantGames": 192,
+      "byOpponent": {
+        "detective": 0.002,
+        "lockout": 0.004
+      }
+    },
+    {
+      "name": "entropy-premium",
+      "fullMinusAblatedWinRate": -0.005,
+      "confidenceInterval": [
+        -0.026961646954827327,
+        0.016961646954827325
+      ],
+      "discordantGames": 502,
+      "byOpponent": {
+        "detective": 0.007,
+        "lockout": -0.017
+      }
+    },
+    {
+      "name": "immediate-transfer-only",
+      "fullMinusAblatedWinRate": 0.032,
+      "confidenceInterval": [
+        0.0024630178004129352,
+        0.061536982199587066
+      ],
+      "discordantGames": 910,
+      "byOpponent": {
+        "detective": 0.037,
+        "lockout": 0.027
+      }
+    }
+  ]
+}

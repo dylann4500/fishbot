@@ -1,0 +1,1168 @@
+{
+  "generatedAt": "2026-08-21T00:22:20.750Z",
+  "scope": "54-card, nine-half-suit, six-player Fish; wrong declarations award the set to the opponent",
+  "selectedConfig": {
+    "useCountConditioning": true,
+    "signalStrength": 0.453,
+    "hitWeight": 22,
+    "informationWeight": 0,
+    "setProgressWeight": 2.5,
+    "teamControlWeight": 4,
+    "targetEvidenceWeight": 0.5,
+    "continuationWeight": 4,
+    "completionWeight": 4,
+    "replyThreatWeight": 1,
+    "repeatSetWeight": 0.5,
+    "declarationThreshold": 0.963,
+    "trailingDeclarationDelta": -0.016,
+    "leadingDeclarationDelta": 0.005,
+    "allocationSlack": 0.008
+  },
+  "seeds": {
+    "testSeed": 2135587861,
+    "ablationSeed": 1831565813,
+    "matrixSeed": 1284865837
+  },
+  "games": {
+    "headToHeadPerOrientation": 1000,
+    "ablationPerOrientation": 500,
+    "matrixPerCell": 250
+  },
+  "headToHead": [
+    {
+      "opponent": "lockout",
+      "games": 2000,
+      "wins": 1157,
+      "winRate": 0.5785,
+      "winRateCI": [
+        0.5567280287388815,
+        0.5999709837978381
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.596,
+        "asTeamB": 0.5609999999999999
+      },
+      "avgScore": 4.801,
+      "askAccuracy": 0.5220864463471075,
+      "declarationAccuracy": 0.9611324744954393,
+      "informationPerAsk": 0.6546429310513625,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.4500921505984139,
+      "diversionRate": 0.3418303577371551,
+      "replyThreatOnMiss": 0.17670951604808538,
+      "continuationValue": 0.34378854551927124,
+      "completionValue": 0.3001682749613288,
+      "avgActions": 112.554,
+      "medianActions": 112.5,
+      "p90Actions": 126.5
+    },
+    {
+      "opponent": "detective",
+      "games": 2000,
+      "wins": 1144,
+      "winRate": 0.572,
+      "winRateCI": [
+        0.550197247007236,
+        0.5935266880582899
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.573,
+        "asTeamB": 0.571
+      },
+      "avgScore": 4.766500000000001,
+      "askAccuracy": 0.5360404424447811,
+      "declarationAccuracy": 0.950090836908539,
+      "informationPerAsk": 0.6608153506764458,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.4756688164967663,
+      "diversionRate": 0.3241305982709929,
+      "replyThreatOnMiss": 0.17715489462558243,
+      "continuationValue": 0.3491527377876614,
+      "completionValue": 0.3130733549203075,
+      "avgActions": 109.019,
+      "medianActions": 109,
+      "p90Actions": 123
+    },
+    {
+      "opponent": "fishbot_v02",
+      "games": 2000,
+      "wins": 1130,
+      "winRate": 0.565,
+      "winRateCI": [
+        0.5431683583888989,
+        0.5865824163230344
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.563,
+        "asTeamB": 0.567
+      },
+      "avgScore": 4.7695,
+      "askAccuracy": 0.5229270137430121,
+      "declarationAccuracy": 0.9622689986070267,
+      "informationPerAsk": 0.6554088783893146,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.4502859230688019,
+      "diversionRate": 0.3549439187376588,
+      "replyThreatOnMiss": 0.17668013772667412,
+      "continuationValue": 0.34127068174504704,
+      "completionValue": 0.30519159275128727,
+      "avgActions": 112.2575,
+      "medianActions": 112,
+      "p90Actions": 126.5
+    },
+    {
+      "opponent": "diversifier",
+      "games": 2000,
+      "wins": 1723,
+      "winRate": 0.8615,
+      "winRateCI": [
+        0.8456667354281623,
+        0.8759471885466671
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.857,
+        "asTeamB": 0.866
+      },
+      "avgScore": 5.9775,
+      "askAccuracy": 0.6370481929524492,
+      "declarationAccuracy": 0.9394762037046223,
+      "informationPerAsk": 0.5718398556231141,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.6486348516551317,
+      "diversionRate": 0.276632751508867,
+      "replyThreatOnMiss": 0.20348500686809812,
+      "continuationValue": 0.38020917261250986,
+      "completionValue": 0.3169768149358253,
+      "avgActions": 119.51599999999999,
+      "medianActions": 119,
+      "p90Actions": 140
+    },
+    {
+      "opponent": "hunter",
+      "games": 2000,
+      "wins": 1903,
+      "winRate": 0.9515,
+      "winRateCI": [
+        0.9411887933111758,
+        0.960080049495561
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.948,
+        "asTeamB": 0.955
+      },
+      "avgScore": 6.7465,
+      "askAccuracy": 0.5529909462442026,
+      "declarationAccuracy": 0.9155591246737602,
+      "informationPerAsk": 0.6793074081067347,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.525302983985036,
+      "diversionRate": 0.3086340098821816,
+      "replyThreatOnMiss": 0.19111311776152815,
+      "continuationValue": 0.3355106028507948,
+      "completionValue": 0.3357865682770335,
+      "avgActions": 96.896,
+      "medianActions": 97,
+      "p90Actions": 112
+    },
+    {
+      "opponent": "bluffer",
+      "games": 2000,
+      "wins": 1984,
+      "winRate": 0.992,
+      "winRateCI": [
+        0.9870438100676844,
+        0.9950697462134108
+      ],
+      "orientationWinRates": {
+        "asTeamA": 0.991,
+        "asTeamB": 0.993
+      },
+      "avgScore": 7.4384999999999994,
+      "askAccuracy": 0.5732969244233079,
+      "declarationAccuracy": 0.902425125181678,
+      "informationPerAsk": 0.663993015382643,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.5754220649928462,
+      "diversionRate": 0.2840644129997054,
+      "replyThreatOnMiss": 0.19500153356807842,
+      "continuationValue": 0.3269176788857167,
+      "completionValue": 0.3176249883099471,
+      "avgActions": 93.868,
+      "medianActions": 94,
+      "p90Actions": 110
+    },
+    {
+      "opponent": "random",
+      "games": 2000,
+      "wins": 2000,
+      "winRate": 1,
+      "winRateCI": [
+        0.9980828823994873,
+        1.0000000000000002
+      ],
+      "orientationWinRates": {
+        "asTeamA": 1,
+        "asTeamB": 1
+      },
+      "avgScore": 8.3995,
+      "askAccuracy": 0.5237859434654408,
+      "declarationAccuracy": 0.939066134462478,
+      "informationPerAsk": 0.767870527228499,
+      "decisionRegret": 0,
+      "reactionAccuracy": 0.5582012768067495,
+      "diversionRate": 0.370118556464904,
+      "replyThreatOnMiss": 0.2135829649285724,
+      "continuationValue": 0.28698847709452013,
+      "completionValue": 0.3258073558543644,
+      "avgActions": 95.2885,
+      "medianActions": 95.5,
+      "p90Actions": 112.5
+    }
+  ],
+  "ablations": [
+    {
+      "name": "full",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5845,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 588,
+          "winRate": 0.588,
+          "winRateCI": [
+            0.5572132320047287,
+            0.6181132338440665
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.552,
+            "asTeamB": 0.624
+          },
+          "avgScore": 4.775,
+          "askAccuracy": 0.536187485866446,
+          "declarationAccuracy": 0.9538517635285475,
+          "informationPerAsk": 0.6605879972319226,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4740699763862593,
+          "diversionRate": 0.32117515351888243,
+          "replyThreatOnMiss": 0.17715981034063766,
+          "continuationValue": 0.348971475554132,
+          "completionValue": 0.31006950859933663,
+          "avgActions": 109.531,
+          "medianActions": 109.5,
+          "p90Actions": 123
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 581,
+          "winRate": 0.581,
+          "winRateCI": [
+            0.5501660560097688,
+            0.6112139864192359
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.57,
+            "asTeamB": 0.5920000000000001
+          },
+          "avgScore": 4.807,
+          "askAccuracy": 0.5237507702821513,
+          "declarationAccuracy": 0.9670215554502105,
+          "informationPerAsk": 0.6534063786703702,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4522924295636741,
+          "diversionRate": 0.3411554428785911,
+          "replyThreatOnMiss": 0.1765455552041328,
+          "continuationValue": 0.34316354248423275,
+          "completionValue": 0.29872424259260727,
+          "avgActions": 112.375,
+          "medianActions": 111.5,
+          "p90Actions": 127
+        }
+      ]
+    },
+    {
+      "name": "no-count-conditioning",
+      "config": {
+        "useCountConditioning": false,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5325,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 547,
+          "winRate": 0.547,
+          "winRateCI": [
+            0.5160256008817754,
+            0.5776146706511041
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.534,
+            "asTeamB": 0.56
+          },
+          "avgScore": 4.6129999999999995,
+          "askAccuracy": 0.5127090515181523,
+          "declarationAccuracy": 0.9424540573876783,
+          "informationPerAsk": 0.6466490711822688,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.44090442885395464,
+          "diversionRate": 0.35339513990947674,
+          "replyThreatOnMiss": 0.16206219393498184,
+          "continuationValue": 0.2930144797260866,
+          "completionValue": 0.3086853363793902,
+          "avgActions": 115.733,
+          "medianActions": 115.5,
+          "p90Actions": 131
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 518,
+          "winRate": 0.518,
+          "winRateCI": [
+            0.48702012301568326,
+            0.5488421086352068
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.528,
+            "asTeamB": 0.508
+          },
+          "avgScore": 4.561999999999999,
+          "askAccuracy": 0.49243298245277095,
+          "declarationAccuracy": 0.948836218302953,
+          "informationPerAsk": 0.6482146567327245,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.41166009691884853,
+          "diversionRate": 0.37660315585232274,
+          "replyThreatOnMiss": 0.1616205273882915,
+          "continuationValue": 0.2862070901325031,
+          "completionValue": 0.2886949617676778,
+          "avgActions": 119.752,
+          "medianActions": 119.5,
+          "p90Actions": 135
+        }
+      ]
+    },
+    {
+      "name": "no-ask-history",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.197,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 215,
+          "winRate": 0.215,
+          "winRateCI": [
+            0.19065300972996616,
+            0.2415283224642765
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.202,
+            "asTeamB": 0.22799999999999998
+          },
+          "avgScore": 3.41,
+          "askAccuracy": 0.46606242014752625,
+          "declarationAccuracy": 0.8957162645129346,
+          "informationPerAsk": 0.6461339873526575,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4507941923741608,
+          "diversionRate": 0.3804925931087962,
+          "replyThreatOnMiss": 0.18574952903662822,
+          "continuationValue": 0.3165494716996564,
+          "completionValue": 0.251811717367256,
+          "avgActions": 123.076,
+          "medianActions": 122.5,
+          "p90Actions": 141
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 179,
+          "winRate": 0.179,
+          "winRateCI": [
+            0.15648172434680807,
+            0.20397514454565469
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.182,
+            "asTeamB": 0.17600000000000005
+          },
+          "avgScore": 3.352,
+          "askAccuracy": 0.4555933539611535,
+          "declarationAccuracy": 0.8983737484355445,
+          "informationPerAsk": 0.6457479875935161,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.43153909590707407,
+          "diversionRate": 0.3950522060137811,
+          "replyThreatOnMiss": 0.18582839424762376,
+          "continuationValue": 0.3172748062145936,
+          "completionValue": 0.24047395183053744,
+          "avgActions": 126.91499999999999,
+          "medianActions": 126,
+          "p90Actions": 147
+        }
+      ]
+    },
+    {
+      "name": "no-continuation",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 0,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.581,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 579,
+          "winRate": 0.579,
+          "winRateCI": [
+            0.5481537333387585,
+            0.6092416166845918
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.536,
+            "asTeamB": 0.622
+          },
+          "avgScore": 4.769,
+          "askAccuracy": 0.5354990692405766,
+          "declarationAccuracy": 0.9520048249341762,
+          "informationPerAsk": 0.6605200396229804,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4743556961173542,
+          "diversionRate": 0.32423811931331814,
+          "replyThreatOnMiss": 0.1776204611034666,
+          "continuationValue": 0.34942959086700576,
+          "completionValue": 0.3103611397681647,
+          "avgActions": 109.394,
+          "medianActions": 109.5,
+          "p90Actions": 123.5
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 583,
+          "winRate": 0.583,
+          "winRateCI": [
+            0.5521788916695798,
+            0.6131858431650794
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.572,
+            "asTeamB": 0.594
+          },
+          "avgScore": 4.822,
+          "askAccuracy": 0.5216898681363558,
+          "declarationAccuracy": 0.9674530635965869,
+          "informationPerAsk": 0.6544839956970927,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.45185588649547515,
+          "diversionRate": 0.34539303298576485,
+          "replyThreatOnMiss": 0.1765128668265436,
+          "continuationValue": 0.34176266110579834,
+          "completionValue": 0.30022525086096474,
+          "avgActions": 112.412,
+          "medianActions": 111.5,
+          "p90Actions": 126.5
+        }
+      ]
+    },
+    {
+      "name": "no-team-control",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 0,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5925,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 587,
+          "winRate": 0.587,
+          "winRateCI": [
+            0.5562061061222425,
+            0.6171280135237254
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.552,
+            "asTeamB": 0.622
+          },
+          "avgScore": 4.801,
+          "askAccuracy": 0.5393818136251449,
+          "declarationAccuracy": 0.9485601457106234,
+          "informationPerAsk": 0.6593798647571456,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.48016664724108304,
+          "diversionRate": 0.3160561507364883,
+          "replyThreatOnMiss": 0.17636499916625004,
+          "continuationValue": 0.3465405967417784,
+          "completionValue": 0.31025488996834805,
+          "avgActions": 109.467,
+          "medianActions": 109,
+          "p90Actions": 123
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 598,
+          "winRate": 0.598,
+          "winRateCI": [
+            0.5672916198330558,
+            0.6279583080440116
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.568,
+            "asTeamB": 0.628
+          },
+          "avgScore": 4.852,
+          "askAccuracy": 0.5296835199067151,
+          "declarationAccuracy": 0.9629997118067086,
+          "informationPerAsk": 0.6546533724683019,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.46291741723624025,
+          "diversionRate": 0.33219148077682376,
+          "replyThreatOnMiss": 0.1766919760784797,
+          "continuationValue": 0.3418169214515383,
+          "completionValue": 0.2983005094627569,
+          "avgActions": 111.727,
+          "medianActions": 112,
+          "p90Actions": 125.5
+        }
+      ]
+    },
+    {
+      "name": "no-completion",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 0,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.573,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 583,
+          "winRate": 0.583,
+          "winRateCI": [
+            0.5521788916695798,
+            0.6131858431650794
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.558,
+            "asTeamB": 0.608
+          },
+          "avgScore": 4.784,
+          "askAccuracy": 0.5374470100359151,
+          "declarationAccuracy": 0.9540578589469877,
+          "informationPerAsk": 0.6586397998272712,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4736535086460742,
+          "diversionRate": 0.3195361690928417,
+          "replyThreatOnMiss": 0.17616501393480183,
+          "continuationValue": 0.34812962605694553,
+          "completionValue": 0.3079338013721287,
+          "avgActions": 109.622,
+          "medianActions": 109.5,
+          "p90Actions": 123
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 563,
+          "winRate": 0.563,
+          "winRateCI": [
+            0.5320735047444565,
+            0.5934443060336583
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.548,
+            "asTeamB": 0.5780000000000001
+          },
+          "avgScore": 4.775,
+          "askAccuracy": 0.5237145982009471,
+          "declarationAccuracy": 0.9625879457680345,
+          "informationPerAsk": 0.65382087251625,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.4528302237825912,
+          "diversionRate": 0.33930898664642617,
+          "replyThreatOnMiss": 0.1763878213333802,
+          "continuationValue": 0.3422159670783864,
+          "completionValue": 0.2958487026117198,
+          "avgActions": 112.161,
+          "medianActions": 111.5,
+          "p90Actions": 126
+        }
+      ]
+    },
+    {
+      "name": "no-reply-risk",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 0,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5814999999999999,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 586,
+          "winRate": 0.586,
+          "winRateCI": [
+            0.5551991092840345,
+            0.6161426641591063
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.556,
+            "asTeamB": 0.616
+          },
+          "avgScore": 4.781000000000001,
+          "askAccuracy": 0.5337319313082778,
+          "declarationAccuracy": 0.9564202644457156,
+          "informationPerAsk": 0.6618040378568406,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.47247683295326637,
+          "diversionRate": 0.32246850312275727,
+          "replyThreatOnMiss": 0.1775022175054496,
+          "continuationValue": 0.34779420440117603,
+          "completionValue": 0.3101951169393453,
+          "avgActions": 109.578,
+          "medianActions": 109.5,
+          "p90Actions": 123.5
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 577,
+          "winRate": 0.577,
+          "winRateCI": [
+            0.546141922650669,
+            0.6072687349670269
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.562,
+            "asTeamB": 0.5920000000000001
+          },
+          "avgScore": 4.81,
+          "askAccuracy": 0.5240529722359082,
+          "declarationAccuracy": 0.9655172509859378,
+          "informationPerAsk": 0.6540772391708753,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.45261307696172914,
+          "diversionRate": 0.33925980699229885,
+          "replyThreatOnMiss": 0.1770376941436938,
+          "continuationValue": 0.34286886044361964,
+          "completionValue": 0.2995922528673781,
+          "avgActions": 112.39099999999999,
+          "medianActions": 112,
+          "p90Actions": 127.5
+        }
+      ]
+    },
+    {
+      "name": "entropy-premium",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 4.5,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5894999999999999,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 581,
+          "winRate": 0.581,
+          "winRateCI": [
+            0.5501660560097688,
+            0.6112139864192359
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.546,
+            "asTeamB": 0.616
+          },
+          "avgScore": 4.818,
+          "askAccuracy": 0.5392354202256227,
+          "declarationAccuracy": 0.9532710681504037,
+          "informationPerAsk": 0.6616145388202848,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.48096496243249987,
+          "diversionRate": 0.31569223006376024,
+          "replyThreatOnMiss": 0.1771206454208295,
+          "continuationValue": 0.34854728449202266,
+          "completionValue": 0.31062560599716926,
+          "avgActions": 109.188,
+          "medianActions": 109,
+          "p90Actions": 122.5
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 598,
+          "winRate": 0.598,
+          "winRateCI": [
+            0.5672916198330558,
+            0.6279583080440116
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.584,
+            "asTeamB": 0.612
+          },
+          "avgScore": 4.864,
+          "askAccuracy": 0.5262935131645523,
+          "declarationAccuracy": 0.9636450927290552,
+          "informationPerAsk": 0.6553328131717833,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.45682206724912544,
+          "diversionRate": 0.3370827145911536,
+          "replyThreatOnMiss": 0.17700502154662778,
+          "continuationValue": 0.34192690651124913,
+          "completionValue": 0.2977749121748666,
+          "avgActions": 111.971,
+          "medianActions": 111.5,
+          "p90Actions": 126
+        }
+      ]
+    },
+    {
+      "name": "immediate-transfer-only",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 0,
+        "teamControlWeight": 0,
+        "targetEvidenceWeight": 0,
+        "continuationWeight": 0,
+        "completionWeight": 0,
+        "replyThreatWeight": 0,
+        "repeatSetWeight": 0,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "meanWinRate": 0.5525,
+      "matches": [
+        {
+          "opponent": "detective",
+          "games": 1000,
+          "wins": 551,
+          "winRate": 0.551,
+          "winRateCI": [
+            0.5200345669542098,
+            0.5815750893899784
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.53,
+            "asTeamB": 0.5720000000000001
+          },
+          "avgScore": 4.714,
+          "askAccuracy": 0.5476030952770263,
+          "declarationAccuracy": 0.9510680314606379,
+          "informationPerAsk": 0.6477685915738898,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.49045852562951087,
+          "diversionRate": 0.3097683257075427,
+          "replyThreatOnMiss": 0.18147425076202714,
+          "continuationValue": 0.35129039311867494,
+          "completionValue": 0.270036187568613,
+          "avgActions": 111.81,
+          "medianActions": 111.5,
+          "p90Actions": 127
+        },
+        {
+          "opponent": "lockout",
+          "games": 1000,
+          "wins": 554,
+          "winRate": 0.554,
+          "winRateCI": [
+            0.5230426057684469,
+            0.5845440891842232
+          ],
+          "orientationWinRates": {
+            "asTeamA": 0.544,
+            "asTeamB": 0.5640000000000001
+          },
+          "avgScore": 4.65,
+          "askAccuracy": 0.5334096482911967,
+          "declarationAccuracy": 0.959513359915172,
+          "informationPerAsk": 0.6442251596300934,
+          "decisionRegret": 0,
+          "reactionAccuracy": 0.47046893476146323,
+          "diversionRate": 0.32818420811024285,
+          "replyThreatOnMiss": 0.18087220537727744,
+          "continuationValue": 0.34359264286224034,
+          "completionValue": 0.2621028018269663,
+          "avgActions": 114.476,
+          "medianActions": 114.5,
+          "p90Actions": 129.5
+        }
+      ]
+    }
+  ],
+  "askResponseAblation": [
+    {
+      "opponent": "detective",
+      "enabled": {
+        "opponent": "detective",
+        "games": 1000,
+        "wins": 573,
+        "winRate": 0.573,
+        "winRateCI": [
+          0.5421198333410192,
+          0.6033214394653678
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.578,
+          "asTeamB": 0.5680000000000001
+        },
+        "avgScore": 4.7829999999999995,
+        "askAccuracy": 0.537672069778866,
+        "declarationAccuracy": 0.9526860412122791,
+        "informationPerAsk": 0.6614516999653863,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.4777007186991842,
+        "diversionRate": 0.32060283254873445,
+        "replyThreatOnMiss": 0.17673822833603398,
+        "continuationValue": 0.3483909815085424,
+        "completionValue": 0.31592526447540104,
+        "avgActions": 108.832,
+        "medianActions": 108.5,
+        "p90Actions": 122.5
+      },
+      "disabled": {
+        "opponent": "detective",
+        "games": 1000,
+        "wins": 581,
+        "winRate": 0.581,
+        "winRateCI": [
+          0.5501660560097688,
+          0.6112139864192359
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.596,
+          "asTeamB": 0.5660000000000001
+        },
+        "avgScore": 4.785,
+        "askAccuracy": 0.536777659736928,
+        "declarationAccuracy": 0.9496998195960134,
+        "informationPerAsk": 0.6610295525288354,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.4801751771732128,
+        "diversionRate": 0.32176540886182614,
+        "replyThreatOnMiss": 0.1769354014833583,
+        "continuationValue": 0.3464128606009851,
+        "completionValue": 0.31513828115187076,
+        "avgActions": 109.268,
+        "medianActions": 109.5,
+        "p90Actions": 123
+      }
+    },
+    {
+      "opponent": "lockout",
+      "enabled": {
+        "opponent": "lockout",
+        "games": 1000,
+        "wins": 591,
+        "winRate": 0.591,
+        "winRateCI": [
+          0.5602353853201139,
+          0.621068119137163
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.622,
+          "asTeamB": 0.56
+        },
+        "avgScore": 4.800000000000001,
+        "askAccuracy": 0.5211860732458101,
+        "declarationAccuracy": 0.9615670124496047,
+        "informationPerAsk": 0.6522773907685346,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.45400152268386673,
+        "diversionRate": 0.343417410518567,
+        "replyThreatOnMiss": 0.17607275154080038,
+        "continuationValue": 0.3405773815496635,
+        "completionValue": 0.3028253884021259,
+        "avgActions": 112.286,
+        "medianActions": 111,
+        "p90Actions": 126
+      },
+      "disabled": {
+        "opponent": "lockout",
+        "games": 1000,
+        "wins": 596,
+        "winRate": 0.596,
+        "winRateCI": [
+          0.5652749017650744,
+          0.6259903337063386
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.602,
+          "asTeamB": 0.5900000000000001
+        },
+        "avgScore": 4.821,
+        "askAccuracy": 0.520138667268037,
+        "declarationAccuracy": 0.9654521061906233,
+        "informationPerAsk": 0.6535993099250097,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.45632310637562723,
+        "diversionRate": 0.34578382820495235,
+        "replyThreatOnMiss": 0.1759054033356763,
+        "continuationValue": 0.3367523725439563,
+        "completionValue": 0.30306872960884085,
+        "avgActions": 112.174,
+        "medianActions": 111.5,
+        "p90Actions": 126
+      }
+    },
+    {
+      "opponent": "bluffer",
+      "enabled": {
+        "opponent": "bluffer",
+        "games": 1000,
+        "wins": 988,
+        "winRate": 0.988,
+        "winRateCI": [
+          0.9791425260718425,
+          0.9931224209078404
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.986,
+          "asTeamB": 0.99
+        },
+        "avgScore": 7.452999999999999,
+        "askAccuracy": 0.5769759469222262,
+        "declarationAccuracy": 0.9079539326161619,
+        "informationPerAsk": 0.662482310800879,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.5835603390466219,
+        "diversionRate": 0.27945139475210456,
+        "replyThreatOnMiss": 0.19560357838947998,
+        "continuationValue": 0.3302285852367499,
+        "completionValue": 0.3154865196272361,
+        "avgActions": 94.101,
+        "medianActions": 94,
+        "p90Actions": 111
+      },
+      "disabled": {
+        "opponent": "bluffer",
+        "games": 1000,
+        "wins": 993,
+        "winRate": 0.993,
+        "winRateCI": [
+          0.9856215030730511,
+          0.996605174920768
+        ],
+        "orientationWinRates": {
+          "asTeamA": 0.992,
+          "asTeamB": 0.994
+        },
+        "avgScore": 7.362,
+        "askAccuracy": 0.5647251545544383,
+        "declarationAccuracy": 0.9046291028388216,
+        "informationPerAsk": 0.6536338819082159,
+        "decisionRegret": 0,
+        "reactionAccuracy": 0.5555911887299323,
+        "diversionRate": 0.2752208589621373,
+        "replyThreatOnMiss": 0.19307782775204785,
+        "continuationValue": 0.33785965367612647,
+        "completionValue": 0.3077624257560157,
+        "avgActions": 94.078,
+        "medianActions": 94,
+        "p90Actions": 110
+      }
+    }
+  ],
+  "matrix": {
+    "strategies": [
+      "fishbot",
+      "fishbot_v02",
+      "lockout",
+      "hunter",
+      "diversifier",
+      "detective",
+      "bluffer",
+      "random"
+    ],
+    "cells": {
+      "fishbot:fishbot": 0.536,
+      "fishbot:fishbot_v02": 0.576,
+      "fishbot:lockout": 0.552,
+      "fishbot:hunter": 0.948,
+      "fishbot:diversifier": 0.812,
+      "fishbot:detective": 0.544,
+      "fishbot:bluffer": 0.98,
+      "fishbot:random": 1,
+      "fishbot_v02:fishbot": 0.424,
+      "fishbot_v02:fishbot_v02": 0.512,
+      "fishbot_v02:lockout": 0.444,
+      "fishbot_v02:hunter": 0.864,
+      "fishbot_v02:diversifier": 0.78,
+      "fishbot_v02:detective": 0.44,
+      "fishbot_v02:bluffer": 0.98,
+      "fishbot_v02:random": 0.996,
+      "lockout:fishbot": 0.384,
+      "lockout:fishbot_v02": 0.5,
+      "lockout:lockout": 0.556,
+      "lockout:hunter": 0.904,
+      "lockout:diversifier": 0.832,
+      "lockout:detective": 0.468,
+      "lockout:bluffer": 0.992,
+      "lockout:random": 0.996,
+      "hunter:fishbot": 0.056,
+      "hunter:fishbot_v02": 0.068,
+      "hunter:lockout": 0.092,
+      "hunter:hunter": 0.448,
+      "hunter:diversifier": 0.26,
+      "hunter:detective": 0.1,
+      "hunter:bluffer": 0.788,
+      "hunter:random": 0.828,
+      "diversifier:fishbot": 0.148,
+      "diversifier:fishbot_v02": 0.208,
+      "diversifier:lockout": 0.196,
+      "diversifier:hunter": 0.732,
+      "diversifier:diversifier": 0.516,
+      "diversifier:detective": 0.184,
+      "diversifier:bluffer": 0.972,
+      "diversifier:random": 1,
+      "detective:fishbot": 0.344,
+      "detective:fishbot_v02": 0.488,
+      "detective:lockout": 0.492,
+      "detective:hunter": 0.872,
+      "detective:diversifier": 0.836,
+      "detective:detective": 0.484,
+      "detective:bluffer": 0.988,
+      "detective:random": 1,
+      "bluffer:fishbot": 0.008,
+      "bluffer:fishbot_v02": 0.012,
+      "bluffer:lockout": 0.008,
+      "bluffer:hunter": 0.144,
+      "bluffer:diversifier": 0.044,
+      "bluffer:detective": 0.02,
+      "bluffer:bluffer": 0.496,
+      "bluffer:random": 0.184,
+      "random:fishbot": 0,
+      "random:fishbot_v02": 0,
+      "random:lockout": 0.004,
+      "random:hunter": 0.196,
+      "random:diversifier": 0.008,
+      "random:detective": 0,
+      "random:bluffer": 0.764,
+      "random:random": 0.508
+    }
+  }
+}

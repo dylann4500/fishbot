@@ -1,0 +1,2175 @@
+{
+  "generatedAt": "2026-08-21T00:06:12.165Z",
+  "methodology": {
+    "trainGamesPerOrientationMatchup": 40,
+    "validationGamesPerOrientationMatchup": 250,
+    "trainSeed": 324508639,
+    "validationSeed": 610839776,
+    "opponents": [
+      {
+        "id": "detective",
+        "weight": 0.35
+      },
+      {
+        "id": "lockout",
+        "weight": 0.25
+      },
+      {
+        "id": "fishbot_v02",
+        "weight": 0.2
+      },
+      {
+        "id": "diversifier",
+        "weight": 0.12
+      },
+      {
+        "id": "hunter",
+        "weight": 0.08
+      }
+    ],
+    "objective": "weighted orientation-balanced win rate minus a worst-matchup penalty"
+  },
+  "selected": {
+    "name": "control-and-chain",
+    "config": {
+      "signalStrength": 0.453,
+      "hitWeight": 22,
+      "informationWeight": 0,
+      "setProgressWeight": 2.5,
+      "teamControlWeight": 4,
+      "targetEvidenceWeight": 0.5,
+      "continuationWeight": 4,
+      "completionWeight": 4,
+      "replyThreatWeight": 1,
+      "repeatSetWeight": 0.5,
+      "declarationThreshold": 0.963,
+      "trailingDeclarationDelta": -0.016,
+      "leadingDeclarationDelta": 0.005,
+      "allocationSlack": 0.008
+    },
+    "score": 0.64708,
+    "weightedWinRate": 0.64708,
+    "worstWinRate": 0.546,
+    "matches": [
+      {
+        "opponent": "detective",
+        "winRate": 0.5840000000000001,
+        "avgScore": 4.838,
+        "askAccuracy": 0.5421162348583355,
+        "declarationAccuracy": 0.9505522416220374,
+        "informationPerAsk": 0.6590045029259631,
+        "avgActions": 109.038
+      },
+      {
+        "opponent": "lockout",
+        "winRate": 0.6040000000000001,
+        "avgScore": 4.83,
+        "askAccuracy": 0.5299737960995723,
+        "declarationAccuracy": 0.9622675712899282,
+        "informationPerAsk": 0.6559404193748588,
+        "avgActions": 111.836
+      },
+      {
+        "opponent": "fishbot_v02",
+        "winRate": 0.546,
+        "avgScore": 4.667999999999999,
+        "askAccuracy": 0.528327836026867,
+        "declarationAccuracy": 0.9627192982456141,
+        "informationPerAsk": 0.6508746945384449,
+        "avgActions": 113.394
+      },
+      {
+        "opponent": "diversifier",
+        "winRate": 0.8779999999999999,
+        "avgScore": 6.05,
+        "askAccuracy": 0.638981479374247,
+        "declarationAccuracy": 0.9347022167739298,
+        "informationPerAsk": 0.5726629988342059,
+        "avgActions": 119.63
+      },
+      {
+        "opponent": "hunter",
+        "winRate": 0.964,
+        "avgScore": 6.832000000000001,
+        "askAccuracy": 0.55935663781192,
+        "declarationAccuracy": 0.9235858689949786,
+        "informationPerAsk": 0.6789990815240954,
+        "avgActions": 98.04
+      }
+    ]
+  },
+  "validation": [
+    {
+      "name": "control-and-chain",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.64708,
+      "weightedWinRate": 0.64708,
+      "worstWinRate": 0.546,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5840000000000001,
+          "avgScore": 4.838,
+          "askAccuracy": 0.5421162348583355,
+          "declarationAccuracy": 0.9505522416220374,
+          "informationPerAsk": 0.6590045029259631,
+          "avgActions": 109.038
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6040000000000001,
+          "avgScore": 4.83,
+          "askAccuracy": 0.5299737960995723,
+          "declarationAccuracy": 0.9622675712899282,
+          "informationPerAsk": 0.6559404193748588,
+          "avgActions": 111.836
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.546,
+          "avgScore": 4.667999999999999,
+          "askAccuracy": 0.528327836026867,
+          "declarationAccuracy": 0.9627192982456141,
+          "informationPerAsk": 0.6508746945384449,
+          "avgActions": 113.394
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8779999999999999,
+          "avgScore": 6.05,
+          "askAccuracy": 0.638981479374247,
+          "declarationAccuracy": 0.9347022167739298,
+          "informationPerAsk": 0.5726629988342059,
+          "avgActions": 119.63
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.964,
+          "avgScore": 6.832000000000001,
+          "askAccuracy": 0.55935663781192,
+          "declarationAccuracy": 0.9235858689949786,
+          "informationPerAsk": 0.6789990815240954,
+          "avgActions": 98.04
+        }
+      ]
+    },
+    {
+      "name": "cautious-declarer",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.97,
+        "trailingDeclarationDelta": -0.025,
+        "leadingDeclarationDelta": 0.015,
+        "allocationSlack": 0.01
+      },
+      "score": 0.63872,
+      "weightedWinRate": 0.63872,
+      "worstWinRate": 0.536,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5800000000000001,
+          "avgScore": 4.7379999999999995,
+          "askAccuracy": 0.5416845205125052,
+          "declarationAccuracy": 0.9462535264260685,
+          "informationPerAsk": 0.6585311541453847,
+          "avgActions": 109.336
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6040000000000001,
+          "avgScore": 4.808,
+          "askAccuracy": 0.5291048457313753,
+          "declarationAccuracy": 0.9655552924605053,
+          "informationPerAsk": 0.655073490368276,
+          "avgActions": 112.63
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.536,
+          "avgScore": 4.622,
+          "askAccuracy": 0.527053629026897,
+          "declarationAccuracy": 0.959007464913044,
+          "informationPerAsk": 0.6545379041488993,
+          "avgActions": 113.434
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.834,
+          "avgScore": 5.832,
+          "askAccuracy": 0.634132921344229,
+          "declarationAccuracy": 0.927846650429389,
+          "informationPerAsk": 0.5735425189642402,
+          "avgActions": 119.588
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.968,
+          "avgScore": 6.742,
+          "askAccuracy": 0.5637535181214441,
+          "declarationAccuracy": 0.9143945556989035,
+          "informationPerAsk": 0.6709287994381035,
+          "avgActions": 98.596
+        }
+      ]
+    },
+    {
+      "name": "v03-default",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.63072,
+      "weightedWinRate": 0.63072,
+      "worstWinRate": 0.53,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.558,
+          "avgScore": 4.676,
+          "askAccuracy": 0.5417126145406408,
+          "declarationAccuracy": 0.9430287605799935,
+          "informationPerAsk": 0.6609360425372374,
+          "avgActions": 108.91
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6060000000000001,
+          "avgScore": 4.859999999999999,
+          "askAccuracy": 0.5328486170537969,
+          "declarationAccuracy": 0.9671800042960452,
+          "informationPerAsk": 0.656251734635073,
+          "avgActions": 111.974
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.53,
+          "avgScore": 4.606,
+          "askAccuracy": 0.5298924961764729,
+          "declarationAccuracy": 0.9563278026061197,
+          "informationPerAsk": 0.6543200800014182,
+          "avgActions": 113.00399999999999
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.84,
+          "avgScore": 5.8919999999999995,
+          "askAccuracy": 0.6380313533522942,
+          "declarationAccuracy": 0.929775650946664,
+          "informationPerAsk": 0.5746877393757703,
+          "avgActions": 119.094
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.964,
+          "avgScore": 6.768,
+          "askAccuracy": 0.565348075349056,
+          "declarationAccuracy": 0.917967551241258,
+          "informationPerAsk": 0.6725296312848157,
+          "avgActions": 98.214
+        }
+      ]
+    },
+    {
+      "name": "sample-16",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.63072,
+      "weightedWinRate": 0.63072,
+      "worstWinRate": 0.53,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.558,
+          "avgScore": 4.676,
+          "askAccuracy": 0.5417126145406408,
+          "declarationAccuracy": 0.9430287605799935,
+          "informationPerAsk": 0.6609360425372374,
+          "avgActions": 108.91
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6060000000000001,
+          "avgScore": 4.859999999999999,
+          "askAccuracy": 0.5328486170537969,
+          "declarationAccuracy": 0.9671800042960452,
+          "informationPerAsk": 0.656251734635073,
+          "avgActions": 111.974
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.53,
+          "avgScore": 4.606,
+          "askAccuracy": 0.5298924961764729,
+          "declarationAccuracy": 0.9563278026061197,
+          "informationPerAsk": 0.6543200800014182,
+          "avgActions": 113.00399999999999
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.84,
+          "avgScore": 5.8919999999999995,
+          "askAccuracy": 0.6380313533522942,
+          "declarationAccuracy": 0.929775650946664,
+          "informationPerAsk": 0.5746877393757703,
+          "avgActions": 119.094
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.964,
+          "avgScore": 6.768,
+          "askAccuracy": 0.565348075349056,
+          "declarationAccuracy": 0.917967551241258,
+          "informationPerAsk": 0.6725296312848157,
+          "avgActions": 98.214
+        }
+      ]
+    },
+    {
+      "name": "sample-10",
+      "config": {
+        "signalStrength": 0.619,
+        "hitWeight": 19.1,
+        "informationWeight": -0.8,
+        "setProgressWeight": 1.99,
+        "teamControlWeight": 1.75,
+        "targetEvidenceWeight": 1.6,
+        "continuationWeight": 2.28,
+        "completionWeight": 1.61,
+        "replyThreatWeight": 0.42,
+        "repeatSetWeight": 0.31,
+        "declarationThreshold": 0.928,
+        "trailingDeclarationDelta": -0.008,
+        "leadingDeclarationDelta": 0.031,
+        "allocationSlack": 0.038
+      },
+      "score": 0.6305000000000001,
+      "weightedWinRate": 0.6305000000000001,
+      "worstWinRate": 0.558,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5840000000000001,
+          "avgScore": 4.746,
+          "askAccuracy": 0.5621658243982017,
+          "declarationAccuracy": 0.9231818925823921,
+          "informationPerAsk": 0.6609316263791262,
+          "avgActions": 105.27199999999999
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5700000000000001,
+          "avgScore": 4.776,
+          "askAccuracy": 0.5523872747373535,
+          "declarationAccuracy": 0.9302985871199514,
+          "informationPerAsk": 0.6579479508627787,
+          "avgActions": 107.428
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.558,
+          "avgScore": 4.702,
+          "askAccuracy": 0.5565471901333834,
+          "declarationAccuracy": 0.9352257503892247,
+          "informationPerAsk": 0.6534031368176845,
+          "avgActions": 108.24
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.824,
+          "avgScore": 5.838,
+          "askAccuracy": 0.6558470625401833,
+          "declarationAccuracy": 0.8997367374887918,
+          "informationPerAsk": 0.577668753667029,
+          "avgActions": 116.27600000000001
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9139999999999999,
+          "avgScore": 6.418,
+          "askAccuracy": 0.5729880504747522,
+          "declarationAccuracy": 0.8488710290395676,
+          "informationPerAsk": 0.6853563148251587,
+          "avgActions": 95.178
+        }
+      ]
+    },
+    {
+      "name": "sample-09",
+      "config": {
+        "signalStrength": 0.272,
+        "hitWeight": 18.3,
+        "informationWeight": 0.49,
+        "setProgressWeight": 4.28,
+        "teamControlWeight": 3.27,
+        "targetEvidenceWeight": 1.02,
+        "continuationWeight": 4.58,
+        "completionWeight": 0.38,
+        "replyThreatWeight": 3.5,
+        "repeatSetWeight": 0.04,
+        "declarationThreshold": 0.928,
+        "trailingDeclarationDelta": -0.003,
+        "leadingDeclarationDelta": 0.021,
+        "allocationSlack": 0.013
+      },
+      "score": 0.62542,
+      "weightedWinRate": 0.62542,
+      "worstWinRate": 0.53,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.558,
+          "avgScore": 4.811999999999999,
+          "askAccuracy": 0.5414335410506614,
+          "declarationAccuracy": 0.9408312182741116,
+          "informationPerAsk": 0.6550300050184569,
+          "avgActions": 109.384
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5800000000000001,
+          "avgScore": 4.724,
+          "askAccuracy": 0.5301591419898037,
+          "declarationAccuracy": 0.9452722102026099,
+          "informationPerAsk": 0.654014800679658,
+          "avgActions": 112.516
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.53,
+          "avgScore": 4.686,
+          "askAccuracy": 0.5324621041053608,
+          "declarationAccuracy": 0.9566483102038772,
+          "informationPerAsk": 0.6484131512270803,
+          "avgActions": 113.96600000000001
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8619999999999999,
+          "avgScore": 5.9,
+          "askAccuracy": 0.6408061115390812,
+          "declarationAccuracy": 0.923467112773823,
+          "informationPerAsk": 0.5583519442595302,
+          "avgActions": 120.96000000000001
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.946,
+          "avgScore": 6.609999999999999,
+          "askAccuracy": 0.5519601965649255,
+          "declarationAccuracy": 0.894428916428564,
+          "informationPerAsk": 0.6696627152472441,
+          "avgActions": 97.44999999999999
+        }
+      ]
+    }
+  ],
+  "training": [
+    {
+      "name": "v03-default",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.6696249999999999,
+      "weightedWinRate": 0.6696249999999999,
+      "worstWinRate": 0.5625,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6000000000000001,
+          "avgScore": 4.625,
+          "askAccuracy": 0.5334178855670435,
+          "declarationAccuracy": 0.9660929376432977,
+          "informationPerAsk": 0.663031075353909,
+          "avgActions": 110.125
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6625,
+          "avgScore": 4.8375,
+          "askAccuracy": 0.5250842117293013,
+          "declarationAccuracy": 0.9698720227515109,
+          "informationPerAsk": 0.6533012712525104,
+          "avgActions": 112.80000000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5625,
+          "avgScore": 4.7625,
+          "askAccuracy": 0.5396624879459981,
+          "declarationAccuracy": 0.9696256038647344,
+          "informationPerAsk": 0.6411965557130295,
+          "avgActions": 114.2125
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8875,
+          "avgScore": 5.987500000000001,
+          "askAccuracy": 0.6416417413594249,
+          "declarationAccuracy": 0.9341364882412351,
+          "informationPerAsk": 0.565401401169034,
+          "avgActions": 119.5
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.6125,
+          "askAccuracy": 0.5578369926744406,
+          "declarationAccuracy": 0.9242089470812875,
+          "informationPerAsk": 0.671028303615828,
+          "avgActions": 98.45
+        }
+      ]
+    },
+    {
+      "name": "sample-16",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.6696249999999999,
+      "weightedWinRate": 0.6696249999999999,
+      "worstWinRate": 0.5625,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6000000000000001,
+          "avgScore": 4.625,
+          "askAccuracy": 0.5334178855670435,
+          "declarationAccuracy": 0.9660929376432977,
+          "informationPerAsk": 0.663031075353909,
+          "avgActions": 110.125
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6625,
+          "avgScore": 4.8375,
+          "askAccuracy": 0.5250842117293013,
+          "declarationAccuracy": 0.9698720227515109,
+          "informationPerAsk": 0.6533012712525104,
+          "avgActions": 112.80000000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5625,
+          "avgScore": 4.7625,
+          "askAccuracy": 0.5396624879459981,
+          "declarationAccuracy": 0.9696256038647344,
+          "informationPerAsk": 0.6411965557130295,
+          "avgActions": 114.2125
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8875,
+          "avgScore": 5.987500000000001,
+          "askAccuracy": 0.6416417413594249,
+          "declarationAccuracy": 0.9341364882412351,
+          "informationPerAsk": 0.565401401169034,
+          "avgActions": 119.5
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.6125,
+          "askAccuracy": 0.5578369926744406,
+          "declarationAccuracy": 0.9242089470812875,
+          "informationPerAsk": 0.671028303615828,
+          "avgActions": 98.45
+        }
+      ]
+    },
+    {
+      "name": "cautious-declarer",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 24.93,
+        "informationWeight": 0.06,
+        "setProgressWeight": 1.63,
+        "teamControlWeight": 2.63,
+        "targetEvidenceWeight": 1.33,
+        "continuationWeight": 3.81,
+        "completionWeight": 4.76,
+        "replyThreatWeight": 0.71,
+        "repeatSetWeight": 0.23,
+        "declarationThreshold": 0.97,
+        "trailingDeclarationDelta": -0.025,
+        "leadingDeclarationDelta": 0.015,
+        "allocationSlack": 0.01
+      },
+      "score": 0.666875,
+      "weightedWinRate": 0.666875,
+      "worstWinRate": 0.55,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5875,
+          "avgScore": 4.6625,
+          "askAccuracy": 0.5371510040192,
+          "declarationAccuracy": 0.9586215415019763,
+          "informationPerAsk": 0.6613759253521737,
+          "avgActions": 110.6625
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6749999999999999,
+          "avgScore": 4.9125,
+          "askAccuracy": 0.5256938713460453,
+          "declarationAccuracy": 0.9784547665933048,
+          "informationPerAsk": 0.6496815963413936,
+          "avgActions": 113.2
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.55,
+          "avgScore": 4.7375,
+          "askAccuracy": 0.5354525997306823,
+          "declarationAccuracy": 0.9724473506477558,
+          "informationPerAsk": 0.6408260140331499,
+          "avgActions": 114.55
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8875000000000001,
+          "avgScore": 6,
+          "askAccuracy": 0.6373310503666889,
+          "declarationAccuracy": 0.931895162020685,
+          "informationPerAsk": 0.5675442747943009,
+          "avgActions": 119.4375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.95,
+          "avgScore": 6.475,
+          "askAccuracy": 0.5529589505879537,
+          "declarationAccuracy": 0.9061296072681272,
+          "informationPerAsk": 0.6707225850388263,
+          "avgActions": 99.275
+        }
+      ]
+    },
+    {
+      "name": "sample-10",
+      "config": {
+        "signalStrength": 0.619,
+        "hitWeight": 19.1,
+        "informationWeight": -0.8,
+        "setProgressWeight": 1.99,
+        "teamControlWeight": 1.75,
+        "targetEvidenceWeight": 1.6,
+        "continuationWeight": 2.28,
+        "completionWeight": 1.61,
+        "replyThreatWeight": 0.42,
+        "repeatSetWeight": 0.31,
+        "declarationThreshold": 0.928,
+        "trailingDeclarationDelta": -0.008,
+        "leadingDeclarationDelta": 0.031,
+        "allocationSlack": 0.038
+      },
+      "score": 0.66075,
+      "weightedWinRate": 0.66075,
+      "worstWinRate": 0.5375000000000001,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6499999999999999,
+          "avgScore": 4.8125,
+          "askAccuracy": 0.5594487835741124,
+          "declarationAccuracy": 0.9341948530430206,
+          "informationPerAsk": 0.6597095751399873,
+          "avgActions": 106.5625
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.625,
+          "avgScore": 5,
+          "askAccuracy": 0.5580720732314746,
+          "declarationAccuracy": 0.9505877058294064,
+          "informationPerAsk": 0.6487877121154826,
+          "avgActions": 109.8375
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5375000000000001,
+          "avgScore": 4.6875,
+          "askAccuracy": 0.5603224160288588,
+          "declarationAccuracy": 0.923494983277592,
+          "informationPerAsk": 0.6480585104105143,
+          "avgActions": 110.1
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8125,
+          "avgScore": 5.8125,
+          "askAccuracy": 0.6544028467210534,
+          "declarationAccuracy": 0.8983793517406963,
+          "informationPerAsk": 0.5766409549651736,
+          "avgActions": 115.3375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9,
+          "avgScore": 6.3125,
+          "askAccuracy": 0.5693592324640027,
+          "declarationAccuracy": 0.8700286068707122,
+          "informationPerAsk": 0.6875581432292531,
+          "avgActions": 95.875
+        }
+      ]
+    },
+    {
+      "name": "control-and-chain",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.659875,
+      "weightedWinRate": 0.659875,
+      "worstWinRate": 0.5375,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6125,
+          "avgScore": 4.8125,
+          "askAccuracy": 0.5339432266619217,
+          "declarationAccuracy": 0.969536525475752,
+          "informationPerAsk": 0.6575227115546635,
+          "avgActions": 110.61250000000001
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6,
+          "avgScore": 4.625,
+          "askAccuracy": 0.5159070451375289,
+          "declarationAccuracy": 0.9531297431849919,
+          "informationPerAsk": 0.6510093717037263,
+          "avgActions": 113.875
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5375,
+          "avgScore": 4.6875,
+          "askAccuracy": 0.5268898597845966,
+          "declarationAccuracy": 0.9719062713655293,
+          "informationPerAsk": 0.6487501251377261,
+          "avgActions": 113.61250000000001
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.9249999999999999,
+          "avgScore": 5.9875,
+          "askAccuracy": 0.633228955862347,
+          "declarationAccuracy": 0.9474907808241142,
+          "informationPerAsk": 0.5785475362198071,
+          "avgActions": 118.925
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9625,
+          "avgScore": 6.825,
+          "askAccuracy": 0.5565314825315305,
+          "declarationAccuracy": 0.9338235294117647,
+          "informationPerAsk": 0.6694920739953719,
+          "avgActions": 98.4
+        }
+      ]
+    },
+    {
+      "name": "sample-09",
+      "config": {
+        "signalStrength": 0.272,
+        "hitWeight": 18.3,
+        "informationWeight": 0.49,
+        "setProgressWeight": 4.28,
+        "teamControlWeight": 3.27,
+        "targetEvidenceWeight": 1.02,
+        "continuationWeight": 4.58,
+        "completionWeight": 0.38,
+        "replyThreatWeight": 3.5,
+        "repeatSetWeight": 0.04,
+        "declarationThreshold": 0.928,
+        "trailingDeclarationDelta": -0.003,
+        "leadingDeclarationDelta": 0.021,
+        "allocationSlack": 0.013
+      },
+      "score": 0.6497499999999999,
+      "weightedWinRate": 0.6497499999999999,
+      "worstWinRate": 0.5875,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6124999999999999,
+          "avgScore": 4.725,
+          "askAccuracy": 0.541018158236057,
+          "declarationAccuracy": 0.9330949656750572,
+          "informationPerAsk": 0.6505077115774327,
+          "avgActions": 109.7875
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5875,
+          "avgScore": 4.824999999999999,
+          "askAccuracy": 0.524754799246365,
+          "declarationAccuracy": 0.9541966984422228,
+          "informationPerAsk": 0.6572522890949413,
+          "avgActions": 112.2375
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.6125,
+          "avgScore": 4.7875,
+          "askAccuracy": 0.5428114949045449,
+          "declarationAccuracy": 0.9636160714285714,
+          "informationPerAsk": 0.6412991489361747,
+          "avgActions": 114.9375
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.775,
+          "avgScore": 5.875,
+          "askAccuracy": 0.634658275122024,
+          "declarationAccuracy": 0.9429051704150243,
+          "informationPerAsk": 0.5586953472517845,
+          "avgActions": 120.725
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9125,
+          "avgScore": 6.449999999999999,
+          "askAccuracy": 0.540982537490674,
+          "declarationAccuracy": 0.901996091568956,
+          "informationPerAsk": 0.6621442954958299,
+          "avgActions": 97.7125
+        }
+      ]
+    },
+    {
+      "name": "sample-01",
+      "config": {
+        "signalStrength": 0.256,
+        "hitWeight": 30.53,
+        "informationWeight": -0.11,
+        "setProgressWeight": 4.11,
+        "teamControlWeight": 3.03,
+        "targetEvidenceWeight": 1.65,
+        "continuationWeight": 0.51,
+        "completionWeight": 1.45,
+        "replyThreatWeight": 2.51,
+        "repeatSetWeight": -0.21,
+        "declarationThreshold": 0.971,
+        "trailingDeclarationDelta": -0.023,
+        "leadingDeclarationDelta": 0.002,
+        "allocationSlack": 0.008
+      },
+      "score": 0.6311249999999999,
+      "weightedWinRate": 0.6311249999999999,
+      "worstWinRate": 0.5125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5874999999999999,
+          "avgScore": 4.7125,
+          "askAccuracy": 0.5349601922409208,
+          "declarationAccuracy": 0.9432269752220663,
+          "informationPerAsk": 0.6481164358951584,
+          "avgActions": 114.0875
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.6000000000000001,
+          "avgScore": 4.7125,
+          "askAccuracy": 0.5153714271406722,
+          "declarationAccuracy": 0.9327113126380653,
+          "informationPerAsk": 0.6455412421938211,
+          "avgActions": 116.4625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5125,
+          "avgScore": 4.5875,
+          "askAccuracy": 0.5284671685405293,
+          "declarationAccuracy": 0.9546575298600659,
+          "informationPerAsk": 0.6496293815490994,
+          "avgActions": 117.1125
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.825,
+          "avgScore": 5.737500000000001,
+          "askAccuracy": 0.6274276399858159,
+          "declarationAccuracy": 0.9222222222222223,
+          "informationPerAsk": 0.5501143437605107,
+          "avgActions": 122.6375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.925,
+          "avgScore": 6.45,
+          "askAccuracy": 0.5469747485163035,
+          "declarationAccuracy": 0.891490543424245,
+          "informationPerAsk": 0.6523270860374812,
+          "avgActions": 100.7
+        }
+      ]
+    },
+    {
+      "name": "sample-12",
+      "config": {
+        "signalStrength": 0.315,
+        "hitWeight": 24.73,
+        "informationWeight": 0.17,
+        "setProgressWeight": 1.92,
+        "teamControlWeight": 1.06,
+        "targetEvidenceWeight": 2.17,
+        "continuationWeight": 1.62,
+        "completionWeight": 2.09,
+        "replyThreatWeight": 3.03,
+        "repeatSetWeight": 1.62,
+        "declarationThreshold": 0.954,
+        "trailingDeclarationDelta": -0.001,
+        "leadingDeclarationDelta": 0.008,
+        "allocationSlack": 0.031
+      },
+      "score": 0.6297499999999999,
+      "weightedWinRate": 0.6297499999999999,
+      "worstWinRate": 0.5,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6375,
+          "avgScore": 4.85,
+          "askAccuracy": 0.5464201400402202,
+          "declarationAccuracy": 0.9449073052306334,
+          "informationPerAsk": 0.6497005463330571,
+          "avgActions": 110.75
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5625,
+          "avgScore": 4.6,
+          "askAccuracy": 0.5261475646930557,
+          "declarationAccuracy": 0.9369595243814557,
+          "informationPerAsk": 0.6520299556826193,
+          "avgActions": 115.0625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5,
+          "avgScore": 4.699999999999999,
+          "askAccuracy": 0.5318343552192537,
+          "declarationAccuracy": 0.9428009679370841,
+          "informationPerAsk": 0.6470131214012518,
+          "avgActions": 114.6375
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.775,
+          "avgScore": 5.65,
+          "askAccuracy": 0.6296727948743777,
+          "declarationAccuracy": 0.9345529450155001,
+          "informationPerAsk": 0.5636217606608425,
+          "avgActions": 120.01249999999999
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9125,
+          "avgScore": 6.45,
+          "askAccuracy": 0.5557174307550923,
+          "declarationAccuracy": 0.8986742424242424,
+          "informationPerAsk": 0.6652755207533027,
+          "avgActions": 99.6
+        }
+      ]
+    },
+    {
+      "name": "sample-04",
+      "config": {
+        "signalStrength": 0.573,
+        "hitWeight": 23.05,
+        "informationWeight": 1.09,
+        "setProgressWeight": 3.61,
+        "teamControlWeight": 1.15,
+        "targetEvidenceWeight": 0.4,
+        "continuationWeight": 1.82,
+        "completionWeight": 3.2,
+        "replyThreatWeight": 0.07,
+        "repeatSetWeight": 1.5,
+        "declarationThreshold": 0.961,
+        "trailingDeclarationDelta": -0.012,
+        "leadingDeclarationDelta": 0.027,
+        "allocationSlack": 0.01
+      },
+      "score": 0.624375,
+      "weightedWinRate": 0.624375,
+      "worstWinRate": 0.5625,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5750000000000001,
+          "avgScore": 4.8,
+          "askAccuracy": 0.5353369847574274,
+          "declarationAccuracy": 0.96429438911829,
+          "informationPerAsk": 0.6532811552716782,
+          "avgActions": 110.975
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5625,
+          "avgScore": 4.737500000000001,
+          "askAccuracy": 0.5212457190489639,
+          "declarationAccuracy": 0.9644365150163545,
+          "informationPerAsk": 0.6551373319072997,
+          "avgActions": 113.675
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5625,
+          "avgScore": 4.6875,
+          "askAccuracy": 0.5212133741282836,
+          "declarationAccuracy": 0.9806169429097605,
+          "informationPerAsk": 0.657821369832954,
+          "avgActions": 113.7375
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.775,
+          "avgScore": 5.550000000000001,
+          "askAccuracy": 0.6300379344795843,
+          "declarationAccuracy": 0.9154486659678409,
+          "informationPerAsk": 0.5765742059200938,
+          "avgActions": 119.8
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9625,
+          "avgScore": 6.55,
+          "askAccuracy": 0.559330416086631,
+          "declarationAccuracy": 0.904054235467848,
+          "informationPerAsk": 0.6709904059960514,
+          "avgActions": 99.19999999999999
+        }
+      ]
+    },
+    {
+      "name": "sample-11",
+      "config": {
+        "signalStrength": 0.353,
+        "hitWeight": 23.04,
+        "informationWeight": 2.11,
+        "setProgressWeight": 2.07,
+        "teamControlWeight": 4.98,
+        "targetEvidenceWeight": 1.97,
+        "continuationWeight": 4.16,
+        "completionWeight": 2.2,
+        "replyThreatWeight": 3.6,
+        "repeatSetWeight": 0.51,
+        "declarationThreshold": 0.966,
+        "trailingDeclarationDelta": -0.005,
+        "leadingDeclarationDelta": 0.027,
+        "allocationSlack": 0.034
+      },
+      "score": 0.6227499999999999,
+      "weightedWinRate": 0.6327499999999999,
+      "worstWinRate": 0.45000000000000007,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6875,
+          "avgScore": 4.925,
+          "askAccuracy": 0.5321895996464208,
+          "declarationAccuracy": 0.9509366281387006,
+          "informationPerAsk": 0.6610908650622971,
+          "avgActions": 109.44999999999999
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5125,
+          "avgScore": 4.55,
+          "askAccuracy": 0.5183989152895403,
+          "declarationAccuracy": 0.9416988416988417,
+          "informationPerAsk": 0.6517522853756775,
+          "avgActions": 113.92500000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.45000000000000007,
+          "avgScore": 4.525,
+          "askAccuracy": 0.5260873211750379,
+          "declarationAccuracy": 0.9470037453183521,
+          "informationPerAsk": 0.6461203968728021,
+          "avgActions": 115.5875
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.825,
+          "avgScore": 5.675,
+          "askAccuracy": 0.6252085456021532,
+          "declarationAccuracy": 0.9240213664992426,
+          "informationPerAsk": 0.5730617877461557,
+          "avgActions": 119.675
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.6125,
+          "askAccuracy": 0.5516450495898071,
+          "declarationAccuracy": 0.9125103127578189,
+          "informationPerAsk": 0.6631958209397374,
+          "avgActions": 99.5375
+        }
+      ]
+    },
+    {
+      "name": "sample-17",
+      "config": {
+        "signalStrength": 0.489,
+        "hitWeight": 18.89,
+        "informationWeight": 0.7,
+        "setProgressWeight": 4.79,
+        "teamControlWeight": 4.46,
+        "targetEvidenceWeight": 0.82,
+        "continuationWeight": 4.21,
+        "completionWeight": 1.03,
+        "replyThreatWeight": 2.03,
+        "repeatSetWeight": 0.64,
+        "declarationThreshold": 0.968,
+        "trailingDeclarationDelta": -0.015,
+        "leadingDeclarationDelta": 0.014,
+        "allocationSlack": 0.046
+      },
+      "score": 0.6203750000000001,
+      "weightedWinRate": 0.6203750000000001,
+      "worstWinRate": 0.5375,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5375000000000001,
+          "avgScore": 4.737500000000001,
+          "askAccuracy": 0.5356688031890903,
+          "declarationAccuracy": 0.9694151778897542,
+          "informationPerAsk": 0.6584805479404905,
+          "avgActions": 109.725
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.575,
+          "avgScore": 4.75,
+          "askAccuracy": 0.5217969656555564,
+          "declarationAccuracy": 0.9490506144795853,
+          "informationPerAsk": 0.6494612848597597,
+          "avgActions": 112.875
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5375,
+          "avgScore": 4.675,
+          "askAccuracy": 0.5381172796507319,
+          "declarationAccuracy": 0.9587154570300638,
+          "informationPerAsk": 0.6457025453670948,
+          "avgActions": 113.8375
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.875,
+          "avgScore": 5.975,
+          "askAccuracy": 0.637195147873652,
+          "declarationAccuracy": 0.9191143400795709,
+          "informationPerAsk": 0.5737703745878844,
+          "avgActions": 119.0375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9500000000000001,
+          "avgScore": 6.699999999999999,
+          "askAccuracy": 0.5450927898860715,
+          "declarationAccuracy": 0.9157093765341188,
+          "informationPerAsk": 0.6806133339360626,
+          "avgActions": 97.4
+        }
+      ]
+    },
+    {
+      "name": "sample-18",
+      "config": {
+        "signalStrength": 0.556,
+        "hitWeight": 18.92,
+        "informationWeight": -0.48,
+        "setProgressWeight": 4.8,
+        "teamControlWeight": 1.16,
+        "targetEvidenceWeight": 0.53,
+        "continuationWeight": 1.28,
+        "completionWeight": 1.03,
+        "replyThreatWeight": 2.25,
+        "repeatSetWeight": 1.48,
+        "declarationThreshold": 0.934,
+        "trailingDeclarationDelta": -0.017,
+        "leadingDeclarationDelta": 0.027,
+        "allocationSlack": 0.049
+      },
+      "score": 0.619375,
+      "weightedWinRate": 0.619375,
+      "worstWinRate": 0.525,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5875,
+          "avgScore": 4.675,
+          "askAccuracy": 0.5511343528646699,
+          "declarationAccuracy": 0.9319073083778966,
+          "informationPerAsk": 0.6550528999512097,
+          "avgActions": 107.69999999999999
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.525,
+          "avgScore": 4.65,
+          "askAccuracy": 0.5402914198917412,
+          "declarationAccuracy": 0.9210176255404057,
+          "informationPerAsk": 0.6567377396022587,
+          "avgActions": 110.55
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.55,
+          "avgScore": 4.824999999999999,
+          "askAccuracy": 0.5567693946191036,
+          "declarationAccuracy": 0.9370614035087719,
+          "informationPerAsk": 0.6518067356910633,
+          "avgActions": 110.01249999999999
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8125,
+          "avgScore": 5.875,
+          "askAccuracy": 0.6439025023479266,
+          "declarationAccuracy": 0.911137522392173,
+          "informationPerAsk": 0.5770079303571476,
+          "avgActions": 115.7375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.575,
+          "askAccuracy": 0.5659769156036158,
+          "declarationAccuracy": 0.8873329402515724,
+          "informationPerAsk": 0.6723087593250505,
+          "avgActions": 97.4375
+        }
+      ]
+    },
+    {
+      "name": "sample-15",
+      "config": {
+        "signalStrength": 0.478,
+        "hitWeight": 23.67,
+        "informationWeight": 0.3,
+        "setProgressWeight": 3.86,
+        "teamControlWeight": 1.71,
+        "targetEvidenceWeight": 1.44,
+        "continuationWeight": 3.93,
+        "completionWeight": 1.55,
+        "replyThreatWeight": 0.29,
+        "repeatSetWeight": 1.29,
+        "declarationThreshold": 0.964,
+        "trailingDeclarationDelta": -0.029,
+        "leadingDeclarationDelta": 0.011,
+        "allocationSlack": 0.006
+      },
+      "score": 0.617125,
+      "weightedWinRate": 0.619625,
+      "worstWinRate": 0.48750000000000004,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5875,
+          "avgScore": 4.800000000000001,
+          "askAccuracy": 0.5352594435113165,
+          "declarationAccuracy": 0.9564516129032259,
+          "informationPerAsk": 0.6559185594677859,
+          "avgActions": 109.35
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5499999999999999,
+          "avgScore": 4.550000000000001,
+          "askAccuracy": 0.5176348586309524,
+          "declarationAccuracy": 0.9576098059244127,
+          "informationPerAsk": 0.6557916474823899,
+          "avgActions": 113.65
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.48750000000000004,
+          "avgScore": 4.5375,
+          "askAccuracy": 0.5287564242073082,
+          "declarationAccuracy": 0.9713949458955833,
+          "informationPerAsk": 0.6520211952433635,
+          "avgActions": 113.3125
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.875,
+          "avgScore": 5.7125,
+          "askAccuracy": 0.6323802378201637,
+          "declarationAccuracy": 0.9282142311803329,
+          "informationPerAsk": 0.5737599005295075,
+          "avgActions": 118.475
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9249999999999999,
+          "avgScore": 6.5,
+          "askAccuracy": 0.5513741976176751,
+          "declarationAccuracy": 0.88835391412711,
+          "informationPerAsk": 0.6757344811673528,
+          "avgActions": 97.8
+        }
+      ]
+    },
+    {
+      "name": "posterior-greedy",
+      "config": {
+        "signalStrength": 0.453,
+        "hitWeight": 28,
+        "informationWeight": 0,
+        "setProgressWeight": 1,
+        "teamControlWeight": 1,
+        "targetEvidenceWeight": 1.4,
+        "continuationWeight": 1,
+        "completionWeight": 2.5,
+        "replyThreatWeight": 0.5,
+        "repeatSetWeight": 0.2,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.615375,
+      "weightedWinRate": 0.615375,
+      "worstWinRate": 0.5375000000000001,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5375000000000001,
+          "avgScore": 4.4125,
+          "askAccuracy": 0.5415667367687319,
+          "declarationAccuracy": 0.9313693646875405,
+          "informationPerAsk": 0.6552525468860373,
+          "avgActions": 109.4875
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.575,
+          "avgScore": 4.6125,
+          "askAccuracy": 0.5176886792452831,
+          "declarationAccuracy": 0.9446405549757505,
+          "informationPerAsk": 0.6441780323102875,
+          "avgActions": 115.475
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5625,
+          "avgScore": 4.6625,
+          "askAccuracy": 0.5358989362871146,
+          "declarationAccuracy": 0.9696955503512881,
+          "informationPerAsk": 0.6462591182796769,
+          "avgActions": 114.125
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.7999999999999999,
+          "avgScore": 5.6125,
+          "askAccuracy": 0.6355672651428657,
+          "declarationAccuracy": 0.9356701726282064,
+          "informationPerAsk": 0.5682598695388157,
+          "avgActions": 119.5375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.550000000000001,
+          "askAccuracy": 0.5627733698617139,
+          "declarationAccuracy": 0.9044802867383512,
+          "informationPerAsk": 0.6678565661146294,
+          "avgActions": 99.2
+        }
+      ]
+    },
+    {
+      "name": "sample-02",
+      "config": {
+        "signalStrength": 0.557,
+        "hitWeight": 20.86,
+        "informationWeight": 2.47,
+        "setProgressWeight": 0.15,
+        "teamControlWeight": 2.88,
+        "targetEvidenceWeight": 0.94,
+        "continuationWeight": 1.17,
+        "completionWeight": 0.21,
+        "replyThreatWeight": 1.99,
+        "repeatSetWeight": -0.07,
+        "declarationThreshold": 0.937,
+        "trailingDeclarationDelta": -0.02,
+        "leadingDeclarationDelta": 0.006,
+        "allocationSlack": 0.037
+      },
+      "score": 0.6128750000000001,
+      "weightedWinRate": 0.615375,
+      "worstWinRate": 0.48750000000000004,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.6,
+          "avgScore": 4.725,
+          "askAccuracy": 0.5587188612099644,
+          "declarationAccuracy": 0.9436402743866992,
+          "informationPerAsk": 0.6526419641074575,
+          "avgActions": 106.95
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.48750000000000004,
+          "avgScore": 4.5375,
+          "askAccuracy": 0.5509332132650995,
+          "declarationAccuracy": 0.9290009818360334,
+          "informationPerAsk": 0.6496679494244217,
+          "avgActions": 110.80000000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.6125,
+          "avgScore": 4.8,
+          "askAccuracy": 0.561225410318645,
+          "declarationAccuracy": 0.9444444444444444,
+          "informationPerAsk": 0.6453212249898792,
+          "avgActions": 110.85
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.75,
+          "avgScore": 5.4875,
+          "askAccuracy": 0.6611644774505624,
+          "declarationAccuracy": 0.8958142551892552,
+          "informationPerAsk": 0.5710980890463202,
+          "avgActions": 115.8375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.8875,
+          "avgScore": 6.199999999999999,
+          "askAccuracy": 0.5719022481768623,
+          "declarationAccuracy": 0.8606410256410256,
+          "informationPerAsk": 0.6695973577617923,
+          "avgActions": 99.2125
+        }
+      ]
+    },
+    {
+      "name": "sample-05",
+      "config": {
+        "signalStrength": 0.466,
+        "hitWeight": 23.17,
+        "informationWeight": 2.28,
+        "setProgressWeight": 3.28,
+        "teamControlWeight": 2.77,
+        "targetEvidenceWeight": 0.02,
+        "continuationWeight": 2.61,
+        "completionWeight": 0.21,
+        "replyThreatWeight": 0.68,
+        "repeatSetWeight": 1.62,
+        "declarationThreshold": 0.938,
+        "trailingDeclarationDelta": -0.024,
+        "leadingDeclarationDelta": 0.034,
+        "allocationSlack": 0.047
+      },
+      "score": 0.6107499999999999,
+      "weightedWinRate": 0.6107499999999999,
+      "worstWinRate": 0.5375000000000001,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5375000000000001,
+          "avgScore": 4.625,
+          "askAccuracy": 0.5578031338230409,
+          "declarationAccuracy": 0.9120218579234973,
+          "informationPerAsk": 0.655677519260061,
+          "avgActions": 106.75
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5625,
+          "avgScore": 4.7875,
+          "askAccuracy": 0.5404404704282375,
+          "declarationAccuracy": 0.9230834177642688,
+          "informationPerAsk": 0.6560864543190972,
+          "avgActions": 109.35
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5625,
+          "avgScore": 4.725,
+          "askAccuracy": 0.546676247553816,
+          "declarationAccuracy": 0.9460445245291793,
+          "informationPerAsk": 0.6484375825335744,
+          "avgActions": 111.025
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8125,
+          "avgScore": 5.699999999999999,
+          "askAccuracy": 0.6434678899768573,
+          "declarationAccuracy": 0.9101851851851852,
+          "informationPerAsk": 0.5634818105198725,
+          "avgActions": 120.76249999999999
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9,
+          "avgScore": 6.625,
+          "askAccuracy": 0.5582099205725546,
+          "declarationAccuracy": 0.87473604826546,
+          "informationPerAsk": 0.6763557571514978,
+          "avgActions": 96.3125
+        }
+      ]
+    },
+    {
+      "name": "sample-06",
+      "config": {
+        "signalStrength": 0.32,
+        "hitWeight": 30.27,
+        "informationWeight": 0.91,
+        "setProgressWeight": 1.89,
+        "teamControlWeight": 0.68,
+        "targetEvidenceWeight": 1.27,
+        "continuationWeight": 3.43,
+        "completionWeight": 3.18,
+        "replyThreatWeight": 2.62,
+        "repeatSetWeight": 1.33,
+        "declarationThreshold": 0.965,
+        "trailingDeclarationDelta": -0.025,
+        "leadingDeclarationDelta": 0.014,
+        "allocationSlack": 0.025
+      },
+      "score": 0.598625,
+      "weightedWinRate": 0.603625,
+      "worstWinRate": 0.47500000000000003,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.55,
+          "avgScore": 4.6875,
+          "askAccuracy": 0.5351316707516021,
+          "declarationAccuracy": 0.9311855670103093,
+          "informationPerAsk": 0.6512563809162061,
+          "avgActions": 112.7
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5625,
+          "avgScore": 4.65,
+          "askAccuracy": 0.5184672050035227,
+          "declarationAccuracy": 0.9369633099141297,
+          "informationPerAsk": 0.6499590599112121,
+          "avgActions": 115.325
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.47500000000000003,
+          "avgScore": 4.425000000000001,
+          "askAccuracy": 0.5353390614788791,
+          "declarationAccuracy": 0.929889896373057,
+          "informationPerAsk": 0.6432660305127553,
+          "avgActions": 115.525
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8125,
+          "avgScore": 5.65,
+          "askAccuracy": 0.6322494925827941,
+          "declarationAccuracy": 0.9245582688108,
+          "informationPerAsk": 0.5616302920070045,
+          "avgActions": 120.3125
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.975,
+          "avgScore": 6.5875,
+          "askAccuracy": 0.5527790934617638,
+          "declarationAccuracy": 0.9019008019008019,
+          "informationPerAsk": 0.6602877041934763,
+          "avgActions": 99.425
+        }
+      ]
+    },
+    {
+      "name": "sample-03",
+      "config": {
+        "signalStrength": 0.228,
+        "hitWeight": 20.93,
+        "informationWeight": 1.9,
+        "setProgressWeight": 2.91,
+        "teamControlWeight": 1.41,
+        "targetEvidenceWeight": 0.85,
+        "continuationWeight": 0.29,
+        "completionWeight": 1.47,
+        "replyThreatWeight": 3.25,
+        "repeatSetWeight": 0.44,
+        "declarationThreshold": 0.975,
+        "trailingDeclarationDelta": -0.029,
+        "leadingDeclarationDelta": 0.027,
+        "allocationSlack": 0.054
+      },
+      "score": 0.5695000000000001,
+      "weightedWinRate": 0.5720000000000001,
+      "worstWinRate": 0.4875,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5125000000000001,
+          "avgScore": 4.725,
+          "askAccuracy": 0.5283461132097838,
+          "declarationAccuracy": 0.927673950546291,
+          "informationPerAsk": 0.6434577309706726,
+          "avgActions": 114.1625
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5125,
+          "avgScore": 4.550000000000001,
+          "askAccuracy": 0.504736302355707,
+          "declarationAccuracy": 0.9455065037445802,
+          "informationPerAsk": 0.6399557911560645,
+          "avgActions": 118.45
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.4875,
+          "avgScore": 4.5,
+          "askAccuracy": 0.519461984900658,
+          "declarationAccuracy": 0.9456260032102729,
+          "informationPerAsk": 0.6520003626850177,
+          "avgActions": 118.225
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.775,
+          "avgScore": 5.6,
+          "askAccuracy": 0.6358206706086891,
+          "declarationAccuracy": 0.9051714051714053,
+          "informationPerAsk": 0.5464882946060032,
+          "avgActions": 124.61250000000001
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.925,
+          "avgScore": 6.525,
+          "askAccuracy": 0.5472906008396614,
+          "declarationAccuracy": 0.882710361112711,
+          "informationPerAsk": 0.6516891032915066,
+          "avgActions": 100.15
+        }
+      ]
+    },
+    {
+      "name": "sample-08",
+      "config": {
+        "signalStrength": 0.356,
+        "hitWeight": 23.11,
+        "informationWeight": 0.01,
+        "setProgressWeight": 1.93,
+        "teamControlWeight": 2.17,
+        "targetEvidenceWeight": 1.92,
+        "continuationWeight": 4.58,
+        "completionWeight": 2.22,
+        "replyThreatWeight": 0.8,
+        "repeatSetWeight": -0.71,
+        "declarationThreshold": 0.934,
+        "trailingDeclarationDelta": -0.006,
+        "leadingDeclarationDelta": 0.002,
+        "allocationSlack": 0.052
+      },
+      "score": 0.559875,
+      "weightedWinRate": 0.577375,
+      "worstWinRate": 0.41250000000000003,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.525,
+          "avgScore": 4.55,
+          "askAccuracy": 0.5514403866243835,
+          "declarationAccuracy": 0.9022220173335792,
+          "informationPerAsk": 0.6545118065479723,
+          "avgActions": 107.9375
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5625,
+          "avgScore": 4.574999999999999,
+          "askAccuracy": 0.5487746191225147,
+          "declarationAccuracy": 0.9285081691861352,
+          "informationPerAsk": 0.6482809430882053,
+          "avgActions": 112.6625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.41250000000000003,
+          "avgScore": 4.4625,
+          "askAccuracy": 0.5554389970376347,
+          "declarationAccuracy": 0.9198249385749386,
+          "informationPerAsk": 0.6397432286774458,
+          "avgActions": 113.5
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8375,
+          "avgScore": 5.824999999999999,
+          "askAccuracy": 0.6504587540986466,
+          "declarationAccuracy": 0.8981215801414654,
+          "informationPerAsk": 0.5620428358078772,
+          "avgActions": 117.3125
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.875,
+          "avgScore": 6.237500000000001,
+          "askAccuracy": 0.5656864524939043,
+          "declarationAccuracy": 0.8648241064381554,
+          "informationPerAsk": 0.6604504636663902,
+          "avgActions": 97.7125
+        }
+      ]
+    },
+    {
+      "name": "sample-07",
+      "config": {
+        "signalStrength": 0.186,
+        "hitWeight": 29.86,
+        "informationWeight": 0,
+        "setProgressWeight": 3.5,
+        "teamControlWeight": 3.34,
+        "targetEvidenceWeight": 1.63,
+        "continuationWeight": 1.86,
+        "completionWeight": 1.61,
+        "replyThreatWeight": 2.19,
+        "repeatSetWeight": 1.09,
+        "declarationThreshold": 0.95,
+        "trailingDeclarationDelta": -0.017,
+        "leadingDeclarationDelta": 0.02,
+        "allocationSlack": 0.053
+      },
+      "score": 0.533,
+      "weightedWinRate": 0.5455,
+      "worstWinRate": 0.4375,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.5125,
+          "avgScore": 4.475,
+          "askAccuracy": 0.5155177993527508,
+          "declarationAccuracy": 0.9245202976112779,
+          "informationPerAsk": 0.6507661370817143,
+          "avgActions": 114.1875
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.4625,
+          "avgScore": 4.55,
+          "askAccuracy": 0.504310552572705,
+          "declarationAccuracy": 0.9389822134387352,
+          "informationPerAsk": 0.6594381043489872,
+          "avgActions": 116.4
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.4375,
+          "avgScore": 4.4,
+          "askAccuracy": 0.5072013191997262,
+          "declarationAccuracy": 0.9146788030968822,
+          "informationPerAsk": 0.6553609194977003,
+          "avgActions": 117.4625
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.75,
+          "avgScore": 5.65,
+          "askAccuracy": 0.6402768440399915,
+          "declarationAccuracy": 0.9080430033344831,
+          "informationPerAsk": 0.5400905951547945,
+          "avgActions": 125.3125
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9125,
+          "avgScore": 6.4125,
+          "askAccuracy": 0.5438333880283638,
+          "declarationAccuracy": 0.8660239361702128,
+          "informationPerAsk": 0.6527054530274394,
+          "avgActions": 97.975
+        }
+      ]
+    },
+    {
+      "name": "sample-13",
+      "config": {
+        "signalStrength": 0.229,
+        "hitWeight": 28.6,
+        "informationWeight": 0.18,
+        "setProgressWeight": 4.72,
+        "teamControlWeight": 2.29,
+        "targetEvidenceWeight": 0.44,
+        "continuationWeight": 1.57,
+        "completionWeight": 4.55,
+        "replyThreatWeight": 1.38,
+        "repeatSetWeight": 0.86,
+        "declarationThreshold": 0.949,
+        "trailingDeclarationDelta": -0.027,
+        "leadingDeclarationDelta": 0.023,
+        "allocationSlack": 0.042
+      },
+      "score": 0.509125,
+      "weightedWinRate": 0.5391250000000001,
+      "worstWinRate": 0.35,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.48750000000000004,
+          "avgScore": 4.4,
+          "askAccuracy": 0.5230251737665619,
+          "declarationAccuracy": 0.9252014352259852,
+          "informationPerAsk": 0.6570733207398158,
+          "avgActions": 111.925
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.5,
+          "avgScore": 4.75,
+          "askAccuracy": 0.5146362249932717,
+          "declarationAccuracy": 0.9395469758546497,
+          "informationPerAsk": 0.6473723358773529,
+          "avgActions": 117.55000000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.35,
+          "avgScore": 4.325,
+          "askAccuracy": 0.514844749822944,
+          "declarationAccuracy": 0.9247835497835497,
+          "informationPerAsk": 0.6600936989230972,
+          "avgActions": 116.92500000000001
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.8125,
+          "avgScore": 5.675,
+          "askAccuracy": 0.632493452403588,
+          "declarationAccuracy": 0.914572559793148,
+          "informationPerAsk": 0.548785683732083,
+          "avgActions": 122.5
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9500000000000001,
+          "avgScore": 6.362500000000001,
+          "askAccuracy": 0.5415786539086785,
+          "declarationAccuracy": 0.8609258748966657,
+          "informationPerAsk": 0.6513609284357529,
+          "avgActions": 98.85
+        }
+      ]
+    },
+    {
+      "name": "sample-14",
+      "config": {
+        "signalStrength": 0.26,
+        "hitWeight": 18.44,
+        "informationWeight": 3.33,
+        "setProgressWeight": 1.32,
+        "teamControlWeight": 0.2,
+        "targetEvidenceWeight": 0.58,
+        "continuationWeight": 3.46,
+        "completionWeight": 0.38,
+        "replyThreatWeight": 3.64,
+        "repeatSetWeight": 0.41,
+        "declarationThreshold": 0.964,
+        "trailingDeclarationDelta": -0.008,
+        "leadingDeclarationDelta": 0.029,
+        "allocationSlack": 0.025
+      },
+      "score": 0.49862499999999993,
+      "weightedWinRate": 0.516125,
+      "worstWinRate": 0.4125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.4125,
+          "avgScore": 4.2875,
+          "askAccuracy": 0.52852083379083,
+          "declarationAccuracy": 0.9320378151260504,
+          "informationPerAsk": 0.6567569067267212,
+          "avgActions": 112.26249999999999
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.42499999999999993,
+          "avgScore": 4.2875,
+          "askAccuracy": 0.5115081431292553,
+          "declarationAccuracy": 0.9343990590248075,
+          "informationPerAsk": 0.6475851918445195,
+          "avgActions": 117.9625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5,
+          "avgScore": 4.5375,
+          "askAccuracy": 0.5300844922574781,
+          "declarationAccuracy": 0.9222714458316552,
+          "informationPerAsk": 0.64138500028126,
+          "avgActions": 118.325
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.7625000000000001,
+          "avgScore": 5.7,
+          "askAccuracy": 0.6355193283781817,
+          "declarationAccuracy": 0.9275576946809824,
+          "informationPerAsk": 0.5461836629973951,
+          "avgActions": 122.9875
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9249999999999999,
+          "avgScore": 6.425000000000001,
+          "askAccuracy": 0.5517087207479043,
+          "declarationAccuracy": 0.8817293042153378,
+          "informationPerAsk": 0.6484142940963603,
+          "avgActions": 99.325
+        }
+      ]
+    },
+    {
+      "name": "sample-19",
+      "config": {
+        "signalStrength": 0.189,
+        "hitWeight": 25.58,
+        "informationWeight": 3,
+        "setProgressWeight": 0.57,
+        "teamControlWeight": 2.96,
+        "targetEvidenceWeight": 0.19,
+        "continuationWeight": 3.52,
+        "completionWeight": 4.98,
+        "replyThreatWeight": 2.45,
+        "repeatSetWeight": 0.68,
+        "declarationThreshold": 0.942,
+        "trailingDeclarationDelta": -0.017,
+        "leadingDeclarationDelta": 0.008,
+        "allocationSlack": 0.013
+      },
+      "score": 0.48962499999999987,
+      "weightedWinRate": 0.5146249999999999,
+      "worstWinRate": 0.375,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.375,
+          "avgScore": 4.0625,
+          "askAccuracy": 0.5023147338850056,
+          "declarationAccuracy": 0.9240075311460962,
+          "informationPerAsk": 0.6624300867021798,
+          "avgActions": 113.575
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.4375,
+          "avgScore": 4.175,
+          "askAccuracy": 0.49736248552887796,
+          "declarationAccuracy": 0.9332148203592814,
+          "informationPerAsk": 0.6565415552213218,
+          "avgActions": 118.32499999999999
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.5375,
+          "avgScore": 4.475,
+          "askAccuracy": 0.5159273303619801,
+          "declarationAccuracy": 0.942717963305362,
+          "informationPerAsk": 0.6464957286342307,
+          "avgActions": 118.375
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.7625,
+          "avgScore": 5.387499999999999,
+          "askAccuracy": 0.6359496984496984,
+          "declarationAccuracy": 0.9126537859890923,
+          "informationPerAsk": 0.5395504814002121,
+          "avgActions": 124.6375
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.449999999999999,
+          "askAccuracy": 0.5420806462937153,
+          "declarationAccuracy": 0.8935275946058338,
+          "informationPerAsk": 0.6516233246133822,
+          "avgActions": 99.1875
+        }
+      ]
+    },
+    {
+      "name": "sample-20",
+      "config": {
+        "signalStrength": 0.166,
+        "hitWeight": 23.6,
+        "informationWeight": 1.3,
+        "setProgressWeight": 0.49,
+        "teamControlWeight": 1.18,
+        "targetEvidenceWeight": 0.14,
+        "continuationWeight": 1.63,
+        "completionWeight": 1.52,
+        "replyThreatWeight": 2.35,
+        "repeatSetWeight": 1.5,
+        "declarationThreshold": 0.971,
+        "trailingDeclarationDelta": -0.02,
+        "leadingDeclarationDelta": 0.019,
+        "allocationSlack": 0.047
+      },
+      "score": 0.4235,
+      "weightedWinRate": 0.461,
+      "worstWinRate": 0.3125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "winRate": 0.3125,
+          "avgScore": 3.9875,
+          "askAccuracy": 0.5125770183573652,
+          "declarationAccuracy": 0.9150326797385621,
+          "informationPerAsk": 0.6479141992547192,
+          "avgActions": 116.6
+        },
+        {
+          "opponent": "lockout",
+          "winRate": 0.36249999999999993,
+          "avgScore": 4.025,
+          "askAccuracy": 0.48845106797874316,
+          "declarationAccuracy": 0.9046621267679413,
+          "informationPerAsk": 0.6514018443731399,
+          "avgActions": 121.35
+        },
+        {
+          "opponent": "fishbot_v02",
+          "winRate": 0.48750000000000004,
+          "avgScore": 4.4375,
+          "askAccuracy": 0.5138456715499323,
+          "declarationAccuracy": 0.9414103368905629,
+          "informationPerAsk": 0.6426943312718001,
+          "avgActions": 119.1875
+        },
+        {
+          "opponent": "diversifier",
+          "winRate": 0.7374999999999999,
+          "avgScore": 5.25,
+          "askAccuracy": 0.6343755401326898,
+          "declarationAccuracy": 0.8657911595131326,
+          "informationPerAsk": 0.5350020599660845,
+          "avgActions": 125.975
+        },
+        {
+          "opponent": "hunter",
+          "winRate": 0.9375,
+          "avgScore": 6.300000000000001,
+          "askAccuracy": 0.5330693607140575,
+          "declarationAccuracy": 0.879568553543784,
+          "informationPerAsk": 0.6488027797120557,
+          "avgActions": 101.0375
+        }
+      ]
+    }
+  ]
+}

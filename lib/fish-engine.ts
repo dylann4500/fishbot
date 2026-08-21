@@ -1,5 +1,5 @@
 export type Team = 0 | 1;
-export type StrategyId = "fishbot" | "hunter" | "diversifier" | "detective" | "bluffer" | "random";
+export type StrategyId = "fishbot" | "fishbot_v02" | "lockout" | "hunter" | "diversifier" | "detective" | "bluffer" | "random";
 
 export type Strategy = {
   id: StrategyId;
@@ -12,7 +12,9 @@ export type Strategy = {
 };
 
 export const STRATEGIES: Record<StrategyId, Strategy> = {
-  fishbot: { id: "fishbot", name: "FishBot v0.2", short: "FishBot", description: "One-ply belief search maximizing expected card, information, set, and turn value.", icon: "ƒ", declarationThreshold: .96, risk: .02 },
+  fishbot: { id: "fishbot", name: "FishBot v0.3", short: "Fish v0.3", description: "Count-conditioned belief search with empirically tuned transfer, continuation, control, and reply values.", icon: "ƒ", declarationThreshold: .963, risk: .02 },
+  fishbot_v02: { id: "fishbot_v02", name: "FishBot v0.2 (legacy)", short: "Fish v0.2", description: "Original one-ply utility policy retained as a frozen development baseline.", icon: "ƒ", declarationThreshold: .96, risk: .02 },
+  lockout: { id: "lockout", name: "Turn-starvation specialist", short: "Lockout", description: "Posterior-greedy asking with an explicit penalty for missing into a dangerous opponent.", icon: "⊘", declarationThreshold: .94, risk: .04 },
   hunter: { id: "hunter", name: "Focused hunter", short: "Focus", description: "Builds momentum in one half-suit and keeps pressing it.", icon: "◎", declarationThreshold: .82, risk: .16 },
   diversifier: { id: "diversifier", name: "Adaptive diversifier", short: "Diversify", description: "Switches half-suits to preserve options and spread information.", icon: "↝", declarationThreshold: .88, risk: .12 },
   detective: { id: "detective", name: "Bayesian detective", short: "Infer", description: "Targets the card-location hypothesis with the best posterior odds.", icon: "⌁", declarationThreshold: .92, risk: .06 },
@@ -31,12 +33,28 @@ export type PolicyTechnical = {
 
 export const POLICY_TECHNICAL: Record<StrategyId, PolicyTechnical> = {
   fishbot: {
-    class: "Deterministic one-ply belief search",
-    objective: "Maximize expected utility over every legal card–target pair, then subtract the strongest estimated reply after a miss.",
-    askFormula: "13·P(hit) + 4.5·binary entropy + 3.2·set progress + 1.6·target evidence + 2.2·turn retention − 3.8·P(miss)·reply threat",
-    reactsToAsk: "Every public ask increments asker/half-suit evidence. A failed ask also exposes the next actor; FishBot recomputes all card posteriors and their best reply from that new public history.",
-    declarationRule: "Declare only when geometric mean team ownership and exact teammate-allocation confidence clear a dynamic 94–97% threshold.",
-    limitations: "First search-based computer, not solved play: one-ply search, approximate posteriors, and no teammate convention learning or equilibrium guarantee.",
+    class: "Tuned count-conditioned belief search",
+    objective: "Maximize held-out win performance using only the private hand and public history, balancing immediate transfer, continuation, team control, information, and public reply risk.",
+    askFormula: "22·P(hit) + 2.5·progress + 4·team control + .5·target evidence + 4·P(hit)·continuation + 4·P(hit)·completion + .5·repeat − P(miss)·reply risk",
+    reactsToAsk: "Conditions card-location beliefs on exclusions, public transfers, current hand counts, and ask history. It never inspects another player's hidden cards when estimating a reply.",
+    declarationRule: "Uses separately tuned thresholds for exact allocation and team ownership, with score-aware caution and an endgame escape rule.",
+    limitations: "Empirically robust in the tested simulator population, not a proof of equilibrium: beliefs are approximate and conventions, collusion, and expert human adaptations are not modeled.",
+  },
+  fishbot_v02: {
+    class: "Legacy deterministic one-ply search",
+    objective: "Maximize the original hand-built expected utility over each legal card–target pair.",
+    askFormula: "15.2·P(hit) + 4.5·binary entropy + 3.2·set progress + 1.6·target evidence − 3.8·P(miss)·reply threat",
+    reactsToAsk: "Adds public asker/half-suit evidence to an approximate card posterior.",
+    declarationRule: "Uses the original dynamic 94–97% combined-confidence threshold.",
+    limitations: "Frozen comparison baseline; its original reply-risk feature was not information-safe and is replaced by a public-history estimate in this implementation.",
+  },
+  lockout: {
+    class: "External-strategy challenger",
+    objective: "Convert likely asks while blackballing opponents whose public card concentration and ask history make control unusually dangerous.",
+    askFormula: "21·P(hit) + target evidence + set progress − 8·P(miss)·dangerous-target score",
+    reactsToAsk: "Uses public transfers, hand counts, exclusions, and half-suit activity to identify opponents who should not receive the turn.",
+    declarationRule: "Declares conservatively above 94% modeled team/allocation confidence.",
+    limitations: "Operationalizes blackballing from published human strategy notes, but cannot reproduce tacit team coordination or deeper multi-turn lockout plans.",
   },
   hunter: {
     class: "Weighted heuristic",
@@ -123,6 +141,43 @@ export type GameOptions = {
   declarations: boolean;
   detailed?: boolean;
   maxActions?: number;
+  fishbotConfig?: Partial<FishBotConfig>;
+};
+
+export type FishBotConfig = {
+  useCountConditioning: boolean;
+  signalStrength: number;
+  hitWeight: number;
+  informationWeight: number;
+  setProgressWeight: number;
+  teamControlWeight: number;
+  targetEvidenceWeight: number;
+  continuationWeight: number;
+  completionWeight: number;
+  replyThreatWeight: number;
+  repeatSetWeight: number;
+  declarationThreshold: number;
+  trailingDeclarationDelta: number;
+  leadingDeclarationDelta: number;
+  allocationSlack: number;
+};
+
+export const DEFAULT_FISHBOT_CONFIG: FishBotConfig = {
+  useCountConditioning: true,
+  signalStrength: .453,
+  hitWeight: 22,
+  informationWeight: 0,
+  setProgressWeight: 2.5,
+  teamControlWeight: 4,
+  targetEvidenceWeight: .5,
+  continuationWeight: 4,
+  completionWeight: 4,
+  replyThreatWeight: 1,
+  repeatSetWeight: .5,
+  declarationThreshold: .963,
+  trailingDeclarationDelta: -.016,
+  leadingDeclarationDelta: .005,
+  allocationSlack: .008,
 };
 
 export type GameAction = {
@@ -149,7 +204,10 @@ export type DecisionFeatures = {
   hitProbability: number;
   informationGain: number;
   setProgress: number;
+  teamControl: number;
   targetEvidence: number;
+  continuationValue: number;
+  completionValue: number;
   replyThreat: number;
   expectedUtility: number;
 };
@@ -191,6 +249,12 @@ export type GameSummary = {
   decisionRegret: [number, number];
   reactionAsks: number;
   reactionHits: number;
+  teamReactionAsks: [number, number];
+  teamReactionHits: [number, number];
+  teamDiversions: [number, number];
+  replyThreatOnMiss: [number, number];
+  continuationValue: [number, number];
+  completionValue: [number, number];
   maxHitStreak: number;
   firstDeclarationAction: number;
   initialHands?: number[][];
@@ -218,6 +282,11 @@ export type BatchResult = {
   avgInformationGain: [number, number];
   avgDecisionRegret: [number, number];
   reactionAccuracy: number;
+  teamReactionAccuracy: [number, number];
+  teamDiversionRate: [number, number];
+  avgReplyThreatOnMiss: [number, number];
+  avgContinuationValue: [number, number];
+  avgCompletionValue: [number, number];
   avgPivotalMoments: number;
   avgMaxHitStreak: number;
   medianActions: number;
@@ -258,10 +327,18 @@ type State = {
   decisionRegret: [number, number];
   reactionAsks: number;
   reactionHits: number;
+  teamReactionAsks: [number, number];
+  teamReactionHits: [number, number];
+  teamDiversions: [number, number];
+  replyThreatOnMiss: [number, number];
+  continuationValue: [number, number];
+  completionValue: [number, number];
   hitStreak: number;
   maxHitStreak: number;
   streakActor: number;
   firstDeclarationAction: number;
+  beliefVersion: number;
+  beliefCache: ({ version: number; signalStrength: number; beliefs: number[][] } | null)[];
 };
 
 const TEAM: Team[] = [0, 1, 0, 1, 0, 1];
@@ -323,7 +400,7 @@ function record(state: State, action: Omit<GameAction, "index" | "score" | "card
   });
 }
 
-function legalCandidates(state: State, actor: number): AskOption[] {
+function legalCandidates(state: State, actor: number, probabilities?: number[][]): AskOption[] {
   const memory = state.memories[actor];
   const candidates: { card: number; target: number; set: number; probability: number }[] = [];
   const heldSets = new Set([...state.hands[actor]].map(c => CARDS[c].set).filter(s => state.activeSets[s]));
@@ -332,7 +409,7 @@ function legalCandidates(state: State, actor: number): AskOption[] {
       if (state.hands[actor].has(card)) continue;
       for (let target = 0; target < 6; target++) {
         if (TEAM[target] === TEAM[actor] || state.hands[target].size === 0) continue;
-        const probability = ownerProbability(memory, actor, card, target);
+        const probability = probabilities?.[card]?.[target] ?? ownerProbability(memory, actor, card, target);
         // A known miss is still a legal (and sometimes strategically necessary)
         // ask. Keeping it in the action space prevents knowledge from creating
         // an artificial deadlock when every missing card appears to be friendly.
@@ -343,7 +420,109 @@ function legalCandidates(state: State, actor: number): AskOption[] {
   return candidates;
 }
 
-function fishbotFeatures(state: State, actor: number, option: AskOption, knownReplyThreat?: number): DecisionFeatures {
+function resolvedFishbotConfig(state: State): FishBotConfig {
+  return { ...DEFAULT_FISHBOT_CONFIG, ...state.opts.fishbotConfig };
+}
+
+/**
+ * Approximate the posterior over unresolved card owners while enforcing the
+ * publicly known hand counts. Alternating row/column scaling is a compact
+ * maximum-entropy approximation to enumerating every deal consistent with the
+ * observer's exclusions. Crucially, it never reads another player's hand to
+ * decide which owners are plausible; hand sizes are public consequences of the
+ * deal, transfers, and declarations.
+ */
+function conditionedBeliefs(state: State, observer: number, signalStrength: number): number[][] {
+  const cached = state.beliefCache[observer];
+  if (cached && cached.version === state.beliefVersion && cached.signalStrength === signalStrength) return cached.beliefs;
+  const memory = state.memories[observer];
+  const beliefs = Array.from({ length: 54 }, () => Array(6).fill(0));
+  const knownCounts = Array(6).fill(0);
+  const unresolved: number[] = [];
+
+  for (let card = 0; card < 54; card++) {
+    if (!state.activeSets[CARDS[card].set]) continue;
+    const known = memory.knownOwner[card];
+    if (known >= 0) {
+      beliefs[card][known] = 1;
+      knownCounts[known]++;
+    } else {
+      unresolved.push(card);
+      for (let owner = 0; owner < 6; owner++) {
+        if (memory.excluded[card][owner]) continue;
+        beliefs[card][owner] = Math.exp(Math.min(2.4, memory.signals[owner][CARDS[card].set] * signalStrength));
+      }
+    }
+  }
+
+  const capacities = state.hands.map((hand, player) => Math.max(0, hand.size - knownCounts[player]));
+  for (let iteration = 0; iteration < 12; iteration++) {
+    for (const card of unresolved) {
+      let total = beliefs[card].reduce((sum, value) => sum + value, 0);
+      if (!total) {
+        for (let owner = 0; owner < 6; owner++) {
+          if (!memory.excluded[card][owner] && capacities[owner] > 0) beliefs[card][owner] = 1;
+        }
+        total = beliefs[card].reduce((sum, value) => sum + value, 0);
+      }
+      if (total) for (let owner = 0; owner < 6; owner++) beliefs[card][owner] /= total;
+    }
+    const columnTotals = Array(6).fill(0);
+    for (const card of unresolved) for (let owner = 0; owner < 6; owner++) columnTotals[owner] += beliefs[card][owner];
+    for (let owner = 0; owner < 6; owner++) {
+      const scale = columnTotals[owner] ? capacities[owner] / columnTotals[owner] : 0;
+      for (const card of unresolved) beliefs[card][owner] *= scale;
+    }
+  }
+  for (const card of unresolved) {
+    const total = beliefs[card].reduce((sum, value) => sum + value, 0);
+    if (total) for (let owner = 0; owner < 6; owner++) beliefs[card][owner] /= total;
+  }
+  state.beliefCache[observer] = { version: state.beliefVersion, signalStrength, beliefs };
+  return beliefs;
+}
+
+function independentBeliefs(state: State, observer: number): number[][] {
+  const memory = state.memories[observer];
+  return Array.from({ length: 54 }, (_, card) => Array.from(
+    { length: 6 },
+    (_, owner) => ownerProbability(memory, observer, card, owner),
+  ));
+}
+
+function publicReplyThreat(state: State, actor: number, target: number, askedSet: number, beliefs: number[][]) {
+  const memory = state.memories[actor];
+  let best = 0;
+  for (let set = 0; set < 9; set++) {
+    if (!state.activeSets[set]) continue;
+    let noneProbability = 1;
+    let expectedTargetCards = 0;
+    let expectedTargetTeamCards = 0;
+    let expectedFriendlyCards = 0;
+    for (const card of HALF_SUITS[set].cards) {
+      const targetProbability = beliefs[card]?.[target] ?? ownerProbability(memory, actor, card, target);
+      expectedTargetCards += targetProbability;
+      noneProbability *= 1 - targetProbability;
+      for (let player = 0; player < 6; player++) {
+        const probability = beliefs[card]?.[player] ?? ownerProbability(memory, actor, card, player);
+        if (TEAM[player] === TEAM[target]) expectedTargetTeamCards += probability;
+        else expectedFriendlyCards += probability;
+      }
+    }
+    const targetHasSet = 1 - noneProbability;
+    const publicActivity = Math.min(1, memory.signals[target][set] / 3);
+    const concentration = Math.min(1, expectedTargetCards / 4);
+    const opponentControl = expectedTargetTeamCards / 6;
+    const friendlyExposure = expectedFriendlyCards / 6;
+    const newTell = set === askedSet ? .12 : 0;
+    const danger = targetHasSet * friendlyExposure
+      * Math.min(1, .15 + .35 * concentration + .25 * publicActivity + .25 * opponentControl + newTell);
+    best = Math.max(best, danger);
+  }
+  return best;
+}
+
+function legacyFishbotFeatures(state: State, actor: number, option: AskOption, replyThreat: number): DecisionFeatures {
   const memory = state.memories[actor];
   let held = 0;
   let knownFriendly = 0;
@@ -352,23 +531,68 @@ function fishbotFeatures(state: State, actor: number, option: AskOption, knownRe
     const known = memory.knownOwner[card];
     if (known >= 0 && TEAM[known] === TEAM[actor]) knownFriendly++;
   }
-  const replyThreat = knownReplyThreat ?? legalCandidates(state, option.target).reduce((best, candidate) => Math.max(best, candidate.probability), 0);
   const hitProbability = option.probability;
   const informationGain = binaryEntropy(hitProbability);
   const setProgress = Math.min(1, (held + knownFriendly * .45) / 6);
+  const teamControl = setProgress;
   const targetEvidence = Math.min(1, memory.signals[option.target][option.set] / 4);
+  const continuationValue = 0;
+  const completionValue = held >= 4 ? 1 : held === 3 ? .35 : 0;
   const expectedUtility = 13 * hitProbability
     + 4.5 * informationGain
     + 3.2 * setProgress
     + 1.6 * targetEvidence
     + 2.2 * hitProbability
     - 3.8 * (1 - hitProbability) * replyThreat;
-  return { hitProbability, informationGain, setProgress, targetEvidence, replyThreat, expectedUtility };
+  return { hitProbability, informationGain, setProgress, teamControl, targetEvidence, continuationValue, completionValue, replyThreat, expectedUtility };
+}
+
+function optimizedFishbotFeatures(state: State, actor: number, option: AskOption, beliefs: number[][], config: FishBotConfig): DecisionFeatures {
+  const memory = state.memories[actor];
+  let held = 0;
+  let expectedTeamCards = 0;
+  let continuationValue = 0;
+  for (const card of HALF_SUITS[option.set].cards) {
+    if (state.hands[actor].has(card)) held++;
+    for (let player = 0; player < 6; player++) if (TEAM[player] === TEAM[actor]) expectedTeamCards += beliefs[card][player];
+    if (card === option.card || state.hands[actor].has(card)) continue;
+    for (let target = 0; target < 6; target++) {
+      if (TEAM[target] !== TEAM[actor]) continuationValue = Math.max(continuationValue, beliefs[card][target]);
+    }
+  }
+  const hitProbability = option.probability;
+  const informationGain = binaryEntropy(hitProbability);
+  const setProgress = held / 6;
+  const teamControl = expectedTeamCards / 6;
+  const targetEvidence = Math.min(1, memory.signals[option.target][option.set] / 4);
+  const completionValue = held >= 4 ? 1 : held === 3 ? .35 : 0;
+  const replyThreat = publicReplyThreat(state, actor, option.target, option.set, beliefs);
+  const repeatsSet = state.lastAsk?.actor === actor && state.lastAsk.set === option.set ? 1 : 0;
+  const expectedUtility = config.hitWeight * hitProbability
+    + config.informationWeight * informationGain
+    + config.setProgressWeight * setProgress
+    + config.teamControlWeight * teamControl
+    + config.targetEvidenceWeight * targetEvidence
+    + config.continuationWeight * hitProbability * continuationValue
+    + config.completionWeight * hitProbability * completionValue
+    + config.repeatSetWeight * repeatsSet
+    - config.replyThreatWeight * (1 - hitProbability) * replyThreat;
+  return { hitProbability, informationGain, setProgress, teamControl, targetEvidence, continuationValue, completionValue, replyThreat, expectedUtility };
 }
 
 function chooseAsk(state: State, actor: number): ScoredAsk | null {
   const strategy = STRATEGIES[state.opts.strategies[TEAM[actor]]];
-  const legal = legalCandidates(state, actor);
+  const config = resolvedFishbotConfig(state);
+  const beliefs = config.useCountConditioning
+    ? conditionedBeliefs(state, actor, config.signalStrength)
+    : independentBeliefs(state, actor);
+  const legacyBeliefs = strategy.id === "fishbot_v02"
+    ? conditionedBeliefs(state, actor, DEFAULT_FISHBOT_CONFIG.signalStrength)
+    : beliefs;
+  const challengerBeliefs = strategy.id === "lockout"
+    ? conditionedBeliefs(state, actor, DEFAULT_FISHBOT_CONFIG.signalStrength)
+    : beliefs;
+  const legal = legalCandidates(state, actor, strategy.id === "fishbot" ? beliefs : undefined);
   if (!legal.length) return null;
   const heldBySet = Array(9).fill(0);
   const teamKnown = Array(9).fill(0);
@@ -381,19 +605,25 @@ function chooseAsk(state: State, actor: number): ScoredAsk | null {
     state.focus[actor] = [...new Set(legal.map(x => x.set))].sort((a, b) => heldBySet[b] - heldBySet[a])[0];
   }
   const responding = state.lastAsk && state.lastAsk.target === actor && !state.lastAsk.success;
-  const replyThreats = new Map<number, number>();
-  for (const target of new Set(legal.map(option => option.target))) {
-    replyThreats.set(target, legalCandidates(state, target).reduce((best, candidate) => Math.max(best, candidate.probability), 0));
-  }
-  const evaluate = (option: AskOption) => fishbotFeatures(state, actor, option, replyThreats.get(option.target));
+  const evaluate = (option: AskOption) => optimizedFishbotFeatures(state, actor, {
+    ...option,
+    probability: beliefs[option.card][option.target],
+  }, beliefs, config);
+  const evaluateLegacy = (option: AskOption) => legacyFishbotFeatures(
+    state,
+    actor,
+    option,
+    publicReplyThreat(state, actor, option.target, option.set, legacyBeliefs),
+  );
   const fishRanked = legal.map(option => ({ option, features: evaluate(option) }))
     .sort((a, b) => b.features.expectedUtility - a.features.expectedUtility || a.option.card - b.option.card || a.option.target - b.option.target);
   let best = strategy.id === "random" ? legal[state.rng.int(legal.length)] : legal[0];
   let bestScore = -Infinity;
   for (const option of legal) {
     const features = evaluate(option);
-    let score = option.probability * 9 + heldBySet[option.set] * .72 + teamKnown[option.set] * .25 + (strategy.id === "fishbot" ? 0 : state.rng.next() * .7);
+    let score = option.probability * 9 + heldBySet[option.set] * .72 + teamKnown[option.set] * .25 + (strategy.id === "fishbot" || strategy.id === "fishbot_v02" ? 0 : state.rng.next() * .7);
     if (strategy.id === "fishbot") score = features.expectedUtility;
+    if (strategy.id === "fishbot_v02") score = evaluateLegacy(option).expectedUtility;
     if (strategy.id === "hunter") {
       score += option.set === state.focus[actor] ? 6.2 : -1.1;
       score += heldBySet[option.set] * 1.25;
@@ -401,6 +631,11 @@ function chooseAsk(state: State, actor: number): ScoredAsk | null {
     if (strategy.id === "detective") {
       score += option.probability * 12;
       score += state.memories[actor].signals[option.target][option.set] * .85;
+    }
+    if (strategy.id === "lockout") {
+      score += option.probability * 12;
+      score += state.memories[actor].signals[option.target][option.set] * .85;
+      score -= 8 * (1 - option.probability) * publicReplyThreat(state, actor, option.target, option.set, challengerBeliefs);
     }
     if (strategy.id === "diversifier") {
       const recentSame = state.lastAsk?.actor === actor && state.lastAsk.set === option.set;
@@ -411,7 +646,7 @@ function chooseAsk(state: State, actor: number): ScoredAsk | null {
       if (responding && state.opts.psychologicalTells) score += option.set === state.lastAsk!.set ? -6.8 : 4.8;
       score += option.probability * 2 + state.rng.next() * 2.8;
     }
-    if (responding && state.opts.psychologicalTells && strategy.id !== "bluffer" && strategy.id !== "fishbot") {
+    if (responding && state.opts.psychologicalTells && strategy.id !== "bluffer" && strategy.id !== "fishbot" && strategy.id !== "fishbot_v02") {
       score += option.set === state.lastAsk!.set ? 1.1 : -.25;
     }
     if (strategy.id !== "random" && score > bestScore) { bestScore = score; best = option; }
@@ -433,7 +668,7 @@ function chooseAsk(state: State, actor: number): ScoredAsk | null {
   };
 }
 
-function predictionForSet(state: State, actor: number, set: number) {
+function predictionForSet(state: State, actor: number, set: number, probabilities?: number[][]) {
   const memory = state.memories[actor];
   const team = TEAM[actor];
   const teammates = [0, 1, 2, 3, 4, 5].filter(p => TEAM[p] === team);
@@ -441,7 +676,7 @@ function predictionForSet(state: State, actor: number, set: number) {
   let teamConfidence = 1;
   let allocationConfidence = 1;
   for (const card of HALF_SUITS[set].cards) {
-    const probs = teammates.map(p => [p, ownerProbability(memory, actor, card, p)] as const).sort((a, b) => b[1] - a[1]);
+    const probs = teammates.map(p => [p, probabilities?.[card]?.[p] ?? ownerProbability(memory, actor, card, p)] as const).sort((a, b) => b[1] - a[1]);
     const teamProb = probs.reduce((sum, x) => sum + x[1], 0);
     owners.push(probs[0][0]);
     teamConfidence *= Math.max(.001, teamProb);
@@ -453,15 +688,28 @@ function predictionForSet(state: State, actor: number, set: number) {
 
 function bestDeclaration(state: State, actor: number, forced = false) {
   const strategy = STRATEGIES[state.opts.strategies[TEAM[actor]]];
-  const informationExhausted = strategy.id === "fishbot" && legalCandidates(state, actor).every(option => option.probability <= .001);
+  const config = resolvedFishbotConfig(state);
+  const beliefs = strategy.id === "fishbot"
+    ? config.useCountConditioning ? conditionedBeliefs(state, actor, config.signalStrength) : independentBeliefs(state, actor)
+    : undefined;
+  const informationExhausted = (strategy.id === "fishbot" || strategy.id === "fishbot_v02")
+    && legalCandidates(state, actor, beliefs).every(option => option.probability <= .001);
   let best: { set: number; owners: number[]; confidence: number; teamConfidence: number } | null = null;
   for (let set = 0; set < 9; set++) {
     if (!state.activeSets[set]) continue;
-    const pred = predictionForSet(state, actor, set);
+    const pred = predictionForSet(state, actor, set, beliefs);
     const lead = state.score[TEAM[actor]] - state.score[(1 - TEAM[actor]) as Team];
-    const fishbotThreshold = lead >= 2 ? .97 : lead <= -2 ? .94 : .96;
-    const threshold = forced ? .38 : state.eventCount >= 280 ? .5 : informationExhausted ? .72 : strategy.id === "fishbot" ? fishbotThreshold : strategy.declarationThreshold;
-    if (pred.teamConfidence < threshold || pred.confidence < threshold - strategy.risk * .22) continue;
+    const optimizedThreshold = config.declarationThreshold
+      + (lead >= 2 ? config.leadingDeclarationDelta : lead <= -2 ? config.trailingDeclarationDelta : 0);
+    const legacyThreshold = lead >= 2 ? .97 : lead <= -2 ? .94 : .96;
+    const threshold = forced ? .38
+      : strategy.id === "fishbot"
+        ? state.eventCount >= 280 || informationExhausted ? .78 : optimizedThreshold
+        : state.eventCount >= 280 ? .5
+          : informationExhausted ? .72
+            : strategy.id === "fishbot_v02" ? legacyThreshold : strategy.declarationThreshold;
+    const allocationSlack = strategy.id === "fishbot" ? config.allocationSlack : strategy.risk * .22;
+    if (pred.teamConfidence < threshold || pred.confidence < threshold - allocationSlack) continue;
     if (!best || pred.confidence > best.confidence) best = { set, ...pred };
   }
   return best;
@@ -495,6 +743,7 @@ function declareSet(state: State, actor: number, declaration: NonNullable<Return
   state.maxDeficit[1] = Math.max(state.maxDeficit[1], state.score[0] - state.score[1]);
   state.activeSets[declaration.set] = false;
   for (const card of cards) for (const hand of state.hands) hand.delete(card);
+  state.beliefVersion++;
   const assignments = declaration.owners.map((p, i) => `${CARDS[cards[i]].compact}→${PLAYER_NAMES[p]}`).join(", ");
   const pivotalReasons = [
     !correct ? "incorrect allocation awards the set to the opponent" : "set changes the score",
@@ -540,7 +789,10 @@ export function simulateGame(options: GameOptions): GameSummary {
     maxDeficit: [0, 0], lastLead: 0, focus: Array(6).fill(null), lastAsk: null,
     eventCount: 0, pivotalCount: 0, peakPivotal: 0, teamAsks: [0, 0], teamHits: [0, 0],
     teamDeclarations: [0, 0], teamCorrectDeclarations: [0, 0], informationGain: [0, 0], decisionRegret: [0, 0],
-    reactionAsks: 0, reactionHits: 0, hitStreak: 0, maxHitStreak: 0, streakActor: -1, firstDeclarationAction: -1,
+    reactionAsks: 0, reactionHits: 0, teamReactionAsks: [0, 0], teamReactionHits: [0, 0], teamDiversions: [0, 0],
+    replyThreatOnMiss: [0, 0], continuationValue: [0, 0], completionValue: [0, 0],
+    hitStreak: 0, maxHitStreak: 0, streakActor: -1, firstDeclarationAction: -1,
+    beliefVersion: 0, beliefCache: Array(6).fill(null),
   };
   state.memories = Array.from({ length: 6 }, (_, p) => makeMemory(p, hands));
   const maxActions = options.maxActions ?? 360;
@@ -600,8 +852,16 @@ export function simulateGame(options: GameOptions): GameSummary {
     state.teamAsks[team]++;
     state.informationGain[team] += ask.decision.features.informationGain;
     state.decisionRegret[team] += ask.decision.regret;
-    if (reacting) { state.reactionAsks++; if (success) state.reactionHits++; }
-    if (previous && previous.target === actor && !previous.success && previous.set !== ask.set) state.diversions++;
+    state.continuationValue[team] += ask.decision.features.continuationValue;
+    state.completionValue[team] += ask.decision.features.completionValue;
+    if (!success) state.replyThreatOnMiss[team] += ask.decision.features.replyThreat;
+    if (reacting) {
+      state.reactionAsks++; state.teamReactionAsks[team]++;
+      if (success) { state.reactionHits++; state.teamReactionHits[team]++; }
+    }
+    if (previous && previous.target === actor && !previous.success && previous.set !== ask.set) {
+      state.diversions++; state.teamDiversions[team]++;
+    }
     for (const memory of state.memories) {
       memory.excluded[ask.card][actor] = 1;
       memory.signals[actor][ask.set]++;
@@ -621,6 +881,7 @@ export function simulateGame(options: GameOptions): GameSummary {
       for (const memory of state.memories) memory.excluded[ask.card][ask.target] = 1;
       state.turn = ask.target;
     }
+    state.beliefVersion++;
     const isDiversion = previous && previous.target === actor && !previous.success && previous.set !== ask.set;
     const surprise = success ? (1 - ask.probability) * 4 : ask.probability * 3;
     const progressImpact = success && heldBefore >= 3 ? 2.5 : success && heldBefore === 2 ? 1 : 0;
@@ -671,13 +932,15 @@ export function simulateGame(options: GameOptions): GameSummary {
     teamAsks: state.teamAsks, teamHits: state.teamHits, teamDeclarations: state.teamDeclarations,
     teamCorrectDeclarations: state.teamCorrectDeclarations, informationGain: state.informationGain,
     decisionRegret: state.decisionRegret, reactionAsks: state.reactionAsks, reactionHits: state.reactionHits,
+    teamReactionAsks: state.teamReactionAsks, teamReactionHits: state.teamReactionHits, teamDiversions: state.teamDiversions,
+    replyThreatOnMiss: state.replyThreatOnMiss, continuationValue: state.continuationValue, completionValue: state.completionValue,
     maxHitStreak: state.maxHitStreak, firstDeclarationAction: state.firstDeclarationAction < 0 ? state.eventCount : state.firstDeclarationAction,
     ...(options.detailed ? { log: state.log, initialHands } : {}),
   };
   return { ...bare, tag: classify(bare) };
 }
 
-function mixSeed(base: number, i: number) {
+export function deriveGameSeed(base: number, i: number) {
   let x = (base + Math.imul(i + 1, 0x9e3779b1)) >>> 0;
   x ^= x >>> 16; x = Math.imul(x, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16;
   return x >>> 0;
@@ -706,11 +969,13 @@ export function runBatch(games: number, options: Omit<GameOptions, "seed" | "det
   const teamAsks: [number, number] = [0, 0], teamHits: [number, number] = [0, 0];
   const teamDeclarations: [number, number] = [0, 0], teamCorrectDeclarations: [number, number] = [0, 0];
   const informationGain: [number, number] = [0, 0], decisionRegret: [number, number] = [0, 0];
+  const teamReactionAsks: [number, number] = [0, 0], teamReactionHits: [number, number] = [0, 0], teamDiversions: [number, number] = [0, 0];
+  const replyThreatOnMiss: [number, number] = [0, 0], continuationValue: [number, number] = [0, 0], completionValue: [number, number] = [0, 0];
   const gameLengths: number[] = [];
   const scoreDistribution = Array(10).fill(0);
   const outliers: GameSummary[] = [];
   for (let i = 0; i < games; i++) {
-    const game = simulateGame({ ...options, seed: mixSeed(base, i), detailed: false });
+    const game = simulateGame({ ...options, seed: deriveGameSeed(base, i), detailed: false });
     if (game.winner === 0) teamAWins++;
     scoreA += game.score[0]; scoreB += game.score[1]; actions += game.actions; asks += game.asks; hits += game.successfulAsks;
     declarations += game.declarations; failedDeclarations += game.failedDeclarations; diversions += game.diversions; leadChanges += game.leadChanges;
@@ -720,6 +985,9 @@ export function runBatch(games: number, options: Omit<GameOptions, "seed" | "det
       teamAsks[team] += game.teamAsks[team]; teamHits[team] += game.teamHits[team];
       teamDeclarations[team] += game.teamDeclarations[team]; teamCorrectDeclarations[team] += game.teamCorrectDeclarations[team];
       informationGain[team] += game.informationGain[team]; decisionRegret[team] += game.decisionRegret[team];
+      teamReactionAsks[team] += game.teamReactionAsks[team]; teamReactionHits[team] += game.teamReactionHits[team];
+      teamDiversions[team] += game.teamDiversions[team]; replyThreatOnMiss[team] += game.replyThreatOnMiss[team];
+      continuationValue[team] += game.continuationValue[team]; completionValue[team] += game.completionValue[team];
     }
     outliers.push(game);
     outliers.sort((a, b) => b.interest - a.interest);
@@ -738,6 +1006,11 @@ export function runBatch(games: number, options: Omit<GameOptions, "seed" | "det
     avgInformationGain: [teamAsks[0] ? informationGain[0] / teamAsks[0] : 0, teamAsks[1] ? informationGain[1] / teamAsks[1] : 0],
     avgDecisionRegret: [teamAsks[0] ? decisionRegret[0] / teamAsks[0] : 0, teamAsks[1] ? decisionRegret[1] / teamAsks[1] : 0],
     reactionAccuracy: reactionAsks ? reactionHits / reactionAsks : 0,
+    teamReactionAccuracy: [teamReactionAsks[0] ? teamReactionHits[0] / teamReactionAsks[0] : 0, teamReactionAsks[1] ? teamReactionHits[1] / teamReactionAsks[1] : 0],
+    teamDiversionRate: [teamAsks[0] ? teamDiversions[0] / teamAsks[0] : 0, teamAsks[1] ? teamDiversions[1] / teamAsks[1] : 0],
+    avgReplyThreatOnMiss: [teamAsks[0] > teamHits[0] ? replyThreatOnMiss[0] / (teamAsks[0] - teamHits[0]) : 0, teamAsks[1] > teamHits[1] ? replyThreatOnMiss[1] / (teamAsks[1] - teamHits[1]) : 0],
+    avgContinuationValue: [teamAsks[0] ? continuationValue[0] / teamAsks[0] : 0, teamAsks[1] ? continuationValue[1] / teamAsks[1] : 0],
+    avgCompletionValue: [teamAsks[0] ? completionValue[0] / teamAsks[0] : 0, teamAsks[1] ? completionValue[1] / teamAsks[1] : 0],
     avgPivotalMoments: pivotalMoments / games, avgMaxHitStreak: maxHitStreaks / games,
     medianActions: percentile(gameLengths, .5), p90Actions: percentile(gameLengths, .9), scoreDistribution,
     outliers,

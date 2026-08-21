@@ -6,7 +6,7 @@ assert.equal(new Set(CARDS.map(card => card.id)).size, 54, "card ids must be uni
 assert.equal(HALF_SUITS.length, 9, "deck must contain nine half-suits");
 assert.ok(HALF_SUITS.every(set => set.cards.length === 6), "each half-suit must contain six cards");
 
-const strategies: StrategyId[] = ["fishbot", "hunter", "diversifier", "detective", "bluffer", "random"];
+const strategies: StrategyId[] = ["fishbot", "fishbot_v02", "lockout", "hunter", "diversifier", "detective", "bluffer", "random"];
 let checkedAsks = 0;
 for (let i = 0; i < 250; i++) {
   const config = {
@@ -32,6 +32,10 @@ for (let i = 0; i < 250; i++) {
     assert.ok(action.card !== undefined && action.set !== undefined);
     assert.ok(action.decision, "every ask must retain an explainable decision trace");
     assert.ok(Number.isFinite(action.decision!.features.expectedUtility));
+    assert.ok(Object.values(action.decision!.features).every(Number.isFinite), "all decision features must be finite");
+    assert.ok(action.decision!.features.hitProbability >= 0 && action.decision!.features.hitProbability <= 1);
+    assert.ok(action.decision!.features.teamControl >= 0 && action.decision!.features.teamControl <= 1);
+    assert.ok(action.decision!.features.replyThreat >= 0 && action.decision!.features.replyThreat <= 1);
     assert.ok(action.decision!.alternatives.length >= 1);
     assert.equal(CARDS[action.card!].set, action.set);
     const actorHand = action.hands![action.actor];

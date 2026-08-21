@@ -1,0 +1,541 @@
+{
+  "generatedAt": "2026-08-21T00:29:18.631Z",
+  "gamesPerOrientationBank": 200,
+  "seedBanks": [
+    271136839,
+    1447508009
+  ],
+  "opponents": [
+    {
+      "id": "detective",
+      "weight": 0.4
+    },
+    {
+      "id": "lockout",
+      "weight": 0.35
+    },
+    {
+      "id": "fishbot_v02",
+      "weight": 0.25
+    }
+  ],
+  "selected": {
+    "name": "no-continuation",
+    "config": {
+      "useCountConditioning": true,
+      "signalStrength": 0.453,
+      "hitWeight": 22,
+      "informationWeight": 0,
+      "setProgressWeight": 2.5,
+      "teamControlWeight": 4,
+      "targetEvidenceWeight": 0.5,
+      "continuationWeight": 0,
+      "completionWeight": 4,
+      "replyThreatWeight": 1,
+      "repeatSetWeight": 0.5,
+      "declarationThreshold": 0.963,
+      "trailingDeclarationDelta": -0.016,
+      "leadingDeclarationDelta": 0.005,
+      "allocationSlack": 0.008
+    },
+    "score": 0.586375,
+    "matches": [
+      {
+        "opponent": "detective",
+        "bankWinRates": [
+          0.5425,
+          0.5675
+        ],
+        "winRate": 0.5549999999999999
+      },
+      {
+        "opponent": "lockout",
+        "bankWinRates": [
+          0.6125,
+          0.6124999999999999
+        ],
+        "winRate": 0.6125
+      },
+      {
+        "opponent": "fishbot_v02",
+        "bankWinRates": [
+          0.615,
+          0.585
+        ],
+        "winRate": 0.6
+      }
+    ]
+  },
+  "results": [
+    {
+      "name": "no-continuation",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 0,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.586375,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5425,
+            0.5675
+          ],
+          "winRate": 0.5549999999999999
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.6125,
+            0.6124999999999999
+          ],
+          "winRate": 0.6125
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.615,
+            0.585
+          ],
+          "winRate": 0.6
+        }
+      ]
+    },
+    {
+      "name": "cautious-97",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.97,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.58575,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.555,
+            0.5574999999999999
+          ],
+          "winRate": 0.5562499999999999
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.6225,
+            0.605
+          ],
+          "winRate": 0.61375
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.605,
+            0.5824999999999999
+          ],
+          "winRate": 0.59375
+        }
+      ]
+    },
+    {
+      "name": "entropy-3",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 3,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5855,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5625,
+            0.5750000000000001
+          ],
+          "winRate": 0.5687500000000001
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.61,
+            0.6125
+          ],
+          "winRate": 0.6112500000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.595,
+            0.5575000000000001
+          ],
+          "winRate": 0.57625
+        }
+      ]
+    },
+    {
+      "name": "entropy-1.5",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 1.5,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5851875,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5675000000000001,
+            0.575
+          ],
+          "winRate": 0.57125
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.6024999999999999,
+            0.5875
+          ],
+          "winRate": 0.595
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.6125,
+            0.575
+          ],
+          "winRate": 0.59375
+        }
+      ]
+    },
+    {
+      "name": "selected-full",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5848125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5499999999999999,
+            0.565
+          ],
+          "winRate": 0.5574999999999999
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.62,
+            0.5975
+          ],
+          "winRate": 0.60875
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.6074999999999999,
+            0.5824999999999999
+          ],
+          "winRate": 0.595
+        }
+      ]
+    },
+    {
+      "name": "entropy-4.5",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 4.5,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 4,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5760625,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5675000000000001,
+            0.5725
+          ],
+          "winRate": 0.5700000000000001
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.5874999999999999,
+            0.605
+          ],
+          "winRate": 0.59625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.5725,
+            0.5425
+          ],
+          "winRate": 0.5575
+        }
+      ]
+    },
+    {
+      "name": "no-control-entropy-2",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 2,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 0,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5738125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.575,
+            0.5725
+          ],
+          "winRate": 0.57375
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.5925,
+            0.6
+          ],
+          "winRate": 0.59625
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.5475,
+            0.5375000000000001
+          ],
+          "winRate": 0.5425
+        }
+      ]
+    },
+    {
+      "name": "no-control-entropy-4.5",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 4.5,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 0,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.568125,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5724999999999999,
+            0.5650000000000001
+          ],
+          "winRate": 0.56875
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.5775,
+            0.5974999999999999
+          ],
+          "winRate": 0.5874999999999999
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.5425,
+            0.5375
+          ],
+          "winRate": 0.54
+        }
+      ]
+    },
+    {
+      "name": "control-2-entropy-2",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 2,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 2,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5666875,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5475,
+            0.5525
+          ],
+          "winRate": 0.55
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.5875,
+            0.615
+          ],
+          "winRate": 0.6012500000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.5599999999999999,
+            0.53
+          ],
+          "winRate": 0.5449999999999999
+        }
+      ]
+    },
+    {
+      "name": "no-team-control",
+      "config": {
+        "useCountConditioning": true,
+        "signalStrength": 0.453,
+        "hitWeight": 22,
+        "informationWeight": 0,
+        "setProgressWeight": 2.5,
+        "teamControlWeight": 0,
+        "targetEvidenceWeight": 0.5,
+        "continuationWeight": 4,
+        "completionWeight": 4,
+        "replyThreatWeight": 1,
+        "repeatSetWeight": 0.5,
+        "declarationThreshold": 0.963,
+        "trailingDeclarationDelta": -0.016,
+        "leadingDeclarationDelta": 0.005,
+        "allocationSlack": 0.008
+      },
+      "score": 0.5647500000000001,
+      "matches": [
+        {
+          "opponent": "detective",
+          "bankWinRates": [
+            0.5549999999999999,
+            0.56
+          ],
+          "winRate": 0.5575
+        },
+        {
+          "opponent": "lockout",
+          "bankWinRates": [
+            0.5800000000000001,
+            0.5800000000000001
+          ],
+          "winRate": 0.5800000000000001
+        },
+        {
+          "opponent": "fishbot_v02",
+          "bankWinRates": [
+            0.5675,
+            0.5425
+          ],
+          "winRate": 0.5549999999999999
+        }
+      ]
+    }
+  ]
+}

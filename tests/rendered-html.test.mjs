@@ -23,7 +23,8 @@ test("server-renders the FishLab research workbench", async () => {
   assert.match(html, /optimal/);
   assert.match(html, /Experiment configuration/);
   assert.match(html, /Bayesian detective/);
-  assert.match(html, /FishBot v0\.2/);
+  assert.match(html, /FishBot v0\.3/);
+  assert.match(html, /Turn-starvation specialist/);
   assert.match(html, /Canadian Fish/);
   assert.match(html, /https?:\/\/fishlab\.test\/og\.png/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|SkeletonPreview/);
