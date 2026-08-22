@@ -15,8 +15,27 @@
 #include "belief.hpp"
 #include "blockdp.hpp"
 #include "game.hpp"
+#include <atomic>
 
 namespace fish {
+
+// Instrumentation for the declaration pre-gate audit.  The shipped policy skips
+// a half-suit whose cheap capacity-only score falls below `gateTeamProb`, and
+// `evaluateSet` applies a second cheap gate (`marginalGate`).  Neither is proved
+// to be an upper bound on the full evaluation, so `fish gateaudit` re-runs the
+// complete evaluation on every half-suit the gates reject and counts how often
+// the full evaluation would have declared one.  Counters are process-wide and
+// atomic because matches are threaded; they are inert unless cfg.gateAudit.
+struct GateAuditCounters {
+  std::atomic<long long> opportunities{0};   // declaration opportunities examined
+  std::atomic<long long> setsSeen{0};        // (opportunity, live half-suit) pairs
+  std::atomic<long long> setsRejected{0};    // rejected by one of the cheap gates
+  std::atomic<long long> falseNegatives{0};  // rejected, but the full rule would declare
+  std::atomic<long long> actionsChanged{0};  // opportunities whose chosen action differs
+  std::atomic<long long> gatedDeclares{0};   // declarations the shipped path made
+  std::atomic<long long> ungatedDeclares{0}; // declarations the ungated path would make
+};
+inline GateAuditCounters& gateAudit() { static GateAuditCounters g; return g; }
 
 enum class BeliefMode : int { Exact = 0, ExactDisj = 1, Sinkhorn = 2, Independent = 3, Hybrid = 4, Fast = 5, Block = 6 };
 
@@ -110,6 +129,7 @@ struct V04Config {
   double gateTeamProb       = .008;  // loose capacity-only pre-filter
   double marginalGate       = .008;  // loose marginal pre-filter
   bool   declareEnabled     = true;
+  bool   gateAudit          = false;  // diagnostic only; see `fish gateaudit`
 };
 
 inline double binEnt(double p) {
@@ -565,7 +585,7 @@ struct V04Agent : Agent {
     return 0;
   }
 
-  SetVerdict evaluateSet(const PublicState& pub, int s, int press = 0) {
+  SetVerdict evaluateSet(const PublicState& pub, int s, int press = 0, bool ignoreGates = false) {
     SetVerdict v{};
     v.decl.set = uint8_t(s);
     uint8_t allow[SETSZ]; int cards[SETSZ], players[SETSZ];
@@ -585,7 +605,7 @@ struct V04Agent : Agent {
       v.decl.owner[i] = uint8_t(bestQ);
     }
     double teamFloor = press >= 2 ? 0.0 : (press >= 1 ? 0.25 : cfg.minTeamProb);
-    if (cheap < (press >= 2 ? 0.0 : cfg.marginalGate)) return v;
+    if (!ignoreGates && cheap < (press >= 2 ? 0.0 : cfg.marginalGate)) return v;
     if (cfg.belief == BeliefMode::Block && blockOk) {
       // Exact: probability that every unresolved card of the half-suit sits with
       // my team, and the exact probability of the best legal allocation.
@@ -681,7 +701,7 @@ struct V04Agent : Agent {
       if (!pub.setActive[s]) continue;
       if (k.cheapTeamProb(s, teamMask) >= cfg.gateTeamProb) candidate = true;
     }
-    if (!candidate) return false;
+    if (!candidate && !cfg.gateAudit) return false;
     refresh();
     int oppCards = 0;
     for (int p = 0; p < NPLAY; p++) if (oppMask & (1 << p)) oppCards += pub.handCount[p];
@@ -690,13 +710,39 @@ struct V04Agent : Agent {
                || pub.nEvents >= cfg.forceDeclareEvents
                || bestAskProbability(pub) < cfg.askFloor;
     double bestConf = -1; bool found = false;
+    double auditBestConf = -1; bool auditFound = false; int auditBestSet = -1;
+    long long localSeen = 0, localRejected = 0, localFalseNeg = 0;
     for (int s = 0; s < NSET; s++) {
       if (!pub.setActive[s]) continue;
-      if (!bypass && k.cheapTeamProb(s, teamMask) < cfg.gateTeamProb) continue;
+      bool passesGate = bypass || k.cheapTeamProb(s, teamMask) >= cfg.gateTeamProb;
+      if (cfg.gateAudit) {
+        // The ungated evaluation: full posterior query on every live half-suit,
+        // with both cheap gates disabled, followed by the same stopping rule.
+        localSeen++;
+        SetVerdict vu = evaluateSet(pub, s, press, true);
+        bool wouldDeclare = vu.ok && declareNow(pub, vu, urgent, press);
+        if (wouldDeclare && vu.pAlloc > auditBestConf) { auditBestConf = vu.pAlloc; auditBestSet = s; auditFound = true; }
+        bool rejected = !candidate || !passesGate
+                     || (!evaluateSet(pub, s, press).ok && vu.ok);
+        if (rejected) { localRejected++; if (wouldDeclare) localFalseNeg++; }
+      }
+      if (!candidate) continue;
+      if (!passesGate) continue;
       SetVerdict v = evaluateSet(pub, s, press);
       if (!v.ok) continue;
       if (!declareNow(pub, v, urgent, press)) continue;
       if (v.pAlloc > bestConf) { bestConf = v.pAlloc; d = v.decl; found = true; }
+    }
+    if (cfg.gateAudit) {
+      auto& G = gateAudit();
+      G.opportunities.fetch_add(1, std::memory_order_relaxed);
+      G.setsSeen.fetch_add(localSeen, std::memory_order_relaxed);
+      G.setsRejected.fetch_add(localRejected, std::memory_order_relaxed);
+      G.falseNegatives.fetch_add(localFalseNeg, std::memory_order_relaxed);
+      if (found) G.gatedDeclares.fetch_add(1, std::memory_order_relaxed);
+      if (auditFound) G.ungatedDeclares.fetch_add(1, std::memory_order_relaxed);
+      bool changed = (found != auditFound) || (found && auditFound && int(d.set) != auditBestSet);
+      if (changed) G.actionsChanged.fetch_add(1, std::memory_order_relaxed);
     }
     conf = bestConf;
     return found;

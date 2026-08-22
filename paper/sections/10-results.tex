@@ -1,182 +1,360 @@
 \section{Results}
 \label{sec:results}
 
+% This section carries eleven floats in a few pages.  LaTeX's default float
+% fractions reserve so much of each page for text that the tables would be
+% pushed several pages past the prose that discusses them; the values below let
+% a page carry more table and fewer orphaned strips of text.  They are restored
+% to the LaTeX defaults at the end of the section.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.80}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\setlength{\textfloatsep}{12pt plus 2pt minus 4pt}
+\setlength{\floatsep}{10pt plus 2pt minus 3pt}
+\setlength{\intextsep}{12pt plus 2pt minus 3pt}
+
 \subsection{Engine and belief validation}
 \label{sec:results-verify}
 
-The verification sweep plays every ordered pair of the eight policies with the
-knowledge audit of \S\ref{sec:engine} active. Across
-\numAuditChecks\ soundness checks it recorded
-\numAuditViolations\ violations: no agent ever excluded the true
-holder of a card, no derived capacity ever disagreed with the truth, and no
-ask-legality certificate was ever violated by the actual deal. Card conservation
-and exact nine-half-suit resolution hold in every game, and replays are
-bit-identical under a fixed seed at a fixed thread count. The action cap fires on
-a handful of the verification sweep's deals --- that sweep deliberately includes
-pathological policy pairings --- and on none of the head-to-head deals reported
-below.
+\paragraph{Information-safety audit (E1).}
+The verification sweep plays the ordered cross-product of nine policies with the
+knowledge audit of \S\ref{sec:engine} active and recorded \numAuditViolations{}
+violations in \numAuditChecks{} soundness checks: no derived knowledge state,
+capacity or certificate was ever contradicted by the actual deal. Card
+conservation, resolution of all nine half-suits and bit-identical replay hold in
+every game, and the action-limit rate is \numLimitRate{}. The same run under the
+v0.3 dialect records \numAuditViolations{} violations in \numAuditChecksLegacy{}
+checks and, again, no action-limit game. E13 measures action-cap incidence over
+\numEthirteenDeals{} deals in six seat rotations, seed $464646$, against every
+panel member and the \vfast{} mirror, and records \numLimitRate{} on every row.
 
-The belief engines were then checked against each other and against ground
-truth. With no ask-legality certificate live, the block-enumeration posterior and
-the card-level capacity dynamic program agree to
-$\numBeliefVsCardDP$ --- machine precision, as they must, since
-they compute the same quantity two different ways. With certificates live, the
-block posterior agrees with exact rejection sampling from the constraint-
-satisfying distribution to $\numBeliefVsSampling$, which is Monte
-Carlo error at the sample sizes used. The fast approximation of \S\ref{sec:fast}
-has mean absolute marginal error $\numSinkhornMean$ but a
-maximum of $\numSinkhornMax$: accurate on average, with a heavy
-tail exactly where the position is sharp.
+\paragraph{Belief cross-checks (E2).}
+Over \numSelftestGames{} games and \numSelftestChecks{} comparisons the exact
+reference engine agrees with the card-level capacity dynamic program to
+$\numBeliefVsCardDP$ with no certificate live --- machine precision, as it must,
+the two computing one quantity two ways --- and with exact rejection sampling to
+$\numBeliefVsSampling$ with certificates live, Monte-Carlo error at these sample
+sizes. The Fast approximation has mean absolute marginal error $\numSinkhornMean$
+and maximum $\numSinkhornMax$: accurate on average, with a heavy tail that E2
+does not localise to any class of position.
 
-\subsection{Validating the v0.3 port}
+\paragraph{Brute-force allocation oracle (E15).}
+E2 compares two structured algorithms against each other and does not establish
+that either enumerates the correct collection of assignments. E15 tests that
+directly against an enumerator using no dynamic programming, no factorisation and
+no sampling; the procedure, its per-state cut-off of \numOracleMaxDeals{}
+consistent deals and the sampler comparison are in \S\ref{app:inference}.
 
-Every comparison in this paper is against a re-implementation of FishBot v0.3 in
-the new engine, so that re-implementation has to be shown faithful. Run under the
-v0.3 rule dialect on the v0.3 seed bank, the port reproduces six of the seven
-published figures within their confidence intervals (Table~\ref{tab:port}); the
-seventh, against the misdirection artist, misses by half a point at the top of
-the scale, where both figures are above 98\%.
 
-\begin{table}[ht]
-\centering
-\caption{FishBot v0.3 as published versus the C++ port, under the v0.3 rule
-dialect. Published values are from \cite{fishbot03}.}
-\label{tab:port}
-\small
-\input{tables/port}
-\end{table}
+Every deterministic comparison (Table~\ref{tab:oracle}, \S\ref{app:oracle}) differs by exactly zero,
+which is exact rather than approximate agreement because both sides are integer
+counts in double precision; of \numOracleBestChecks{} checks on the chosen
+allocation \numOracleBestBad{} were inconsistent and none failed to be the argmax
+of $\alpha$, and sampler frequencies fall within \numOracleSampleDiff{} of the
+exact marginals over \numOracleDraws{} draws. Coverage is partial by construction: \numOracleStatesSkipped{} states,
+more than were enumerated, were skipped as too large, and skipping is correlated
+with what makes a state hard, a large space of unresolved cards. E15 validates
+the reference engine on small reachable states, not the whole state space.
 
-\subsection{Held-out head-to-head}
+\paragraph{Declaration pre-gate audit (E16).}
+Two cheap pre-gates screen declaration candidates before the full posterior
+evaluation runs (\S\ref{sec:declare}), and neither is proved to be an upper bound
+on the quantity it screens. E16 re-runs the full evaluation and the same stopping
+rule with both gates disabled, on every live half-suit at every declaration
+opportunity of the primary bank (\S\ref{app:ablations}).
 
-Table~\ref{tab:h2h} gives the primary result: FishBot v0.4 against the whole
-population on an untouched seed bank, with every deal played in all six seat
-rotations.
 
-\begin{table}[ht]
-\centering
-\caption{FishBot v0.4 on the held-out bank, six-rotation duplicate blocks,
-\numHtHGames\ games per row.}
-\label{tab:h2h}
-\small
-\input{tables/headtohead}
-\end{table}
+Of \numGateSeen{} (opportunity, live half-suit) pairs over \numGateOpps{}
+opportunities, \numGateRejected{} (\numGateRejectedPct\%) were gated out, and
+\numGateFalseNeg{} of those --- \numGateFalseNegPct\% --- would have been
+declared by the full rule; the gated path makes \numGateDeclGated{} declarations
+against \numGateDeclUngated{} ungated, choosing differently at
+\numGateActionsChanged{} opportunities, \numGateActionsPct\% of the total and
+\numGateDeclLostPct\% of the ungated rule's declarations
+(Table~\ref{tab:gateaudit}, \S\ref{app:abl-gateaudit}). The pre-gates are
+therefore not lossless: they are a pruning heuristic with a measured
+false-negative rate of roughly one in ten thousand declaration opportunities,
+specific to this policy, this corpus and the compiled thresholds. The audit
+bounds the size of that effect rather than eliminating it, and does not license
+describing the gates as safe or as a proved upper bound.
 
-The number that matters for the question this project asks is not the mean but
-the minimum: FishBot v0.4's \emph{worst} result against any policy in the
-population is \numWorstCase\%. Against the strongest predecessor it wins
-\numVsVthree\% (95\% CI \numVsVthreeCI), taking \numVsVthreeSets\ of the nine
-half-suits on average. For scale, FishBot v0.3's own worst result against the
-three credible challengers of its study was 56.50\% \cite{fishbot03}.
+\paragraph{Port validation (E8).}
+Every comparison in this paper is made against a port of \vthree{} into the new
+engine. Under the v0.3 dialect that port reproduces six of the seven published
+figures within their intervals (Table~\ref{tab:port}, \S\ref{app:port}). The row for the
+misdirection artist misses by half a point, near the top of a scale on which both
+figures exceed $98\%$.
 
-Ask accuracy does not explain any of this, and the clearest evidence is the row
-where it goes backwards. Against the turn-starvation lockout policy v0.4 converts
-a far \emph{lower} fraction of its asks than against any other opponent, and yet
-beats it by a wider margin than it beats either of the other two policies of
-comparable strength. Two things are
-happening. The lockout policy is built to refuse the turn to a dangerous
-opponent, which means it hands v0.4 positions in which the remaining asks are
-genuinely poor; and v0.4's edge is concentrated not in converting asks but in
-declaring --- it claims at roughly \numVsVthreeDeclAcc\% accuracy while FishBot v0.3, on those
-same games, claims correctly only \numVthreeDeclObs\% of the time, and every
-failed claim is a half-suit handed to the opponents. A policy can ask worse and still win, provided
-it never gives a set away.
 
-The rule permitting a claim at any moment is used heavily: v0.4 makes
-\numVsVthreeOOT\ out-of-turn declarations per game against v0.3.
-\S\ref{sec:robustness} isolates how much of the margin depends on it.
+\subsection{Primary result: \vfast{} against \vthree{}}
+\label{sec:results-h2h}
 
-\subsection{Population ratings}
+On the primary evaluation bank of \numHtHDeals{} held-out deals played in six
+seat rotations for \numHtHGames{} games, \vfast{} defeated \vthree{} in
+\numVsVthreeWins{} games --- a \numVsVthree\% win rate with a deal-clustered
+$95\%$ interval of \numVsVthreeCI\% --- taking \numVsVthreeSets{} of the nine
+half-suits on average.
 
-Table~\ref{tab:elo} converts the round-robin of Table~\ref{tab:matrix} into
-Bradley--Terry ratings.
 
-\begin{table}[ht]
-\centering
-\caption{Bradley--Terry ratings over the round-robin, expressed in Elo with
-FishBot v0.3 at zero.}
-\label{tab:elo}
-\small
-\input{tables/elo}
-\end{table}
-
-\begin{table}[ht]
-\centering
-\caption{Round-robin win rates (\%), row policy against column policy, six
-rotations per deal.}
-\label{tab:matrix}
-\scriptsize
-\input{tables/matrix}
-\end{table}
-
-The shape of Table~\ref{tab:elo} is worth a sentence. FishBot v0.3, the
-turn-starvation lockout and the posterior detective are separated by four Elo
-points --- for practical purposes they are the same strength, which is what one
-would expect of three policies that all reduce to ``ask where the posterior is
-highest, and be careful about claiming''. FishBot v0.4 sits $\numElo$ Elo
-clear of that group. The gap is not a refinement of the same idea; it comes from
-replacing the posterior itself and from what the exact posterior makes possible
-at the moment of the claim.
-
-\subsection{Throughput}
-
-The fitted configuration plays roughly twenty times faster than the same policy
-driven by the exact block posterior
-(\path{research/v04/results/E9-throughput.txt}), which is why the exact engine is
-used to validate probabilities and to serve as an ablation rather than to run in
-the inner loop. Both are far slower than FishBot v0.3, which does no exact
-inference at all; the absolute rates are fast enough that every experiment in
-this paper is a matter of minutes.
+Table~\ref{tab:elo} converts the round-robin --- reproduced cell by cell as
+Table~\ref{tab:matrix} in \S\ref{app:pop-matrix} --- into
+Bradley--Terry ratings: \vfast{} is rated \numElo{} on a scale where \vthree{} is
+zero, against \numEloDetective{} for the posterior detective and \numEloLockout{}
+for the turn-starvation lockout, so those two sit within a few Elo of \vthree{}.
+Such ratings are not invariant to redundancy in the population and cannot
+represent cyclic dominance \cite{balduzzi-reeval}, so the table summarises this
+panel rather than giving a transferable strength scale.
 
 \subsection{Calibration}
+\label{sec:results-calib}
 
-A stopping rule is only as good as the probabilities it stops on, so the
-policy's own forecasts are a first-class result rather than a diagnostic.
-Table~\ref{tab:calib} gives the aggregate scores and Table~\ref{tab:reliability}
-the decile breakdown.
-
-\begin{table}[ht]
+\begin{figure}[!htbp]
 \centering
-\caption{Reliability of the policies' own probability forecasts on held-out
-games. FishBot v0.3 does not expose an ask forecast, so only its declaration
-confidence is comparable.}
+\resizebox{\linewidth}{!}{\input{figures/reliability}}
+\caption{Reliability diagrams (E6) for the two forecasts \vfast{} exposes and for
+\vthree{}'s declaration forecast. Population: the calibration bank of
+\numCalibDeals{} deals, seed $717171$, \vfast{} against \vthree{}, weights
+frozen; the unit is one forecast. Marker size increases with bin count on a
+compressed scale, so it orders the bins rather than measuring them.
+Points above the diagonal are underconfident, below it overconfident. No
+clustered intervals are computed.}
+\label{fig:reliability}
+\end{figure}
+
+\begin{table}[!htbp]
+\centering
+\caption{Aggregate forecast reliability (E6). Population: the calibration bank of
+\numCalibDeals{} deals, seed $717171$, \vfast{} against \vthree{}, both frozen;
+the unit is one forecast and $n$ counts forecasts of that type. \vthree{} exposes
+no ask forecast, so only the declaration rows are comparable. All entries are
+point estimates: no clustered uncertainty for Brier score, log loss or ECE.
+Voluntary and forced declarations are pooled here, unlike in
+Table~\ref{tab:h2h}.}
 \label{tab:calib}
 \small
 \input{tables/calibration}
 \end{table}
 
-\begin{table}[ht]
+Table~\ref{tab:calib} gives the aggregate scores, Figure~\ref{fig:reliability}
+the reliability diagrams and \S\ref{app:calibration} the decile breakdown. Every
+calibration score in this paper --- here, in the appendix, and wherever one is
+quoted elsewhere --- is a point estimate with no clustered uncertainty, so small
+differences between the estimators are not resolved by these numbers.
+
+\vfast{}'s declaration aggregate is dominated by one bin: \numDeclTopBinShare\% of
+the \numDeclN{} forecasts fall in the top decile, close to $1$ and almost exactly
+right, which is most of what an expected calibration error of \numDeclECE{}
+against realised accuracy \numDeclObs\% measures. The decision-relevant bins are
+the middle ones, and in $[0.6, 0.9)$ the forecast is \emph{under}confident ---
+realised accuracy exceeds predicted probability by $10.0$ to $22.3$ points --- on counts
+of 74, 415 and 221, individually noisy and carrying little aggregate weight.
+Whatever the stopping rule of \S\ref{sec:stopping} does there, the aggregate
+score does not characterise it. \vthree{} is the contrasting case on the same
+bank, expected calibration error \numVthreeDeclECE{} running in the overconfident
+direction, mean predicted \numVthreeDeclPred\% against realised
+\numVthreeDeclObs\%. That is a descriptive comparison of two estimators on the
+same games, not a causal explanation of either policy's behaviour, and it does
+not establish why the declaration-accuracy difference of \S\ref{sec:results-h2h}
+exists.
+
+\subsection{Which mechanisms matter: frozen-policy ablations}
+\label{sec:ablations}
+
+Each ablated variant plays the same \numAblDeals{} deals in two seat rotations
+against the same four-policy panel with the fitted weights left \emph{unchanged},
+so each row measures how the fitted policy behaves when one component is removed
+from it, not the standalone causal value of that component in a policy refitted
+around its absence: a cheap removal may still be doing work a refitted policy
+would find another way to do, and an expensive removal may be expensive only
+because the surrounding weights were fitted to rely on it. No matched-budget
+refit was run (\S\ref{sec:limitations}). That qualification applies to every row
+below and to \S\ref{app:ablations} and is not repeated per row; all ablation
+intervals are paired percentile bootstrap over deals, \numBootstrapDraws{}
+resamples.
+
+\begin{table}[!htbp]
 \centering
-\caption{Reliability of both forecasts, by decile of the predicted probability.
-The declaration column is where \eqref{eq:stop} operates, and it is sparse
-everywhere except the top bin.}
-\label{tab:reliability}
-\small
-\input{tables/reliability}
+\caption{Frozen-policy ablations (E5). Population: \numAblDeals{} deals in two
+seat rotations against the four-policy panel \{\vthree{}, turn-starvation
+lockout, posterior detective, \vtwo{}\}, \numAblGames{} games per opponent, seed
+$606060$, full rules dialect. Fitted weights are frozen at the shipping values in
+every row; only the named component changes. ``Full $-$ ablated'' is the
+reference win rate \numAblRef\% minus the row's, so positive means removal hurt.
+Intervals: paired percentile bootstrap over deals. The three belief rows at
+$21$--$29\%$ substitute weaker approximate beliefs, not the exact reference
+engine; only the \vblock{} row uses that. The two policy-prior rows carry
+identical figures by construction rather than by coincidence, because the Fast
+belief is already the default (\S\ref{app:ablations}).}
+\label{tab:ablations}
+\footnotesize
+\input{tables/ablations}
 \end{table}
 
-Declaration forecasts are calibrated to within $\numDeclECE$ expected
-calibration error, with realised accuracy \numDeclObs\%.
+\paragraph{Belief.}
+The three rows that degrade the belief itself are the largest in
+Table~\ref{tab:ablations} by an order of magnitude over anything else, and none
+of them isolates a single constraint. The fitted prior of \eqref{eq:prior} is
+applied only along the Fast path (\filepath{engine/src/belief.hpp}), so every one
+of these rows removes the prior together with whatever else it removes. Keeping
+the Sinkhorn solver and dropping the certificates and the prior costs
+\numAblSinkhorn{} points (CI \numAblSinkhornCI{}), leaving \numAblSinkhornAbs\%;
+making the same removal with the exact capacity dynamic program in place of
+Sinkhorn costs \numAblCFive{} points (CI \numAblCFiveCI{}), leaving
+\numAblCFiveAbs\%; dropping capacity conditioning as well costs \numAblCFour{}
+points (CI \numAblCFourCI{}), leaving \numAblCFourAbs\% and the largest decrease
+in the table. The prior alone is worth \numAblPrior{} points, so the certificates
+account for most but not all of each difference, and no row in this experiment
+separates the two. None of the three uses the exact reference engine --- all
+substitute a degraded approximate belief --- and only the \vblock{} row
+substitutes the engine of \S\ref{sec:belief}.
 
-That aggregate needs a qualification, because it is dominated by one bin. Roughly
-nine tenths of the agent's declaration forecasts sit above $0.99$, where it is
-almost perfectly calibrated; the sparse middle bins, between $0.6$ and $0.9$, are
-underconfident by eight to nineteen points. Those are exactly the forecasts at
-which \eqref{eq:stop} has a decision to make rather than a formality to
-discharge. The direction is the safe one --- the agent claims less often than it
-should, not more --- and it is consistent with the ablation finding that moving
-the declaration threshold between $0.80$ and $0.99$ changes nothing measurable,
-since so little mass lies between them. But the honest statement is that the
-calibration result licenses the \emph{scale} the stopping rule operates on, not
-its behaviour in the region where it is actually deciding.
+\paragraph{Prior and ask features.}
+Removing the fitted policy-aware prior costs \numAblPrior{} points (CI
+\numAblPriorCI{}), leaving \numAblPriorAbs\%; the fitted policy depends on it. Of
+the ask-side rows, which probe single coordinates of the \numAskFeats-weight ask
+score and the lookahead terms, only the lock-completion weight has an interval
+excluding zero: \numAblLockWeight{} points (CI \numAblLockWeightCI{}), leaving
+\numAblLockWeightAbs\%. Every other ask-side interval contains zero --- hit
+probability \numAblHitWeight{} (CI \numAblHitWeightCI{}), two-ply
+\numAblTwoPly{} (CI \numAblTwoPlyCI{}), information leak \numAblLeak{} (CI
+\numAblLeakCI{}) --- and three are negative point estimates: one-ply value
+\numAblValue{} (CI \numAblValueCI{}), reply threat \numAblThreat{} (CI
+\numAblThreatCI{}), runway \numAblRunway{} (CI \numAblRunwayCI{}). Correlated
+features produce exactly this pattern, one coordinate's removal being absorbed by
+the others, and a paired design controls the deals but not the collinearity; we
+keep all three, because dropping a component on a non-significant ablation is
+selection on noise.
 
-The comparison with the predecessor is the sharpest single diagnostic in the
-study, and it explains the declaration-accuracy gap in Table~\ref{tab:h2h}
-mechanically rather than by appeal to a better policy. FishBot v0.3's
-declaration confidence is a geometric mean of per-card marginals; on the same
-games it predicts \numVthreeDeclPred\% and achieves \numVthreeDeclObs\%, an
-expected calibration error of $\numVthreeDeclECE$ --- roughly eight times v0.4's,
-and in the dangerous direction. A policy that believes it is 95\% sure when it is
-84\% sure will keep making claims it should not make, whatever threshold sits on
-top. Replacing that estimate with the exact joint probability \eqref{eq:q2} is
-the change that matters; the stopping rule above it is a refinement whose
-separate contribution this study does not establish (\S\ref{sec:ablations}).
+\paragraph{Declaration.}
+Every declaration-side row is unresolved from zero: the value-based stopping rule
+against a fixed threshold at \numAblStop{} points (CI \numAblStopCI{}), the
+threshold settings $0.80$ and $0.99$ at \numAblDeclEighty{} (CI
+\numAblDeclEightyCI{}) and \numAblDeclNinetyNine{} (CI \numAblDeclNinetyNineCI{}).
+The ``cash locked half-suits immediately'' row is zero by construction rather than
+by measurement: the value-based rule decides first, so the cashing rule never
+fires. With the belief rows and the declaration-accuracy difference of
+\S\ref{sec:results-h2h}, these support only the claim that the \emph{joint}
+allocation probability matters, which is what the certificates and the capacity
+conditioning sharpen. They do not establish that the stopping formulation of
+\S\ref{sec:stopping} outperforms a well-calibrated fixed threshold; this
+experiment lacks the power to resolve that.
+
+\paragraph{Belief substitution.}
+Substituting the \vblock{} belief --- the exact reference engine --- into the
+Fast-fitted policy costs \numAblBlock{} points (CI \numAblBlockCI{}), leaving
+\numAblBlockAbs\%. The matched comparator --- the Fast belief with the policy
+prior switched off, so that it is prior-free as the reference engine is --- costs
+\numAblPrior{} points on its own. These are two separate frozen-policy measurements and do not
+decompose the \numAblBlock{}-point difference additively; the remainder is in the
+same direction and no interval is reported for it. Repeating the substitution
+under a deliberately unfitted posterior-greedy policy (E12, \numETwelveDeals{}
+deals in six seat rotations, \numETwelveGames{} games per arm), which removes the
+confound of weights fitted around Fast beliefs, gives \numETwelveFast\% (CI
+\numETwelveFastCI\%) against \numETwelveBlock\% (CI \numETwelveBlockCI\%),
+deal-clustered percentile bootstrap: same direction, overlapping intervals, so
+E12 does not resolve the question either. The fitted policy is therefore not
+invariant to the belief representation. This does not establish that an
+exact-belief policy would be weaker after matched retraining, which would require
+separate matched-budget fits that we did not run; as an analogy only,
+\cite{rebstock-inference} report a comparable observation in Skat, where more
+accurate inference did not translate into better play under a policy tuned around
+the cheaper estimate.
+
+\subsection{Robustness: rules dialects and arbitration}
+\label{sec:robustness}
+
+The margin over \vthree{} depends on the dialect (E7, \numEsevenDeals{} deals in
+six seat rotations, \numEsevenGames{} games per row, deal-clustered percentile
+bootstrap, tables in \S\ref{app:dialects}): it falls to \numEsevenVthreeLegacy\%
+(CI \numEsevenVthreeLegacyCI\%) under the v0.3 dialect, which permits declarations
+only on turn, to \numEsevenVthreeEight\% (CI \numEsevenVthreeEightCI\%) under the
+$48$-card, eight-half-suit form, and to \numEsevenVthreeNoOOT\% (CI
+\numEsevenVthreeNoOOTCI\%) with out-of-turn declarations disabled. Comparator rows
+do not move uniformly downwards --- against the lockout, disabling out-of-turn
+declarations \emph{raises} the win rate to \numEsevenLockoutNoOOT\% --- and since
+E7 and E3 differ in bank as well as dialect, these rows bound the size of the
+dialect dependence rather than isolating the rule's contribution.
+
+Arbitration of simultaneous voluntary declarations is a modelling choice rather
+than a rule of the game (\S\ref{sec:rules}). Replacing the default lowest-seat
+order by highest seat or by a scan from the turn-holder moves every win rate by
+at most \numArbMaxMove{} points, with overlapping deal-clustered percentile
+bootstrap intervals throughout (E17, \numEseventeenDeals{} deals in six seat
+rotations, tables in \S\ref{app:dialects}); against \vthree{} the alternatives
+give \numArbHighVthree\% and \numArbTurnVthree\% for a default of \numVsVthree\%,
+so both put the worst panel result marginally below the \numWorstCase\% of
+\S\ref{sec:results-h2h}, which is why that figure is scoped to the default order.
+What the choice does move is the out-of-turn declaration rate, from
+\numArbOOTSeatLo--\numArbOOTSeatHi{} per game under either seat order to
+\numArbOOTTurnLo--\numArbOOTTurnHi{} under the turn-holder scan, declarations per
+game unchanged. Both checks are within-dialect and within-panel.
+
+\subsection{Local response probe}
+\label{sec:lbr}
+
+\begin{table}[!htbp]
+\centering
+\caption{Local response probe (E10). Each row fits a fresh policy in the same
+policy class, with the same optimiser and budget, whose only objective is to beat
+the frozen policy named; fitting used seed $515253$, evaluation a separate bank
+of \numLBRDeals{} deals in six seat rotations, \numLBRGames{} games per row, seed
+$6543210$, target weights frozen. The win rate is what the response achieved, so
+lower is better for the frozen policy. Intervals: deal-clustered percentile
+bootstrap, \numBootstrapDraws{} resamples. Action-limit rate \numLBRLimit{} in
+all three probes.}
+\label{tab:lbr}
+\small
+\input{tables/lbr}
+\end{table}
+
+A response fitted specifically against frozen \vfast{} achieved \numLBRFour\% (CI
+\numLBRFourCI\%, Table~\ref{tab:lbr}); the interval includes $50\%$, so this
+search did not resolve an advantage in either direction. The identical procedure
+achieved \numLBRThree\% (CI \numLBRThreeCI\%) against \vthree{} and
+\numLBRDetective\% against the posterior detective, so it is sensitive enough to
+find large exploits when they exist; the action-limit rate is \numLBRLimit{} in
+all three probes, the \vfast{} mirror included. As \S\ref{sec:protocol-metrics}
+sets out, an achieved response score is a \emph{lower} bound on the
+exploitability of the frozen target within the searched class \cite{lisy-lbr}: a
+restricted-policy-class diagnostic, not evidence of an equilibrium.
+
+\subsection{Throughput}
+\label{sec:throughput}
+
+\begin{table}[!htbp]
+\centering
+\caption{Whole-game throughput (E9). Population: self-play games under the full
+rules dialect with policy weights frozen; the unit is one complete game and the
+last column gives how many were timed. The \vfast{} and \vblock{} rows differ
+only in the belief path. No intervals; these are wall-clock rates for one timing
+run each.}
+\label{tab:throughput}
+\small
+\input{tables/throughput}
+\end{table}
+
+\vfast{} runs at \numThroughputFast{} games/s against \numThroughputBlock{} for
+\vblock{}, a factor of about \numThroughputRatio$\times$; \vthree{}, whose
+posterior carries neither capacity conditioning nor ask-legality certificates,
+runs at \numThroughputThree{} games/s. That Fast-to-Block factor is why the exact
+reference engine validates probabilities and serves as an ablation arm rather
+than running in the deployed inner loop: at \numThroughputBlock{} games/s the
+primary bank of \numHtHGames{} games per row would dominate the experimental
+budget. Every evaluation run reported in \S\ref{sec:results} completes in
+minutes at these rates; the fitting rounds of \S\ref{sec:fitting} and the
+exhaustive enumeration of E15 do not, and their costs are not reported here.
+
+\renewcommand{\topfraction}{0.7}
+\renewcommand{\bottomfraction}{0.3}
+\renewcommand{\textfraction}{0.2}
+\renewcommand{\floatpagefraction}{0.5}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{1}
+\setcounter{totalnumber}{3}
+\setlength{\textfloatsep}{20pt plus 2pt minus 4pt}
+\setlength{\floatsep}{12pt plus 2pt minus 2pt}
+\setlength{\intextsep}{12pt plus 2pt minus 2pt}

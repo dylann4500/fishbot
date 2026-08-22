@@ -1,297 +1,106 @@
 \section{Related work}
 \label{sec:related}
 
-\subsection{Fish and Literature specifically}
+This section covers only the work the rest of the report builds on. The
+background it does not depend on is collected in \S\ref{app:related}, and the
+evaluation-methodology literature is taken up in \S\ref{sec:protocol}.
 
-The literature on this game is human and informal. McLeod's Pagat entry
-\cite{pagat} is canonical for the rules --- including our 54-card nine-set deck and
-the variant in which any declaration error awards the half-suit to the opponents
---- and for a tactics list covering deliberate misses that inform a partner,
-locking out a dangerous opponent by never asking them anything, and exhausting one
-rank across all opponents before switching rank; it also records Ali Salahuddin's
-partner-signalling convention and Guy Srinivasan's Forced Claims rule. Develin's
-chapter \cite{develin} is the deepest strategy writing we found and describes
-exactly our dialect: the blackball example, the rule against declaring a half-suit
-one holds entirely, the observation that asking teaches opponents as much as
-teammates --- so asks inside a team-owned half-suit are a free channel --- and the
-corpus's only quantitative endgame, where the alternative to a coin-flip
-declaration would need success probability $3/2$. He forbids pre-agreed
-conventions outright, contradicting Pagat. Wikipedia
-\cite{wikiliterature} names the ``stalemate breaker''; secondary pages
-\cite{dorsa,strategy-site} restate blackballing, asking the asker, and an endgame
-delegation heuristic.
+\subsection{Fish and Literature}
 
-Computational prior art is close to absent. The review corpus reports that arXiv
-searches on 21 August 2026 for \texttt{"Canadian Fish"},
-\texttt{"Literature card game"} and \texttt{"half-suit"} each returned nothing,
-that a GitHub sweep found no repository containing search, planning or a working
-learner, and that Literature is not among RLCard's environments \cite{rlcard}. The
-one real agent is Somani's \texttt{literature} \cite{somani,somani-server}: about
-$1{,}940$ lines of Python with a complete rules engine and a sound deduction fixed
-point. It plays the 48-card, eight-half-suit ``remove the sevens'' variant and
-trains only on four players, so the six-player game's hardest sub-problem is
-missing --- with one teammate a half-suit allocation spans $2^6$ possibilities and
-is usually forced, with two it spans $3^6 = 729$. Its learner, a
-$1149 \to 100 \to 1$ perceptron fitted for $1{,}030{,}945$ iterations, never
-bootstraps: it regresses a hand-written score of $\pm 20$ per ask outcome plus
-$\pm 100$ at the end, which punishes the deliberate miss both Pagat and Develin
-recommend, and its move generator forbids known misses except as a fallback. A
-verified bug compounds this --- team identity is an integer and the winner a plain
-enumeration member, so the terminal comparison is always false and every move in
-every game received $-100$. The published model never saw a win/loss gradient and
-is functionally a greedy maximum-likelihood asker. Declarations fire the instant a
-half-suit is provably owned, wrong claims are unpenalised by construction, and no
-strength numbers have ever been published. The other public repositories are user
-interfaces; one closed-source Android application advertises four- and six-player
-bots with no stated methodology (unverified) \cite{playstore}.
+The published material on this game is human and informal, and neither of its
+two substantial sources is quantitative or describes a program. McLeod's Pagat
+entry \cite{pagat} is the canonical rules source and records several points on
+which dialects differ, including the variant in which a declaration error awards
+the half-suit to the opposing team; ours is specified in \S\ref{sec:rules} and
+listed in full in \S\ref{app:dialect}. Develin's chapter \cite{develin} is the
+most detailed strategy writing we located, describes the same dialect, and
+supplies two observations our design uses: an ask teaches the opponents as much
+as it teaches a teammate, which the information-leak features of
+\S\ref{sec:policy} price, and a player may not declare a half-suit they hold
+entirely, a rules-level constraint rather than a tactical one.
 
-\subsection{Search under imperfect information}
+Computational prior art is close to absent among the sources we reviewed:
+arXiv searches on 21 August 2026 for ``Canadian Fish'', ``Literature card
+game'' and ``half-suit'' returned nothing, a sweep of public GitHub
+repositories found none containing search, planning or a working learner for
+this game, and Literature is not among the environments packaged with RLCard
+\cite{rlcard}. That search was not exhaustive, so every novelty statement in
+this report takes the form ``we found no prior published work that \dots'' and
+should be read against this scope rather than as a categorical claim. The one
+agent we found, Somani's \texttt{literature} \cite{somani,somani-server}, plays
+the four-player, 48-card variant, which does not raise the six-player
+allocation problem this report addresses, and no strength numbers for it have
+been published, so it cannot serve as a baseline; a closed-source Android
+application advertises four- and six-player bots with no stated methodology
+\cite{playstore}, which we were not able to verify. \S\ref{app:related}
+describes both, the informal strategy corpus, and where Develin and Pagat
+disagree.
 
-The standard recipe for hidden-hand card games is determinization, or Perfect
-Information Monte Carlo: sample an assignment of the hidden cards consistent with
-the public history, solve the resulting perfect-information game with a
-double-dummy solver, and play the best average move. Levy proposed it for Bridge
-(a source the corpus could not verify) \cite{levy}; Ginsberg's GIB made it work,
-reweighting sampled deals by Bayes and finding fifty worlds sufficient
-\cite{ginsberg-gib}. Frank and Basin showed the method unsound however many worlds
-are drawn, naming \emph{strategy fusion} --- the searcher plays a different
-strategy in each world, although a real player must commit to one per information
-set --- and \emph{non-locality}, where a node's value depends on parts of the tree
-outside its subtree because informed opponents steer play away from it
-\cite{frank-basin-ai}; the repairs that work are those attacking non-locality too
-\cite{frank-basin-aaai}. Long, Sturtevant, Buro and Furtak explained when
-determinization succeeds at all, through leaf correlation, bias and a
-disambiguation factor, placing Skat and Hearts where PIMC is near-optimal and Kuhn
-poker where it is not \cite{long-pimc}. Ginsberg names the structural cost:
-because each determinization assumes the missing information will arrive at the
-next decision, PIMC never makes an information-gathering play.
+\subsection{Determinization, and why it is not the foundation used here}
 
-Information Set MCTS instead builds one tree over information sets, redeterminizes
-each iteration, and explores on the count of iterations in which a move was
-\emph{available} rather than on parent visits \cite{cowling-ismcts}. Its variants
-coincide when all moves are fully observable, as in Fish, and one tree of ten
-thousand iterations beat forty trees of two hundred and fifty by $22.9\%$;
-re-determinization at non-root seats and self-determinization extend it
-\cite{goodman-ris,cowling-bluffing}, though ISMCTS is unsound too, its
-exploitability sometimes \emph{increasing} with computation \cite{lisy-oos}. The
-Skat and Bridge engineering lines matter as much: Kermit's inference module alone
-was worth $+217$ tournament points per 36 games \cite{buro-kermit}, and a Spades
-post-mortem traced blunders to a sampler placing a card of true probability $1/3$
-into $87\%$ of its worlds \cite{whitehouse-spades}.
+Determinization, or Perfect Information Monte Carlo --- sample hidden cards
+consistently with the public history, solve the resulting perfect-information
+game, and play the move with the best average value \cite{ginsberg-gib} --- is
+the standard recipe for hidden-hand card games, and is unsound however many
+worlds are drawn \cite{frank-basin-ai}. It is a poor foundation for Fish for a
+structural reason as well as that one: the perfect-information game is
+degenerate, because a clairvoyant player names only cards the target actually
+holds, so never fails an ask, never loses the turn, and declares each half-suit
+correctly as soon as their team holds all of it. Almost every reachable position
+therefore carries the same perfect-information value, and averaging that value
+over deals sampled from the public history collapses to choosing the ask most
+likely to hit: a one-ply heuristic blind to the information an ask leaks, the
+information a refusal supplies and the option value of postponing a declaration.
+\S\ref{app:related} gives that collapse in full, together with the unsoundness
+diagnosis, the conditions under which determinization performs well anyway, and
+the proposed repairs. We therefore treat the hit probability as one feature among
+several (\S\ref{sec:policy}) rather than as an engine, and put the modelling
+effort into the posterior (\S\ref{sec:belief}) and the declaration-timing rule
+(\S\ref{sec:locked}).
 
-None of this is the right foundation here. In Fish the \emph{perfect-information}
-game is degenerate: a clairvoyant player only ever names cards the target actually
-holds, so never fails an ask and never loses the turn, and declares each half-suit
-correctly the instant their team completes it. The double-dummy value of almost
-every position is ``the team on turn takes everything it can reach''; the solver
-barely discriminates among root moves, and averaging over sampled worlds leaves
-\[
-  \arg\max_{(t,c)} \; \mathbb{E}\bigl[V^{\mathrm{PI}}\bigr]
-  \;\approx\; \arg\max_{(t,c)} \; \Pr[\,t \text{ holds } c \mid h\,],
-\]
-a one-ply heuristic blind to the information an ask leaks, the information a
-refusal supplies, the option value of postponing a declaration, and partner
-signalling. A Fish double-dummy solver will be easy to write, fast, and worthless
-as an engine --- useful only for hit-probability features and as a sparring
-baseline. The corpus's reading of \cite{long-pimc} sharpens the point: Fish should
-have a disambiguation factor far above the $\approx 0.6$ measured for Skat and
-Hearts --- nominally PIMC's best regime --- yet its pre-terminal leaf structure
-sits in the corner where almost every move wins in the sampled world, which that
-paper never measured and dismissed as ``very boring games''. Fish is not boring,
-precisely because of the imperfect information determinization discards. That is
-why we build an exact belief engine (\S\ref{sec:belief}) and a decision-theoretic
-declaration rule (\S\ref{sec:theory}) instead. One smaller finding survives: Go
-Fish sits at the maximum of Zuckerman, Felner and Kraus's Opponent Impact measure
-\cite{zuckerman-mpmix}, so which opponent to ask is a first-class argument here,
-not a tie-break.
+\subsection{Policy-aware inference over deals}
 
-\subsection{Equilibrium computation and team games}
+Skat engines enumerate the deals consistent with the public record and
+reweight them by a learned model of what each player would have done --- a
+supervised per-card location model \cite{solinas-supervised}, or reach
+probabilities taken from a policy \cite{rebstock-inference} --- and a
+dedicated inference module was reported to be worth $+217$ tournament points
+per 36 games to the Skat engine Kermit on its own \cite{buro-kermit}. The
+policy-aware prior of \S\ref{sec:policyprior} is the same idea in a much
+simpler form, a fitted soft reweighting of the rules posterior rather than a
+learned opponent model, and \S\ref{sec:ablations} reports its frozen-policy
+ablation rather than claiming it is necessary.
 
-The equilibrium line runs from counterfactual regret minimisation
-\cite{zinkevich-cfr} through sampling variants \cite{lanctot-mccfr}, CFR+
-\cite{tammelin-cfrplus} and discounted CFR \cite{brown-dcfr} to function
-approximation \cite{brown-deepcfr,steinberger-dream}. CFR+ does relatively badly
-where some actions are very costly mistakes \cite{brown-dcfr}, and a wrong
-declaration is exactly that; DREAM's exploration term is exponential in depth, and
-a Fish game runs sixty to a hundred and twenty decisions. ReBeL recasts an
-imperfect-information game as a continuous-state perfect-information game over
-\emph{public belief states} \cite{brown-rebel}, building on the common-information
-reduction of decentralised control \cite{nayyar-common} and the public-belief
-construction used in Hanabi \cite{foerster-bad}; Student of Games extends it and
-names Scotland Yard as the closest published public-observation domain
-\cite{schmid-sog}. Fish is an \emph{exact} public-belief-state game, which is what
-\S\ref{sec:belief} exploits.
+\subsection{Counting deals under constraints}
 
-Three teammates share a payoff but hold different information and cannot
-communicate, so the team is not one player with pooled knowledge --- assuming
-otherwise is a second flavour of strategy fusion --- and Nash equilibrium over
-individual strategies is not the target either. The right concept is the
-team-maxmin equilibrium with correlation (TMECor): agree on a correlated joint
-strategy before the deal, then execute it without communicating. Celli and Gatti
-give the complexity --- TMECor is FNP-hard, the team best-response oracle APX-hard,
-and the worst-case price of uncorrelation grows with the leaf count $|L|$, with
-reported bounds of $|L|/2$, $|L|/4$ and $\sqrt{|L|}$ \cite{celli-gatti}. Farina
-and coauthors connect ex-ante team collusion to extensive-form correlation
-\cite{farina-collusion}, and the team belief DAG and two-player conversion make
-the team a single coordinator issuing prescriptions, giving a two-player zero-sum
-game whose equilibria are realization-equivalent to TMECor, at the cost of a
-representation exponential in how much private information distinguishes teammates
-within a public state \cite{zhang-tbdag,carminati-tpi}. Learning-based attacks
-exist \cite{mcaleer-teampsro,xu-fxp}; the latter proves self-play converges to
-\emph{local} team equilibria --- the formal version of the complaint that a bot's
-asks stop meaning anything.
+Counting the deals consistent with a public history is a permanent computation;
+the exact formulas and the randomised approximation schemes are recorded in
+\S\ref{app:related}, and none is practical at $n = 54$. Matrix scaling is the
+usual practical approximation \cite{lsw}, and a Sinkhorn iteration of this kind
+is what the Fast path uses (\S\ref{sec:fast}). The tractable case that matters
+here comes from the contingency-table literature, where counting tables with a
+\emph{constant} number of rows is polynomial \cite{cryan-dyer}. Fish lands in
+that regime because the hidden state is exactly the initial deal
+(Proposition~\ref{prop:transfer}) and each seat's share of it is a known,
+constant number of cards, so the counting matrix has one column type per seat,
+with capacities that are small integers rather than binary-encoded margins. Ask
+legality is disjunctive, which would normally destroy the product form, but
+every legality certificate is confined to a single half-suit, so
+exhaustive enumeration within a block keeps the computation exact; \S\ref{sec:belief}
+develops this into the reference engine and \S\ref{sec:fast} into the deployed
+approximation.
 
-We attempt none of this: one seat's information set at deal time holds
-$45!/(9!)^5 \approx 1.9 \times 10^{28}$ deals, and a prescription would have to
-name an action for each teammate at each of their possible hands. The cost should
-be stated plainly. Nothing here is an equilibrium result --- win rates are measured
-against a fixed population, robustness is a worst-case-over-panel claim rather
-than an exploitability bound, and the fitted exploiter of \S\ref{sec:protocol} is a
-lower-bound proxy whose failure mode is known: a low score against an exploiter is
-not evidence of low exploitability \cite{lisy-lbr}.
+\subsection{Team games and common information}
 
-\subsection{Cooperative play through public actions}
-
-Hanabi is the reference benchmark for coordination through observable actions
-\cite{bard-hanabi}, and is relevant because Fish likewise has no side channel. The
-Bayesian Action Decoder made the public belief explicit, reached $24.174$ of $25$,
-and attributed roughly $40\%$ of its information transfer to learned conventions
-rather than grounded content \cite{foerster-bad}. The Simplified Action Decoder
-showed that letting teammates condition on the \emph{greedy} rather than the
-exploratory action is a prerequisite for conventions to survive
-$\varepsilon$-greedy training \cite{hu-sad}. Other-Play exposed how much of a
-self-play score is convention rather than skill: the same agents scored $23.97$
-with themselves and $2.52$ paired across independent runs \cite{hu-otherplay}.
-Off-Belief Learning is an explicit dial on convention depth, from a grounded
-level-one policy near $20.9$ to $24.10$ at level four, with a uniqueness result
-that makes independent runs interoperable \cite{hu-obl}; test-time search alone
-lifted a blueprint from $24.08$ to $24.61$ \cite{lerer-sparta}. Bridge bidding is
-the other model system, an auction that is literally a learned language: bidding
-networks beat a strong commercial program by $0.25$ IMP per board
-\cite{rong-bidding}, joint policy search --- which scores simultaneous changes at
-several information sets, exactly what inventing a convention requires --- improved
-a system from $+0.29$ to $+0.63$ IMPs per board \cite{tian-jps}, and an agent
-trained with human partners gained $+0.97$ IMPs per deal \cite{lockhart-bidding}.
-
-The asymmetry separating Fish from both is the audience. Hanabi has no adversary,
-so every bit of signal is pure profit --- which is why its conventions are so
-elaborate --- and in bridge the harm a leaked auction does is diffuse. In Fish a
-leaked card location is directly executable: once it is public that a player holds
-a card, any opponent holding another card of that half-suit takes it with
-probability one and keeps the turn. Conventions here carry a genuine eavesdropping
-cost. The corpus states the sharpest version information-theoretically: because
-teammate and opponent hands are exchangeable given the public history, an absolute
-codebook --- one whose meaning is fixed by public information alone --- is decoded
-identically by all five listeners, so with two teammates against three opponents
-the Wyner-style secrecy rate of such a convention is non-positive
-\cite{wyner,csiszar-korner}; only a receiver-relative codebook, whose semantics
-depend on the receiver's own holdings, has positive rate, at the price of
-ambiguity at the encoder. We report this as an argument, not a theorem: the corpus
-gives a structural claim with an informal exchangeability justification and no
-proof, and we have not proved it either. It is the design rationale for building
-v0.4 with no private channel at all. Public-signalling economics predicts the same
-outcome, cheap talk separating before two audiences only when credible against
-both and otherwise collapsing toward pooling --- the regime Farrell and Gibbons
-call subversion \cite{farrell-gibbons}. The Hanabi construction that most clearly
-fails to port is the modular hat-guessing code, which works because each receiver
-sees every other receiver's hand and can subtract it \cite{cox-hanabi}; in Fish
-nobody sees any hand. Any claim that an agent has learned a convention must also
-survive the scramble ablation of \cite{lowe-pitfalls}, where high
-speaker--listener consistency coexisted with zero causal effect.
-
-\subsection{Inference over deals}
-
-Counting the deals consistent with a public history is a permanent computation.
-Ryser's inclusion--exclusion and Glynn's sign-vector formula are exact at
-$O(2^n n)$ \cite{ryser,glynn}; at $n = 54$ that is about $1.8 \times 10^{16}$, so
-they serve only as unit tests on tiny instances. The Jerrum--Sinclair--Vigoda
-chain is a fully polynomial randomised approximation scheme \cite{jsv}, but a
-practical study measured it at $50{,}634$ seconds for $n = 10$ against Ryser's
-$0.003$ seconds \cite{newman-vardi}. Matrix scaling is the usual approximation ---
-Sinkhorn iteration, with the deterministic strongly polynomial analysis bounding
-the permanent within a factor $e^n$ \cite{lsw} --- and it is what our fast path
-uses (\S\ref{sec:fast}); the corpus measures its cost as two to six percent
-maximum marginal error on a Fish-sized instance, worst exactly where a real
-position gets hard, reaching $5.9\%$ at $60\%$ void. The contingency-table
-literature contributes sequential importance sampling \cite{chen-sis}, the warning
-that it can underestimate by an exponential factor under any row or column
-ordering while appearing to have converged \cite{bezakova-sis}, and, closest in
-spirit to what Fish permits, polynomial approximate counting of tables with a
-constant number of rows \cite{cryan-dyer}. Constrained deal generation in practice
-is done by rejection or by learning: GIB deals against suit-length restrictions and
-then discards deals whose bids its own bidding module would not have made ---
-rejection sampling against a policy, one to two seconds for fifty worlds
-\cite{ginsberg-gib,pavlicek} --- while Skat engines enumerate and reweight with a
-learned per-card location model or policy-based reach probabilities
-\cite{solinas-supervised,rebstock-inference}. The general problem is hard:
-constructing a history consistent with a public state is FNP-complete in the worst
-case, and enumeration is polynomial only for \emph{sparse} public trees
-\cite{solinas-history}.
-
-Fish is unusually favourable. Cards move only by publicly observed transfer, so
-the hidden state never grows --- it is the initial deal and nothing else --- and
-each player's share of the initial deal stays constant at nine all game. The counting matrix
-therefore has at most six distinct column types, one per seat, and its permanent
-becomes polynomial rather than \#P-hard: a dynamic program over the capacity
-vector costs about $5 \times 10^5$ multiply--adds from a player's seat. Two
-caveats deserve recording: tractability needs the constant column count \emph{and}
-capacities that are small numbers written in unary, since counting contingency
-tables is \#P-complete even with two rows once margins are binary-encoded; and ask
-legality is disjunctive, which would normally destroy the product form --- the
-escape being that every legality certificate is confined to a single half-suit, so
-exhaustive enumeration within a block keeps it exact. A reference implementation
-with nine blocks and 27 exact legality constraints runs in $0.72$ seconds of
-unoptimised NumPy, milliseconds once ported to C. Nothing comparable holds in
-Bridge, where the constraints are soft auction inferences and no such collapse of
-column types occurs.
-
-\subsection{Evaluation methodology}
-
-Card-game results are dominated by deal variance, so the standard remedy is a
-matched design: duplicate bridge replays each board with the same cards in the
-same seats, and the computer poker competition adds common seeds across pairings,
-reportedly cutting the standard deviation to about two thirds --- a figure the
-corpus could verify only partially \cite{acpc}. The resampling unit is then the
-deal, not the game, since replays of one deal form one correlated cluster; and the
-raw percentile bootstrap should be avoided, having been measured to fail at $5.7$
-to $11.2\%$ against a nominal $5\%$ \cite{jordan-rleval}. Poker also supplies
-control variates: advantage-sum estimators \cite{zinkevich-divat}, importance
-sampling over imaginary observations \cite{bowling-is}, MIVAT's least-squares value
-function \cite{white-mivat}, and AIVAT, which cut standard deviation by $68.8\%$ in
-heads-up no-limit hold'em and $99.9\%$ in Leduc with full knowledge
-\cite{burch-aivat,avaivat}. The gains are domain-sensitive: MIVAT delivered only
-about eighteen to twenty percent in six-player poker, the closest analogue to our
-setting.
-
-For absolute quality the tools are best-response computation and its relaxation,
-local best response, which showed every entrant in the 2016 computer poker
-competition to be exploitable for more than $3{,}180$ milli-big-blinds per hand
-\cite{lisy-lbr}. Two lessons carry over verbatim: it gives only a lower bound, so a
-low score proves nothing --- it lost $536$ against a bot whose true exploitability
-in the same action set was $90$ --- and the point at which the exploiter may act
-must be swept, since restricting it to later rounds raised measured exploitability
-by nearly an order of magnitude. Refining an abstraction likewise does not
-monotonically reduce exploitability \cite{waugh-abstraction}. For ranking a
-population, Bradley--Terry-style models \cite{coulom-whr,herbrich-trueskill} fail
-twice over when that population is a training run's own checkpoints: they are not
-redundancy-invariant, so duplicating one agent redistributes everyone's rating,
-and they cannot represent cycles. Balduzzi and coauthors offer a maximum-entropy
-Nash average over the antisymmetric logit matrix instead
-\cite{balduzzi-reeval,omidshafiei-alpharank}.
-
-Three documented traps shaped our protocol. Monitoring an interval computed for a
-fixed sample size and stopping when it looks good is not a test: in simulation it
-produced a $61.35\%$ false-positive rate under the null \cite{avaivat}, which is
-why sequential designs on normalised Elo exist \cite{nelo}. Resampling games rather
-than deals inflates apparent precision whenever several games share a deal. And
-fitting a variance-reduction heuristic on the evaluation data destroys the
-guarantee that motivated it: AIVAT is unbiased for \emph{any} value function,
-which constrains its expectation and not the realised estimate, and
-\cite{kim-sandholm} tuned the heuristic on a published ten-thousand-hand
-six-player dataset until all fourteen players simultaneously appeared to be large
-winners --- which the zero-sum structure makes impossible. Accordingly
-\S\ref{sec:protocol} uses six-rotation duplicate blocks, resamples deals and not
-games, freezes its held-out seed banks before the configuration is fixed, and uses
-a fitted exploiter as its only exploitability proxy. We deliberately do not use
-AIVAT or MIVAT: a learned control variate fitted by us, on our own agent, is the
-exact pathology this literature warns about.
+Three teammates share a payoff, hold different information and cannot
+communicate, so the target concept is neither a single player with pooled
+knowledge nor a Nash equilibrium over individual strategies, but a team-maxmin
+equilibrium with correlation: a correlated joint strategy agreed before the deal
+and then executed without communicating \cite{celli-gatti}. We do not compute it,
+and none of the machinery collected in \S\ref{app:related} for computing it is
+applied here, because one seat's information set at deal time contains
+$45!/(9!)^5 \approx 1.9 \times 10^{28}$ deals and a prescription would have to
+name an action for each teammate at each of their possible hands. Nothing in this
+report is an equilibrium result: win rates are measured against a fixed opponent
+panel, and \S\ref{sec:lbr} reports a fitted-response probe whose achieved score
+is a lower bound within its search class.

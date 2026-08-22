@@ -1,0 +1,63 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper constructed four things: an information-safe simulator for an
+explicitly specified dialect of six-player Canadian Fish, each consequential
+rule a switch and each agent's view audited against the public record
+(\S\ref{sec:engine}); an exact observer-conditioned deal posterior, closed-form
+because card movement in Fish is public so the hidden state is exactly the
+initial deal, giving ownership marginals, team-ownership and named-allocation
+probabilities and validated against a brute-force enumeration oracle on small
+reachable states (\S\ref{sec:belief}, \S\ref{sec:results-verify}); the cheaper
+approximation of it that the deployed \vfast{} policy runs, beneath fitted ask,
+lookahead and declaration machinery (\S\ref{sec:policy}); and a duplicate-block
+protocol --- every primary-bank deal in six seat rotations, two on the ablation
+bank, intervals bootstrapped with the deal as the resampling cluster
+(\S\ref{sec:protocol}).
+
+Four findings are empirical. \vfast{} defeated \vthree{} in \numVsVthreeWins{}
+of \numHtHGames{} games --- \numHtHDeals{} held-out deals in six seat rotations
+--- at \numVsVthree\%, deal-clustered 95\% interval \numVsVthreeCI\%: its lowest
+rate against any member of this eight-policy panel, on this bank, under this
+dialect and the default arbitration order, six of the eight also being
+fitting-panel members (\S\ref{sec:results-h2h}). The margin is declaration
+reliability rather than ask conversion: on the same games \vfast{} declared
+correctly \numVsVthreeDeclAcc\% of the time against \numVthreeDeclAccSame\% for
+\vthree{}, at expected calibration error \numDeclECE{} against \numVthreeDeclECE{}
+(\S\ref{sec:results-calib}); no experiment decomposes that margin causally.
+Among the frozen-policy ablations, the rows removing parts of the rules-derived
+constraint set, the policy prior, the lock-completion weight and the \vblock{}
+belief substitution are resolved from zero; the declaration timing rule, the
+two-ply refinement and the information-leak weights are not, and support no
+conclusion in either direction (Table~\ref{tab:ablations}). And the two cheap
+declaration pre-gates are a pruning heuristic, not a proved bound: over the
+primary evaluation corpus they rejected \numGateFalseNeg{} candidate pairs the
+ungated rule would have declared --- a measured, non-zero false-negative rate
+(E16, \S\ref{sec:results-verify}).
+
+Three readings are suggested by the analysis without being established by it.
+The declaration-accuracy difference appears carried by the joint allocation
+probability rather than by the timing rule above it: a fixed threshold in place
+of the fitted stopping rule moved the win rate \numAblStop{} points, 95\% paired
+interval \numAblStopCI{} (E5) --- an interval that resolves nothing, beside a
+large and consistent reliability difference. Substituting the \vblock{} belief
+cost \numAblBlock{} points, 95\% paired interval \numAblBlockCI{}, so a policy
+fitted around one belief representation does not transfer to the other
+unchanged; that does not show an exact-belief policy would be weaker after
+matched retraining, and no matched fit was run. And ownership of a half-suit can
+freeze while allocation information about it keeps arriving, asks inside a
+locked half-suit remaining legal for the owning team and still carrying
+certificates (\S\ref{sec:locked}): waiting is safe with respect to ownership
+without being profitable, and this study does not isolate its value.
+
+More remains unresolved than settled. Exploitability is not bounded: the
+response probe returns a lower bound within one parametric class, its interval
+including even money (\S\ref{sec:lbr}). No team equilibrium was computed.
+Termination is imposed by hand-set horizons rather than derived, and the
+observed cycling is a property of specific fitted configurations in self-play,
+not of the game. Nothing was tested against expert human play or an
+independently authored engine. The open question the belief-substitution and
+response-probe results jointly raise is whether a separately fitted
+exact-belief agent, a policy class broader than a linear ask score with a linear
+value function, or an equilibrium-oriented method can improve on the current
+\vfast{} policy.

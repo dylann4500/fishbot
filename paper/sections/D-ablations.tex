@@ -1,0 +1,327 @@
+\section{Extended frozen-policy ablations}
+\label{app:ablations}
+
+This appendix records the full design of experiment E5, the exact variant
+specification strings passed to the ablation driver, and the per-opponent
+breakdown that the summary in \S\ref{sec:ablations} compresses into a single
+win rate. The grouped summary itself is Table~\ref{tab:ablations} and is not
+repeated here. It also gives the E12 belief-substitution comparison under a
+deliberately unfitted policy in full, and the method of the E16 declaration
+pre-gate audit whose results are reported in \S\ref{sec:results-verify}.
+
+\subsection{Design}
+\label{app:abl-design}
+
+The reference configuration is \vfast{} as shipped, the policy specification
+\texttt{v04:mgate=0.008}, which equals the compiled defaults. Every variant
+differs from it only in the switch named in its row; the \numParams{}-coordinate
+fitted parameter vector is held at its shipping values throughout, and no
+variant is refitted.
+
+The experiment plays \numAblDeals{} deals against each member of a four-policy
+panel --- \vthree{}, the turn-starvation lockout, the posterior detective and
+\vtwo{} --- with each deal played in two seat rotations, giving \numAblGames{}
+games per opponent per variant. The reported win rate is the mean over the four
+opponents; the reference configuration scores \numAblRef\%. The seed bank is
+606060, which is disjoint from every fitting and selection bank
+(\S\ref{sec:fitting}). The command is
+
+\begin{verbatim}
+./fish ablate --ref=v04:mgate=0.008 --games=500 --rotations=2 --seed=606060 \
+              --panel=v03,lockout,detective,v02 --variants="..."
+\end{verbatim}
+
+and the artifact is \filepath{research/v04/results/E5-ablations.json}.
+
+Because the reference and every variant play the identical deals in the
+identical rotations, the design is matched at the level of the deal. The
+interval in the ``full $-$ ablated'' column is a paired percentile bootstrap in
+which the \emph{deal}, not the game, is the resampling unit: deals are resampled
+with replacement, the paired difference is recomputed on each resample, and the
+endpoints are the 2.5\% and 97.5\% percentiles of \numBootstrapDraws{} draws.
+Resampling
+deals rather than games is the relevant correction here, because the six (or, in
+E5, two) games generated from one deal are not independent observations.
+
+\begin{center}
+\fcolorbox{fishgreen}{fishlight}{%
+\parbox{0.90\linewidth}{\vspace{3pt}
+\textbf{Every row in E5 is a frozen-policy effect.} A row measures what happens
+to \emph{this} fitted parameter vector when one component is removed or
+replaced. It does not measure the standalone value of that component, and it
+does not predict what a policy refitted without the component would score. No
+matched-budget refitting experiment was run.
+\vspace{3pt}}}
+\end{center}
+
+\subsection{Variant specification strings}
+\label{app:abl-specs}
+
+Table~\ref{tab:ablspecs} gives the specification string for each row exactly as
+it is passed to \texttt{fish ablate}, so that any row can be reconstructed with
+a single \texttt{fish match} invocation. The grammar is documented in
+\S\ref{app:repro}. The rows of Table~\ref{tab:ablspecs} and of
+Table~\ref{tab:ablopp} below carry the same ``Change'' labels, in the same
+order, as Table~\ref{tab:ablations}, so a row can be followed across all three.
+
+\begin{longtable}{@{}>{\footnotesize}p{0.42\linewidth}>{\footnotesize\ttfamily}p{0.52\linewidth}@{}}
+\caption{E5 variant specifications. Each string is the complete policy
+specification for one ablation row; the reference is
+\texttt{v04:mgate=0.008}. \numAblDeals{} deals $\times$ 2 seat rotations
+$=$ \numAblGames{} games against each of \vthree{}, the turn-starvation
+lockout, the posterior detective and \vtwo{}; seed 606060; fitted weights
+frozen throughout.}
+\label{tab:ablspecs}\\
+\toprule
+\normalfont Change & \normalfont Specification string \\
+\midrule
+\endfirsthead
+\toprule
+\normalfont Change & \normalfont Specification string \\
+\midrule
+\endhead
+\vfast{} (reference configuration) & v04:mgate=0.008 \\
+\addlinespace
+Drop capacity conditioning (C4) as well as the certificates & v04:mgate=0.008,belief=indep \\
+Drop the ask-legality certificates (C5); plain Sinkhorn over C1--C4 & v04:mgate=0.008,belief=sinkhorn \\
+Drop the ask-legality certificates (C5); exact capacity DP over C1--C4 & v04:mgate=0.008,belief=exact \\
+\vblock{} belief substituted into the Fast-fitted policy & v04:mgate=0.008,belief=block \\
+Fast belief with the policy prior off (matches Block's prior-free belief) & v04:mgate=0.008,belief=fast,ptheta=0,pphi=0 \\
+Remove the fitted policy-aware prior & v04:mgate=0.008,ptheta=0,pphi=0 \\
+\addlinespace
+Zero the lock-completion weight & v04:mgate=0.008,w5=0 \\
+Zero the hit-probability weight & v04:mgate=0.008,w0=0 \\
+Remove the two-ply refinement & v04:mgate=0.008,topk=0 \\
+Zero both information-leak weights & v04:mgate=0.008,w9=0,w19=0 \\
+Remove the one-ply value lookahead & v04:mgate=0.008,value=0 \\
+Zero the reply-threat weight & v04:mgate=0.008,w8=0 \\
+Zero the runway weight & v04:mgate=0.008,w18=0 \\
+\addlinespace
+Declaration threshold 0.99 & v04:mgate=0.008,decl=0.99 \\
+Name the allocation by conditioned greedy MAP & v04:mgate=0.008,gmap=1 \\
+Fixed threshold in place of the value-based stopping rule & v04:mgate=0.008,vdecl=0 \\
+Declaration threshold 0.80 & v04:mgate=0.008,decl=0.80 \\
+Cash locked half-suits immediately & v04:mgate=0.008,patient=0 \\
+\bottomrule
+\end{longtable}
+
+The \texttt{belief=fast,ptheta=0,pphi=0} row exists so that the belief-substitution
+row has a prior-matched comparator: the reference engine carries no fitted
+policy prior, so switching to it changes two things at once, and this row
+isolates the prior half of the change. Because \texttt{belief=fast} is already
+the default, it is numerically identical to the row that sets
+\texttt{ptheta=0,pphi=0} alone. The \texttt{patient=0} row is inert by
+construction: when the
+value-based stopping rule is active it decides first, so the immediate-cash
+switch is never consulted, and the paired difference is exactly zero with a
+zero-width interval. Both are reported for completeness rather than as
+evidence.
+
+\subsection{Belief-mode variants are not all exact}
+\label{app:abl-beliefmodes}
+
+Three rows sit between \numAblCFourAbs\% and \numAblCFiveAbs\% and it would be
+easy to read them as ablations of exact inference. They are not.
+\texttt{belief=exact} is the card-level capacity
+dynamic program \emph{without} the ask-legality certificates (C5);
+\texttt{belief=sinkhorn} is plain Sinkhorn scaling with neither certificates nor
+the disjointness handling; \texttt{belief=indep} additionally drops capacity
+conditioning (C4), leaving independent per-card ownership estimates. Their
+paired differences from the reference are \numAblCFive{}
+(\numAblCFiveCI{}), \numAblSinkhorn{} (\numAblSinkhornCI{}) and \numAblCFour{}
+(\numAblCFourCI{}) points respectively, each a paired percentile bootstrap over
+deals. The exact
+reference engine of \S\ref{sec:belief} is \texttt{belief=block} alone, and it
+appears in the row at \numAblBlockAbs\%. The name \texttt{exact} in the specification
+grammar is a legacy identifier for the capacity dynamic program and is
+unfortunate; it is retained because it appears in the committed artifact.
+
+\subsection{Per-opponent breakdown}
+\label{app:abl-peropponent}
+
+Table~\ref{tab:ablopp} gives the four per-opponent win rates behind each
+averaged row, read directly from
+\filepath{research/v04/results/E5-ablations.json}. The artifact records
+per-opponent win rates but not per-opponent intervals, so no uncertainty is
+attached to the individual columns; only the averaged difference carries the
+paired interval reported in Table~\ref{tab:ablations}. With \numAblGames{}
+games behind each cell the resolution of a cell is 0.1 percentage points. The
+averaged win rate of each row is not repeated here, because it is the ``win
+rate'' column of Table~\ref{tab:ablations}; the paired difference is repeated so
+that each row's overall effect sits beside its per-opponent split, and the
+averaged win rate is \numAblRef\% minus that difference.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.42\linewidth}rrrrr@{}}
+\caption{E5 per-opponent breakdown. Win rate of the frozen \vfast{}
+configuration or of the named variant against each panel member;
+\numAblDeals{} deals $\times$ 2 seat rotations $=$ \numAblGames{} games per
+cell, seed 606060, fitted weights frozen in every row. Rows carry the same
+labels and order as Table~\ref{tab:ablations}. ``Full $-$ ablated'' is the
+averaged paired difference of that table, so the row's overall win rate is
+\numAblRef\% minus it. Per-opponent cells carry no interval; the artifact
+reports intervals only for the averaged paired difference. Source:
+\texttt{research/v04/results/E5-ablations.json}.}
+\label{tab:ablopp}\\
+\toprule
+Change & Full $-$ ablated & \vthree{} & Lockout & Detective & \vtwo{} \\
+\midrule
+\endfirsthead
+\toprule
+Change & Full $-$ ablated & \vthree{} & Lockout & Detective & \vtwo{} \\
+\midrule
+\endhead
+\vfast{} (reference configuration) & --- & 75.0\% & 78.3\% & 72.8\% & 83.9\% \\
+\midrule
+Drop capacity conditioning (C4) as well as the certificates & \numAblCFour{} & 21.1\% & 20.9\% & 19.0\% & 24.9\% \\
+Drop the ask-legality certificates (C5); plain Sinkhorn over C1--C4 & \numAblSinkhorn{} & 20.0\% & 23.2\% & 24.1\% & 31.6\% \\
+Drop the ask-legality certificates (C5); exact capacity DP over C1--C4 & \numAblCFive{} & 27.2\% & 26.5\% & 28.1\% & 32.6\% \\
+\vblock{} belief substituted into the Fast-fitted policy & \numAblBlock{} & 69.2\% & 70.4\% & 69.6\% & 76.0\% \\
+Fast belief with the policy prior off (matches Block's prior-free belief) & \numAblPrior{} & 69.8\% & 75.7\% & 69.6\% & 79.4\% \\
+Remove the fitted policy-aware prior & \numAblPrior{} & 69.8\% & 75.7\% & 69.6\% & 79.4\% \\
+\midrule
+Zero the lock-completion weight & \numAblLockWeight{} & 71.3\% & 74.1\% & 69.6\% & 82.2\% \\
+Zero the hit-probability weight & \numAblHitWeight{} & 76.9\% & 78.4\% & 69.2\% & 79.3\% \\
+Remove the two-ply refinement & \numAblTwoPly{} & 73.3\% & 77.2\% & 73.2\% & 81.4\% \\
+Zero both information-leak weights & \numAblLeak{} & 74.9\% & 76.7\% & 74.7\% & 83.2\% \\
+Remove the one-ply value lookahead & \numAblValue{} & 77.3\% & 79.5\% & 72.4\% & 82.1\% \\
+Zero the reply-threat weight & \numAblThreat{} & 74.7\% & 78.9\% & 74.8\% & 83.0\% \\
+Zero the runway weight & \numAblRunway{} & 75.1\% & 76.7\% & 76.0\% & 83.6\% \\
+\midrule
+Declaration threshold 0.99 & \numAblDeclNinetyNine{} & 74.4\% & 78.5\% & 72.8\% & 83.5\% \\
+Name the allocation by conditioned greedy MAP & \numAblGmap{} & 74.6\% & 78.2\% & 73.1\% & 83.4\% \\
+Fixed threshold in place of the value-based stopping rule & \numAblStop{} & 76.1\% & 78.0\% & 73.5\% & 81.9\% \\
+Declaration threshold 0.80 & \numAblDeclEighty{} & 75.0\% & 78.0\% & 73.1\% & 83.8\% \\
+Cash locked half-suits immediately & $+0.00$ & 75.0\% & 78.3\% & 72.8\% & 83.9\% \\
+\bottomrule
+\end{longtable}
+}
+
+The three degraded-belief rows are degraded against all four opponents
+together, by between forty and sixty percentage points in every cell of the
+table above; no single panel member drives the averaged effect. Several of the
+small-effect rows are not uniform
+in sign across the panel. Zeroing the hit-probability weight raises the win rate
+against \vthree{} (75.0\% to 76.9\%) and against the lockout (78.3\% to 78.4\%)
+while lowering it against the detective (72.8\% to 69.2\%) and \vtwo{} (83.9\%
+to 79.3\%); zeroing the runway weight raises it against the detective (72.8\% to
+76.0\%) while lowering it against the lockout (78.3\% to 76.7\%). Where the
+averaged interval already includes zero, these sign reversals are consistent
+with sampling variation, and the per-opponent cells are not powered to
+distinguish that from a real opponent-specific effect.
+
+\subsection{Belief substitution under a deliberately unfitted policy (E12)}
+\label{app:abl-e12}
+
+The belief-substitution row of Table~\ref{tab:ablations} compares two beliefs
+under weights that were fitted around one of them. E12 repeats the substitution
+under a policy chosen so that neither belief has been fitted to: pure
+posterior-greedy asking, with the single ask weight $w_0 = 12$ and every other
+ask weight zero, no value term, no two-ply refinement, and no policy prior. The
+two specifications are
+
+\begin{verbatim}
+v04:weights=12|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0,\
+    value=0,topk=0,ptheta=0,pphi=0,belief=fast
+
+v04:weights=12|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0,\
+    value=0,topk=0,ptheta=0,pphi=0,belief=block
+\end{verbatim}
+
+(written on one line each in \filepath{engine/experiments.sh}; the backslash above
+is a line break for the page only). Each plays \numETwelveDeals{} deals in six
+seat rotations, \numETwelveGames{} games, against \vthree{} on seed bank 959595,
+under the full dialect.
+
+The Fast belief scores \numETwelveFast\% and the reference belief
+\numETwelveBlock\%. The 95\% intervals are \numETwelveFastCI\% and
+\numETwelveBlockCI\%, each a single-arm deal-clustered percentile bootstrap. The
+two arms share the seed bank, so the deals are matched, but the artifact reports
+those single-arm intervals rather than an interval on the difference; the paired
+quantity was not computed for this experiment.
+
+The Fast arm's point estimate exceeds the Block arm's by just over one
+percentage point, in the same direction as
+the fitted comparison of Table~\ref{tab:ablations}. The intervals overlap
+substantially, so E12 does not resolve the question, and it does not establish
+that the direction of the fitted result is independent of the ask weights having
+been fitted around the Fast path. The experiment that would resolve it ---
+refitting the entire policy against the reference belief under a matched
+optimisation budget and comparing the two fitted agents --- was not run, and is
+listed as a limitation in \S\ref{sec:limitations}.
+
+\subsection{Method of the declaration pre-gate audit (E16)}
+\label{app:abl-gateaudit}
+
+\begin{table}[!htbp]
+\centering
+\caption{Declaration pre-gate false-negative audit (E16). Population: the primary
+bank of \numHtHDeals{} held-out deals in six seat rotations, seed $90210$, all
+eight panel opponents, \vfast{} with policy weights frozen; the unit is one
+declaration opportunity, or for the first three rows one (opportunity, live
+half-suit) pair. Shares are exact fractions of the stated denominator; no
+intervals are constructed.}
+\label{tab:gateaudit}
+\small
+\input{tables/gateaudit}
+\end{table}
+
+
+The results of E16 are in \S\ref{sec:results-verify} and
+Table~\ref{tab:gateaudit}; this subsection records how the audit is constructed.
+
+\vfast{} screens declaration candidates with two cheap scores before the
+expensive posterior query of \S\ref{sec:declare} runs, and the two screens are
+separate because they cut at different stages and read different information.
+The first is \texttt{Knowledge::cheapTeamProb} in
+\filepath{engine/src/belief.hpp}, a capacity-only product: for each unresolved
+card of the half-suit it takes the share of the surviving support's total
+capacity that belongs to the declarer's team, and multiplies. It uses no dynamic
+program and no Sinkhorn iteration, so it can be evaluated before the posterior
+is refreshed at all. \texttt{proposeDeclaration} in
+\filepath{engine/src/v04.hpp} applies it twice: once across all live half-suits,
+to decide whether to refresh the posterior for this opportunity at all, and once
+per half-suit, against the threshold \texttt{gateTeamProb}. The second screen
+lives inside \texttt{evaluateSet} and is a product of per-card team
+probabilities read off the refreshed posterior marginals, tested against
+\texttt{marginalGate}. It therefore prunes a half-suit that survived the
+capacity-only screen but whose posterior team mass is small, before the joint
+allocation query is run. Both thresholds are $0.008$ in the shipping
+configuration, and both are bypassed when the unresolved pool has fallen to
+eight cards or fewer, or when the forced-endgame pressure level is non-zero.
+
+With \texttt{gateaudit=1} the policy carries out a second, ungated evaluation
+alongside the one it acts on. At every declaration opportunity, and for
+\emph{every} live half-suit rather than only the ones that survive the screens,
+\texttt{evaluateSet} is re-run with both gates disabled and the result is passed
+to the same stopping rule \eqref{eq:stop} at the same pressure level. The
+audited path changes no action: the declaration the policy actually makes is
+still the gated one, so the games played are the games of the primary bank.
+
+A (opportunity, half-suit) pair counts as \emph{rejected} when the gated path
+did not reach a full verdict on it --- because no half-suit passed the
+first screen at that opportunity, or because this half-suit failed the
+per-half-suit screen, or because the gated \texttt{evaluateSet} returned no
+verdict while the ungated one did. A rejected pair counts as a \emph{false
+negative} when the ungated evaluation plus the same stopping rule would have
+declared it. Separately, an opportunity is counted as one where the chosen
+action differs when the gated and ungated paths disagree about whether to
+declare at all, or agree to declare but select different half-suits. The two
+counts are not the same quantity: several pairs can be falsely rejected at one
+opportunity, and a falsely rejected pair changes nothing if the gated path
+declared a different half-suit at that opportunity anyway. Both counts, and the
+number of declarations each path made, are in Table~\ref{tab:gateaudit}.
+
+The audit is run by
+
+\begin{verbatim}
+PANEL=v03,lockout,detective,v02,diversifier,hunter,bluffer,random
+./fish gateaudit --games=700 --rotations=6 --seed=90210 --panel=$PANEL
+\end{verbatim}
+
+which replays the primary bank of \numHtHDeals{} deals in six seat rotations
+against all eight panel opponents with the fitted weights frozen, and
+accumulates the counters across every seat and every game. Every figure it
+reports is an exact count over that corpus; no interval is constructed, and the
+measurement is specific to this policy, this bank and the two thresholds
+compiled into the shipping configuration.

@@ -1,0 +1,251 @@
+\section{Reproducibility and artifact manifest}
+\label{app:repro}
+
+\subsection{Source layout}
+\label{app:repro-source}
+
+The engine is a single C++20 translation unit assembled from headers in
+\filepath{engine/src/}. The rules, the card and half-suit types and the action
+encoding are in \filepath{engine/src/fish.hpp}. Constraint tracking (C1--C5) and the
+Fast posterior are in \filepath{engine/src/belief.hpp}; the exact reference engine
+--- the block-allocation dynamic program, its partition function, its marginals
+and its sampler --- is in \filepath{engine/src/blockdp.hpp}; the brute-force oracle
+that validates it is in \filepath{engine/src/oracle.hpp}. The policy is in
+\filepath{engine/src/v04.hpp} and the ported \vthree{} population, together with the
+other baselines, is in \filepath{engine/src/baselines.hpp}. The game driver, which
+owns turn order, declaration rounds and the information-safety audit, is in
+\filepath{engine/src/game.hpp}; the match runner and both bootstrap procedures are
+in \filepath{engine/src/arena.hpp}; the cross-entropy optimiser is in
+\filepath{engine/src/tuner.hpp}. The policy-specification parser is in
+\filepath{engine/src/factory.hpp} and the command-line entry point in
+\filepath{engine/src/main.cpp}.
+
+Build with \verb|make| in \filepath{engine/}. The build produces a single binary,
+\filepath{engine/fish}.
+
+\subsection{Commands}
+\label{app:repro-commands}
+
+The following commands are those in \filepath{engine/experiments.sh} and
+\filepath{engine/exploitability.sh}, with the shell's own variables expanded to the
+shipping policy specification. Results are written to
+\filepath{research/v04/results/} as JSON, JSONL or text;
+\filepath{engine/build_tables.py} turns them into the tables of this paper and
+\filepath{engine/build_manifest.py} into the manifest below.
+
+Throughout the command-line interface \texttt{-{}-games} counts \emph{deals},
+not games: each deal is replayed in the number of seat rotations given by
+\texttt{-{}-rotations}, and \texttt{fish bench} always times each deal in two
+seat orientations. The game counts in the tables are therefore the product of
+the deal count and the rotation count --- \numHtHDeals{} deals in six rotations
+give the \numHtHGames{} games of Table~\ref{tab:h2h}, and the three
+\texttt{bench} runs below give the game counts in Table~\ref{tab:throughput}.
+
+\begin{verbatim}
+# ---- build ---------------------------------------------------------
+cd engine && make
+
+# ---- E1  engine and information-safety verification (9x9 pool) -----
+./fish verify   --games=600
+./fish verify   --games=300 --legacy
+
+# ---- E2  belief-engine cross-checks --------------------------------
+./fish selftest --games=40
+
+# ---- E15 brute-force allocation oracle -----------------------------
+./fish oracle   --games=150 --maxdeals=200000 --samples=3000 \
+                --seed=20260822
+
+# ---- E16 declaration pre-gate false-negative audit ------------------
+PANEL=v03,lockout,detective,v02,diversifier,hunter,bluffer,random
+./fish gateaudit --games=700 --rotations=6 --seed=90210 --panel=$PANEL
+
+# ---- E3  primary head-to-head (repeat for each of the 8 opponents) --
+./fish match --a=v04:mgate=0.008 --b=v03 --games=700 --rotations=6 \
+             --seed=90210 --json
+
+# ---- E4  round-robin matrix over the nine-policy population --------
+P=v04:mgate=0.008,v03,v02,lockout,detective,diversifier
+P=$P,hunter,bluffer,random
+./fish matrix --policies=$P --games=200 --rotations=6 --seed=515151
+
+# ---- E5  frozen-policy ablations (18 variant strings: Appendix D) --
+./fish ablate --ref=v04:mgate=0.008 --games=500 --rotations=2 \
+              --seed=606060 --panel=v03,lockout,detective,v02 \
+              --variants="v04:mgate=0.008,belief=block;..."
+
+# ---- E6  calibration ------------------------------------------------
+./fish calibrate --a=v04:mgate=0.008 --b=v03 --games=600 --seed=717171
+./fish calibrate --a=v03 --b=v04:mgate=0.008 --games=600 --seed=717171
+
+# ---- E7  rules dialects (repeat for v03, lockout, detective) --------
+./fish match --a=v04:mgate=0.008 --b=v03 --games=400 --rotations=6 \
+             --seed=828282 --legacy --json
+./fish match --a=v04:mgate=0.008 --b=v03 --games=400 --rotations=6 \
+             --seed=838383 --sets=8 --json
+./fish match --a=v04:mgate=0.008 --b=v03 --games=400 --rotations=6 \
+             --seed=848484 --no-out-of-turn --json
+
+# ---- E8  v0.3 port validation under the v0.3 dialect ----------------
+./fish match --a=v03 --b=lockout --games=1000 --rotations=2 \
+             --seed=20260820 --legacy --json
+
+# ---- E9  whole-game throughput --------------------------------------
+#      --games counts DEALS, and bench times each deal in two seat
+#      orientations, so these three runs are the 400, 120 and 800
+#      games reported in the throughput table.
+./fish bench --a=v04:mgate=0.008 --b=v04:mgate=0.008 --games=200
+./fish bench --a=v04:mgate=0.008,belief=block \
+             --b=v04:mgate=0.008,belief=block --games=60
+./fish bench --a=v03 --b=v03 --games=400
+
+# ---- E12 belief substitution under an unfitted policy ---------------
+#      the two full specifications are given in Appendix D
+./fish match --a="v04:$GREEDY,belief=fast"  --b=v03 --games=400 \
+             --rotations=6 --seed=959595 --json
+./fish match --a="v04:$GREEDY,belief=block" --b=v03 --games=400 \
+             --rotations=6 --seed=959595 --json
+
+# ---- E13 action-cap incidence, including the mirror match -----------
+./fish match --a=v04:mgate=0.008 --b=v04:mgate=0.008 --games=300 \
+             --rotations=6 --seed=464646 --json
+
+# ---- E14 ridge fit of the value function ----------------------------
+./fish fitvalue --a=v04:mgate=0.008 --b=v04:mgate=0.008 --games=250 \
+                --seed=31415
+
+# ---- E17 simultaneous-declaration arbitration sweep -----------------
+for arb in low high turn; do
+  for opp in v03 lockout detective; do
+    ./fish match --a=v04:mgate=0.008 --b=$opp --games=700 \
+                 --rotations=6 --seed=90210 --arb=$arb --json
+  done
+done
+
+# ---- policy fitting (cross-entropy method) --------------------------
+# Five rounds were run; --gens and --seed differed per round, and the
+# per-round generation counts are recorded in the traces under
+# research/v04/runs/.  Round 5's base seed was not captured.
+./fish tune --panel=v03,lockout,detective,v02,diversifier,hunter \
+            --base=v04 --full --gens=<per round> --seed=<per round>
+
+# ---- E10 local response probe: fit an exploiter, re-measure it ------
+./fish tune --panel=v04:mgate=0.008 --base=v04 --full --games=180 \
+            --pop=18 --elite=5 --gens=12 --beta=1 --sigma=0.7 \
+            --seed=515253 --out=E10-lbr-v04.jsonl
+./fish match --a="v04:allparams=$w" --b=v04:mgate=0.008 --games=600 \
+             --rotations=6 --seed=6543210 --json
+
+# ---- the whole battery ----------------------------------------------
+./experiments.sh
+./exploitability.sh
+\end{verbatim}
+
+\subsection{The policy-specification grammar}
+\label{app:repro-spec}
+
+Every agent in every experiment is named by a string, parsed in
+\filepath{engine/src/factory.hpp}. The grammar is
+
+\begin{verbatim}
+spec  := name | name ":" opt ("," opt)*
+opt   := key "=" value
+name  := v04 | v03 | v02 | lockout | detective
+       | hunter | diversifier | bluffer | random
+\end{verbatim}
+
+Unrecognised keys are ignored, so a specification is always parseable and a
+misspelt key fails silently; this is worth knowing when reconstructing a run.
+For the \texttt{v04} base the keys used in this paper are
+\texttt{belief} (one of \texttt{fast}, \texttt{block}, \texttt{exact},
+\texttt{exactdisj}, \texttt{sinkhorn}, \texttt{indep}, \texttt{hybrid}),
+\texttt{decl} (declaration threshold), \texttt{lockthr} (locked-allocation
+threshold), \texttt{minteam}, \texttt{vmargin}, \texttt{patient},
+\texttt{askfloor}, \texttt{pool}, \texttt{force}, \texttt{oppfloor},
+\texttt{gate} and \texttt{mgate} (the two cheap declaration pre-gates),
+\texttt{souter} and \texttt{sinner} (Sinkhorn iteration counts), \texttt{value},
+\texttt{vweight}, \texttt{lweight}, \texttt{vdecl}, \texttt{ptheta} and
+\texttt{pphi} (the policy prior), \texttt{gmap}, \texttt{topk} (two-ply search
+width), \texttt{chain}, \texttt{threat}, \texttt{declare} and
+\texttt{gateaudit}. Individual coefficients are addressed as \texttt{w0}
+\ldots{} \texttt{w19} for the \numAskFeats{} ask features and \texttt{v0}
+\ldots{} \texttt{v15} for the \numValueFeats{} value features, and whole vectors
+as \texttt{weights=} and \texttt{vweights=}, pipe-separated.
+
+The reconstruction key is \texttt{allparams=}. It takes the full fitted vector
+as a pipe-separated list. The leading \numAskFeats{} entries are the ask weights
+$w_0 \ldots w_{19}$; the remaining fourteen are the decision knobs, in this
+order: declaration threshold, locked-allocation threshold, ask floor, patience
+pool, opponent-card floor, value weight, linear weight, minimum team
+probability, stopping margin, prior $\theta$, prior $\phi$, two-ply width $K$,
+chain weight, threat weight. That is \numParams{} coordinates in all. Each knob
+is clamped to its admissible range on parse, so a vector written by the
+optimiser round-trips to the same configuration. The offset at which the knobs
+begin is derived from the ask-feature count rather than hard-coded; the
+hard-coded form aliased two ask weights onto the leading two knobs once the ask
+feature count grew to \numAskFeats{}, and the fixed form is what produced every
+result reported here. \filepath{engine/freeze_config.py} asserts the
+\numParams{}-coordinate length when it bakes a fitted vector into the compiled
+defaults.
+
+\subsection{Artifact manifest}
+\label{app:repro-manifest}
+
+Table~\ref{tab:manifest} is generated by \filepath{engine/build_manifest.py} from
+the artifact files themselves: the script walks
+\filepath{research/v04/results/}, records each file's size and SHA-256, and pairs it
+with the command that produced it. It is not maintained by hand.
+
+\begingroup
+\small
+\captionof{table}{Artifact manifest for the experiments reported in this paper.
+``ID'' is the experiment identifier used throughout the text, ``Artifact'' the
+file under \texttt{research/v04/results/}, ``Design'' the population and
+experimental unit recorded by the generator, and the last column the first
+twelve hex digits of the file's SHA-256 digest. Generated by
+\texttt{engine/build\_manifest.py}; the full digests, together with the byte counts
+and the exact command line for each row, are in
+\texttt{research/v04/results/MANIFEST.json}.}
+\label{tab:manifest}
+\input{tables/manifest}
+\endgroup
+
+\filepath{research/v04/results/MANIFEST.json} additionally records the commit the
+manifest was generated at, whether the working tree was clean at that moment,
+the shipping policy specification (\texttt{v04:mgate=0.008}), the belief mode
+(\texttt{Fast}), the fitted-parameter count (\numParams{}), the ask- and
+value-feature counts (\numAskFeats{} and \numValueFeats{}), the recorded fitting
+base seeds, the selection seed and selected generation, and every evaluation
+seed bank used in this paper. Fitting traces are in
+\filepath{research/v04/runs/}; the authoritative record of which configuration was
+selected, and on what, is \filepath{research/v04/runs/selected.json} together with
+\filepath{research/v04/runs/selection.log}, which record generation
+\numSelectedGen{} of the round-5 trace, chosen on validation bank 1357911.
+
+\subsection{Known reproducibility gaps}
+\label{app:repro-gaps}
+
+The base seed for round 5 of the fitting procedure is not recorded in any
+committed script or artifact; \filepath{research/v04/results/MANIFEST.json} carries
+it as null. Rounds 1 to 4 are recorded (20260821, 770077, 313131, 888111). The
+round-5 trace itself is committed, as
+\filepath{research/v04/runs/tune-round5.jsonl}, so the generation means from which
+the shipping configuration was selected can be inspected and the selection step
+repeated; the sampling of that round cannot be reproduced exactly.
+
+The sixteen value-function coefficients compiled into the shipping policy are
+not the coefficients in \filepath{research/v04/results/E14-valuefit.txt}.
+\filepath{engine/freeze_config.py} writes the \numParams{}-coordinate ask-and-knob
+vector but not the value vector, so the E14 fit and the shipped value function
+are separate objects. The E14 statistics --- \numValueRows{} rows,
+$R^2 = \numValueRSq$, RMSE $= \numValueRmse$ --- describe the fit reported in
+that artifact and must not be read as a validation of the coefficients actually
+used.
+
+Experiments E1--E14 were produced at commit \texttt{bb3bc8a}
+(\texttt{bb3bc8afc92c848b421af87941c1a91de3bc5300}). Experiments E15
+(the brute-force oracle), E16 (the pre-gate audit) and E17 (the arbitration
+sweep) are newer than that commit and are regenerated by the commands in
+\S\ref{app:repro-commands}; \filepath{research/v04/results/MANIFEST.json} records
+the working tree as dirty at generation time for that reason. There is no single
+commit hash covering the whole battery.

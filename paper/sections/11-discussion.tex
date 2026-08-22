@@ -1,0 +1,115 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Whether one policy can be best across playstyles}
+
+The answer has two parts, one for each half of the agent: the inference
+component, derived from the rules, and the decision component, fitted against a
+panel of opponents.
+
+\textbf{The inference half is playstyle-independent.} Constraints (C1)--(C5) of
+\S\ref{sec:belief} are logical consequences of the dialect specified in
+\S\ref{sec:rules}, so they are true whatever policy the observed player is
+running, and no opponent behaviour can make them false. Nothing in the
+observer-conditioned deal posterior is fitted to an opponent, and the same is true
+of Theorem~\ref{thm:locked}, which is a statement about which asks the rules
+permit rather than about how anyone chooses among them. Consistent with this, the
+frozen-policy ablations that remove parts of the constraint set produce the
+largest win-rate decreases recorded in Table~\ref{tab:ablations}: dropping the
+ask-legality certificates gives a full-minus-ablated difference of
+\numAblSinkhorn{} points, with a 95\% paired percentile bootstrap interval over
+deals of \numAblSinkhornCI{}. That row removes the fitted prior along with the
+certificates, and it is a frozen-policy sensitivity rather than the standalone
+causal value of either (\S\ref{sec:ablations}).
+
+\textbf{The decision half cannot be a best response to every opponent at once.}
+Choosing among asks trades off quantities --- the cost of handing a particular
+opponent the turn, the information an ask reveals, when to declare a half-suit
+--- whose values depend on what the other five seats do next. A best response to
+a policy is a function of the policy it responds to, so no single deterministic
+policy is simultaneously a best response to every opponent, and no experiment in
+this paper could establish that one was. The defensible target is therefore
+minimal exploitability rather than dominance over an arbitrary opponent. For a
+game with two three-player teams, no communication channel, and a shared team
+payoff, the appropriate solution concept is a team-maxmin equilibrium with
+correlation \cite{celli-gatti,zhang-tbdag}, which we do not compute and which is
+out of computational reach at this game size. The fitting objective
+\eqref{eq:softmin} is a deliberate finite-panel approximation of it: a soft
+minimum over a hand-built six-opponent panel rather than a minimum over the whole
+policy space.
+
+\textbf{What the evidence supports.} Within the eight-policy panel of
+Table~\ref{tab:h2h}, one policy is ahead of every member simultaneously:
+\vfast's lowest win rate against any panel member is \numWorstCase\%, recorded
+against \vthree{} on the primary bank under the dialect of \S\ref{sec:rules} and
+its default arbitration order, two alternatives to which put it slightly lower
+(\S\ref{sec:robustness}).
+That statement is bounded by the panel, and it measures generalisation to new
+deals rather than to new strategic populations (\S\ref{sec:results-h2h}). The
+local response probe is inconclusive in the other direction: a response fitted
+specifically to frozen \vfast{} reached \numLBRFour\% with a 95\% deal-clustered
+percentile bootstrap interval of \numLBRFourCI{} that includes 50\%, and an
+achieved exploiter score is in any case a lower bound within the searched class
+(\S\ref{sec:lbr}). The two results are not in tension: the fitted policy is
+uniformly ahead of the opponent population we were able to construct, and its
+exploitability by a purpose-built response remains unresolved.
+
+\subsection{Interpreting the belief-substitution result}
+
+Substituting the exact reference belief into a policy fitted around Fast beliefs
+cost \numAblBlock{} points, with a 95\% paired percentile bootstrap interval over
+deals of \numAblBlockCI{} (E5, \S\ref{sec:ablations}). The fitted policy is
+therefore not invariant to the belief representation; that is not evidence that
+an exact-belief policy would be weaker after matched retraining, and no matched
+fit was run. Two mechanisms are consistent with the observation, and this study
+cannot separate them.
+
+The first is threshold placement. The \numKnobs{} decision knobs of
+\S\ref{sec:policy} --- among them the declaration threshold, the minimum team
+probability, the two cheap gate thresholds and the stopping margin --- were
+fitted against the distribution of scores produced by the Fast estimator. E2
+records a mean absolute difference of \numSinkhornMean{} and a maximum of
+\numSinkhornMax{} between Fast and block per-card marginals, so the reference
+engine presents a differently distributed input to knobs placed at quantiles of
+the Fast distribution. Under that account the loss is a calibration mismatch
+between fitted constants and a substituted estimator, and refitting would remove
+it.
+
+The second is rank tolerance. The ask rule scores the legal ask candidates
+enumerated each turn and takes an argmax, which is insensitive to perturbations
+that do not reorder the leaders, so a more accurate estimator can change the
+chosen ask only where the ranking is close. Whether the largest Fast--Block
+deviations coincide with close rankings is a conjecture rather than a
+measurement: E2 records the size of the deviations but no position-conditioned
+statistic. E12 does not resolve the question either --- under a deliberately
+unfitted posterior-greedy asking rule the two belief paths reached
+\numETwelveFast\% and \numETwelveBlock\%, with 95\% deal-clustered percentile
+bootstrap intervals of \numETwelveFastCI{} and \numETwelveBlockCI{}, a gap in the
+same direction as the fitted comparison but with substantially overlapping
+intervals.
+
+Settling the question needs the matched-budget pair of fits described in
+\S\ref{sec:limitations}: the cross-entropy procedure of \S\ref{sec:fitting} run
+twice from the same seeds and generation count, once with each inference path in
+the inner loop. At the reference engine's \numThroughputBlock{} games per second
+(E9) that is expensive but not infeasible; it was not attempted here.
+
+\subsection{Implications for human play}
+\label{sec:humanplay}
+
+Three of the mechanisms this analysis relies on are cheap enough to apply at a
+table without a posterior over deals. An ask is a confession: under the dialect
+of \S\ref{sec:rules} it establishes that the asker lacks the named card and holds
+some other card of its half-suit, and a miss establishes that the target lacks
+the named card, which are constraints (C1)--(C3) and (C5) of \S\ref{sec:belief}
+applied by hand. Public hand sizes then close those exclusions into certainties
+--- the capacity constraint (C4) applied by hand --- and the single frozen-policy
+ablation that removes capacity conditioning produced the largest win-rate
+decrease in Table~\ref{tab:ablations}. A half-suit held entirely by one team
+cannot change hands, so waiting carries no risk to ownership
+(Theorem~\ref{thm:locked}, Corollary~\ref{cor:wait}), but no experiment here
+isolates the profit of waiting: the ``cash locked half-suits immediately'' row is
+inert by construction, and the locked-hold times of \S\ref{sec:locked} are
+observational. \S\ref{app:human} states these three mechanisms in full and adds
+the ask-ordering, declaration and endgame material, tagging each item by whether
+it is a consequence of the rules, a measurement, or an untested suggestion.

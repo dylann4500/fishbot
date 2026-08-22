@@ -1,0 +1,90 @@
+\section{Threats to validity}
+\label{sec:limitations}
+
+Limitations are grouped by the kind of validity each threatens; caveats stated
+in full at the point of measurement are cross-referenced rather than restated.
+
+\textbf{Internal validity.} Every ablation is a frozen-policy ablation with the
+\numParams{} fitted coordinates left as selected, so no row measures a
+component's standalone value (\S\ref{sec:ablations}). The \numAskFeats{} ask
+features are correlated and the paired design controls the deal, not the
+collinearity, so a component can look essential because the surrounding weights
+lean on it, or redundant because a correlated term covers it.
+Substituting the reference belief compounds this, changing the inference, every
+feature computed from it and the constants they are compared against
+(\S\ref{sec:discussion}). No retrained ablation was run for any row.
+
+\textbf{Construct validity.} The posterior is exact with respect to the rules
+and the uniform prior over consistent deals, not to opponents' policies;
+\eqref{eq:prior} is a parametric stand-in for that correction, not the correction
+(\S\ref{sec:policyprior}). The declaration rule \eqref{eq:stop} compares fitted
+linear value estimates under an approximate team-level feature transition rather
+than true continuation values, and is not a Bellman-optimal stopping value
+(\S\ref{sec:declare}). The two declaration
+pre-gates are pruning heuristics with a measured, non-zero false-negative rate
+(\S\ref{sec:results-verify}). And win rate, the primary metric, does not capture
+the half-suit differential, declaration reliability or calibration reported
+beside it (\S\ref{sec:protocol-metrics}).
+
+\textbf{External validity.} Deals were held out from fitting and selection;
+opponent identities largely were not (\S\ref{sec:results-h2h},
+\S\ref{sec:protocol-seeds}). Every opponent was written by us or ported from
+v0.3, and with no expert human logs for this dialect and no independently
+authored Fish engine to play, nothing tests the agent against a strategy source
+outside this project.
+
+\textbf{Statistical validity.} Win-rate intervals are percentile bootstrap
+intervals over \numBootstrapDraws{} resamples clustered on the deal
+(\S\ref{sec:protocol-ci}); such intervals under-cover in evaluations of this
+kind \cite{jordan-rleval}, and neither BCa nor bootstrap-$t$ was implemented.
+The calibration metrics carry no clustered uncertainty at all
+(\S\ref{sec:results-calib}). Many rows of Table~\ref{tab:ablations} have
+intervals including zero: the study was not powered below about a point, and an
+unresolved row is an absence of evidence, not evidence of absence.
+
+\textbf{Opponent-population dependence.} Leading every member of this panel is
+not being unexploitable, and nothing here bounds exploitability from above: the
+response probe searches one parametric class with one optimiser at a fixed
+budget, so its score is a lower bound within that class (\S\ref{sec:lbr}), and a
+differently shaped adversary or a wider search could do better.
+
+\textbf{Rules-dialect dependence.} All results are for the dialect of
+\S\ref{sec:rules}, given in full in \S\ref{app:dialect}; \S\ref{app:dialects}
+varies three rules and the three arbitration orders, not every consequential
+choice, and arbitration by lowest seat is itself a modelling choice, not a rule.
+The asks inside a locked half-suit that only the owning team may make are a
+channel the fitted configuration has no term for (\S\ref{sec:locked}):
+unexploited here, not shown to be worthless.
+
+\textbf{Computational and model-class limits.} The policy class is small --- a
+\numAskFeats-feature linear ask score, \numKnobs{} decision knobs and a
+\numValueFeats-feature linear value function --- which caps what the one-ply
+lookahead and the declaration rule built on it can extract. No goodness-of-fit
+figure is reported for the deployed value coefficients: the in-sample
+$R^2 = \numValueRSq$ of E14 belongs to the artifact's ridge fit, whose
+coefficients are not the compiled ones, and neither vector was evaluated out of
+sample (\S\ref{app:params}). Termination is imposed by hand-set escalation
+horizons rather than derived, and a differently tuned pair of policies could
+cycle inside them (\S\ref{sec:termination}). The brute-force oracle validates
+only small reachable states, \numOracleStatesSkipped{} having been skipped as
+too large (\S\ref{sec:results-verify}). And the base seed of fitting round 5,
+which produced the shipping configuration, is in no committed script or artifact,
+so that round cannot be reproduced from scratch (\S\ref{sec:fitting}).
+
+\textbf{Experiments that would resolve the open questions}, each targeting one
+limitation above, none of which was run:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Matched-budget fits against the Fast path and against the reference engine
+on a common held-out bank, in place of the non-invariance result.
+\item Retrained ablations for the C5 certificates, the policy prior and the
+belief mode.
+\item A declaration-timing experiment sized for effects below a point.
+\item Deal-clustered intervals for the calibration metrics.
+\item An opponent family excluded from all fitting and selection, ideally an
+independently authored engine or expert human logs.
+\item A held-out corpus and a goodness-of-fit figure for the deployed value
+coefficients.
+\item For termination, a constructive reachable recurrent state whose
+information state also repeats.
+\end{itemize}

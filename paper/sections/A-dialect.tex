@@ -1,0 +1,309 @@
+\section{The rules dialect in full}
+\label{app:dialect}
+
+This appendix states the dialect of \S\ref{sec:rules} at the length required to
+re-implement it. Table~\ref{tab:dialect} is the index: it lists every
+consequential choice against the engine switch that changes it, and the
+subsections that follow give each choice in full. The two files that carry the
+definitions are \filepath{engine/src/fish.hpp} (deck, indexing, the
+\texttt{Rules} record, the legality predicate) and \filepath{engine/src/game.hpp}
+(the driver: declaration rounds, turn handling, the forced endgame, the action
+cap). Where the text below names a field it is a member of \texttt{Rules}; where
+it names a routine it is a member of the driver.
+
+\begin{table}[ht]
+\centering
+\caption{The rules dialect used for every experiment in this paper unless
+stated otherwise, and the engine switch that changes each choice. The switches
+are command-line flags of the \texttt{fish} driver; the underlying fields are
+members of \texttt{Rules} in \texttt{engine/src/fish.hpp}. Rows marked ``modelling
+choice'' are not fixed by any published statement of the rules.}
+\label{tab:dialect}
+\small
+\begin{tabular}{@{}p{0.29\linewidth}p{0.46\linewidth}p{0.19\linewidth}@{}}
+\toprule
+Choice & Value used & Switch \\
+\midrule
+Deck composition & 54 cards in nine half-suits (low and high band of each suit,
+plus the four eights and two jokers); nine cards per player &
+\texttt{-{}-sets=8} gives the 48-card, eight-half-suit form \\
+Ask legality & Live half-suit; asker holds another card of it and not the named
+card; target is an opponent and still holds cards & --- \\
+Turn transfer & A successful ask retains the turn; a miss passes it to the
+target & --- \\
+Out-of-turn declarations & Permitted at any moment, including during an
+opponent's turn & \texttt{outOfTurnDeclare} (\texttt{-{}-no-out-of-turn}) \\
+Cardless players may declare & Permitted &
+\texttt{cardlessMayDeclare} (\texttt{-{}-no-cardless-declare}) \\
+Incorrect declaration & Awards the half-suit to the opposing team & --- \\
+Declaration aftermath & The six cards leave play and the turn returns to the
+player who held it & --- \\
+Cardless turn-holder & Chooses which live teammate receives the turn &
+--- \\
+Forced endgame (whole team cardless) & The live team declares every remaining
+half-suit, sharing only willingness, over an eight-level ladder
+$\{0.995, 0.98, 0.95, 0.90, 0.80, 0.65, 0.50, \text{best guess}\}$ &
+\texttt{-{}-legacy} gives the two-level ladder $\{0.38, \text{best guess}\}$ \\
+Simultaneous declarations & Lowest seat index declares first (a modelling
+choice; alternatives measured in \S\ref{app:dialects}) &
+\texttt{declArbitration} (\texttt{-{}-arb=low\textbar high\textbar turn}) \\
+Action cap & 400 asks (360 under the v0.3 dialect), any residue adjudicated
+neutrally by majority physical holding, ties to the holder of the lowest card &
+\texttt{-{}-maxasks} \\
+Conventions & No prearranged signalling conventions; team communication is
+limited to the willingness bit described above & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Players, teams, and the deck}
+
+Six players occupy seats $0,\dots,5$. Teams alternate: seats $\{0,2,4\}$ form
+team~0 and seats $\{1,3,5\}$ form team~1, so every player's two neighbours are
+opponents. The deck is 54 cards partitioned into $N_H = 9$ half-suits of six
+cards. Half-suits are indexed $h \in \{0,\dots,8\}$ and positions within a
+half-suit $i \in \{0,\dots,5\}$; a card is the integer
+\[
+  c \;=\; 6h + i, \qquad h = \lfloor c/6 \rfloor, \qquad i = c \bmod 6 .
+\]
+The ordering is fixed and matches the v0.3 engine card for card, so that ported
+policies and cross-engine checks line up:
+
+\begin{center}
+\small
+\begin{tabular}{@{}clp{0.46\linewidth}@{}}
+\toprule
+$h$ & Half-suit & Cards at positions $i = 0,\dots,5$ \\
+\midrule
+0 & Low Spades    & 2S, 3S, 4S, 5S, 6S, 7S \\
+1 & High Spades   & 9S, 10S, JS, QS, KS, AS \\
+2 & Low Hearts    & 2H, 3H, 4H, 5H, 6H, 7H \\
+3 & High Hearts   & 9H, 10H, JH, QH, KH, AH \\
+4 & Low Diamonds  & 2D, 3D, 4D, 5D, 6D, 7D \\
+5 & High Diamonds & 9D, 10D, JD, QD, KD, AD \\
+6 & Low Clubs     & 2C, 3C, 4C, 5C, 6C, 7C \\
+7 & High Clubs    & 9C, 10C, JC, QC, KC, AC \\
+8 & Eights and Jokers & 8S, 8H, 8D, 8C, red joker, black joker \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Even $h$ are low bands, odd $h$ are high bands, and $\lfloor h/2 \rfloor$ is the
+suit in the order spades, hearts, diamonds, clubs; $h = 8$ is the mixed
+half-suit. Hands are 64-bit masks with bit $c$ set when the seat holds card $c$,
+so a half-suit is the mask $\mathtt{0x3F} \ll 6h$. The code identifier for a
+half-suit is \texttt{set}; the term is used nowhere else in this paper.
+
+With \texttt{deckSets} $=8$ (the \texttt{-{}-sets=8} switch) the ninth half-suit
+is removed, giving the 48-card, eight-half-suit form with eight cards per
+player; all other rules are unchanged.
+
+\subsection{The deal and the opening turn}
+
+The deck is shuffled by a Fisher--Yates pass driven by a splitmix64 generator
+seeded from the deal seed, and dealt in contiguous blocks of $54/6 = 9$ cards
+(eight cards under \texttt{deckSets} $=8$) to seats $0,\dots,5$ in order. The
+initial deal is retained separately as ground truth and is never exposed to a
+policy. A dealer seat is then drawn uniformly and the opening turn is given to
+the seat clockwise of the dealer. Because the shuffle is a pure function of the
+seed, a deal is reproducible from its seed alone, which is what makes the
+duplicate-block protocol of \S\ref{sec:protocol} possible.
+
+\subsection{Asking}
+\label{app:dialect-ask}
+
+Let $\mathcal{H}$ be the set of live half-suits, $\mathrm{team}(p)$ the team of
+seat $p$, and $n_p$ the public card count of seat $p$. Seat $a$ asking seat $t$
+for card $c$ is legal exactly when all five of the following hold:
+
+\begin{enumerate}
+  \item $h(c) \in \mathcal{H}$: the half-suit has not yet been claimed;
+  \item $\mathrm{team}(t) \neq \mathrm{team}(a)$: the target is an opponent;
+  \item $n_t > 0$: the target still holds cards;
+  \item $a$ does not hold $c$;
+  \item $a$ holds at least one card of $h(c)$ --- necessarily a card other than
+        $c$, by the previous condition.
+\end{enumerate}
+
+Two properties of this predicate matter for the rest of the paper. First, the
+only private input is the asker's own hand: conditions 1--3 are functions of the
+public state alone, and conditions 4--5 are functions of the public state and
+the asker's hand. An observer watching a legal ask therefore learns a certificate
+about the asker's hand without needing to see it, which is the C5 constraint of
+\S\ref{sec:belief}. Second, the predicate is evaluated identically on the
+ground-truth hand inside the driver and on the observer's reconstruction, so the
+two cannot disagree.
+
+The target must surrender the card if they hold it, and no other transfer is
+possible. On a hit the asker keeps the turn; on a miss the turn passes to the
+target. The ask, the identity of asker and target, the named card, the outcome,
+and the resulting card counts are all appended to a public event history.
+
+If the seat to move has no legal ask at all --- which happens only when every
+card it holds lies in a half-suit whose other five cards it also holds --- it
+must declare instead, and the driver requires a declaration of one such
+half-suit from that seat.
+
+\subsection{Declarations}
+\label{app:dialect-declare}
+
+A declaration names a live half-suit $h$ and an allocation
+$A: \{0,\dots,5\} \to \{0,\dots,5\}$ assigning each position $i$ of $h$ to the
+seat claimed to hold card $6h+i$. Three conditions are checked before the
+declaration is applied: the half-suit must still be live; every named seat must
+belong to the declarer's own team; and, when \texttt{outOfTurnDeclare} is
+disabled or \texttt{cardlessMayDeclare} is disabled, the declarer must
+respectively hold the turn or hold at least one card. Under the dialect studied
+both switches are enabled, so any seat may declare at any moment whether or not
+it holds cards and whether or not it holds cards of the half-suit concerned.
+
+Resolution is all-or-nothing. The declaration is correct when, for every
+$i$, seat $A(i)$ actually holds card $6h+i$; a single misassignment --- including
+one that names the right team but the wrong teammate --- makes the whole
+declaration incorrect. A correct declaration awards $h$ to the declarer's team;
+an incorrect one awards $h$ to the opposing team. In both cases the six cards
+are removed from every hand, $h$ leaves $\mathcal{H}$, the public card counts are
+updated, and the turn returns to the seat that held it before the declaration.
+The declarer's own stated confidence is recorded in the event history as a
+diagnostic and is never used to resolve anything.
+
+The driver polls for declarations before every ask, in a loop that repeats while
+any seat still offers a declaration, so several half-suits can be claimed between
+two consecutive asks.
+
+\subsection{Arbitration between simultaneous declarations}
+\label{app:dialect-arb}
+
+Because any seat may declare at any moment, the poll can find more than one
+willing declarer, and the rules as published do not say who acts first.
+\texttt{declArbitration} selects the scan order over seats and the first willing
+seat in that order declares:
+
+\begin{itemize}
+  \item \texttt{0} (default, \texttt{-{}-arb=low}): ascending seat index
+        $0,1,\dots,5$;
+  \item \texttt{1} (\texttt{-{}-arb=high}): descending seat index
+        $5,4,\dots,0$;
+  \item \texttt{2} (\texttt{-{}-arb=turn}): ascending from the current
+        turn-holder, $g, g+1, \dots$ modulo six.
+\end{itemize}
+
+Selecting the most confident proposer is deliberately not offered. Confidence is
+private to a seat, and comparing confidences across seats would move information
+between opponents as well as teammates; it is the same leak that the forced
+endgame was corrected to remove (\S\ref{app:dialect-vthree}). E17 reports the primary
+head-to-head result under all three orders (\S\ref{app:dialects}).
+
+\subsection{Cardless players and the turn}
+\label{app:dialect-cardless}
+
+A seat with no cards leaves the asking cycle: it cannot ask, and condition~3 of
+\S\ref{app:dialect-ask} makes it an illegal target. It remains part of the game
+in two ways --- it can be named in a teammate's declaration as the holder of a
+card, which is impossible while it is genuinely empty and therefore constrains
+the allocations a teammate may name, and, with \texttt{cardlessMayDeclare}
+enabled, it may itself declare.
+
+The turn can reach a cardless seat only immediately after a declaration removed
+its last cards. That seat then chooses which of its live teammates receives the
+turn; the choice is a policy decision, and an invalid choice is replaced by the
+lowest-indexed live teammate. If the seat has no live teammate, its whole team is
+cardless and the forced endgame begins.
+
+\subsection{The forced endgame}
+\label{app:dialect-endgame}
+
+When one team holds no cards at all, no legal ask remains for either side, and
+the live team must declare every remaining half-suit. Teammates may negotiate
+openly but may exchange nothing except willingness to declare, so the driver
+implements the selection as a threshold sweep rather than a comparison of
+confidences. The willingness ladder is
+\[
+  \Theta \;=\; \{\,0.995,\; 0.98,\; 0.95,\; 0.90,\; 0.80,\; 0.65,\; 0.50,\;
+  \text{best guess}\,\},
+\]
+eight levels held in \texttt{forcedTh}, the last entry (stored as $-1$) meaning
+that somebody must declare and should submit their best guess. For each
+threshold $\theta \in \Theta$ in descending order, the driver scans the live
+team's seats over the remaining half-suits and asks each seat whether it is
+willing to declare that half-suit at confidence at least $\theta$; the first
+seat that says yes declares, the ladder restarts at its top, and the sweep
+repeats until every half-suit is resolved. Only the willingness bit crosses
+between seats. A consequence of restarting the ladder is that early, safer
+declarations resolve cards and thereby sharpen the allocations available for the
+later ones.
+
+Declarations in the forced endgame resolve exactly as in
+\S\ref{app:dialect-declare}, including the possibility of misdeclaring and
+handing a half-suit to the cardless team. They are recorded separately from
+voluntary declarations in the event history. If every seat refuses at every
+level --- reachable only with a policy that declines its own best guess --- the
+remaining half-suits are awarded to the team physically holding the majority of
+their cards.
+
+Under \texttt{-{}-legacy} the ladder is the two-level
+$\{0.38,\ \text{best guess}\}$ of the v0.3 dialect.
+
+\subsection{Two further differences from the v0.3 dialect}
+\label{app:dialect-vthree}
+
+\S\ref{sec:rules-v03} lists the two v0.3 differences that bear on the reported
+results --- turn-only declarations and the 360-ask cap. The other two concern
+the two teammate-to-teammate channels of \S\ref{app:dialect-conventions}, and
+are recorded here.
+
+\paragraph{The successor of a cardless turn-holder was fixed.} In the v0.3
+engine \cite{fishbot03} the turn passed automatically to the live teammate
+holding the most cards. In the dialect studied the cardless seat chooses
+(\S\ref{app:dialect-cardless}). The v0.3 rule is a function of the public card
+counts alone and so conveys nothing between teammates; the choice made here is a
+policy decision and is therefore the second of the two channels listed in
+\S\ref{app:dialect-conventions}. What it can carry is bounded by its range: one
+selection among at most two live teammates, made only immediately after a
+declaration emptied the chooser's hand.
+
+\paragraph{The forced endgame selected the declarer by comparing private
+confidences.} v0.3 gave the declaration to whichever live seat stated the
+highest confidence in a remaining half-suit. Ordering seats by confidence
+conveys more than willingness, because the ordering is itself a statistic of the
+hands being compared. The threshold sweep of \S\ref{app:dialect-endgame}
+replaces that comparison with a descending sequence of thresholds shared in
+advance, so that only a willingness bit crosses between seats. The same argument
+is why confidence ranking is not offered as an arbitration order in
+\S\ref{app:dialect-arb}.
+
+\subsection{The action cap and adjudication}
+
+The driver counts asks and stops the game once \texttt{maxAsks} is reached: 400
+under the dialect studied, 360 under \texttt{-{}-legacy}, and settable with
+\texttt{-{}-maxasks}. Awarding the unresolved residue to either side would bias
+the outcome towards whichever policy stalls more readily, so with
+\texttt{adjudicateOnLimit} enabled each remaining half-suit is awarded to the
+team physically holding the majority of its six cards, ties going to the team
+holding the lowest-indexed card of that half-suit. The game result records
+whether the cap was reached, and that incidence is reported alongside every
+experiment in this paper. It is \numLimitRate{} in E1, E3, E7, E10 and E13; the
+exception is the deliberately unforced mirror configuration of E11
+(\S\ref{sec:termination}), which is measured precisely because it does reach the
+cap.
+
+\subsection{Termination of a game and scoring}
+
+The game ends when no live half-suit remains: every half-suit has been claimed
+by a declaration, resolved in the forced endgame, or adjudicated at the cap.
+Each of the nine half-suits is awarded to exactly one team, so the final scores
+sum to nine and the team taking at least five wins. Under \texttt{deckSets} $=8$
+the scores sum to eight, a level four-all result is possible, and the driver
+awards such a game to team~0; that case cannot arise with nine half-suits.
+
+\subsection{Communication and conventions}
+\label{app:dialect-conventions}
+
+No prearranged signalling conventions are available to any policy in this paper.
+The only channel between teammates beyond the public event history is the
+willingness bit of \S\ref{app:dialect-endgame} and the choice of successor made
+by a cardless turn-holder. Every other quantity a policy computes --- ownership
+marginals, allocation probabilities, declaration confidences --- is private to
+the seat that computed it, and the information-safety audit of
+\S\ref{sec:engine} checks that no policy is ever handed a quantity derived from
+another seat's hand.

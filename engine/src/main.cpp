@@ -1,6 +1,8 @@
 #include "arena.hpp"
 #include "tuner.hpp"
 #include "blockdp.hpp"
+#include "oracle.hpp"
+#include "serve.hpp"
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -21,6 +23,8 @@ static bool argFlag(int argc, char** argv, const char* key) {
 
 static Rules rulesFrom(int argc, char** argv) {
   Rules r;
+  { std::string arb = argVal(argc, argv, "arb", "low");
+    r.declArbitration = arb == "high" ? 1 : (arb == "turn" ? 2 : 0); }
   if (argFlag(argc, argv, "legacy")) {
     r.outOfTurnDeclare = false;
     r.cardlessMayDeclare = false;
@@ -221,7 +225,6 @@ int main(int argc, char** argv) {
     int games = atoi(argVal(argc, argv, "games", "60").c_str());
     Rules r = rulesFrom(argc, argv);
     double maxCardDiff = 0, maxDisjDiff = 0, maxSinkDiff = 0, sumSink = 0; long long nSink = 0;
-    double maxAllocDiff = 0;
     long long checks = 0, blockFail = 0;
     Rng rng(4242);
     for (int gi = 0; gi < games; gi++) {
@@ -276,10 +279,6 @@ int main(int argc, char** argv) {
             }
             checks++;
           }
-          // allocation probability: block exact vs sampled frequency
-          if (drawn >= 1500) {
-            (void)maxAllocDiff;
-          }
           break;   // one observer per event is enough
         }
         // advance one action
@@ -304,7 +303,104 @@ int main(int argc, char** argv) {
     printf("block vs exact sampling   max abs diff %.3e\n", maxDisjDiff);
     printf("sinkhorn vs block  max %.4f  mean %.5f\n", maxSinkDiff, nSink ? sumSink / nSink : 0.0);
     printf("%s\n", (maxCardDiff < 1e-9 && maxDisjDiff < 0.05 && blockFail == 0) ? "SELFTEST PASS" : "SELFTEST CHECK");
-    printf("%.4f\n", maxAllocDiff);
+    printf("note: allocation probabilities are validated by `fish oracle`, not here\n");
+    return 0;
+  }
+
+
+  if (cmd == "oracle") {
+    // Deterministic brute-force validation of the exact block engine.  Every
+    // quantity the engine claims to compute exactly -- Z, per-card marginals,
+    // team-ownership probabilities and full allocation probabilities -- is
+    // compared against exhaustive enumeration of the posterior on small
+    // reachable states, and the sampler's frequencies are compared against the
+    // exact marginals.  Coverage is reported alongside the result: states whose
+    // posterior is too large to enumerate are counted, not silently dropped.
+    int games      = atoi(argVal(argc, argv, "games", "200").c_str());
+    long long maxD = atoll(argVal(argc, argv, "maxdeals", "200000").c_str());
+    int samples    = atoi(argVal(argc, argv, "samples", "3000").c_str());
+    uint64_t seed  = strtoull(argVal(argc, argv, "seed", "20260822").c_str(), nullptr, 10);
+    std::string aSpec = argVal(argc, argv, "a", "v04");
+    std::string bSpec = argVal(argc, argv, "b", "v03");
+    Rules r = rulesFrom(argc, argv);
+    OracleStats st;
+    Rng rng(seed ? seed : 1);
+    static BruteForce bf;
+    std::unique_ptr<Agent> A[3], B[3];
+    for (int i = 0; i < 3; i++) { A[i] = makeAgent(aSpec); B[i] = makeAgent(bSpec); }
+    Agent* ag[NPLAY];
+    for (int p = 0; p < NPLAY; p++) ag[p] = (p % 2 == 0) ? A[p / 2].get() : B[p / 2].get();
+    Game game;
+    game.observer = [&](const Game& gm) {
+      for (int p = 0; p < NPLAY; p++) {
+        const Knowledge& kk = gm.agents[p]->k;
+        if (!kk.unresolved) continue;
+        DealDP dd;
+        if (!dd.build(kk)) continue;
+        if (!(dd.N > 0) || dd.N > double(maxD)) { st.statesSkipped++; continue; }
+        if (!bf.enumerate(kk, maxD * 64)) { st.statesSkipped++; continue; }
+        BlockDP bd;
+        if (!bd.build(kk)) { st.buildFailures++; continue; }
+        oracleCheckState(kk, bd, bf, st, rng, samples);
+      }
+    };
+    for (int gi = 0; gi < games; gi++) game.run(mixSeed(seed, gi), r, ag);
+    printf("games replayed             %d  (%s vs %s)\n", games, aSpec.c_str(), bSpec.c_str());
+    printf("states enumerated          %lld  (with a live C5 certificate: %lld)\n",
+           st.statesChecked, st.statesWithC5);
+    printf("states skipped (too large) %lld\n", st.statesSkipped);
+    printf("block build failures       %lld\n", st.buildFailures);
+    printf("consistent deals counted   %lld\n", st.deals);
+    printf("partition function Z       max rel diff %.3e\n", st.maxZRelDiff);
+    printf("per-card marginals         max abs diff %.3e over %lld checks\n",
+           st.maxMarginalDiff, st.marginalChecks);
+    printf("team-ownership prob        max abs diff %.3e over %lld checks\n",
+           st.maxTeamDiff, st.teamChecks);
+    printf("named allocation prob      max abs diff %.3e over %lld checks\n",
+           st.maxAllocDiff, st.allocChecks);
+    printf("equal-prob corollary       max within-class spread %.3e\n", st.maxCountVectorSpread);
+    printf("bestTeamAllocation         %lld checks, %lld inconsistent, %lld not argmax, max diff %.3e\n",
+           st.bestAllocChecks, st.bestAllocInconsistent, st.bestAllocNotArgmax, st.maxBestAllocDiff);
+    printf("sampler vs exact marginals max abs diff %.4f over %lld draws\n",
+           st.maxSampleDiff, st.sampleDraws);
+    printf("%s\n", st.pass() ? "ORACLE PASS" : "ORACLE FAIL");
+    return st.pass() ? 0 : 1;
+  }
+
+  if (cmd == "gateaudit") {
+    // Corpus-wide false-negative audit of the declaration pre-gates.  The
+    // shipped policy screens half-suits with two cheap scores before running the
+    // full posterior query; neither screen is proved to be an upper bound on the
+    // full evaluation, so this re-runs the complete evaluation on every half-suit
+    // the screens reject and counts how often it would have declared one.
+    std::string a = argVal(argc, argv, "a", "v04:mgate=0.008,gateaudit=1");
+    int deals = atoi(argVal(argc, argv, "games", "300").c_str());
+    uint64_t seed = strtoull(argVal(argc, argv, "seed", "90210").c_str(), nullptr, 10);
+    int rots = atoi(argVal(argc, argv, "rotations", "6").c_str());
+    std::string panel = argVal(argc, argv, "panel", "v03,lockout,detective,v02,diversifier,hunter,bluffer,random");
+    std::vector<std::string> opps;
+    { std::stringstream ss(panel); std::string it; while (std::getline(ss, it, ',')) opps.push_back(it); }
+    Rules r = rulesFrom(argc, argv);
+    for (const auto& opp : opps) {
+      MatchConfig mc;
+      mc.specA = a; mc.specB = opp; mc.games = deals; mc.rotations = rots;
+      mc.seed = seed; mc.rules = r; mc.threads = threads;
+      runMatch(mc);
+    }
+    auto& G = gateAudit();
+    long long seen = G.setsSeen.load(), rej = G.setsRejected.load(), fn = G.falseNegatives.load();
+    printf("opponents                  %zu\n", opps.size());
+    printf("declaration opportunities  %lld\n", G.opportunities.load());
+    printf("(opportunity, half-suit)   %lld\n", seen);
+    printf("rejected by a cheap gate   %lld  (%.3f%% of pairs)\n",
+           rej, seen ? 100.0 * double(rej) / double(seen) : 0.0);
+    printf("false negatives            %lld  (%.5f%% of rejections)\n",
+           fn, rej ? 100.0 * double(fn) / double(rej) : 0.0);
+    printf("declarations, gated        %lld\n", G.gatedDeclares.load());
+    printf("declarations, ungated      %lld\n", G.ungatedDeclares.load());
+    printf("opportunities where the chosen action differs  %lld\n", G.actionsChanged.load());
+    printf("%s\n", (fn == 0 && G.actionsChanged.load() == 0) ? "GATEAUDIT PASS (no false negative observed)"
+                                                             : "GATEAUDIT: FALSE NEGATIVES PRESENT");
     return 0;
   }
 
@@ -453,6 +549,12 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::cout << "usage: fish <match|verify|matrix|bench> [--a=SPEC] [--b=SPEC] [--games=N] [--seed=S] [--legacy] [--json] [--audit]\n";
+  if (cmd == "serve") {
+    int port = atoi(argVal(argc, argv, "port", "8173").c_str());
+    return runServe(port, argVal(argc, argv, "web", ""), argv[0]);
+  }
+
+  std::cout << "usage: fish <match|verify|matrix|bench|serve> [--a=SPEC] [--b=SPEC] [--games=N] [--seed=S] [--legacy] [--json] [--audit]\n";
+  std::cout << "       fish serve [--port=8173] [--web=DIR]   interactive table in a browser\n";
   return 0;
 }

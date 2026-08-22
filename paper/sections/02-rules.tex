@@ -1,68 +1,127 @@
-\section{The game, and the rule dialect studied}
+\section{The game and the rules dialect studied}
 \label{sec:rules}
 
 Canadian Fish (also called Literature) is played by six players in two teams of
-three, seated so that the teams alternate. The deck is the standard 52 cards
-plus two distinguishable jokers, partitioned into nine \emph{half-suits} of six
-cards: the low band $\{2,3,4,5,6,7\}$ and the high band $\{9,10,J,Q,K,A\}$ of
-each of the four suits, together with a ninth half-suit containing the four
-eights and the two jokers. Every player is dealt nine cards. The team that
-claims at least five of the nine half-suits wins.
+three, seated so that the teams alternate around the table. The deck is 54
+cards, partitioned into nine \emph{half-suits} of six cards each: the low band
+$\{2,3,4,5,6,7\}$ and the high band $\{9,10,\mathrm{J},\mathrm{Q},\mathrm{K},\mathrm{A}\}$
+of each of the four suits, together with a ninth half-suit containing the four
+eights and the two jokers. Each player is dealt nine cards. A half-suit is
+awarded to one team or the other when it is claimed; the team that takes at
+least five of the nine half-suits wins the game.
 
 \paragraph{Asking.} On their turn a player asks one opponent for one named card.
-The ask is legal only if the asker holds at least one \emph{other} card of that
-card's half-suit, does not hold the named card, and the target still has cards.
-If the target holds the card they must surrender it and the asker continues; if
-not, the turn passes to the target. Every ask, its answer, and every resulting
-transfer is public, as is every player's card count.
+The ask is legal only if the named card lies in a half-suit that is still live,
+the asker holds at least one \emph{other} card of that half-suit, the asker does
+not hold the named card, the target sits on the opposing team, and the target
+still holds at least one card. If the target holds the named card they must
+surrender it and the asker retains the turn; otherwise the turn passes to the
+target. Every ask, its answer, every resulting transfer, and every player's card
+count are public.
 
-\paragraph{Declaring.} A player may declare a half-suit \emph{at any moment},
-including during an opponent's turn, and needs to hold none of its cards to do
-so. The declaration must name, for each of the six cards, the exact teammate who
-holds it. If every card and every assignment is right, the declaring team scores
-the half-suit; \emph{any} error awards it to the opposing team. Either way the
-six cards leave the game, and the turn returns to whoever held it.
+\paragraph{Declaring.} A claim on a half-suit is a \emph{declaration}: an exact
+allocation naming, for each of the six cards, which member of the declaring
+player's own team holds it. If every one of the six assignments is correct the
+declaring team is awarded the half-suit; any error at all awards it to the
+opposing team. Either way the six cards leave play, the half-suit becomes
+inactive, and the turn returns to the player who held it before the
+declaration.
 
-\paragraph{Running out.} A player with no cards drops out of the asking cycle:
-they can neither ask nor be asked. If the turn reaches them --- which can only
-happen after a declaration --- they hand it to a teammate who still has cards,
-and the team may negotiate openly, but may communicate nothing beyond
-willingness to receive. If an entire team is cardless, the other team must
-declare every remaining half-suit with no further asking, again choosing the
-declarer by open negotiation limited to willingness.
+\paragraph{Running out of cards.} A player with no cards leaves the asking
+cycle: they can neither ask nor be asked, though they may still be named as the
+holder of a card in a teammate's declaration and, in this dialect, may still
+declare. If the turn reaches a cardless player --- possible only after a
+declaration --- that player chooses a teammate who still holds cards to receive
+it. When an entire team is cardless, the other team must declare every remaining
+half-suit with no further asking, and may misdeclare and thereby hand half-suits
+to the cardless team. In both situations teammates negotiate openly but exchange
+nothing beyond willingness (\S\ref{app:dialect-endgame}).
 
-\subsection{What the v0.3 simulator modelled, and what it did not}
+\subsection{The dialect studied}
+\label{sec:rules-dialect}
 
-The v0.3 engine \cite{fishbot03} implemented the deck, the ask legality
+Published descriptions of the game document several mutually incompatible
+variants: deck size, whether declarations are confined to the declarer's turn,
+what becomes of a misdeclared half-suit, and how the endgame is run all differ
+between sources \cite{pagat}. What follows is one explicit selection among those
+variants, not a uniquely canonical rule set. It matches the strategy corpus this
+work draws on \cite{develin}, and every contested choice is exposed as an engine
+switch, so its effect can be measured rather than assumed
+(\S\ref{sec:robustness}, \S\ref{app:dialects}). The consequential choices, each
+with the switch that changes it, are:
+
+\begin{itemize}
+  \item \textbf{Deck:} 54 cards, nine half-suits, nine per player
+        (\texttt{-{}-sets=8} gives the 48-card, eight-half-suit form).
+  \item \textbf{Declaration timing:} any seat may declare at any moment, in or
+        out of turn, holding cards or not (\texttt{-{}-no-out-of-turn},
+        \texttt{-{}-no-cardless-declare}).
+  \item \textbf{Misdeclaration:} the half-suit is awarded to the opposing
+        team; published variants differ here \cite{pagat}.
+  \item \textbf{Simultaneous declarations:} the lowest seat index that offers a
+        declaration acts first --- a modelling choice, not a rule
+        (\texttt{-{}-arb=low\textbar high\textbar turn}).
+  \item \textbf{Forced endgame:} an eight-level willingness ladder
+        (\texttt{-{}-legacy} gives the two-level v0.3 ladder).
+  \item \textbf{Action cap:} 400 asks, 360 under \texttt{-{}-legacy}, any
+        residue adjudicated neutrally by majority physical holding
+        (\texttt{-{}-maxasks}).
+\end{itemize}
+
+No prearranged signalling conventions are available to any policy, and team
+communication is limited to the willingness bit above and the successor choice
+made by a cardless turn-holder.
+Table~\ref{tab:dialect} in \S\ref{app:dialect} gives the full list against the
+underlying \texttt{Rules} fields, and the rest of that appendix states the
+dialect at the length needed to re-implement it. Unless a result says otherwise,
+every number in this paper was produced under these settings.
+
+\paragraph{Simultaneous declarations.} None of the statements of the rules we
+reviewed says who acts first when two seats offer a declaration at the same
+instant, so the arbitration order is a modelling choice rather than a rule.
+Ranking candidates by stated confidence is deliberately excluded, because it
+would compare private confidences across seats; E17 reports the sensitivity of
+the primary head-to-head result to the three orders implemented
+(\S\ref{app:dialect-arb}, \S\ref{app:dialects}).
+
+\paragraph{The action cap.} The cap is a backstop against unbounded play, not
+part of the rules: two sufficiently patient policies could in principle stall,
+and \S\ref{sec:termination} treats
+termination as an empirical property of the fitted policies rather than a
+guarantee. Its incidence is reported with every experiment, and is
+\numLimitRate{} in E1, E3, E7, E10 and E13; the exception is the deliberately
+unforced mirror configuration of E11 (\S\ref{sec:termination}), which is
+measured precisely because it does reach the cap.
+
+\subsection{What the v0.3 simulator modelled and what it did not}
+\label{sec:rules-v03}
+
+The v0.3 engine \cite{fishbot03} implemented the deck, the ask-legality
 conditions, transfers, exact-allocation declarations and the cardless-team
-endgame, and it is the direct ancestor of this work. Comparing it against the
-authoritative rules above surfaces four gaps, all of which change strategy
-rather than merely presentation:
+endgame, and is the direct ancestor of this work. It differs from the dialect
+above in four respects, each of which changes the strategic problem rather than
+only its presentation. Two of them bear on the results reported here:
 
 \begin{enumerate}
-  \item \textbf{Declarations were restricted to the declarer's own turn.} The
-        real rule permits declaring at any moment. This matters because it turns
-        declaration timing into a continuous decision rather than a once-per-turn
-        one, and because it allows a team to cash a half-suit immediately before
-        an opponent could act.
-  \item \textbf{The cardless player's choice of successor was fixed} to the
-        teammate holding the most cards, rather than being a decision.
-  \item \textbf{The forced endgame selected the declarer by comparing private
-        confidences}, which leaks more than the rules permit; the rules allow the
-        team to exchange only willingness.
-  \item \textbf{Games were adjudicated by majority holding} after an action cap.
-        A cap is a necessary safety device --- \S\ref{sec:termination} shows the
-        rules do not guarantee termination against deterministic play --- but
-        adjudication changes the payoff structure of exactly the stalling
-        behaviour that strong policies produce. v0.4 makes termination a policy
-        property instead, and retains a cap only as a backstop whose residue is
-        split neutrally by majority holding and whose incidence is reported with
-        every experiment.
+  \item \textbf{Declarations were restricted to the declarer's own turn.} With
+        out-of-turn declarations allowed, declaration timing becomes a
+        continuous decision rather than a once-per-turn one, and a team can
+        claim a half-suit immediately before an opponent acts.
+  \item \textbf{Games were adjudicated after an action cap} of 360 asks. A cap
+        remains necessary here, but in v0.4 it is a backstop with the measured
+        incidence given above, and the residue is split neutrally rather than
+        awarded to one side.
 \end{enumerate}
 
-The v0.4 engine implements all four correctly and exposes each as a switch, so
-that the effect of the rule dialect is measurable rather than assumed
-(\S\ref{sec:robustness}). Unless stated otherwise, every number in this paper
-uses the full rules: out-of-turn declarations enabled, cardless players allowed
-to declare, willingness-only endgame negotiation, and a $400$-ask safety cap whose incidence we report
-($360$ under the v0.3 dialect, matching that engine).
+The other two --- the successor rule applied when the turn reaches a cardless
+seat, and the confidence comparison by which the v0.3 forced endgame selected a
+declarer --- are stated in \S\ref{app:dialect-vthree}.
+
+Each of the four is a switch in the v0.4 engine, so the difference each makes is
+measurable: E7 reports play under the v0.3 dialect, under the 48-card
+eight-half-suit deck, and with out-of-turn declarations disabled
+(\S\ref{sec:robustness}, \S\ref{app:dialects}). Setting \texttt{-{}-legacy}
+restores the v0.3 dialect in full --- turn-only declarations, no declarations by
+cardless players, the two-level willingness ladder and the 360-ask cap --- and
+is also the configuration in which the v0.3 port was validated
+(\S\ref{sec:results-verify}).

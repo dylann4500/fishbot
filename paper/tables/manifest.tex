@@ -1,0 +1,26 @@
+\begin{longtable}{@{}llp{0.40\linewidth}l@{}}
+\toprule
+ID & Artifact & Design & SHA-256 (first 12) \\
+\midrule
+\endhead
+E1 & \filepath{E1-verify.txt} & engine and information-safety audit, $9\times9$ policy cross-product, full dialect & \texttt{1cf3b1e6f994} \\
+E1L & \filepath{E1-verify-legacy.txt} & the same audit under the v0.3 rules dialect & \texttt{4651588f2627} \\
+E2 & \filepath{E2-belief-selftest.txt} & reference engine vs card-level DP vs exact rejection sampling & \texttt{7145c2b68ef8} \\
+E3 & \filepath{E3-headtohead.jsonl} & primary head-to-head; 700 deals $\times$ 6 rotations = 4{,}200 games per opponent & \texttt{5131b8f001fa} \\
+E4 & \filepath{E4-matrix.json} & round-robin over nine policies; 200 deals $\times$ 6 rotations per ordered pair & \texttt{8c214b0404d1} \\
+E5 & \filepath{E5-ablations.json} & frozen-policy ablations; 500 deals $\times$ 2 rotations against a four-policy panel & \texttt{32f0c3eb2fe5} \\
+E6 & \filepath{E6-calibration-v04.txt} & forecast reliability, v0.4-Fast & \texttt{a40617ce7a60} \\
+E6b & \filepath{E6-calibration-v03.txt} & forecast reliability, FishBot v0.3 & \texttt{00d15f780942} \\
+E7 & \filepath{E7-rules.jsonl} & rules-dialect sensitivity; 400 deals $\times$ 6 rotations per cell & \texttt{9e1c6f857762} \\
+E8 & \filepath{E8-v03-port.jsonl} & v0.3 port validation against the published v0.3 figures & \texttt{658945dd10b0} \\
+E9 & \filepath{E9-throughput.txt} & whole-game throughput, v0.4-Fast vs v0.4-Block vs v0.3 & \texttt{d44073f72621} \\
+E10 & \filepath{E10-lbr.jsonl} & local response probe; response fitted, then re-measured on 600 deals $\times$ 6 rotations & \texttt{491111e8d214} \\
+E11 & \filepath{E11-termination.md} & termination study of four forcing rules in mirror self-play & \texttt{1260bf5fe4c9} \\
+E12 & \filepath{E12-exactness.txt} & belief substitution under a deliberately unfitted policy & \texttt{961b3aa73a49} \\
+E13 & \filepath{E13-termination.jsonl} & action-cap incidence across the population; 300 deals $\times$ 6 rotations, including the mirror match & \texttt{1a6f0dc047f9} \\
+E14 & \filepath{E14-valuefit-stats.txt} & ridge fit of the value function on self-play decision points & \texttt{8b353b8c92f9} \\
+E15 & \filepath{E15-oracle.txt} & brute-force oracle for the exact reference engine & \texttt{6ea42ed28011} \\
+E16 & \filepath{E16-gateaudit.txt} & false-negative audit of the declaration pre-gates over the primary bank & \texttt{719c9e7c904e} \\
+E17 & \filepath{E17-arbitration.jsonl} & sensitivity of the results to the simultaneous-declaration arbitration order & \texttt{2a4afff2422b} \\
+\bottomrule
+\end{longtable}

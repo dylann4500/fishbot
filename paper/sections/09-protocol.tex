@@ -1,68 +1,113 @@
 \section{Evaluation protocol}
 \label{sec:protocol}
 
-Fish has a single chance node --- the deal --- followed by a fully public
-transcript. That is close to the best case for variance reduction, and we
-exploit it.
+Fish has a single chance node --- the deal --- followed by a public
+transcript, and that structure permits an unusually strong variance-reduction
+design. This section fixes the experimental unit, the interval construction,
+the fitting/evaluation separation, and the metrics of \S\ref{sec:results}.
 
 \subsection{Six-rotation duplicate blocks}
+\label{sec:protocol-blocks}
 
-Because seats alternate teams, the cyclic group of six seat rotations of a fixed
-deal forms a balanced block: the three odd rotations exchange which team holds
-which hand-triple, and the even rotations permute hands within a team. Playing
-all six rotations of every deal means each policy holds every hand-triple exactly
-once, so the intrinsic luck of the deal cancels out of the comparison rather than
-being averaged down. This is strictly stronger than the two-orientation swap used
-for v0.3, which balances only the team label.
+Seats alternate between the two teams, so the cyclic group of six seat
+rotations of a fixed deal forms a balanced block. The three odd rotations
+exchange which team holds which hand-triple; the three even rotations permute
+hands within a team. Playing all six rotations of every deal therefore has
+each policy hold every hand-triple of that deal exactly once, and the
+intrinsic advantage of the deal cancels from the comparison rather than merely
+being averaged down. A matchup reported over $D$ deals is $6D$ games organised
+into $D$ blocks of six.
 
-\subsection{Clustered inference}
+This is a stronger control than the two-orientation swap used in the v0.3
+study \cite{fishbot03}, which balances the team label only and leaves the
+assignment of individual hands within a team uncontrolled. The frozen-policy
+ablations of \S\ref{sec:ablations} use two rotations rather than six, for
+budget reasons; that is stated in the caption of Table~\ref{tab:ablations} and
+is a weaker block than the primary bank uses.
 
-The six rotations of one deal are one correlated cluster, so resampling
-\emph{games} would understate the variance. All bootstrap intervals in this paper
-resample \emph{deals}: for a single arm we report a cluster bootstrap of the
-per-deal win count, and for a comparison between two configurations played on the
-same deals we report a paired bootstrap of the per-deal difference. Wilson
-intervals are also given for continuity with the v0.3 paper; where the two
-disagree, the bootstrap is the one to trust.
+\subsection{Clustered interval construction}
+\label{sec:protocol-ci}
 
-\subsection{Seed separation}
+The six rotations of one deal are one correlated cluster: they share the same
+card distribution and differ only in seat assignment. Resampling \emph{games}
+would treat those six observations as independent and understate the variance.
+Every interval reported in this paper therefore resamples \emph{deals}: a cluster
+bootstrap of the per-deal win count for a single arm, and a paired bootstrap of
+the per-deal difference for a comparison between two configurations played on the
+same deals, both implemented in \filepath{engine/src/arena.hpp} and both taking
+the $2.5\%$ and $97.5\%$ quantiles of \numBootstrapDraws{} resamples.
 
-Fitting used base seeds $20260821$, $770077$, $313131$, $888111$ and $606111$
-across five rounds, and the shipping configuration was selected on a further
-validation bank ($1357911$). Every number reported in \S\ref{sec:results}
-onwards comes from banks disjoint from all six --- $90210$ for the head-to-head,
-$515151$ for the matrix, $606060$ for the ablations, $717171$ for calibration,
-$828282$--$848484$ for the rule dialects, $20260820$ for the v0.3 port
-validation, and $515253$/$6543210$ for the exploitability probe --- and the
-configuration was frozen before any of them were run.
+They are therefore \emph{percentile} bootstrap intervals, with the deal as the
+resampling cluster, and they inherit the known coverage error of that
+construction: \cite{jordan-rleval} measures raw percentile intervals failing at
+$5.7$--$11.2\%$ against a nominal $5\%$ rate. We keep the percentile
+construction for two reasons. First, clustering by deal is the correction that
+matters most in this design, because the within-deal correlation across the six
+rotations is large and ignoring it would understate the variance by a
+substantial factor, whereas the percentile-versus-BCa distinction is a
+second-order adjustment at the sample sizes used here. Second, we have not
+implemented the bias-corrected and accelerated (BCa) or bootstrap-$t$
+corrections, so no claim of nominal coverage is made: the intervals should be
+read as approximate, and differences whose intervals sit close to zero should not
+be treated as resolved. Wilson intervals on the raw game counts are computed
+alongside the bootstrap for continuity with the v0.3 paper; they ignore
+clustering and are reported only as a reference point.
+
+\subsection{Seed separation and what was held out}
+\label{sec:protocol-seeds}
+
+Fitting used recorded base seeds $20260821$ (round~1), $770077$ (round~2),
+$313131$ (round~3) and $888111$ (round~4). The base seed of round~5, from
+whose trace the shipping configuration was drawn, is not recorded in any
+committed script or artifact; this is a reproducibility gap and is documented
+as one in \S\ref{app:repro}. Selection over the last six generation means of
+the round-5 trace used a further validation bank, seed $1357911$.
+
+Every number reported in \S\ref{sec:results} comes from a bank disjoint from
+all of those: $90210$ for the head-to-head, the declaration pre-gate audit and
+the arbitration sensitivity run; $515151$ for the round-robin matrix; $606060$
+for the frozen-policy ablations; $717171$ for calibration; $828282$, $838383$
+and $848484$ for the rule dialects; $20260820$ for the v0.3 port validation;
+$959595$ for the belief substitution under an unfitted policy; $464646$ for
+action-cap incidence; $31415$ for the value-function fit; $20260822$ for the
+brute-force oracle; and $515253$ (response fitting) with $6543210$ (response
+evaluation) for the local response probe. The configuration was frozen before
+any evaluation bank was run.
+
+That separation is narrower than ``held out'' usually implies: deals were held
+out --- no deal used in any reported experiment appears in any fitting or
+selection bank --- but most opponent identities were not, and
+\S\ref{sec:results-h2h} states the consequence for the evaluation panel and
+scopes every result of \S\ref{sec:results} accordingly.
 
 \subsection{Metrics}
+\label{sec:protocol-metrics}
 
-Win rate is primary but insufficient on its own, for the reason
-\S\ref{sec:results} makes concrete: a policy can win by declaring better while
-asking worse. We therefore report, for every matchup:
+Win rate is the primary metric, but it is not sufficient on its own: a policy
+can win while converting a smaller fraction of its asks, and
+\S\ref{sec:results-h2h} reports a matchup in which exactly that happens. For
+every matchup we therefore also report \emph{mean half-suits} won out of nine,
+giving the margin and not only the sign of the result; \emph{ask accuracy},
+the fraction of asks that transfer a card; and \emph{declaration accuracy and
+rate}, declarations per game and the fraction scored correctly. The engine
+tallies voluntary and forced endgame declarations separately; the win-rate
+tables report the voluntary counters only, the calibration study pools the
+two, and forced declarations run at well under a tenth per game on the primary
+bank, so that contamination is small but is not zero. \emph{Out-of-turn
+declarations} are reported per game; they are impossible under the v0.3
+dialect, which permits declarations only on turn.
 
-\begin{description}[style=nextline]
-  \item[Mean half-suits.] Out of nine; the margin, not just the sign.
-  \item[Ask accuracy.] Fraction of asks that transfer a card.
-  \item[Declaration accuracy and rate.] Voluntary declarations per game and the
-        fraction scored correctly. Forced endgame declarations are counted
-        separately in the win-rate tables; the calibration study pools the two,
-        which is a negligible contamination at well under a tenth of a forced
-        declaration per game.
-  \item[Out-of-turn declarations.] Per game; zero under the v0.3 rule dialect.
-  \item[Forecast calibration.] Brier score, log loss, expected calibration error
-        and a ten-bin reliability table for the policy's own $\Pr[\text{hit}]$
-        and $\Pr[\text{allocation correct}]$ predictions. A policy whose
-        declaration probabilities are miscalibrated is making its stopping
-        decision on a corrupted scale, so this is a first-class result rather
-        than a diagnostic.
-  \item[Worst-case profile.] The minimum win rate across the opponent panel, not
-        only the mean. A policy that averages well but collapses against one
-        playstyle has not answered the question this project asks.
-  \item[Local best response.] An explicit exploiter, fitted \emph{against} a
-        frozen configuration inside the same policy class, gives an upper bound
-        estimate on how much a well-informed adversary who has studied the bot
-        can win. This is the closest available proxy for exploitability in a
-        game where exact best-response computation is out of reach.
-\end{description}
+\emph{Forecast calibration} is the Brier score, log loss, expected calibration
+error and a decile reliability table for the policy's own $\Pr[\text{ask
+succeeds}]$ and $\Pr[\text{allocation correct}]$ forecasts, descriptive
+properties of the estimators computed as point estimates without clustered
+uncertainty. The \emph{worst-case profile} is the minimum win rate over the
+opponent panel, not only the mean: a policy that averages well and collapses
+against one playstyle is not well described by its mean. The \emph{local
+response probe} is a policy fitted specifically against a frozen target,
+inside the same policy class and with the same optimiser and budget; the score
+such a response achieves is an achieved \emph{lower} bound on the
+exploitability of the frozen target within the searched policy class, since a
+larger budget, a better optimiser or a policy class outside the one searched
+could all achieve more. It is a restricted-policy-class diagnostic and not an
+equilibrium computation.

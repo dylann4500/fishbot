@@ -1,77 +1,78 @@
-\section{The simulator: rules-exactness, information safety, verification}
+\section{The simulator: implementation, information safety, verification}
 \label{sec:engine}
 
 \subsection{Implementation}
 
-The v0.4 engine is a single-header C++20 core. A hand is one \verb|uint64_t|
-over the 54 card indices $c = 6h + i$, so a half-suit mask is
-\verb|0x3F << 6h| and the six hands plus the deal they came from occupy under a
-hundred bytes. Where the agent explores a hypothetical --- the two-ply
+The engine is a single-header C++20 core in \filepath{engine/src/}. A hand is one
+\verb|uint64_t| over the 54 card indices $c = 6h + i$, where $h$ numbers the nine
+half-suits and $i$ the six cards within one, so a half-suit mask is
+\verb|0x3F << 6h| and the six hands together with the deal they came from occupy
+under a hundred bytes. Where the policy explores a hypothetical --- the two-ply
 refinement of \S\ref{sec:twoply} --- it copies the constraint state and
-recomputes, rather than making and unmaking moves; there are no rollouts
-anywhere in this agent. Games are driven by a loop that,
-after every public event, (i) offers every player the chance to declare, (ii)
-resolves a cardless team into the forced endgame, (iii) resolves a cardless
-turn-holder into a chosen successor, and (iv) otherwise asks the turn-holder for
-a move. All randomness comes from counter-based streams keyed by
-\emph{(seed, seat, purpose)}, so a deal is reproducible from its seed, which the
-duplicate-block protocol of \S\ref{sec:protocol} requires. The verification
-suite checks replay identity at a fixed thread count; the streams are keyed so
-that thread count cannot matter, but we do not test that claim directly.
+recomputes on the copy rather than making and unmaking moves on the live game.
+There are no rollouts anywhere in this agent: every quantity the policy consumes
+is either a closed-form posterior query (\S\ref{sec:belief}) or a fitted linear
+score (\S\ref{sec:policy}).
 
-Agents are handed their own hand once and a stream of public events thereafter.
-There is no interface through which a policy can read another player's cards; the
-event record carries only actor, target, named card, outcome, declared
-allocation, and the resulting public hand counts.
+Games are driven by a loop that, after every public event, (i) offers every
+player the opportunity to declare, (ii) resolves a cardless team into the forced
+endgame, (iii) resolves a cardless turn-holder into a chosen successor, and
+(iv) otherwise asks the turn-holder for a move. All randomness comes from
+counter-based streams keyed by \emph{(seed, seat, purpose)}, so a deal and its
+entire play are reproducible from the seed alone. The duplicate-block protocol
+of \S\ref{sec:protocol} depends on that property.
 
-\subsection{Information safety, and why v0.3 needed an audit}
+\subsection{Information safety}
 
-The v0.3 audit found that its predecessor's reply-risk feature estimated a
-target's follow-up options by invoking the legal-move generator with the target
-as actor --- which consults that target's hidden hand \cite{fishbot03}. v0.4
-removes the possibility structurally rather than by inspection: the acting
-policy never receives a pointer to the game state, only to its own
-\texttt{Knowledge} object and the public record. To confirm that no leak remains
-and, more importantly, that the belief machinery is \emph{sound}, the engine has
-an audit mode that runs after every event and checks, for every player:
+The acting policy never receives the game state. It receives its own
+\texttt{Knowledge} object --- the constraint bookkeeping of
+\S\ref{sec:belief} --- and the public record, in which each event carries only
+the actor, the target, the named card, the outcome, any declared allocation, and
+the resulting public hand counts. There is no interface through which a policy
+can read another player's cards. A leak of the kind the \vthree{} audit reported
+in its predecessor \cite{fishbot03}, where a reply-risk feature estimated a
+target's follow-up options by invoking the legal-move generator with that target
+as actor, is therefore excluded structurally rather than by inspection.
+
+To confirm that no leak remains, and more importantly that the deductions the
+belief machinery makes are \emph{sound}, the engine has an audit mode that runs
+after every public event and checks, for every player, four properties against
+the true deal:
 
 \begin{itemize}
-  \item every card whose holder that player believes is known is in fact held by
-        that player;
-  \item for every unresolved card, the true holder is contained in the surviving
-        support $M_c$;
+  \item every card the constraint state records as resolved is in fact held by
+        the seat it is resolved to, and no card of a live half-suit is marked out
+        of play;
+  \item for every unresolved card, the true holder lies in the surviving support
+        $M_c$ (\S\ref{sec:belief});
   \item the derived capacities \eqref{eq:capacity} equal the true counts of
         unresolved cards per player;
-  \item every live ask-legality certificate \eqref{eq:disj} is in fact satisfied
-        by the true deal.
+  \item every live ask-legality certificate \eqref{eq:disj} is satisfied by the
+        true deal.
 \end{itemize}
 
-A single violation would mean the belief engine had excluded the truth --- an
-unsound deduction. Across the verification sweep the engine performed
-\textbf{\numAuditChecks} such checks with
-\textbf{\numAuditViolations} violations
-(\S\ref{sec:results-verify}).
+A single violation would mean the belief engine had excluded the truth. In
+experiment E1 the engine performed \textbf{\numAuditChecks} such checks with
+\textbf{\numAuditViolations} violations under the full dialect, and
+\textbf{\numAuditChecksLegacy} checks with no violations under the \vthree{}
+dialect (\S\ref{sec:results-verify}). The audit is run inside \texttt{fish
+verify}, which plays the $9 \times 9$ ordered cross-product of nine policies
+(\vfast{}, \vthree{}, \vtwo{}, turn-starvation lockout, posterior detective,
+focused hunter, adaptive diversifier, misdirection artist, random legal control),
+so that both orderings of every pair and every self-play pairing are exercised.
 
 \subsection{Verification suite}
 
-Beyond the audit the suite checks deck integrity and card conservation, that the
-nine half-suits are always exactly resolved, that declarations only ever assign
-cards to the declarer's own teammates, that ask legality is enforced on both the
-generator and the applier, that replays are bit-identical under a fixed seed, and
-that the action cap is not reached in ordinary play. The suite runs the full
-$8 \times 8$ policy cross-product so that pathological policies are exercised too.
-
-\subsection{Termination}
-
-Nothing in the rules forces a player to declare, so two sufficiently patient
-teams can in principle stall forever --- and by Theorem~\ref{thm:locked}, patient
-play is exactly what a strong policy discovers. We handle this the way the rules
-would in practice, with an in-policy cashing rule (\S\ref{sec:termination}), and
-keep a hard cap of 400 asks purely as a backstop. If it is ever reached, the
-unresolved half-suits are split by who physically holds the majority, with ties
-going to the holder of the lowest card --- a neutral fallback rather than a rule,
-and one whose incidence therefore has to travel with every number. In the
-head-to-head runs of \S\ref{sec:results} it is \textbf{\numLimitRate}; across
-the rule-dialect runs it stays below 0.7\% of deals; the one place it is
-material is the mirror match inside the exploitability probe, which
-\S\ref{sec:robustness} reports separately.
+Beyond the soundness audit the suite checks deck integrity and card
+conservation; that exactly nine half-suits are resolved in every completed game;
+that a declaration only ever assigns cards to the declarer's own teammates; that
+ask legality is enforced independently on the move generator and on the applier,
+so a policy cannot submit an illegal ask even if its generator is wrong; that
+replaying a seed at a fixed thread count reproduces the game bit-identically;
+and that the action cap of \S\ref{sec:rules} --- a backstop whose residue
+adjudication is a convention of the simulator rather than a rule of the game ---
+is not reached in ordinary play, which it was not (\numLimitRate{}, E1 and E3).
+The in-policy mechanism that keeps games terminating is the subject of
+\S\ref{sec:termination}. The random streams are keyed so that thread count
+cannot affect a game's outcome, but the suite tests replay identity only at a
+fixed thread count and does not test that claim directly.

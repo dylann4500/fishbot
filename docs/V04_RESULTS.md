@@ -8,10 +8,10 @@ for fitting, and the configuration was frozen before any of them ran.
 
 | Opponent | Win rate | 95% CI | Mean sets | Ask acc. | Decl. acc. | Decl./game | Out-of-turn |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| FishBot v0.3 | 75.07% | 73.7–76.4 | 5.457 | 55.8% | 98.5% | 4.80 | 3.43 |
+| \vthree{} | 75.07% | 73.7–76.4 | 5.457 | 55.8% | 98.5% | 4.80 | 3.43 |
 | Turn-starvation lockout | 78.12% | 76.9–79.4 | 5.542 | 48.0% | 98.1% | 5.16 | 3.59 |
 | Posterior detective | 75.74% | 74.5–77.0 | 5.440 | 52.8% | 98.4% | 5.12 | 3.57 |
-| FishBot v0.2 | 84.24% | 83.1–85.3 | 5.857 | 54.4% | 98.9% | 5.17 | 3.63 |
+| \vtwo{} | 84.24% | 83.1–85.3 | 5.857 | 54.4% | 98.9% | 5.17 | 3.63 |
 | Adaptive diversifier | 92.14% | 91.3–93.0 | 6.442 | 64.0% | 97.4% | 6.14 | 4.16 |
 | Focused hunter | 97.64% | 97.2–98.1 | 7.000 | 55.7% | 97.5% | 5.09 | 3.49 |
 | Misdirection artist | 99.95% | 99.9–100.0 | 8.161 | 55.1% | 98.2% | 3.80 | 2.66 |
@@ -49,7 +49,7 @@ Worst case across the population: **75.07%**.
 |---|---:|---:|---:|
 | Turn-starvation lockout | 57.85% | 57.60% | 55.5–59.8 |
 | Posterior detective | 57.20% | 59.10% | 57.0–61.3 |
-| FishBot v0.2 | 56.50% | 56.60% | 54.5–58.7 |
+| \vtwo{} | 56.50% | 56.60% | 54.5–58.7 |
 | Adaptive diversifier | 86.15% | 84.75% | 83.2–86.3 |
 | Focused hunter | 95.15% | 94.55% | 93.5–95.5 |
 | Misdirection artist | 99.20% | 98.70% | 98.2–99.2 |

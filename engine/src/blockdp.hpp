@@ -447,6 +447,38 @@ struct BlockDP {
     for (int i = 0; i < n; i++) { outCards[i] = gr->cards[i]; outSeats[i] = assign[i]; }
     return bestS / Z;
   }
+  // Exact probability of a NAMED allocation of half-suit s.  Under the uniform
+  // prior every SURVIVING assignment sharing a count vector is equally likely,
+  // so P(A) = S_{t(A)} / Z -- but an assignment with a surviving count vector
+  // need not itself satisfy the half-suit's certificates, so survival is checked
+  // explicitly here rather than inferred from the count vector.  Used by the
+  // brute-force oracle (`fish oracle`); not on any decision path.
+  double allocationProbability(const Knowledge& k, int s, const int* seats) {
+    Group* gr = groupForSet(s);
+    if (!gr) return 1.0;
+    ensureGroupTable(*gr);
+    if (!gr->nEnt) return 0.0;
+    int cnt[NPLAY] = {0,0,0,0,0,0};
+    for (int i = 0; i < gr->nCards; i++) {
+      int p = seats[i];
+      if (p < 0 || p >= NPLAY || !(gr->cmask[i] & (1u << p))) return 0.0;
+      cnt[p]++;
+      if (cnt[p] > cap[p]) return 0.0;
+    }
+    // survival: every certificate confined to this half-suit must be satisfied
+    for (const auto& d : k.disj) {
+      uint64_t inBlock = d.cards & setMask(s) & k.unresolved;
+      if (!inBlock) continue;
+      bool sat = false;
+      for (int i = 0; i < gr->nCards && !sat; i++)
+        if ((inBlock & bit(gr->cards[i])) && seats[i] == d.player) sat = true;
+      if (!sat) return 0.0;
+    }
+    uint64_t tp = packCnt(cnt);
+    for (int e = 0; e < gr->nEnt; e++) if (gr->tpack[e] == tp) return gr->S[e] / Z;
+    return 0.0;
+  }
+
   bool pick(const Group& gr, int e, int* want, int* assign, int i) const {
     if (i == gr.nCards) return true;
     for (int p = 0; p < NPLAY; p++) {

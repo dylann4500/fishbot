@@ -21,6 +21,7 @@
     "engine:build": "cd engine && make",
     "engine:verify": "cd engine && ./fish verify --games=600",
     "engine:selftest": "cd engine && ./fish selftest --games=40",
+    "engine:play": "cd engine && make && ./fish serve",
     "engine:match": "cd engine && ./fish match --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210",
     "engine:experiments": "cd engine && ./experiments.sh",
     "paper:v04": "cd paper && python3 inline.py && tectonic -X compile fishbot_v04.tex --outdir ../output/pdf"

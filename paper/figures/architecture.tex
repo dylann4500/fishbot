@@ -1,0 +1,65 @@
+% Pipeline of FishBot v0.4.  The dashed enclosure separates the exact reference
+% engine (validation only) from the approximate path the deployed policy runs.
+\begin{tikzpicture}[
+  font=\small,
+  node distance=0pt,
+  box/.style   = {draw=fishgray!70, rounded corners=2pt, fill=white,
+                  align=center, inner sep=5pt, minimum height=9mm, text width=30mm},
+  inbox/.style = {box, fill=fishlight, draw=fishgreen!60},
+  ref/.style   = {box, draw=fishgreen, dashed, fill=white},
+  act/.style   = {box, fill=fishgreen!12, draw=fishgreen},
+  lab/.style   = {font=\scriptsize\itshape, text=fishgray},
+  ar/.style    = {-{Latex[length=2mm]}, draw=fishgray!85, thick},
+  arref/.style = {-{Latex[length=2mm]}, draw=fishgreen, thick, dashed},
+]
+
+% --- inputs ---------------------------------------------------------------
+\node[inbox] (hand)  at (0, 1.05) {observer's\\private hand};
+\node[inbox] (pub)   at (0,-1.05) {public transcript\\asks, answers,\\declarations, counts};
+
+% --- constraints ----------------------------------------------------------
+\node[box, text width=34mm, minimum height=22mm] (con) at (4.2,0)
+  {\textbf{rule constraints}\\[2pt]
+   \scriptsize C1 own hand\\
+   \scriptsize C2 revealed holders\\
+   \scriptsize C3 exclusions\\
+   \scriptsize C4 capacities\\
+   \scriptsize C5 ask-legality certificates};
+
+% --- the two inference paths ---------------------------------------------
+\node[act, text width=36mm, minimum height=14mm] (fast) at (9.2, 1.55)
+  {\textbf{Fast path} (deployed)\\[1pt]
+   \scriptsize Sinkhorn capacity fitting\\
+   \scriptsize + C5 conditioning\\
+   \scriptsize $\hat\mu,\ \hat\tau,\ \hat\alpha$};
+
+\node[ref, text width=36mm, minimum height=14mm] (block) at (9.2,-1.55)
+  {\textbf{Reference engine}\\[1pt]
+   \scriptsize half-suit block DP\\
+   \scriptsize exact $Z,\ \mu,\ \tau,\ \alpha$\\
+   \scriptsize validation and ablation only};
+
+% --- decision -------------------------------------------------------------
+\node[act, text width=30mm, minimum height=11mm] (ask) at (14.0, 1.55)
+  {ask scorer\\\scriptsize \numAskFeats{} features + one-ply\\\scriptsize value, two-ply rerank};
+\node[act, text width=30mm, minimum height=11mm] (decl) at (14.0,-0.15)
+  {declaration rule\\\scriptsize pre-gates, then\\\scriptsize value-based stopping};
+\node[act, text width=18mm, minimum height=9mm] (act) at (18.1, 0.70) {\textbf{action}};
+
+% --- edges ----------------------------------------------------------------
+\draw[ar] (hand.east)  -- ++(0.5,0) |- (con.west);
+\draw[ar] (pub.east)   -- ++(0.5,0) |- (con.west);
+\draw[ar] (con.east) -- ++(0.55,0) |- (fast.west);
+\draw[arref] (con.east) -- ++(0.55,0) |- (block.west);
+\draw[ar] (fast.east) -- (ask.west);
+\draw[ar] (fast.south east) -- ++(0.45,0) |- (decl.west);
+\draw[ar] (ask.east) -- ++(0.45,0) |- (act.west);
+\draw[ar] (decl.east) -- ++(0.45,0) |- (act.west);
+\draw[arref] (block.east) -- ++(0.7,0) |- ($(decl.south)+(0,-0.75)$)
+      node[lab, below, pos=0.72] {substitution ablation (\S\ref{sec:ablations})} -- (decl.south);
+
+% --- annotations ----------------------------------------------------------
+\node[lab, align=center] at (9.2, 0.02) {both paths compute the\\same three quantities};
+\node[lab, above] at (4.2, 1.35) {logical consequences of the rules};
+
+\end{tikzpicture}

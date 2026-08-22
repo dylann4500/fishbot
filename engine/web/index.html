@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FishLab Table</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b23; --panel2:#1d232d; --line:#2a323f;
+  --ink:#e6edf5; --dim:#8b98a9; --accent:#59a5ff; --a:#4ec9a7; --b:#e0864f;
+  --good:#4ec9a7; --bad:#e5636b; --warn:#e3c05c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font:14px/1.45 ui-sans-serif,-apple-system,"SF Pro Text",Segoe UI,Roboto,sans-serif}
+h1,h2,h3{margin:0;font-weight:650}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);
+  border-radius:7px;padding:6px 11px;cursor:pointer}
+button:hover:not(:disabled){border-color:#41506a;background:#232b37}
+button:disabled{opacity:.38;cursor:default}
+button.pri{background:var(--accent);border-color:var(--accent);color:#06121f;font-weight:650}
+button.pri:hover:not(:disabled){background:#7bb8ff;border-color:#7bb8ff}
+select,input{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;padding:5px 7px}
+a{color:var(--accent)}
+.wrap{max-width:1320px;margin:0 auto;padding:12px 16px 60px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;letter-spacing:.2px}
+.brand small{color:var(--dim);font-weight:400;margin-left:8px}
+.spacer{flex:1}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:13px}
+.chip b{font-variant-numeric:tabular-nums}
+.teamA{color:var(--a)} .teamB{color:var(--b)}
+.dotA{background:var(--a)} .dotB{background:var(--b)}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:16px;margin-top:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+.panel h3{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.seats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.seat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;position:relative}
+.seat.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.seat.you{background:#1b2533}
+.seat.out{opacity:.5}
+.seat .nm{font-weight:600;display:flex;align-items:center;gap:6px}
+.seat .sub{color:var(--dim);font-size:12px;margin-top:2px;display:flex;justify-content:space-between}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);
+  border-radius:4px;padding:0 4px}
+/* cards */
+.card{width:44px;height:62px;background:#f6f7f9;color:#12151a;border:1px solid #c3cad4;border-radius:6px;
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;
+  box-shadow:0 1px 2px rgba(0,0,0,.35);user-select:none}
+.card .r{font-size:15px;font-weight:700;line-height:1}
+.card.jk .r{font-size:10px;letter-spacing:.02em}
+.card.jk .s{font-size:22px}
+.card .s{font-size:19px;line-height:1.05}
+.card.red{color:#c2263a}
+.card .corner{position:absolute;top:2px;left:4px;font-size:9px;font-weight:700;line-height:1}
+.card.sm{width:34px;height:48px}
+.card.sm .r{font-size:12px}.card.sm .s{font-size:14px}
+.card.jk{background:#fffbe9}
+.card.ghost{background:#222933;color:#5d6a7c;border-color:#333c4a;border-style:dashed;box-shadow:none}
+.card.pick{cursor:pointer}
+.card.pick:hover{outline:2px solid var(--accent);outline-offset:1px}
+.card.sel{outline:2px solid var(--accent);outline-offset:1px}
+.card.held{opacity:.34}
+.hand{display:flex;flex-wrap:wrap;gap:14px}
+.hs{display:flex;flex-direction:column;gap:5px}
+.hs .lbl{font-size:11px;color:var(--dim)}
+.hs .row{display:flex;gap:4px}
+/* sets tracker */
+.sets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.setchip{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:12px}
+.setchip.won0{border-color:var(--a);color:var(--a)}
+.setchip.won1{border-color:var(--b);color:var(--b)}
+.setchip .st{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em}
+/* log */
+#log{max-height:340px;overflow:auto;font-size:13px}
+.ev{padding:4px 0;border-bottom:1px solid #202834}
+.ev:last-child{border-bottom:0}
+.ev .who{font-weight:600}
+.ev.hit{color:var(--good)} .ev.miss{color:var(--dim)}
+.ev.dec{color:var(--warn)} .ev.bad{color:var(--bad)}
+.muted{color:var(--dim)}
+.note{background:#2a2016;border:1px solid #5b4726;color:#e8c98d;border-radius:7px;padding:7px 9px;margin-bottom:9px;font-size:13px}
+.err{background:#2c1a1d;border:1px solid #5f2a30;color:#f0a3a9}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tbl{width:100%;border-collapse:collapse}
+.tbl td,.tbl th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+.tbl th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.alloc{display:flex;flex-direction:column;gap:6px}
+.allocrow{display:flex;align-items:center;gap:8px}
+.allocrow .who{display:flex;gap:5px}
+.seatbtn{padding:4px 9px;font-size:12px;border-radius:6px}
+.seatbtn.sel{background:var(--accent);border-color:var(--accent);color:#06121f;font-weight:650}
+.hint{color:var(--dim);font-size:12px;margin-top:6px}
+#setup{position:fixed;inset:0;background:rgba(6,9,13,.82);display:none;align-items:flex-start;justify-content:center;
+  overflow:auto;padding:36px 16px;z-index:20}
+#setup.show{display:flex}
+#setup .box{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px;max-width:720px;width:100%}
+.deal{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.deal .col .h{font-size:12px;color:var(--dim);margin-bottom:5px}
+.deal .col .row{display:flex;flex-wrap:wrap;gap:3px}
+kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">FishLab <small>play the engine</small></div>
+    <div class="chip"><span class="dot dotA"></span> Team A <b id="scA">0</b></div>
+    <div class="chip"><span class="dot dotB"></span> Team B <b id="scB">0</b></div>
+    <div class="chip" id="turnChip">—</div>
+    <span id="viewWrap" style="display:none" class="chip">view <select id="viewNow" style="border:0;background:transparent;padding:0"></select></span>
+    <div class="spacer"></div>
+    <div class="row">
+      <button id="pauseBtn">Pause</button>
+      <button id="stepBtn">Step</button>
+      <label class="muted" style="font-size:12px">pace
+        <select id="paceSel">
+          <option value="0">instant</option>
+          <option value="300">fast</option>
+          <option value="800" selected>normal</option>
+          <option value="1600">slow</option>
+        </select></label>
+      <button class="pri" id="newBtn">New game</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <h3>Table</h3>
+        <div class="seats" id="seats"></div>
+      </div>
+      <div class="panel" style="margin-bottom:14px">
+        <h3>Your hand <span id="handCount" class="muted"></span></h3>
+        <div class="hand" id="hand"></div>
+      </div>
+      <div class="panel" id="actionPanel">
+        <h3>Action</h3>
+        <div id="action"></div>
+      </div>
+      <div class="panel" id="overPanel" style="margin-top:14px;display:none">
+        <h3>Opening hands, revealed</h3>
+        <div class="deal" id="deal"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <h3>Half-suits</h3>
+        <div class="sets" id="sets"></div>
+      </div>
+      <div class="panel">
+        <h3>Log
+          <label class="muted" style="float:right;font-size:11px;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="fullLog" checked> full history
+          </label>
+        </h3>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="setup"><div class="box">
+  <h2 style="margin-bottom:4px">New game</h2>
+  <div class="muted" style="margin-bottom:14px">Seats alternate around the table: 0, 2, 4 are Team A; 1, 3, 5 are Team B.
+    The player to the dealer's left leads, and the dealer is drawn from the seed.</div>
+  <div class="row" style="margin-bottom:12px">
+    <button id="preset1">Me + 2× v0.4 vs 3× v0.4</button>
+    <button id="preset2">Me + 2× v0.3 vs 3× v0.4</button>
+    <button id="preset3">Watch 6 bots</button>
+  </div>
+  <table class="tbl"><thead><tr><th>Seat</th><th>Team</th><th>Played by</th><th>Human</th></tr></thead>
+    <tbody id="setupRows"></tbody></table>
+  <div class="row" style="margin-top:14px">
+    <label class="muted">seed <input id="seedIn" size="12" placeholder="random"></label>
+    <label class="muted">bot pace (ms) <input id="paceIn" size="5" value="800"></label>
+    <label class="muted">view seat <select id="viewSel"></select></label>
+  </div>
+  <div class="row" style="margin-top:16px">
+    <button class="pri" id="startBtn">Deal</button>
+    <button id="cancelBtn">Cancel</button>
+  </div>
+  <div class="hint">Bots never see your cards. You only ever receive your own hand and the public event stream —
+    the same information the engine gives each bot.</div>
+</div></div>
+
+<script>
+const SUITS=['♠','♥','♦','♣'];
+const LOWR=['2','3','4','5','6','7'], HIR=['9','10','J','Q','K','A'];
+const SETN=['Low Spades','High Spades','Low Hearts','High Hearts','Low Diamonds','High Diamonds','Low Clubs','High Clubs','Eights & Jokers'];
+const POLICIES=[['v04','FishBot v0.4'],['v04:belief=block','FishBot v0.4-Block'],['v03','FishBot v0.3'],
+  ['v02','FishBot v0.2'],['lockout','Lockout'],['detective','Detective'],['hunter','Hunter'],
+  ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']];
+
+function cardInfo(c){
+  const s=Math.floor(c/6), i=c%6;
+  if(s===8){
+    if(i<4){const su=SUITS[i];return{rank:'8',suit:su,red:(i===1||i===2),name:'8'+su,joker:false};}
+    const red=(i===4);
+    return {rank:'JKR',suit:red?'★':'★',red,name:red?'Red Joker':'Black Joker',joker:true};
+  }
+  const si=Math.floor(s/2), su=SUITS[si];
+  const rank=(s%2===0)?LOWR[i]:HIR[i];
+  return {rank,suit:su,red:(si===1||si===2),name:rank+su,joker:false};
+}
+function cardName(c){return cardInfo(c).name;}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function cardEl(c,opts){
+  opts=opts||{};
+  const ci=cardInfo(c);
+  const d=el('div','card'+(ci.red?' red':'')+(ci.joker?' jk':'')+(opts.sm?' sm':'')+(opts.cls?' '+opts.cls:''));
+  d.appendChild(el('div','corner',ci.joker?(ci.red?'R':'B'):ci.rank));
+  d.appendChild(el('div','r',ci.rank));
+  d.appendChild(el('div','s',ci.suit));
+  d.title=ci.name;
+  return d;
+}
+function teamOf(p){return p&1;}
+function teamName(t){return t?'Team B':'Team A';}
+
+let st=null, view=-1, lastRev=-1, lastBody='', err='', errAt=0;
+let ask={target:null,card:null};
+let dcl={set:null,owner:[null,null,null,null,null,null]};
+let fcd={owner:[null,null,null,null,null,null]};
+
+async function post(path,params){
+  const body=new URLSearchParams(params).toString();
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  let j={}; try{j=await r.json();}catch(e){}
+  err = r.ok?'':(j.error||('HTTP '+r.status));
+  if(err){errAt=Date.now();setTimeout(()=>{if(Date.now()-errAt>=6000){err='';render();}},6100);}
+  render();
+  return j;
+}
+async function poll(){
+  try{
+    const r=await fetch('/api/state?seat='+view);
+    const txt=await r.text();
+    const s=JSON.parse(txt);
+    const humans=(s.seats||[]).filter(x=>x.human).map(x=>x.i);
+    if(s.everStarted&&humans.length&&humans.indexOf(view)<0){
+      const saved=Number(localStorage.getItem('fishlab.view'));
+      view = humans.indexOf(saved)>=0 ? saved : humans[0];
+      lastRev=-1; lastBody=''; return poll();
+    }
+    const body=txt.replace(/^\{"rev":\d+,/,'{');
+    const changed = (body!==lastBody);
+    lastRev=s.rev; lastBody=body; st=s;
+    if(changed) render();
+  }catch(e){}
+}
+
+function seatLabel(i){
+  if(!st) return 'Seat '+i;
+  const s=st.seats[i];
+  return (s.human?(i===view?'You':'Human'):s.label)+' · '+i;
+}
+function myTeamSeats(){const t=teamOf(view);return [0,1,2,3,4,5].filter(p=>teamOf(p)===t);}
+function oppSeats(){const t=teamOf(view);return [0,1,2,3,4,5].filter(p=>teamOf(p)!==t);}
+
+/* ---------------------------------------------------------------- render */
+function render(){
+  if(!st) return;
+  document.getElementById('scA').textContent=st.score[0];
+  document.getElementById('scB').textContent=st.score[1];
+  const tc=document.getElementById('turnChip');
+  if(!st.everStarted) tc.textContent='no game';
+  else if(st.finished) tc.textContent = st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A wins':'Team B wins');
+  else tc.textContent='turn: '+seatLabel(st.turn);
+  document.getElementById('pauseBtn').textContent = st.paused?'Resume':'Pause';
+  const humans=st.seats.filter(x=>x.human).map(x=>x.i);
+  const vw=document.getElementById('viewWrap'), vn=document.getElementById('viewNow');
+  if(humans.length>1&&st.everStarted){
+    vw.style.display='';
+    if(vn.options.length!==humans.length){
+      vn.innerHTML='';
+      humans.forEach(i=>{const o=el('option',null,'seat '+i);o.value=String(i);vn.appendChild(o);});
+    }
+    vn.value=String(view);
+  } else vw.style.display='none';
+  const ps=document.getElementById('paceSel');
+  if(document.activeElement!==ps&&[0,300,800,1600].indexOf(st.pace)>=0) ps.value=String(st.pace);
+  renderSeats(); renderSets(); renderHand(); renderAction(); renderLog(); renderDeal();
+}
+
+function renderSeats(){
+  const w=document.getElementById('seats'); w.innerHTML='';
+  for(let p=0;p<6;p++){
+    const s=st.seats[p];
+    const d=el('div','seat'+(st.turn===p&&!st.finished?' turn':'')+(p===view?' you':'')+(st.handCount[p]===0&&st.everStarted?' out':''));
+    const nm=el('div','nm');
+    nm.appendChild(el('span','dot '+(teamOf(p)?'dotB':'dotA')));
+    nm.appendChild(el('span',null,s.human?(p===view?'You':'Human'):s.label));
+    if(p===st.dealer&&st.everStarted) nm.appendChild(el('span','tag','dealer'));
+    d.appendChild(nm);
+    const sub=el('div','sub');
+    sub.appendChild(el('span',null,'seat '+p+' · '+teamName(teamOf(p))));
+    sub.appendChild(el('span',null,st.handCount[p]+' card'+(st.handCount[p]===1?'':'s')));
+    d.appendChild(sub);
+    w.appendChild(d);
+  }
+}
+
+function renderSets(){
+  const w=document.getElementById('sets'); w.innerHTML='';
+  for(let s=0;s<9;s++){
+    const won=st.setWinner[s];
+    const d=el('div','setchip'+(won===0?' won0':won===1?' won1':''));
+    d.appendChild(el('div',null,SETN[s]));
+    d.appendChild(el('div','st', won===2?'in play':(won===0?'Team A':'Team B')));
+    w.appendChild(d);
+  }
+}
+
+function renderHand(){
+  const w=document.getElementById('hand'); w.innerHTML='';
+  const cnt=document.getElementById('handCount');
+  const you=st.you;
+  if(!you){cnt.textContent='';
+    w.appendChild(el('div','muted',!st.everStarted?'No game dealt yet.':'You are watching this table — no hand.'));return;}
+  const hand=you.hand||[];
+  cnt.textContent='('+hand.length+')';
+  const bySet={};
+  hand.forEach(c=>{const s=Math.floor(c/6);(bySet[s]=bySet[s]||[]).push(c);});
+  const keys=Object.keys(bySet).map(Number).sort((a,b)=>a-b);
+  if(!keys.length){w.appendChild(el('div','muted','You are out of cards.'));return;}
+  keys.forEach(s=>{
+    const g=el('div','hs');
+    g.appendChild(el('div','lbl',SETN[s]));
+    const r=el('div','row');
+    bySet[s].sort((a,b)=>a-b).forEach(c=>r.appendChild(cardEl(c)));
+    g.appendChild(r); w.appendChild(g);
+  });
+}
+
+/* ------------------------------------------------------------- allocator */
+function allocEditor(setIdx, store, onChange){
+  const box=el('div','alloc');
+  const mates=myTeamSeats();
+  for(let i=0;i<6;i++){
+    const c=setIdx*6+i;
+    const row=el('div','allocrow');
+    row.appendChild(cardEl(c,{sm:true}));
+    row.appendChild(el('span','muted',cardName(c)));
+    const who=el('div','who');
+    mates.forEach(m=>{
+      const b=el('button','seatbtn'+(store.owner[i]===m?' sel':''), m===view?'You':('Seat '+m));
+      b.onclick=()=>{store.owner[i]=m;onChange();};
+      who.appendChild(b);
+    });
+    row.appendChild(who);
+    const held=(st.you&&st.you.hand.indexOf(c)>=0);
+    if(held) row.appendChild(el('span','tag','in your hand'));
+    box.appendChild(row);
+  }
+  return box;
+}
+function prefill(setIdx,store){
+  for(let i=0;i<6;i++){
+    const c=setIdx*6+i;
+    store.owner[i]=(st.you&&st.you.hand.indexOf(c)>=0)?view:null;
+  }
+}
+function complete(store){return store.owner.every(o=>o!==null&&o!==undefined);}
+
+/* ---------------------------------------------------------------- action */
+function renderAction(){
+  const w=document.getElementById('action'); w.innerHTML='';
+  if(err&&!st.finished&&Date.now()-errAt<6000) w.appendChild(el('div','note err',err));
+  if(!st.everStarted){w.appendChild(el('div','muted','Press "New game" to deal.'));return;}
+  if(st.finished){
+    const d=el('div');
+    const win = st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A':'Team B');
+    d.appendChild(el('h2',null,(win==='drawn'?'Drawn':win+' wins')+'  '+st.score[0]+'–'+st.score[1]));
+    if(st.you) d.appendChild(el('div','muted','You played seat '+view+' for '+teamName(teamOf(view))+'.'));
+    if(st.hitLimit) d.appendChild(el('div','muted','The ask limit was reached; unclaimed half-suits were adjudicated by who physically held the majority.'));
+    w.appendChild(d);
+    return;
+  }
+  const you=st.you;
+  if(!you){w.appendChild(el('div','muted','Spectating. Bot seats are playing.'));return;}
+  if(you.note) w.appendChild(el('div','note',you.note));
+
+  const need=you.need;
+  if(need==='pass'){ w.appendChild(passPanel(you)); return; }
+  if(need==='forced'||need==='guess'){ w.appendChild(forcedPanel(you,need)); return; }
+
+  if(need==='turn'){
+    w.appendChild(el('h2',null,'Your turn'));
+    w.appendChild(askPanel());
+    w.appendChild(el('div','hint','— or —'));
+  }else{
+    const head=el('div','muted', st.turn===view? 'Waiting…' :
+      'It is '+seatLabel(st.turn)+"'s turn. You may still declare a half-suit at any moment.");
+    w.appendChild(head);
+  }
+  w.appendChild(declarePanel(you,need==='turn'));
+}
+
+function legalAskCount(){
+  const hand=st.you.hand;
+  const targets=oppSeats().filter(p=>st.handCount[p]>0);
+  if(!targets.length) return 0;
+  let n=0;
+  [...new Set(hand.map(c=>Math.floor(c/6)))].filter(s=>st.setActive[s]).forEach(s=>{
+    for(let i=0;i<6;i++) if(hand.indexOf(s*6+i)<0) n+=targets.length;
+  });
+  return n;
+}
+function askPanel(){
+  const box=el('div');
+  const hand=st.you.hand;
+  if(legalAskCount()===0){
+    box.appendChild(el('div','note','You hold no card you could legally ask for — every half-suit you hold is complete, or every opponent is out of cards. You must declare a half-suit.'));
+    return box;
+  }
+  // target
+  const tr=el('div','row'); tr.appendChild(el('span','muted','Ask'));
+  oppSeats().forEach(p=>{
+    const b=el('button','seatbtn'+(ask.target===p?' sel':''), st.seats[p].label+' · '+p+' ('+st.handCount[p]+')');
+    b.disabled = st.handCount[p]===0;
+    b.onclick=()=>{ask.target=p;renderAction();};
+    tr.appendChild(b);
+  });
+  box.appendChild(tr);
+  // askable cards
+  const mySets=[...new Set(hand.map(c=>Math.floor(c/6)))].filter(s=>st.setActive[s]).sort((a,b)=>a-b);
+  const grid=el('div','hand'); grid.style.marginTop='10px';
+  mySets.forEach(s=>{
+    const g=el('div','hs'); g.appendChild(el('div','lbl',SETN[s]));
+    const r=el('div','row');
+    for(let i=0;i<6;i++){
+      const c=s*6+i;
+      const held=hand.indexOf(c)>=0;
+      const d=cardEl(c,{sm:true,cls:held?'held':'pick'+(ask.card===c?' sel':'')});
+      if(!held) d.onclick=()=>{ask.card=c;renderAction();};
+      r.appendChild(d);
+    }
+    g.appendChild(r); grid.appendChild(g);
+  });
+  box.appendChild(grid);
+  const go=el('div','row'); go.style.marginTop='10px';
+  const b=el('button','pri', ask.card!=null&&ask.target!=null
+      ? ('Ask '+st.seats[ask.target].label+' for '+cardName(ask.card))
+      : 'Pick an opponent and a card');
+  b.disabled=!(ask.card!=null&&ask.target!=null);
+  b.onclick=async()=>{const t=ask.target,c=ask.card;ask={target:null,card:null};await post('/api/ask',{seat:view,card:c,target:t});};
+  go.appendChild(b);
+  box.appendChild(go);
+  box.appendChild(el('div','hint','You must hold another card of the half-suit, must not hold the card you name, and may only ask an opponent who still has cards.'));
+  return box;
+}
+
+function declarePanel(you,isTurn){
+  const box=el('div'); box.style.marginTop='10px';
+  if(you.queued){
+    const q=el('div','note');
+    q.textContent='Declaration queued: '+SETN[you.queued.set]+' — it is announced at the next opportunity.';
+    const c=el('button',null,'Cancel'); c.style.marginLeft='8px';
+    c.onclick=()=>post('/api/declare/cancel',{seat:view});
+    q.appendChild(c);
+    box.appendChild(q);
+  }
+  box.appendChild(el('h3',null,'Declare a half-suit'));
+  const sel=el('select');
+  const ph=el('option',null,'— choose —'); ph.value=''; sel.appendChild(ph);
+  for(let s=0;s<9;s++) if(st.setActive[s]){
+    const o=el('option',null,SETN[s]); o.value=String(s);
+    if(dcl.set===s) o.selected=true;
+    sel.appendChild(o);
+  }
+  sel.onchange=()=>{const v=sel.value;dcl.set=v===''?null:Number(v);if(dcl.set!=null)prefill(dcl.set,dcl);renderAction();};
+  const r=el('div','row'); r.appendChild(sel); box.appendChild(r);
+  if(dcl.set!=null&&st.setActive[dcl.set]){
+    box.appendChild(el('div','hint','Name the teammate holding each card. Everything must be right or the half-suit goes to the other team.'));
+    const ed=allocEditor(dcl.set,dcl,()=>renderAction());
+    ed.style.marginTop='8px'; box.appendChild(ed);
+    const go=el('div','row'); go.style.marginTop='10px';
+    const b=el('button','pri', isTurn?'Declare instead of asking':'Declare '+SETN[dcl.set]);
+    b.disabled=!complete(dcl);
+    b.onclick=async()=>{
+      const p={seat:view,set:dcl.set,owner:dcl.owner.join(',')};
+      dcl={set:null,owner:[null,null,null,null,null,null]};
+      await post('/api/declare',p);
+    };
+    go.appendChild(b); box.appendChild(go);
+  }
+  return box;
+}
+
+function passPanel(you){
+  const box=el('div');
+  box.appendChild(el('h2',null,'You are out of cards and hold the turn'));
+  box.appendChild(el('div','muted','Choose the teammate who takes over. Only willingness may be exchanged — no card information.'));
+  const r=el('div','row'); r.style.marginTop='10px';
+  (you.cands||[]).forEach(p=>{
+    const b=el('button','pri',seatLabel(p)+' ('+st.handCount[p]+' cards)');
+    b.onclick=()=>post('/api/pass',{seat:view,target:p});
+    r.appendChild(b);
+  });
+  box.appendChild(r);
+  return box;
+}
+
+function forcedPanel(you,need){
+  const s=you.needSet;
+  const box=el('div');
+  box.appendChild(el('h2',null,'Forced endgame'));
+  box.appendChild(el('div','muted', need==='guess'
+    ? 'Nobody stepped forward. You must declare '+SETN[s]+' now.'
+    : 'The other team is out of cards, so your team must declare every remaining half-suit with no more asking. Take '+SETN[s]+', or step aside.'));
+  if(fcd.set!==s){fcd.set=s;prefill(s,fcd);}
+  const ed=allocEditor(s,fcd,()=>renderAction()); ed.style.marginTop='10px';
+  box.appendChild(ed);
+  const r=el('div','row'); r.style.marginTop='10px';
+  const b=el('button','pri','Declare '+SETN[s]);
+  b.disabled=!complete(fcd);
+  b.onclick=async()=>{const p={seat:view,set:s,owner:fcd.owner.join(',')};fcd={set:null,owner:[null,null,null,null,null,null]};await post('/api/forced/declare',p);};
+  r.appendChild(b);
+  if(need==='forced'){
+    const sk=el('button',null,'A teammate takes this one');
+    sk.onclick=()=>{fcd={set:null,owner:[null,null,null,null,null,null]};post('/api/forced',{seat:view,skip:1});};
+    r.appendChild(sk);
+    const df=el('button',null,'Let my teammates finish');
+    df.onclick=()=>{fcd={set:null,owner:[null,null,null,null,null,null]};post('/api/forced',{seat:view,deferall:1});};
+    r.appendChild(df);
+  }
+  box.appendChild(r);
+  return box;
+}
+
+/* ------------------------------------------------------------------- log */
+function allocText(o,set){
+  const by={};
+  for(let i=0;i<6;i++){(by[o[i]]=by[o[i]]||[]).push(cardName(set*6+i));}
+  return Object.keys(by).map(k=>seatLabel(Number(k))+': '+by[k].join(' ')).join(' · ');
+}
+function renderLog(){
+  const w=document.getElementById('log'); w.innerHTML='';
+  const full=document.getElementById('fullLog').checked;
+  let h=st.history||[];
+  if(!full){
+    // What the rules actually let you ask for: the previous two asks, plus the
+    // public record of declarations and turn passes.
+    const keep=new Set();
+    for(let i=0;i<h.length;i++) if(h[i].k!=='ask') keep.add(i);
+    let n=0;
+    for(let i=h.length-1;i>=0&&n<2;i--) if(h[i].k==='ask'){keep.add(i);n++;}
+    h=h.filter((e,i)=>keep.has(i));
+    w.appendChild(el('div','muted','Rule view: declarations, passes, and the previous two asks only.'));
+  }
+  h.slice().reverse().forEach(e=>{
+    let d;
+    if(e.k==='ask'){
+      d=el('div','ev '+(e.ok?'hit':'miss'));
+      d.appendChild(el('span','who',seatLabel(e.a)));
+      d.appendChild(el('span',null,' asked '+seatLabel(e.t)+' for '+cardName(e.c)+' — '+(e.ok?'handed over':'no')));
+    }else if(e.k==='declare'||e.k==='forced'){
+      d=el('div','ev '+(e.ok?'dec':'bad'));
+      d.appendChild(el('span','who',seatLabel(e.a)));
+      d.appendChild(el('span',null,(e.k==='forced'?' was forced to declare ':' declared ')+SETN[e.s]+' — '+
+        (e.ok?'correct':'MISDECLARED, half-suit to '+teamName(1-teamOf(e.a)))));
+      d.appendChild(el('div','muted',allocText(e.o,e.s)));
+    }else if(e.k==='pass'){
+      d=el('div','ev muted');
+      d.appendChild(el('span',null,seatLabel(e.a)+' was out of cards and passed the turn to '+seatLabel(e.t)));
+    }else return;
+    w.appendChild(d);
+  });
+  if(!h.length) w.appendChild(el('div','muted','Nothing yet.'));
+}
+
+function renderDeal(){
+  const p=document.getElementById('overPanel'), w=document.getElementById('deal');
+  if(!st.deal){p.style.display='none';return;}
+  p.style.display='';
+  w.innerHTML='';
+  for(let s=0;s<6;s++){
+    const col=el('div','col');
+    col.appendChild(el('div','h',seatLabel(s)));
+    const r=el('div','row');
+    (st.deal[s]||[]).slice().sort((a,b)=>a-b).forEach(c=>r.appendChild(cardEl(c,{sm:true})));
+    col.appendChild(r); w.appendChild(col);
+  }
+}
+
+/* ----------------------------------------------------------------- setup */
+let cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
+function renderSetup(){
+  const t=document.getElementById('setupRows'); t.innerHTML='';
+  cfg.forEach((c,i)=>{
+    const tr=el('tr');
+    tr.appendChild(el('td',null,String(i)));
+    const td2=el('td'); td2.appendChild(el('span',teamOf(i)?'teamB':'teamA',teamName(teamOf(i)))); tr.appendChild(td2);
+    const td3=el('td'); const s=el('select');
+    POLICIES.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;if(v===c.p)o.selected=true;s.appendChild(o);});
+    s.onchange=()=>{c.p=s.value;};
+    s.disabled=c.h; td3.appendChild(s); tr.appendChild(td3);
+    const td4=el('td'); const cb=el('input'); cb.type='checkbox'; cb.checked=c.h;
+    cb.onchange=()=>{c.h=cb.checked;renderSetup();};
+    td4.appendChild(cb); tr.appendChild(td4);
+    t.appendChild(tr);
+  });
+  const vs=document.getElementById('viewSel'); vs.innerHTML='';
+  const humans=cfg.map((c,i)=>c.h?i:-1).filter(i=>i>=0);
+  if(!humans.length){const o=el('option',null,'watch only');o.value='-1';vs.appendChild(o);}
+  humans.forEach(i=>{const o=el('option',null,'seat '+i);o.value=String(i);vs.appendChild(o);});
+}
+function applyPreset(n){
+  if(n===1) cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
+  if(n===2) cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v03',h:false},{p:'v04',h:false},{p:'v03',h:false},{p:'v04',h:false}];
+  if(n===3) cfg=[{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
+  renderSetup();
+}
+document.getElementById('preset1').onclick=()=>applyPreset(1);
+document.getElementById('preset2').onclick=()=>applyPreset(2);
+document.getElementById('preset3').onclick=()=>applyPreset(3);
+document.getElementById('newBtn').onclick=()=>{renderSetup();document.getElementById('setup').classList.add('show');};
+document.getElementById('cancelBtn').onclick=()=>document.getElementById('setup').classList.remove('show');
+document.getElementById('startBtn').onclick=async()=>{
+  const p={};
+  cfg.forEach((c,i)=>{p['s'+i]=c.p;p['h'+i]=c.h?1:0;});
+  p.seed=document.getElementById('seedIn').value.trim()||'0';
+  p.pace=document.getElementById('paceIn').value.trim()||'800';
+  view=Number(document.getElementById('viewSel').value);
+  localStorage.setItem('fishlab.view',String(view));
+  ask={target:null,card:null}; dcl={set:null,owner:[null,null,null,null,null,null]};
+  fcd={set:null,owner:[null,null,null,null,null,null]}; err='';
+  const j=await post('/api/new',p);
+  if(!j.error){document.getElementById('setup').classList.remove('show');lastRev=-1;lastBody='';poll();}
+};
+document.getElementById('viewNow').onchange=e=>{view=Number(e.target.value);localStorage.setItem('fishlab.view',String(view));lastRev=-1;lastBody='';poll();};
+document.getElementById('pauseBtn').onclick=()=>post('/api/pause',{paused:st&&st.paused?0:1});
+document.getElementById('stepBtn').onclick=()=>post('/api/step',{n:1});
+document.getElementById('paceSel').onchange=e=>post('/api/pace',{ms:e.target.value});
+document.getElementById('fullLog').onchange=()=>render();
+
+renderSetup();
+poll();
+setInterval(poll,280);
+</script>
+</body>
+</html>

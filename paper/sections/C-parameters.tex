@@ -1,0 +1,319 @@
+\section{Configuration and fitted parameters}
+\label{app:params}
+
+This appendix records the frozen configuration in enough detail to reconstruct it
+exactly. It is a reproducibility artifact. As stated in \S\ref{sec:fitting}, no
+strategic interpretation should be placed on individual coefficients: the ask
+features are mutually correlated and normalised to different effective ranges, and
+two of the decision knobs are inert in the shipping configuration.
+Table~\ref{tab:features} and Table~\ref{tab:params} are a pair: the first defines
+the \numAskFeats{} ask features, the second gives the weight fitted to each of
+them, under the same feature names. The appendix then records the per-coordinate
+bounds, the implementation detail of ask scoring and of the two-ply lookahead,
+the value-function features, coefficients and provenance gap, the two
+endgame decisions that belong to the policy rather than to the driver
+(\S\ref{app:params-endgame}), and the specification grammar that names any
+configuration on the command line.
+
+\subsection{The ask features}
+
+\begin{table}[ht]
+\centering
+\caption{The \numAskFeats{} ask features $\varphi_k$ entering the fitted linear
+term of \eqref{eq:askutil}, as chosen in \S\ref{sec:ask}. All are normalised to
+roughly $[0,1]$ so that the fitted weights are comparable in scale; the weight
+fitted to feature $k$ appears in Table~\ref{tab:params} under the same name. $H$
+denotes the named card's half-suit and $p = \hat\mu_{c,t}$ the Fast posterior
+that the target holds the named card; probabilities written $\Pr[\cdot]$ are Fast
+per-card marginals, so every feature is computed from the approximate inference
+path rather than from the reference engine. See \S\ref{sec:fitting} for why
+individual coefficients should not be read as strategy.}
+\label{tab:features}
+\small
+\begin{tabular}{rlp{0.60\linewidth}}
+\toprule
+$k$ & Name & Definition \\
+\midrule
+0  & hit probability     & $p = \hat\mu_{c,t}$, the Fast posterior that the target holds the named card \\
+1  & squared hit         & $p^2$; lets the fit curve the trade-off between certainty and value \\
+2  & certain hit         & $\mathbf{1}[p > 0.9995]$ \\
+3  & own progress        & cards of $H$ in hand, over six \\
+4  & team control        & expected fraction of $H$ held by our team \\
+5  & lock completion     & $\prod_{d \in H \setminus \{c\}} \Pr[d \text{ is ours}]$: the probability this ask alone completes team ownership of the half-suit \\
+6  & continuation        & best posterior on any other missing card of $H$ \\
+7  & completion bonus    & $1$ at four or more cards of $H$ in hand, $0.35$ at three \\
+8  & reply threat        & $(1-p)\cdot$ the best ask the target could make against us if handed the turn \\
+9  & information leak    & $1$ if our team has never publicly revealed an interest in $H$ \\
+10 & target hand size    & target's public card count over nine \\
+11 & empties the target  & $p$ if the target holds exactly one card, else $0$ \\
+12 & repeats our half-suit & $1$ if this repeats our own previous half-suit \\
+13 & known team cards    & publicly located cards of $H$ on our team, over six \\
+14 & location entropy    & $-p\log_2 p - (1-p)\log_2(1-p)$ \\
+15 & team owns $H$       & $\prod_{d \in H}\Pr[d \text{ is ours}]$ before the ask; an independence proxy, not the exact query \eqref{eq:q3} \\
+16 & exposure on a miss  & $(1-p)\cdot$ our cards visible in half-suits the target has asked in \\
+17 & trailing pressure   & $p$ when behind by two or more half-suits \\
+18 & runway              & expected length of the run this ask begins, from the best remaining per-card posteriors \\
+19 & leak magnitude      & feature 9 scaled by how much of $H$ we hold \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ask scoring and lookahead implementation}
+\label{app:params-ask}
+
+Two details of \S\ref{sec:ask} and \S\ref{sec:twoply} are recorded here rather
+than in the main text.
+
+Ties in \eqref{eq:askutil}, and in the rescoring \eqref{eq:twoply} that follows
+it, are broken deterministically: first by the index of the named card, then by
+the index of the target seat, so no randomisation enters the choice --- this is
+part of what the determinism claimed in \S\ref{sec:policy} rests on.
+
+The branch states of the two-ply refinement are constructed explicitly rather
+than sampled. On the post-hit branch the named card is resolved to the asker's
+hand and the two affected public hand counts change; on the post-miss branch an
+exclusion is added, removing the target from that card's surviving support $M_c$.
+Capacities \eqref{eq:capacity} are re-derived on each branch and the Fast
+marginals of \S\ref{sec:fast} refitted there, which is why the branch beliefs
+carry the same approximation error as $\hat\mu$ itself.
+
+\subsection{The frozen parameter vector}
+
+\begin{table}[ht]
+\centering
+\caption{The frozen \vfast{} configuration: the \numAskFeats{} fitted ask weights
+of Table~\ref{tab:features} (left pair of columns) and the \numKnobs{} fitted decision
+knobs (right pair), together the \numParams{} coordinates of the vector searched
+in \S\ref{sec:fitting}. Values are those selected at generation
+\numSelectedGen{} of round five on validation seed $1357911$ (500 deals, two
+rotations, panel \{\vthree{}, lockout, detective, \vtwo{}\}) and recorded in
+\texttt{research/v04/runs/selected.json}; the same values are compiled into
+\texttt{V04Config} and are used unchanged in every experiment reported in
+\S\ref{sec:results}. The two integer coordinates are shown before
+rounding: the patience pool is applied as $6$ and the lookahead width $K$ as $6$.
+This table is a reproducibility record, not a description of strategy.}
+\label{tab:params}
+\footnotesize
+\input{tables/params}
+\end{table}
+
+The same vector can be supplied to any build of the engine as a single
+\texttt{allparams=} string. Concatenate the three lines below with no intervening
+whitespace; coordinates are separated by \texttt{|} and appear in the order
+\emph{ask weights $0$--$19$, then the \numKnobs{} knobs in the order of
+Table~\ref{tab:params}}:
+
+{\footnotesize
+\begin{verbatim}
+11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|
+1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|
+2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127
+\end{verbatim}
+}
+
+\subsection{Bounds imposed per coordinate}
+
+The optimiser samples from an unconstrained diagonal Gaussian; the bounds below
+are applied when a sampled vector is turned into a configuration, both by the
+engine's parameter parser (\filepath{engine/src/factory.hpp}) and by the freeze step
+(\filepath{engine/freeze_config.py}), so a coordinate outside its bound is clamped
+rather than rejected. The two integer coordinates are rounded to the nearest
+integer after clamping.
+
+\begin{table}[ht]
+\centering
+\caption{Bounds applied to each coordinate of the \numParams{}-coordinate
+parameter vector when it is instantiated as a configuration. Coordinates
+$0$--$19$ are the ask weights of Table~\ref{tab:features} and are not clamped;
+coordinates $20$--$33$ are the decision knobs. Bounds are identical in the engine
+parser and in the freeze step, so the vector scored during fitting and the vector
+compiled into the shipping binary are subject to the same constraints.}
+\label{tab:bounds}
+\small
+\begin{tabular}{rll}
+\toprule
+Coordinate & Quantity & Bound \\
+\midrule
+$0$--$19$ & ask weights $w_0,\dots,w_{19}$ & unbounded \\
+20 & declaration threshold & $[0.5,\,0.9999]$ \\
+21 & locked-half-suit threshold & $[0.5,\,0.99999]$ \\
+22 & ask floor & $[0,\,0.9]$ \\
+23 & patience pool & $[0,\,45]$, rounded to an integer \\
+24 & opponent-card floor & $[0,\,20]$ \\
+25 & value weight $\lambda_{\mathrm{val}}$ & $[0,\,\infty)$ \\
+26 & linear weight $\lambda_{\mathrm{lin}}$ & $[0,\,\infty)$ \\
+27 & minimum team probability & $[0.05,\,0.99]$ \\
+28 & stopping margin $\varepsilon$ & unbounded \\
+29 & prior $\theta$ & $[0,\,2]$ \\
+30 & prior $\phi$ & $[0,\,1]$ \\
+31 & lookahead width $K$ & $[0,\,24]$, rounded to an integer \\
+32 & chain weight $\lambda_{\mathrm{chain}}$ & $[0,\,\infty)$ \\
+33 & threat weight $\lambda_{\mathrm{threat}}$ & $[0,\,\infty)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Value-function coefficients, and the provenance gap}
+
+The \numValueFeats{} features of $V$ are named in Table~\ref{tab:valuecoef} and
+defined as follows: a bias and the current score differential; three control
+terms built from $e_H$, the expected fraction of half-suit $H$ our team holds,
+namely $\sum_H (2e_H - 1)$, a sharpened version of it and the contested mass
+$\sum_H e_H(1-e_H)$; the signed count of half-suits already owned each way;
+counts of what is left to play for, from the card differential and the size of
+$|U|$ to the near-complete half-suits leaning each way; and side to move with its
+interactions with control and with $|U|$. Features are collected from all six
+seats at every decision point rather than from the mover alone, because under
+mover-only collection the side-to-move feature is constant at $+1$ and its
+coefficient --- which the miss branch of \eqref{eq:askutil} and the stopping rule
+\eqref{eq:stop} both depend on --- would be unidentified.
+
+The \numValueFeats{} coefficients of the value function $V$ (\S\ref{sec:value})
+are not part of the \numParams{}-coordinate vector and are not written by the
+freeze step, which edits only the policy parameters. Two distinct vectors
+therefore exist in the repository, and they differ numerically:
+Table~\ref{tab:valuecoef} prints both. The left column is what
+\texttt{V04Config::vw} contains and is what produced every result in
+\S\ref{sec:results}. The right column is the ridge fit reported as E14
+(\numValueRows{} rows, in-sample $R^2 = \numValueRSq$, RMSE \numValueRmse{}),
+stored in \filepath{research/v04/results/E14-valuefit.txt}.
+
+The two vectors come from different runs, and no step in the pipeline copies the
+second into the first. The consequence is that the
+E14 metrics describe the quality of the artifact's fit and not the quality of the
+coefficients that were actually deployed, and that there is no reported
+goodness-of-fit figure --- in-sample or held-out --- for the deployed vector. We
+record this rather than repair it, because repairing it would change the
+configuration that produced every number in this paper.
+
+\begin{table}[ht]
+\centering
+\caption{The \numValueFeats{} linear coefficients of the value function $V$.
+``Compiled'' is the vector in \texttt{V04Config::vw} used by \vfast{} and
+\vblock{} in every experiment reported here; ``E14 artifact'' is the separate
+ridge fit of \texttt{research/v04/results/E14-valuefit.txt}, obtained on 250
+self-play deals at seed $31415$. The two vectors differ because the freeze step
+writes only the \numParams{} policy parameters and never the value coefficients.}
+\label{tab:valuecoef}
+\small
+\begin{tabular}{rlrr}
+\toprule
+$j$ & Feature & Compiled & E14 artifact \\
+\midrule
+0  & bias                          & $+0.001242$ & $+0.007023$ \\
+1  & score differential            & $+0.888965$ & $+0.909779$ \\
+2  & expected control              & $+0.421266$ & $+0.115403$ \\
+3  & sharpened control             & $-0.145791$ & $-0.249275$ \\
+4  & locked differential           & $+0.225573$ & $+0.011511$ \\
+5  & side to move                  & $+0.022896$ & $+0.026911$ \\
+6  & card differential             & $+0.422207$ & $+0.114251$ \\
+7  & unresolved pool               & $+0.007678$ & $-0.079727$ \\
+8  & live half-suits               & $+0.005904$ & $+0.035886$ \\
+9  & side to move $\times$ control & $-0.000997$ & $-0.003278$ \\
+10 & own hand size                 & $-0.006601$ & $-0.011850$ \\
+11 & smallest friendly hand        & $-0.007472$ & $+0.062496$ \\
+12 & our near-complete half-suits  & $-0.022484$ & $+0.005226$ \\
+13 & their near-complete half-suits& $-0.025189$ & $-0.034832$ \\
+14 & contested mass                & $+0.080416$ & $+0.027557$ \\
+15 & side to move $\times$ unresolved & $-0.021409$ & $-0.019608$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Either vector can be supplied at the command line as a \texttt{vweights=} string,
+in the coordinate order of Table~\ref{tab:valuecoef}. The compiled vector is
+
+{\footnotesize
+\begin{verbatim}
+0.001242|0.888965|0.421266|-0.145791|0.225573|0.022896|0.422207|0.007678|
+0.005904|-0.000997|-0.006601|-0.007472|-0.022484|-0.025189|0.080416|-0.021409
+\end{verbatim}
+}
+
+\noindent and the E14 artifact vector is
+
+{\footnotesize
+\begin{verbatim}
+0.007023|0.909779|0.115403|-0.249275|0.011511|0.026911|0.114251|-0.079727|
+0.035886|-0.003278|-0.011850|0.062496|0.005226|-0.034832|0.027557|-0.019608
+\end{verbatim}
+}
+
+\noindent again concatenating the two lines with no intervening whitespace.
+
+\subsection{Successor choice and the forced-endgame ladder}
+\label{app:params-endgame}
+
+Two decisions in the endgame described in \S\ref{app:dialect-endgame} are made by
+the agent rather than by the rules, and both belong to the \vfast{} policy rather
+than to the driver.
+
+The first is the successor choice. When a declaration leaves a player cardless
+and the turn reaches them, the policy hands it to the live teammate with the
+strongest publicly estimable ask: for each live teammate $u$ it scores
+\[
+  \max_{H} \Bigl( \Pr[u \text{ holds a card of } H] \cdot
+  \max_{c \in H} \Pr[c \text{ is with an opponent}] \Bigr)
+\]
+over the live half-suits, using Fast per-card marginals, and gives the turn to
+the maximiser. The score is computed from the public record and the policy's own
+hand only, so no teammate's private holding enters it; an invalid choice is
+replaced by the driver with the lowest-indexed live teammate.
+
+The second is the willingness bit. When a whole team is cardless, the driver
+sweeps the descending ladder of \S\ref{app:dialect-endgame} and the policy
+answers, for each remaining half-suit at each level $\theta$, whether it would
+declare that half-suit at confidence at least $\theta$. The confidence used is
+$\hat\alpha$ from the same estimator that feeds \eqref{eq:stop}, and only the bit
+crosses between seats. Under the \vthree{} dialect the ladder has two levels
+only. Because the ladder restarts after each declaration, the earlier and safer
+declarations announce exact allocations and thereby sharpen the capacity
+constraints available to the ones that follow. How much of a confidence ordering
+among seats this recovers is not measured, and the ordering that would reveal it
+is excluded as an information leak.
+
+\subsection{The policy-specification grammar}
+
+Every agent in the engine is named by a policy-specification string, parsed by
+\texttt{makeAgent} in \filepath{engine/src/factory.hpp}. The grammar is
+
+\begin{center}
+\texttt{name} \quad or \quad \texttt{name:key=value,key=value,\dots}
+\end{center}
+
+\noindent where \texttt{name} selects the policy family and each
+\texttt{key=value} pair overrides one field of that family's configuration.
+Unrecognised keys are ignored; keys are order-independent; there is no
+whitespace. The example \texttt{v04:belief=block,decl=0.95,topk=6} constructs the
+\vfast{} policy family with the exact reference belief substituted
+(\texttt{belief=block}, i.e.\ \vblock{}), the declaration threshold raised to
+$0.95$, and the two-ply lookahead width set to $K = 6$; every other field keeps
+its compiled value.
+
+The keys used in this paper are as follows. \texttt{belief} selects the inference
+path and accepts \texttt{fast} (the default, \vfast{}), \texttt{block} (the exact
+reference engine, \vblock{}), \texttt{exact} (the card-level capacity dynamic
+program, without C5), \texttt{exactdisj}, \texttt{sinkhorn} (plain Sinkhorn,
+without C5), \texttt{indep} (no capacity conditioning) and \texttt{hybrid}. The
+ablation rows of \S\ref{sec:ablations} that use \texttt{exact},
+\texttt{sinkhorn} and \texttt{indep} are therefore not exact-inference rows, and
+are labelled accordingly there. \texttt{decl}, \texttt{lockthr},
+\texttt{minteam}, \texttt{askfloor}, \texttt{pool}, \texttt{oppfloor},
+\texttt{vweight}, \texttt{lweight}, \texttt{vmargin}, \texttt{ptheta},
+\texttt{pphi}, \texttt{topk}, \texttt{chain} and \texttt{threat} set the
+corresponding coordinates of Table~\ref{tab:bounds}. \texttt{gate} and
+\texttt{mgate} set the two cheap declaration pre-gates of \S\ref{sec:declare};
+\texttt{gateaudit=1} enables the instrumentation used by E16. \texttt{value},
+\texttt{vdecl}, \texttt{patient}, \texttt{gmap} and \texttt{declare} are boolean
+switches controlling, respectively, the one-ply value lookahead in
+\eqref{eq:askutil}, the value-based stopping rule of \eqref{eq:stop}, the
+patience switch, greedy maximum-a-posteriori allocation naming, and declaration
+itself. \texttt{souter}, \texttt{sinner} and \texttt{particles} control the
+inference solver. Individual coefficients may be set as \texttt{w0}--\texttt{w19}
+and \texttt{v0}--\texttt{v15}, or in bulk as \texttt{weights=},
+\texttt{vweights=} and \texttt{allparams=}.
+
+The shipping specification used in every reported experiment is
+\texttt{v04:mgate=0.008}, which is equal to the compiled defaults; it is written
+explicitly in the run scripts so that the gate value appears in the recorded
+command line.

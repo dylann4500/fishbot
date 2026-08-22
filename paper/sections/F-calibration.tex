@@ -1,0 +1,130 @@
+\section{Calibration detail}
+\label{app:calibration}
+
+The aggregate scores are in Table~\ref{tab:calib} and the reliability diagrams in
+Figure~\ref{fig:reliability}. This appendix gives the bin-by-bin counts behind
+them and states what they do and do not support.
+
+\begin{table}[ht]
+\centering
+\caption{E6: bin-by-bin reliability of the two forecasts \vfast{} makes,
+$\Pr[\text{ask succeeds}]$ and $\Pr[\text{allocation correct}]$. Population is
+\numCalibDeals{} deals of \vfast{} against \vthree{} under the full dialect, seed 717171,
+fitted weights frozen; the experimental unit is the individual forecast, not the
+deal or the game, and forecasts are pooled across all six seats. Declaration
+forecasts pool voluntary and forced declarations, which are not separated in the
+artifact. ``$n$'' is the number of forecasts falling in the bin, ``forecast'' is
+their mean predicted probability and ``observed'' the realised frequency. A dash
+means no forecast fell in that bin. Every entry is a point estimate: no
+clustered interval is attached to any count, mean or frequency in this table.
+Source: \texttt{research/v04/results/E6-calibration-v04.txt}.}
+\label{tab:reliability}
+\small
+\input{tables/reliability}
+\end{table}
+
+\subsection{Declaration forecasts}
+\label{app:calib-decl}
+
+The declaration column of Table~\ref{tab:reliability} contains
+\numDeclN{} forecasts distributed over six occupied bins.
+
+Thirty-four forecasts fall in $[0.0,0.1)$ with a mean predicted probability of
+0.0000 and a realised frequency of 0.0000. The estimator assigned probability
+zero to all thirty-four, and none succeeded. The artifact does not label a
+forecast as voluntary or forced, so the table does not record which decision
+path produced these thirty-four.
+
+Eighty-eight forecasts fall in $[0.5,0.6)$, predicted 0.5339 and realised
+0.5227. Seventy-four fall in $[0.6,0.7)$, predicted 0.6624 and realised 0.8243.
+Four hundred and fifteen fall in $[0.7,0.8)$, predicted 0.7434 and realised
+0.9663. Two hundred and twenty-one fall in $[0.8,0.9)$, predicted 0.8413 and
+realised 0.9412. And 4{,}984 --- \numDeclTopBinShare\% of all
+declaration forecasts --- fall in $[0.9,1.0)$, predicted 0.9989 and realised
+0.9986.
+
+The estimator is close to unbiased where almost all of its mass lies. In
+the top bin the predicted and realised values differ by 0.0003, and that bin
+carries \numDeclTopBinShare\% of the forecasts. The aggregate scores ---
+expected calibration error \numDeclECE{}, Brier score \numDeclBrier{}, log loss
+\numDeclLogLoss{}, mean predicted 0.9575 against mean observed
+\numDeclObs\% --- are therefore dominated by that bin, and are a weak test of
+behaviour anywhere else.
+
+The three bins in $[0.6,0.9)$ are \emph{under}confident, and by a margin much
+larger than the top bin's error: 16.2 percentage points in $[0.6,0.7)$, 22.3 in
+$[0.7,0.8)$ and 10.0 in $[0.8,0.9)$. The bin at $[0.5,0.6)$ is close to
+unbiased, 1.1 points in the other direction. Underconfidence here means that
+$\hat\alpha$ assigns a lower probability to an allocation being correct than the
+realised frequency in the bin warrants. That is a statement about the estimator
+and nothing more. The declaration decision is made by \eqref{eq:stop}, which
+consumes the fitted value model as well as $\hat\alpha$, and no experiment in
+this paper traces bin membership through to a declaration, so these bins do not
+say how often the policy declared, declined to declare, or would have succeeded
+had it declared.
+
+The counts in those bins are small: 74, 415 and 221 forecasts respectively, out
+of \numDeclN{}. The three-bin block totals 710 forecasts, about one eighth of
+the corpus. A realised frequency computed from 74 outcomes has substantial
+sampling error even before the clustering of forecasts within deals is
+accounted for, and neither source of uncertainty is quantified here.
+
+\subsection{The \vthree{} declaration forecasts for contrast}
+\label{app:calib-v03}
+
+The same experiment records \vthree{}'s declaration forecasts on the same bank.
+Its \numVthreeDeclN{} forecasts occupy three bins: 403 in $[0.7,0.8)$, predicted
+0.7895 and realised 0.1935; 452 in $[0.8,0.9)$, predicted 0.8459 and realised
+0.3341; and 4{,}129 in $[0.9,1.0)$, predicted 0.9722 and realised 0.9346. In
+aggregate the mean predicted probability is \numVthreeDeclPred\% against a mean
+observed \numVthreeDeclObs\%, an expected calibration error of
+\numVthreeDeclECE{}.
+
+The contrast is in both magnitude and direction. \vthree{}'s middle bins are
+\emph{over}confident by 60 and 51 percentage points respectively, and its top
+bin by nearly 4; \vfast{}'s middle bins are underconfident by 16.2, 22.3 and
+10.0 points and its top bin is accurate to within 0.03 points. The two agents' declaration
+accuracies on the primary head-to-head bank, \numVsVthreeDeclAcc\% and
+\numVthreeDeclAccSame\%, are consistent with that difference, but E6 is a
+separate bank from E3 and the two should not be read as one measurement.
+
+\subsection{Ask forecasts}
+\label{app:calib-ask}
+
+The ask column of Table~\ref{tab:reliability} covers \numAskN{} forecasts and is
+spread across all ten bins, with aggregate Brier score \numAskBrier{}, log loss
+\numAskLogLoss{} and expected calibration error \numAskECE{}; mean predicted
+0.5338 against mean observed 0.5504. The deviations are smaller than on the
+declaration side and change sign across the range: the lowest bin is
+an over-estimate, predicting 0.0291 against a realised 0.0126; the
+bins from $[0.2,0.3)$ to $[0.6,0.7)$ are underconfident by 4 to 6 points; and
+$[0.7,0.9)$ turns over again, predicting 0.7522 against 0.7037 and 0.8496
+against 0.8205. The largest bin, $[0.9,1.0)$ with 16{,}141 forecasts, predicts
+0.9980 against a realised 0.9963.
+
+\subsection{What these numbers are not}
+\label{app:calib-caveats}
+
+Every quantity in this appendix, in Table~\ref{tab:calib} and in
+Figure~\ref{fig:reliability} is a point estimate. No clustered interval is
+attached to any of them. Forecasts are not independent observations: the
+forecasts made within one deal share a deal, and the forecasts made within one
+game share a game history, so the effective sample size behind every bin is
+smaller than its $n$. Computing deal-clustered intervals for the calibration
+metrics is straightforward with the machinery already used for the win rates and
+was not done; it is listed among the open items in \S\ref{sec:limitations}.
+
+The pooling of voluntary and forced declarations is a second limitation of the
+same table. Forced declarations run at well under a tenth per game in E3, so
+their contribution to \numDeclN{} forecasts is small, but it is not zero, and
+the two populations are made under different rules --- a forced declaration is
+made because the endgame requires one, at whatever probability the estimator
+reports. The artifact does not separate the two populations in any bin, so no
+bin of Table~\ref{tab:reliability} can be attributed to one of them.
+
+These are descriptive statistics about a forecast and its realised frequency.
+They do not identify why the policy declares when it does, and they should not
+be used to attribute the difference in declaration accuracy between \vfast{} and
+\vthree{} to any particular mechanism. The ablations of \S\ref{app:ablations}
+address which components the fitted policy depends on, and they do not isolate
+the stopping rule.

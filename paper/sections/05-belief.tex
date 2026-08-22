@@ -1,219 +1,290 @@
-\section{Exact public-belief inference}
+\section{The observer-conditioned deal posterior}
 \label{sec:belief}
 
 \subsection{The hidden state is the initial deal}
 
-Every card in Fish changes hands in exactly one way: a successful ask, which
-every player observes. Declarations remove cards, and that too is public. Hence:
+In the dialect of \S\ref{sec:rules} a card changes hands in exactly one way, a
+successful ask, which every player observes; declarations remove cards from
+play, and that too is public. Hence:
 
 \begin{proposition}[Public transfer]
 \label{prop:transfer}
-Let $c$ be a card whose location has never been publicly revealed. Then $c$ is
-still held by the player to whom it was dealt. Consequently the joint hidden
-state of the game at any time is exactly the initial deal, and the current
-holder of every card is a deterministic function of the initial deal and the
-public history.
+Assume the dialect of \S\ref{sec:rules}, in which the only card movements are
+successful asks and declarations and both are announced. Let $c$ be a card whose
+location has never been publicly revealed. Then $c$ is still held by the player to
+whom it was dealt, the joint hidden state of the game at any time is exactly the
+initial deal, and the current holder of every card is a deterministic function of
+the initial deal and the public history.
 \end{proposition}
 
-Proposition~\ref{prop:transfer} is what makes Fish unusual among card games with
-hidden information: it is an exact \emph{public belief state} game. Every player
---- including every opponent --- computes the same posterior over deals from the
-same public history, differing only by the private conditioning on their own
-hand. There is no filtering recursion to approximate and no state that decays.
+\begin{proof}
+A card changes hands only through a successful ask, and both the ask and its
+outcome are announced, so every change of holder is a public event and a card
+with no such event is where it was dealt. Replaying the public history from the
+deal then determines current holdings, since each announced transfer moves a
+named card between named seats and each declaration removes a named half-suit.
+\end{proof}
+
+Proposition~\ref{prop:transfer} eliminates the filtering recursion that
+dominates inference in most imperfect-information card games: there is no
+belief that decays and no dynamics to approximate, only a fixed hidden object
+and an accumulating set of logical constraints on it. What follows is an
+\emph{observer-conditioned deal posterior}: every player computes it from the
+same public history but conditions additionally on their own private hand, so
+the six posteriors differ and no single distribution is shared. It is exact
+with respect to the rules-conditioned uniform prior of
+\S\ref{sec:constraints}, and it is not a complete Bayesian opponent model,
+since it conditions on nothing about how opponents choose among legal moves
+(\S\ref{sec:policyprior}). Two interchangeable engines compute it, contrasted
+in Figure~\ref{fig:architecture}: the exact reference engine of
+\S\ref{sec:blocks}, and the approximate Fast path of \S\ref{sec:fast} that the
+deployed \vfast{} policy runs.
+
+\begin{figure}[ht]
+\centering
+\resizebox{\linewidth}{!}{\input{figures/architecture}}
+\caption{Inference and decision pipeline. The observer's private hand and the
+public transcript determine the rule constraints C1--C5, from which two
+interchangeable engines compute the same three quantities: per-card ownership
+marginals, team-ownership probabilities, and named-allocation probabilities. The
+\textbf{Fast path} (Sinkhorn capacity fitting with C5 conditioning) is what the
+deployed \vfast{} policy runs, and produced every performance number reported in
+this paper. The \textbf{reference engine} (exact half-suit block dynamic program)
+is used for validation and for the substitution ablation only, and is not on the
+deployed decision path.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Notation}
+\label{sec:notation}
+
+These symbols are used throughout the paper and are not varied. $\mathcal{H}$
+is the set of live half-suits and $H \in \mathcal{H}$ one of them. Fix an
+observer $i$. $U$ is the set of cards in live half-suits whose holder is not
+publicly known to $i$, and for $c \in U$ the map $\sigma : U \to
+\{0,\dots,5\}$ gives that card's holder, which by
+Proposition~\ref{prop:transfer} is constant in time. $M_c \subseteq
+\{0,\dots,5\}$ is the surviving support of $\sigma(c)$, and $q_p$ is the
+capacity of seat $p$, the number of cards of $U$ that seat must hold. $Z$ is
+the number of assignments $\sigma$ consistent with the constraints below, that
+is the partition function of the posterior. The three quantities the policy
+consumes are the per-card ownership marginal $\mu_{c,p} = \Pr[\sigma(c) = p]$;
+the probability $\tau(H,T)$ that team $T$ owns every card of half-suit $H$;
+and the probability $\alpha(A)$ that a named allocation $A$ --- an assignment
+of all six cards of one half-suit to named seats --- is correct. Unhatted
+symbols are values from the exact reference engine, hatted ones
+($\hat\mu_{c,p}$, $\hat\tau(H,T)$, $\hat\alpha(A)$) the same values from the
+Fast path of \S\ref{sec:fast}. Probabilities are conditional on the observer's
+information $\mathcal{I}$ throughout; the conditioning bar is suppressed.
 
 \subsection{The constraint system}
+\label{sec:constraints}
 
-Fix an observer $i$. Let $U$ be the set of cards in still-live half-suits whose
-holder is not publicly known to $i$, and for $c \in U$ let $\sigma(c) \in
-\{0,\dots,5\}$ be its (constant, by Prop.~\ref{prop:transfer}) holder. The
-observer's information is exactly the following constraints.
+The observer's information is exactly the following five constraints on
+$\sigma$.
 
-\begin{description}[style=nextline]
+\begin{description}[style=unboxed,leftmargin=0pt,itemsep=4pt,parsep=0pt]
   \item[(C1) Own hand.] $\sigma(c) \ne i$ for every $c \in U$, and every card $i$
         holds is resolved.
   \item[(C2) Public transfers and correct declarations.] Any card whose holder
         has been revealed leaves $U$ with its holder known exactly. A successful
-        ask reveals the holder \emph{before} the transfer, which is the value
+        ask reveals the holder \emph{before} the transfer, and that is the value
         relevant to every earlier constraint.
   \item[(C3) Exclusions.] An ask for $c$ proves the asker did not hold $c$; a
         miss proves the target did not hold $c$. Both are permanent, again by
-        Prop.~\ref{prop:transfer}. Write $M_c \subseteq \{0,\dots,5\}$ for the
-        surviving support of $\sigma(c)$.
+        Proposition~\ref{prop:transfer}. The surviving support $M_c$ records
+        them.
   \item[(C4) Capacities.] Hand counts are public, so for every player $p$
         \begin{equation}
-          \bigl|\{c \in U : \sigma(c) = p\}\bigr| \;=\; q_p \;:=\; |H_p| - k_p ,
+          \bigl|\{c \in U : \sigma(c) = p\}\bigr| \;=\; q_p \;:=\; h_p - k_p ,
           \label{eq:capacity}
         \end{equation}
-        where $|H_p|$ is $p$'s public card count and $k_p$ the number of live
-        cards already known to be $p$'s. Note that $\sum_p q_p = |U|$
-        automatically, and that a declaration --- correct or not --- is absorbed
-        by \eqref{eq:capacity} without special handling, because the count drop
-        it causes is public.
-  \item[(C5) Ask legality.] An ask for $c$ in half-suit $S$ by player $A$ proves
-        that $A$ held some \emph{other} card of $S$ at that moment. Because
+        where $h_p$ is $p$'s public card count and $k_p$ the number of live cards
+        already known to be $p$'s. Note that $\sum_p q_p = |U|$ automatically,
+        and that a declaration --- correct or not --- is absorbed by
+        \eqref{eq:capacity} without special handling, because the count drop it
+        causes is public.
+  \item[(C5) Ask legality.] An ask for $c$ in half-suit $H$ by player $a$ proves
+        that $a$ held some \emph{other} card of $H$ at that moment. Because
         unresolved cards never move, this is the time-independent disjunction
         \begin{equation}
-          \bigvee_{d \in D} \bigl[\sigma(d) = A\bigr],
-          \qquad D = \{d \in S \setminus \{c\} : d \text{ unresolved}, A \in M_d\},
+          \bigvee_{d \in D} \bigl[\sigma(d) = a\bigr],
+          \qquad D = \{d \in H \setminus \{c\} : d \text{ unresolved},\; a \in M_d\},
           \label{eq:disj}
         \end{equation}
-        vacuous if some card of $S$ is already known to be $A$'s. Every such
-        certificate is confined to a single half-suit.
+        vacuous if some card of $H$ is already known to be $a$'s. The asking seat
+        is written $a$ to keep $A$ reserved for the named allocation of
+        \S\ref{sec:notation}. Every such certificate is confined to a single
+        half-suit.
 \end{description}
 
-The posterior is uniform over the assignments $\sigma$ satisfying (C1)--(C5).
-This is the \emph{grounded} or policy-agnostic posterior: it conditions on
-everything the rules make deducible and on nothing about how opponents choose
-their moves. \S\ref{sec:policyprior} takes up the residual.
+The prior is uniform over deals consistent with the rules, so the posterior is
+uniform over the assignments $\sigma$ satisfying (C1)--(C5), and $\Pr[\sigma]
+= 1/Z$ for each of them. This is exact with respect to that prior, and it is
+policy-agnostic.
 
 \subsection{Counting: a capacity-vector dynamic program}
+\label{sec:counting}
 
-Ignoring (C5) for a moment, counting assignments subject to (C3) and (C4) is a
+Set (C5) aside for a moment. Counting assignments subject to (C3) and (C4) is a
 degree-constrained bipartite counting problem --- the permanent of a $0/1$ matrix
-with at most six distinct column types. Order $U$ as $c_1,\dots,c_{|U|}$ and let
-the dynamic-programming state $n = (n_0,\dots,n_5)$ be the vector of
-\emph{remaining} capacities, so that $q$ is the full vector of
-\eqref{eq:capacity}. Write $F_j(n)$ for the number of ways to place the first $j$
-cards leaving $n$ unused, and $B_j(n)$ for the number of ways to place cards
-$c_{j+1},\dots,c_{|U|}$ out of $n$:
+with at most six distinct column types --- solved exactly by a forward--backward
+recursion over the vector $n = (n_0,\dots,n_5)$ of \emph{remaining} capacities
+from \eqref{eq:capacity}. Ordering $U$ as $c_1,\dots,c_{|U|}$, $F_j(n)$ counts
+placements of the first $j$ cards leaving $n$ unused and $B_j(n)$ placements of
+the rest out of $n$:
 \begin{align}
   F_j(n) &= \sum_{p \,\in\, M_{c_j} :\, n_p < q_p} F_{j-1}(n + e_p),
   &F_0(q) &= 1, \label{eq:fwd}\\
   B_j(n) &= \sum_{p \,\in\, M_{c_{j+1}} :\, n_p \ge 1} B_{j+1}(n - e_p),
   &B_{|U|}(\mathbf{0}) &= 1, \label{eq:bwd}\\
-  Z &= F_{|U|}(\mathbf{0}) \;=\; B_0(q). \label{eq:Z}
+  Z &= F_{|U|}(\mathbf{0}) \;=\; B_0(q), \label{eq:Z}
 \end{align}
-The per-card marginals are then obtained by splitting every consistent deal at
-card $j$:
-\begin{equation}
-  \mu_{c_j, p} \;=\; \Pr\bigl[\sigma(c_j) = p \bigm| h\bigr]
-    \;=\; \frac{\mathbf{1}[\,p \in M_{c_j}\,]}{Z}
-      \sum_{\substack{n \,:\, |n| = |U| - j + 1 \\ n_p \ge 1}}
-        F_{j-1}(n)\; B_j(n - e_p).
-  \label{eq:marg}
-\end{equation}
-
-The implementation detail that makes this cheap is that $F_j(n)$ is nonzero only
-when $\sum_p n_p = |U| - j$, so the layer index is \emph{determined by the
-state}: $F$ and $B$ are each a single array of size $\prod_p (q_p+1)$, not one
-array per card. Since the observer's own capacity is zero and
-$\sum_p q_p = |U| \le 45$ over the five remaining players, AM--GM gives
-\begin{equation}
-  \prod_{p \ne i} (q_p + 1) \;\le\; \Bigl(\tfrac{|U|}{5} + 1\Bigr)^{5} \;\le\; 10^{5},
-  \label{eq:bound}
-\end{equation}
-so the entire forward--backward pass costs $O\!\bigl(6\prod_p (q_p+1)\bigr) \le
-6\times 10^{5}$ multiply--adds regardless of the position. Sampling a deal
-exactly and without rejection follows from the backward table,
-$\Pr[\sigma(c_j) = p \mid \text{prefix}] \propto B_j(n - e_p)$; every prefix is
-extendable by construction. This is rejection-free for (C1)--(C4); with a live
-certificate (C5) the same sampler is used with an accept/reject test, which is
-exact but no longer rejection-free, and is how the validation of
-\S\ref{sec:results-verify} obtains ground truth.
+Here $e_p$ is the $p$-th unit vector. Recursions \eqref{eq:fwd}--\eqref{eq:Z}
+count rather than sample, so they and the per-card marginal \eqref{eq:marg} of
+\S\ref{app:layer}, which contracts the two tables at card $j$, are
+\emph{exact} for (C1)--(C4); the layer index is fixed by the state, so a full
+forward--backward pass costs at most $6 \times 10^{5}$ multiply--adds
+regardless of the position (\S\ref{app:layer}, \S\ref{app:bound},
+\eqref{eq:bound}). The backward table also yields a direct sampler,
+rejection-free for (C1)--(C4) but combined with an exact accept/reject test
+against \eqref{eq:disj} when a (C5) certificate is live, so the combined
+procedure is exact but not rejection-free; it is the ground truth for the E2
+cross-checks of \S\ref{sec:results-verify} (\S\ref{app:sampler}).
 
 \subsection{Ask legality by half-suit block enumeration}
+\label{sec:blocks}
 
-Constraint (C5) is disjunctive and breaks the product form. Inclusion--exclusion
-over $k$ certificates costs $2^k$ passes, and a real game accumulates tens of
-them, so that is not an option. The structural escape is that every certificate
-lives inside one half-suit. We therefore partition $U$ by half-suit and give
-each block one of two exact treatments.
-
-\begin{itemize}
-  \item A block with no live certificate is expanded card by card, exactly as in
-        \eqref{eq:fwd}--\eqref{eq:bwd}, with branching factor $|M_c| \le 5$.
-  \item A block with at least one live certificate is enumerated exhaustively
-        --- at most $\prod_{c \in S}|M_c| \le 5^6$ assignments --- each survivor
-        is checked against \eqref{eq:disj} directly, and the survivors are
-        aggregated into a count-vector table
-        \begin{equation}
-          g_S(t) \;=\; \bigl|\{\text{assignments } a \text{ of } S :
-            \mathrm{count}(a) = t,\; a \models \text{certificates of } S\}\bigr|,
-          \qquad \textstyle\sum_p t_p = m_S .
-          \label{eq:blocktable}
-        \end{equation}
-\end{itemize}
-
-Either way a block consumes a known number of cards, so the layer identity
-survives and the dynamic program simply runs over blocks:
-$F_{b}(n) = \sum_t g_b(t)\,F_{b-1}(n + t)$. Writing $S_t$ for the path mass of
-count vector $t$ at its block's entry layer,
+Constraint (C5) is disjunctive and breaks the product form of
+\eqref{eq:fwd}--\eqref{eq:bwd}, and inclusion--exclusion over the $k$
+certificates a game accumulates --- tens of them --- would cost $2^k$ passes. The
+escape is structural: every certificate lives inside one half-suit, so $U$
+partitions into half-suit blocks admitting one of two exact treatments. A block with no live
+certificate is expanded card by card as in \eqref{eq:fwd}--\eqref{eq:bwd}; one
+with a live certificate is enumerated exhaustively --- at most
+$\prod_{c \in H}|M_c| \le 5^6$ assignments --- each tested against
+\eqref{eq:disj} directly, and the survivors aggregated into a count-vector
+table
+\begin{equation}
+  g_H(t) \;=\; \bigl|\{\text{assignments } \beta \text{ of } H :
+    \mathrm{count}(\beta) = t,\; \beta \models \text{certificates of } H\}\bigr|,
+  \qquad \textstyle\sum_p t_p = m_H ,
+  \label{eq:blocktable}
+\end{equation}
+where $m_H$ is the number of unresolved cards of $H$ and
+$\mathrm{count}(\beta)_p$ is the number of them $\beta$ gives to seat $p$. Either
+way a block consumes a known number of cards, so the layer identity survives and
+the dynamic program runs over blocks rather than cards (\S\ref{app:groups} gives
+the mechanics of both). Writing $S_t$ for the path mass of count vector $t$ at
+its block's entry layer,
 \begin{equation}
   S_t \;=\; \sum_{|n| \,=\, \text{entry layer}} F(n)\, B(n - t),
   \label{eq:pathmass}
 \end{equation}
-the three queries the policy needs are all exact and all read straight off the
-tables:
+the three quantities of \S\ref{sec:notation} are read straight off the tables:
 \begin{align}
-  \mu_{c,p} &= \frac{1}{Z}\sum_t g_S^{(c \to p)}(t)\, S_t
+  \mu_{c,p} &= \frac{1}{Z}\sum_t g_H^{(c \to p)}(t)\, S_t
   &&\text{(per-card ownership)} \label{eq:q1}\\
-  \Pr[\text{allocation } A] &= \frac{S_{t(A)}}{Z}
+  \alpha(A) &= \frac{S_{t(A)}}{Z}
   &&\text{(the declaration query)} \label{eq:q2}\\
-  \Pr[\text{team } T \text{ owns } S] &= \frac{1}{Z}\sum_{t \,:\, \mathrm{supp}(t) \subseteq T} g_S(t)\, S_t
-  &&\text{(is the half-suit ours?)} \label{eq:q3}
+  \tau(H,T) &= \frac{1}{Z}\sum_{t \,:\, \mathrm{supp}(t) \subseteq T} g_H(t)\, S_t
+  &&\text{(does one team hold the half-suit?)} \label{eq:q3}
 \end{align}
+with $g_H^{(c \to p)}$ the table restricted to survivors that give card $c$ to
+seat $p$ and $t(A)$ the count vector of allocation $A$. All three are
+\emph{exact} under the uniform prior of \S\ref{sec:constraints}; no
+independence assumption and no sampling enters.
 
-Equation~\eqref{eq:q2} deserves emphasis. Declaring requires naming an exact
-allocation, so the quantity that governs the decision is the joint probability
-that all six assignments are simultaneously right --- \emph{not} a product of
-per-card marginals, which is badly wrong because the six cards of a half-suit
-are strongly dependent through \eqref{eq:capacity}. FishBot v0.3 used a
-geometric mean of per-card marginals; v0.4 uses \eqref{eq:q2}.
+Equation~\eqref{eq:q2} is the one that matters for play. Declaring requires
+naming an exact allocation, so the quantity that governs the decision is the
+joint probability that all six assignments are simultaneously correct --- not
+a product of per-card marginals, which is badly biased because the six cards
+of a half-suit are strongly dependent through the capacity constraint
+\eqref{eq:capacity}. \vthree{} scored declaration candidates with a geometric
+mean of per-card marginals; \vfast{} and \vblock{} both target \eqref{eq:q2},
+exactly in the latter case and approximately in the former (\S\ref{sec:fast}).
 
-A corollary of \eqref{eq:q2} that we did not anticipate: under the uniform prior,
-every surviving allocation sharing a count vector has \emph{identical}
-probability. The MAP allocation is therefore determined by the count vector
-alone, and the choice among allocations within a count vector is arbitrary.
+\begin{corollary}[Equal probability within a count vector]
+\label{cor:equalprob}
+Under the uniform posterior of \S\ref{sec:constraints}, any two allocations of
+the same half-suit that satisfy (C1)--(C5) and share a count vector have equal
+probability.
+\end{corollary}
 
-\subsection{A fast approximate posterior, and what it costs}
+\begin{proof}
+By \eqref{eq:q2} the probability of a surviving allocation $A$ depends on $A$
+only through $t(A)$, since $S_t$ is a function of the count vector and the
+dynamic-programming tables outside the block.
+\end{proof}
+
+The maximum-probability allocation is therefore determined by the count vector
+alone, so the choice among survivors within a count vector is arbitrary and
+\texttt{bestTeamAllocation} may return any of them. An allocation that
+violates a certificate of \eqref{eq:disj}, however, has probability zero even
+when its count vector is shared by survivors, so survival must be checked
+explicitly rather than inferred from the count vector. The corollary and the
+surviving-allocation caveat are both validated against exhaustive enumeration
+on small reachable states in E15 (\S\ref{sec:results-verify}).
+
+\subsection{A fast approximate posterior}
 \label{sec:fast}
 
-The exact engine is affordable per query but is invoked by six observers after
-every public event, which puts it in the inner loop of any large-scale
-experiment. We therefore also implement an approximation that keeps the exact
-constraint bookkeeping (C1)--(C3) and the exact capacities (C4), fits them by
-Sinkhorn scaling, and interleaves a conditioning step for (C5). For a
-certificate $\bigvee_{d \in D}[\sigma(d) = A]$ with event $E$, independence
-conditioning gives
-\begin{equation}
-  \Pr[\sigma(d) = A \mid E] = \frac{p_{d,A}}{1 - \prod_{e \in D}(1 - p_{e,A})},
-  \qquad
-  \Pr[\sigma(d) = p \mid E] = p_{d,p}\,
-    \frac{1 - \prod_{e \in D \setminus \{d\}}(1 - p_{e,A})}{1 - \prod_{e \in D}(1 - p_{e,A})},
-  \label{eq:cond}
-\end{equation}
-after which capacity fitting is re-run; four outer sweeps of eight Sinkhorn
-iterations converge in practice. The cost is $O(\text{iters} \cdot |U| \cdot 6)$,
-roughly two orders of magnitude below the exact program.
+The reference engine is affordable per query, but six observers invoke it
+after every public event, putting it in the inner loop of every large
+experiment (\S\ref{sec:throughput}). We therefore also implement an
+approximation, the \emph{Fast path}: it keeps the exact bookkeeping of
+(C1)--(C3) and the exact capacities (C4), fits them by Sinkhorn scaling of the
+support matrix, and interleaves a conditioning step \eqref{eq:cond} for (C5)
+that reweights a certificate's cards $D$ by treating their entries $p_{d,a}$
+as independent Bernoulli indicators before capacity fitting is re-run
+(derivation and iteration schedule in \S\ref{app:sinkhorn}). The cost is
+$O(\text{iters} \cdot |U| \cdot 6)$ rather than the $O(\prod_p (q_p+1))$ of
+\eqref{eq:bound}.
 
-\S\ref{sec:results-verify} reports the measured gap: the approximation is
-accurate on average but has a heavy tail, and --- more interestingly --- the
-strength difference between exact and approximate inference depends on which of
-the two the ask policy was fitted against.
+Equation~\eqref{eq:cond} is an \emph{approximation}, and so are the $\hat\mu$,
+$\hat\tau$ and $\hat\alpha$ it produces: its independence assumption is false,
+because the capacity constraints that make \eqref{eq:q2} necessary also couple
+the cards inside a certificate. E2 measures the gap over \numSelftestGames{}
+games and \numSelftestChecks{} paired comparisons --- mean absolute difference
+\numSinkhornMean{} between $\hat\mu$ and $\mu$, maximum \numSinkhornMax{},
+accurate on average with a heavy tail whose positions E2 does not record
+(\S\ref{sec:results-verify}). The Fast path is the compiled default
+(\texttt{BeliefMode::Fast}) and produced every performance number reported in
+this paper; that configuration is \vfast{}, and \vblock{} denotes the same
+fitted policy with the exact reference engine substituted for it, which
+appears only in the validation of \S\ref{sec:results-verify} and the
+substitution ablation of \S\ref{sec:ablations}.
 
 \subsection{The residual: policy-aware inference}
 \label{sec:policyprior}
 
-The posterior of (C1)--(C5) is exact with respect to the rules, but it is not
-the full Bayesian posterior. That would additionally weight each deal $x$ by
-$L(h \mid x) = \prod_t \pi_{p_t}(a_t \mid h_{<t}, x)$, the likelihood that the
-observed actions would have been chosen given $x$ --- which depends on the
-opponents' policies and is therefore \emph{playstyle dependent}. Concretely, a
-player who has taken many turns and never asked in half-suit $S$ is, under any
-reasonable policy, less likely to hold cards of $S$; the rules alone say nothing
-about this.
+The posterior of (C1)--(C5) is exact with respect to the rules but is not the
+full Bayesian posterior over deals, which would additionally weight each deal
+$x$ by the likelihood $L(\mathcal{I} \mid x) = \prod_t \pi_{p_t}(a_t \mid
+\mathcal{I}_{<t}, x)$ that the observed actions would have been chosen given
+$x$. That likelihood is playstyle-dependent: a player who has taken many turns
+and never asked in half-suit $H$ is, under any plausible policy, less likely
+to hold cards of $H$, and the rules alone say nothing about this.
 
-We implement the natural one-parameter family of such corrections as prior
-weights inside the same machinery,
+We implement a two-parameter family of such corrections as prior weights inside
+the same machinery,
 \begin{equation}
-  w(c,p) \;=\; \exp\!\bigl(\theta\, a_{p,S(c)} - \phi\,(a_p - a_{p,S(c)})\bigr),
+  w(c,p) \;=\; \exp\!\bigl(\theta\, a_{p,H(c)} - \phi\,(a_p - a_{p,H(c)})\bigr),
   \label{eq:prior}
 \end{equation}
-where $a_{p,S}$ counts $p$'s public asks in $S$ and $a_p$ their total asks, and
-we fit $\theta,\phi$ jointly with the rest of the policy. Setting
-$\theta = \phi = 0$ recovers the grounded posterior. Equation~\eqref{eq:prior}
-with $\phi = 0$ is exactly the heuristic v0.3 used in place of the certificate
-\eqref{eq:disj}. The measured outcome (\S\ref{sec:ablations}) is that once the
-hard certificate is enforced, the soft weight adds nothing --- evidence, though
-not proof, that \eqref{eq:disj} already captures the bulk of the signal that
-v0.3 was approximating.
+where $a_{p,H}$ counts $p$'s public asks in half-suit $H$, $a_p$ their total
+public asks, and $H(c)$ is the half-suit of card $c$. The weights replace the
+uniform initialisation of the Sinkhorn fit, so $\theta = \phi = 0$ recovers
+the policy-agnostic posterior of \S\ref{sec:constraints}, and $\phi = 0$
+recovers, in form, the heuristic \vthree{} used in place of the hard
+certificate \eqref{eq:disj}. Equation \eqref{eq:prior} is \emph{fitted}:
+$\theta$ and $\phi$ are two coordinates of the \numParams-coordinate vector
+optimised jointly with the rest of the policy (\S\ref{sec:fitting}).
+
+In the frozen-policy ablation E5 (\S\ref{sec:ablations}), disabling the prior ---
+setting $\theta = \phi = 0$ while leaving every other coordinate at its fitted
+value --- lowered the win rate by \numAblPrior{} points, 95\% paired percentile
+bootstrap interval over deals \numAblPriorCI{}. The fitted policy therefore
+depends on the prior. Because the remaining coordinates were fitted with the
+prior active, this measures the sensitivity of \emph{this} fitted vector to
+removing it and is not evidence about a policy retrained without it.

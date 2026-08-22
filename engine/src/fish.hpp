@@ -110,6 +110,13 @@ struct Rules {
   int  maxAsks            = 400;    // safety valve; incidence is reported
   bool adjudicateOnLimit  = true;   // resolve leftovers by majority if hit
   int  deckSets           = 9;      // 9 = 54-card Canadian; 8 = 48-card Literature
+  // Arbitration between simultaneous voluntary declarations is a modelling
+  // choice, not a rule: the rules say a player may declare at any moment but do
+  // not say who wins a tie.  0 = lowest seat, 1 = highest seat, 2 = scan from the
+  // current turn-holder.  Ranking by stated confidence is deliberately absent:
+  // it would compare private confidences across seats, which is the leak the
+  // forced endgame was corrected for.
+  int  declArbitration    = 0;
   // Forced-endgame willingness ladder.  Only a willingness bit may be shared
   // with teammates, so the team sweeps thresholds; a negative entry means
   // "somebody must declare, use your best guess".

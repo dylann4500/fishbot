@@ -1,0 +1,208 @@
+\section{Locked half-suits, declaration timing, and termination}
+\label{sec:locked}
+
+Declaration is the only action in the dialect of \S\ref{sec:rules} that converts
+information into score. This section states the one structural property of
+declaration timing that follows from the rules alone, separates it from the
+properties it does \emph{not} imply, gives the fitted rule \vfast{} uses, and
+reports what is and is not known about termination.
+
+\subsection{A half-suit held by one team cannot be taken back}
+
+\begin{theorem}[Locked half-suits]
+\label{thm:locked}
+Suppose every card of half-suit $H$ is held by members of team $T$. Then no
+member of the opposing team can ever legally ask for a card of $H$, so no card of
+$H$ can change hands, and $H$ remains wholly held by $T$ for as long as it stays
+undeclared. Moreover any declaration of $H$ by the opposing team is necessarily
+incorrect and awards $H$ to $T$.
+\end{theorem}
+
+\begin{proof}
+A legal ask for a card of $H$ requires the asker to hold another card of $H$, so
+with all six cards held by members of $T$ every opposing player is void in $H$
+and has no such ask, and a player holding no cards at all has no legal ask of any
+kind. Cards move only through successful asks, and the only asks in $H$ available
+to anyone are asks by members of $T$ directed at opponents, which are guaranteed
+misses; ownership of $H$ is therefore frozen. For the second part, a declaration
+must assign every card of $H$ to a teammate of the declarer, so an opposing
+declarer would assign cards held by $T$ to the other team, which is false, and
+$H$ is awarded to $T$.
+\end{proof}
+
+Theorem~\ref{thm:locked} does not assert that the probability of a correct claim
+rises monotonically, and it does not: as a ratio of counts of consistent
+assignments, both numerator and denominator shrink as constraints accumulate, and
+a deduction elsewhere in the deal can eliminate more completions of the true
+allocation than of a rival. What is monotone is the support: the allocations of
+$H$ extendable to a consistent deal are non-increasing.
+
+\begin{corollary}[Waiting carries no ownership risk]
+\label{cor:wait}
+For a locked half-suit the ``steal'' term in the declaration trade-off is
+identically zero: $H$ can leave the undeclared state only through a declaration
+by $T$, or one by the opposing team, which by Theorem~\ref{thm:locked} awards $H$
+to $T$ in any case. Declaring immediately therefore cannot protect ownership; the
+remaining reasons to declare are the point itself and the positional consequences
+of removing six cards from play.
+\end{corollary}
+
+Corollary~\ref{cor:wait} concerns ownership only, which matters for
+\S\ref{sec:termination}.
+
+\begin{observation}[Ownership freezes; allocation information need not]
+\label{obs:frozeninfo}
+Let $H$ be a half-suit all of whose cards sit with team $T$. Two statements hold
+simultaneously and should not be merged. First, ownership of $H$ is frozen by
+Theorem~\ref{thm:locked}. Second, asks inside $H$ remain \emph{legal} for members
+of $T$; such an ask transfers nothing, every target being void, but it is a
+public event and still carries the certificate \eqref{eq:disj}, which constrains
+which teammate holds which card. Allocation information about $H$ can therefore
+continue to change while ownership cannot, deliberately at the price of a turn
+and incidentally as capacities tighten elsewhere through \eqref{eq:capacity}.
+Ownership monotonicity alone therefore does not establish that a position with
+only locked half-suits is informationally frozen, and does not prove universal
+non-termination.
+\end{observation}
+
+Develin \cite{develin} records the same channel from the human side, and
+\vfast{} does not exploit it deliberately (\S\ref{sec:limitations}). Two forces
+therefore act on declaration timing in opposite directions --- a retained locked
+half-suit keeps six cards absorbing capacity mass in $U$, while a hand of locked
+cards licenses only asks certain to fail --- and which dominates is a
+quantitative question about a position and an opponent population rather than one
+settled by Theorem~\ref{thm:locked}. \S\ref{app:human} develops both sides.
+
+\subsection{A value-based declaration rule}
+\label{sec:stopping}
+
+At each declaration opportunity \vfast{} chooses between converting a live
+half-suit into a scored point and leaving it live, comparing two estimates of
+position value rather than testing a confidence threshold. Let $V(\cdot)$ be the
+fitted linear evaluation of \S\ref{sec:value}, in units of final half-suit
+differential scaled to $[-1,1]$; $s$ the current position, $\Delta$ the declaring
+team's half-suit differential, $H$ the candidate half-suit, $A$ the named
+allocation the policy would declare, and $\hat q = \hat\alpha(A)$ the Fast
+estimate \eqref{eq:q2} that $A$ is correct. The rule declares when
+\begin{equation}
+  \hat q\, V\bigl(s \ominus H,\, \Delta{+}1\bigr)
+  + (1 - \hat q)\, V\bigl(s \ominus H,\, \Delta{-}1\bigr)
+  \;>\; V(s) + \varepsilon,
+  \label{eq:stop}
+\end{equation}
+where $s \ominus H$ denotes the position with $H$ removed and $\varepsilon$ is a
+fitted margin, one of the \numParams{} fitted coordinates of \S\ref{sec:fitting}.
+
+Both sides of \eqref{eq:stop} are values of a fitted linear model evaluated on
+features produced by an approximate transition, so it compares a fitted value
+estimate under an approximate feature transition; it is not a solution to a
+Bellman equation, and we make no optimality claim for it. The approximation is in
+$s \ominus H$, where the implementation updates aggregate team-level quantities
+only: it removes the half-suit's contributions to expected control, sharpened
+control, the locked differential and the contested mass, removes its unresolved
+cards from $U$, and reduces the declaring team's card count by six. That
+card-count reduction is applied on \emph{both} the correct and the incorrect
+branch, although on an incorrect declaration some of those six cards were held by
+opponents and the true post-declaration counts differ, and player-specific
+features are not re-derived on either branch. The resulting feature vector is an
+approximate summary of the successor position rather than the successor position
+itself.
+
+What distinguishes \eqref{eq:stop} from a threshold on $\hat q$ is which terms
+survive. The immediate expected score change from declaring is $2\hat q - 1$; but
+a value function fitted on positions in which the half-suit is still live already
+credits the team's expected control of it, so that term is largely cancelled by
+the control and locked-differential contributions removed in $s \ominus H$, and
+what remains to decide the comparison are the positional terms
+Corollary~\ref{cor:wait} identifies --- the information the six unresolved slots
+absorb against the turn efficiency of a lighter hand. In the limiting case
+$\hat q = 1$ with $H$ locked, the score term vanishes entirely and
+\eqref{eq:stop} is a comparison between exactly those two effects. This is how
+the rule is constructed; the ablation below is what the construction is worth,
+and it resolves nothing.
+
+The frozen-policy ablation does not isolate a benefit from this formulation.
+Replacing \eqref{eq:stop} with a fixed confidence threshold changed the win rate
+by \numAblStop{} points, 95\% paired CI \numAblStopCI{} (\S\ref{sec:ablations}),
+and moving the declaration confidence threshold of the shipped configuration
+between 0.80 and 0.99 also changes nothing the experiment can resolve. One reason
+the achievable effect is small is the resolution of the model class $V$ is drawn
+from: a linear function of \numValueFeats{} summary features caps what any rule
+built on differences of $V$ can extract. The only recorded fit in that class is
+E14, at $R^2 = \numValueRSq$ in sample on \numValueRows{} self-play decision
+points; its coefficients are not the ones compiled into the shipping policy
+(\S\ref{sec:value}, \S\ref{app:params}), so that figure describes the class and
+not the deployed vector.
+
+Measured over the primary head-to-head bank of \S\ref{sec:results-h2h}, \vfast{}
+holds a half-suit that has become locked for \numLockHoldFour{} public events
+before declaring it, against \numLockHoldThree{} for \vthree{}. Three
+qualifications apply and none can be removed: the moment a half-suit becomes
+locked is computed from ground truth after the fact and is never available to
+either policy; both figures are conditioned on the declaration being correct; and
+the two policies declare correctly at very different rates
+(\numVsVthreeDeclAcc{}\% and \numVthreeDeclAccSame{}\% on these same games), so
+the averages are taken over differently selected subsets. This is measured
+behaviour, not a theorem: the qualifications leave the magnitude of the
+difference unusable, and only the sign survives all three
+(\S\ref{app:human}). The direction is at least consistent with the two
+estimators: \vthree{} scores a candidate allocation by a geometric mean of
+per-card marginals, which needs many more public events to clear a threshold than
+the joint estimate \eqref{eq:q2} does, so the earlier declaration is what a
+sharper allocation probability would be expected to produce. That is an account,
+not a measurement; no experiment here isolates it.
+
+\subsection{Termination}
+\label{sec:termination}
+
+Nothing in the rules of the dialect studied compels a declaration. Consider a
+position in which every live half-suit is wholly owned by one team or the other,
+but at least one team cannot resolve which of its own members holds which card:
+by Theorem~\ref{thm:locked} card movement ceases, every player being void in
+every live half-suit owned by the opposing team, so every legal ask is a
+guaranteed miss. Whether the position is absorbing depends on whether further
+allocation information can arrive, which by Observation~\ref{obs:frozeninfo} is
+not settled by Theorem~\ref{thm:locked} alone, those misses being legal, public
+and certificate-carrying. A policy whose declaration rule is sensitive to the
+certificates may eventually declare from such a position; one whose rule is not
+may not.
+
+\begin{observation}[Observed non-termination in mirror self-play]
+\label{obs:cycle}
+An earlier fitted configuration of the policy, played against a copy of itself
+with no forcing rule, failed to terminate within the action cap in
+\numMirrorCycle\% of games at the 400-ask cap of \S\ref{sec:rules}. Raising the
+cap to 1000 asks left the figure unchanged, which distinguishes a cycle from slow
+convergence (E11, 150 deals in two seat orientations, seed 31). This is a
+measured property of that fitted configuration on that corpus, not a theorem
+about the rules dialect.
+\end{observation}
+
+The remedy adopted is in the policy. A test that forces a declaration as soon as
+no productive ask remains also fires in ordinary early positions, where a player
+holding only cards their own team already owns has no productive ask but ample
+reason to wait; wiring it in reduced the mirror cap-hit rate to
+\numDeadAskCycle\% but cost \numDeadAskCost{} win-rate points against \vthree{}
+(E11). The shipped alternative is a graduated escalation on the public event
+count: below a forcing horizon \eqref{eq:stop} decides, past it the policy
+declares any half-suit whose estimated allocation probability exceeds one half,
+and past a second horizon its best candidate whatever the estimate, an
+undeclared half-suit scoring nothing. Under this rule every game terminated
+through play and the action-limit rate is \numLimitRate{} in E1, E3, E7, E10 and
+E13; the exception is the deliberately unforced mirror configuration of
+Observation~\ref{obs:cycle}, measured precisely because it does reach the cap.
+Both horizons are hand-set constants chosen during development, not the
+output of any analysis in this paper, and no sensitivity study over them is
+reported.
+
+A general termination result would require more than we have: either a
+constructive reachable position, with a strategy profile, in which the full
+information state as well as the physical position recurs, so that play is
+provably periodic --- Observation~\ref{obs:frozeninfo} is the obstacle, since the
+certificate stream from legal misses must also be shown to add nothing --- or a
+proof over the joint dynamics of the full information state and the
+action-selection rule of the policies involved. We have neither, and
+Observation~\ref{obs:cycle} is evidence only that non-termination is reachable in
+practice for some fitted configurations. The rules literature
+already records a forced-claims proposal for tournament play \cite{pagat}, with
+which these measurements are consistent.

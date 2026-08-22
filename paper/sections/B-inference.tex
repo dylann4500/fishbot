@@ -1,0 +1,360 @@
+\section{Inference: derivations and implementation notes}
+\label{app:inference}
+
+This appendix supplies the derivations and implementation detail behind
+\S\ref{sec:belief}. Notation is that of \S\ref{sec:notation}. The source files
+are \filepath{engine/src/belief.hpp} (constraint bookkeeping and the Fast path),
+\filepath{engine/src/blockdp.hpp} (the exact reference engine), and
+\filepath{engine/src/oracle.hpp} (the brute-force enumerator used in E15).
+
+\subsection{The layer identity}
+\label{app:layer}
+
+Order the unresolved cards $c_1,\dots,c_{|U|}$ and let $q = (q_0,\dots,q_5)$ be
+the capacity vector of \eqref{eq:capacity}. A partial assignment of the first $j$
+cards leaves a vector $n$ of unused capacities. Because every one of the first
+$j$ cards consumes exactly one unit of capacity from exactly one seat,
+\[
+  \sum_p n_p \;=\; \sum_p q_p - j \;=\; |U| - j ,
+\]
+so $j$ is recoverable from $n$ and the layer index need not be stored. This is
+the identity that collapses the natural $|U|$-layer table into two single arrays.
+Concretely, the forward and backward tables are laid out as one array each of
+size $\prod_p (q_p+1)$ --- at most $10^5$ entries by \eqref{eq:bound}, so the
+$|U|$-layer table that \eqref{eq:fwd}--\eqref{eq:bwd} would otherwise require
+never has to be materialised --- addressed by the mixed-radix offset
+$\mathrm{off}(n) = \sum_p n_p \, s_p$ with strides $s_p = \prod_{r<p}(q_r+1)$,
+and a companion index sorts the reachable states by $\sum_p n_p$ so that a sweep
+visits one layer at a time. Count vectors are packed one byte per seat into a
+single \verb|uint64_t|, which lets the dominance test $n \ge t$ that guards a
+block transition be evaluated as one branch-free word operation.
+
+The recursions are those of \eqref{eq:fwd}--\eqref{eq:bwd}, evaluated with the
+layer constraint $\sum_p n_p = |U| - j$ in force at every step and initialised at
+$F_0(q) = 1$ and $B_{|U|}(\mathbf{0}) = 1$; $e_p$ is the $p$-th unit vector and
+$q$ the full capacity vector of \eqref{eq:capacity}, so a transition consumes one
+unit of one seat's capacity and the branching factor at card $c_j$ is
+$|M_{c_j}| \le 5$. The per-card marginals of
+\S\ref{sec:counting} are the contraction of the two tables at card $j$,
+\begin{equation}
+  \mu_{c_j, p}
+    \;=\; \frac{\mathbf{1}[\,p \in M_{c_j}\,]}{Z}
+      \sum_{\substack{n \,:\, |n| = |U| - j + 1 \\ n_p \ge 1}}
+        F_{j-1}(n)\; B_j(n - e_p),
+  \label{eq:marg}
+\end{equation}
+which is \emph{exact}, since every consistent assignment is counted once by
+splitting it at card $j$ into a prefix counted by $F_{j-1}$ and a suffix counted
+by $B_j$. Both tables are evaluated in double
+precision on integer-valued data. Each entry is a count of assignments, so the
+arithmetic is exact while the counts stay below $2^{53}$, and the state-space
+bound of \S\ref{app:bound} keeps the number of terms per entry at six. E15 does
+not report the magnitudes of the partition functions it compared; what it
+reports is that the block engine and the brute-force enumerator agreed exactly,
+with a maximum relative difference of zero in $Z$ and a maximum absolute
+difference of zero across all \numOracleMargChecks{} marginal,
+\numOracleTeamChecks{} team-ownership and \numOracleAllocChecks{} allocation
+comparisons (\S\ref{sec:results-verify}), that is, at integer rather than
+rounding scale.
+
+\subsection{Why the state space is bounded by $10^5$}
+\label{app:bound}
+
+The observer's own cards are resolved by (C1), so $q_i = 0$ and the table is a
+product over the five other seats. Also $|U| \le 45$: at the deal the 54 cards
+lie in nine live half-suits, the observer holds nine of them and those are
+resolved by (C1), so $|U| = 45$ initially; thereafter a card leaves $U$ when its
+holder is revealed or its half-suit is declared and, by
+Proposition~\ref{prop:transfer}, never re-enters. Subject to $\sum_{p\ne i} q_p =
+|U|$, the product $\prod_{p \ne i}(q_p+1)$ is maximised when the capacities are
+equal, by the arithmetic--geometric mean inequality, giving
+\begin{equation}
+  \prod_{p\ne i}(q_p+1) \;\le\; \Bigl(\frac{\sum_{p \ne i}(q_p+1)}{5}\Bigr)^{5}
+  \;=\; \Bigl(\frac{|U|}{5}+1\Bigr)^{5} \;\le\; 10^{5}.
+  \label{eq:bound}
+\end{equation}
+Each state has at most six outgoing transitions, so a
+full forward--backward pass is bounded by $6 \times 10^5$ multiply--adds
+independently of the position, and the two arrays together occupy under two
+megabytes. In practice most positions are far smaller, because resolved cards
+leave $U$ and completed half-suits leave $\mathcal{H}$. The implementation
+additionally refuses to build a table above a fixed state cap and reports the
+failure to the caller rather than silently degrading; the build-failure count was
+zero in both E2 and E15.
+
+\subsection{The direct sampler}
+\label{app:sampler}
+
+The backward table doubles as a sampler over assignments. Having placed
+$c_1,\dots,c_{j-1}$ and arrived at the remaining-capacity vector $n$, card $c_j$
+is given to seat $p$ with probability proportional to $B_j(n - e_p)$, restricted
+to $p \in M_{c_j}$ with $n_p \ge 1$. A seat receives positive weight only when
+the suffix can still be completed from $n - e_p$, so every prefix the sampler
+constructs is extendable and no draw is ever discarded: the procedure is
+rejection-free for (C1)--(C4), and the resulting distribution is uniform over the
+assignments satisfying those four constraints, because the weights are
+path counts. When a live (C5) certificate is present the sampler is unchanged and
+the completed assignment is tested against the literal disjunction
+\eqref{eq:disj}, drawing again on failure, so the combined procedure is exact but
+not rejection-free. The sampler
+is used only off the deployed decision path, as the Monte-Carlo ground truth in
+the E2 cross-checks of \S\ref{sec:results-verify}; the residual difference there
+is at Monte-Carlo scale ($\numBeliefVsSampling$) rather than at the exact zero
+E15 obtains by enumeration.
+
+\subsection{Card groups and block groups}
+\label{app:groups}
+
+Every certificate \eqref{eq:disj} constrains only cards of one half-suit, so no
+certificate couples two half-suits. That is what makes the exhaustive branch
+affordable: enumerating one half-suit costs at most $\prod_{c \in H}|M_c|$
+candidate assignments and is paid once per block, whereas handling the same $k$
+live certificates by inclusion--exclusion over the whole of $U$ would cost $2^k$
+forward--backward passes. The reference engine therefore partitions $U$
+by half-suit and classifies each group:
+
+\begin{description}[style=nextline]
+  \item[Card group.] No live certificate in that half-suit. The group's cards are
+        expanded one at a time by the recursions of \S\ref{app:layer}, with
+        branching factor $|M_c| \le 5$. This is the ordinary capacity dynamic
+        program restricted to the group.
+  \item[Block group.] At least one live certificate. The group's assignments are
+        enumerated exhaustively by depth-first search over the supports $M_c$ ---
+        at most $5^6 = 15{,}625$ candidates for a six-card half-suit --- each is
+        tested against every certificate of that half-suit, and the survivors are
+        aggregated by count vector into the table $g_H(t)$ of
+        \eqref{eq:blocktable}. Alongside $g_H(t)$ the engine accumulates, for
+        each count vector, the per-card breakdown $g_H^{(c\to p)}(t)$ that
+        \eqref{eq:q1} needs, so a single enumeration serves all three queries.
+\end{description}
+
+A group of either kind consumes a known number of cards, so the layer identity of
+\S\ref{app:layer} survives the substitution and the outer dynamic program runs
+over groups: $F_b(n) = \sum_t g_b(t) F_{b-1}(n+t)$, with $g_b(t)$ the indicator
+of a single card placement in the card-group case. The path mass
+\eqref{eq:pathmass} is then a contraction of the forward and backward arrays at
+the group's entry layer, and the three queries \eqref{eq:q1}--\eqref{eq:q3} are
+weighted sums over the group's own table. Nothing about this treatment is
+approximate: the block enumeration is exhaustive, the certificate test is the
+literal disjunction \eqref{eq:disj}, and the outer recursion is a counting
+argument.
+
+The exhaustive branch is what makes the equal-probability statement of
+Corollary~\ref{cor:equalprob} usable and also what makes its caveat necessary.
+The count-vector table records only survivors, so two allocations with the same
+count vector are equiprobable \emph{given that both survive}; an allocation that
+fails a certificate has probability zero even though its count vector may be
+shared with survivors. The engine's \texttt{bestTeamAllocation} therefore returns
+a stored survivor rather than reconstructing an allocation from the count vector.
+E15 checks this directly: over \numOracleBestChecks{} calls, none returned an
+allocation of probability zero and none returned a non-maximal one
+(\S\ref{sec:results-verify}).
+
+\subsection{The brute-force allocation oracle (E15)}
+\label{app:oracle}
+
+\begin{table}[!htbp]
+\centering
+\caption{Brute-force oracle (E15) against the exact reference engine.
+Population: reachable states from \numOracleGames{} replayed \vfast{} versus
+\vthree{} games, seed $20260822$, policy weights frozen; the unit is one state.
+\numOracleStates{} states were enumerated, \numOracleStatesCFive{} with a live
+ask-legality certificate, over \numOracleDeals{} consistent deals;
+\numOracleStatesSkipped{} were skipped as too large. No intervals: every entry is
+a deterministic maximum over the checks in the last column, except the sampler
+row, a Monte-Carlo frequency comparison.}
+\label{tab:oracle}
+\small
+\input{tables/oracle}
+\end{table}
+
+
+The block engine of \S\ref{sec:blocks} and the card-level dynamic program of
+\S\ref{sec:counting} share a derivation, so agreement between them is weak
+evidence that either enumerates the right collection of assignments. E15 supplies
+independent evidence by recomputing the same posterior with no dynamic
+programming, no factorisation and no sampling. The enumerator is
+\filepath{engine/src/oracle.hpp} and the driver is the \texttt{oracle} command of
+\filepath{engine/src/main.cpp}.
+
+\paragraph{The enumerator.} For one observer's constraint state the unresolved
+cards are ordered and searched by iterative depth-first search over their
+assignments to seats. At depth $j$ the candidate seats for card $c_j$ are exactly
+the surviving support $M_{c_j}$, which carries (C1)--(C3), and a candidate is
+pruned at once if it would take the number of cards already given to that seat
+above its capacity $q_p$, which carries (C4). Every leaf is therefore a complete
+capacity-feasible assignment, and (C5) is tested there: the literal disjunction
+\eqref{eq:disj} is evaluated against the completed assignment, certificate by
+certificate, with no relaxation and no early aggregation. Surviving leaves are
+counted into $Z$, tallied into per-card ownership counts, and tallied into a
+per-half-suit table keyed by the packed assignment of that half-suit's unresolved
+cards. Nothing is factorised: the count behind every named allocation is an
+explicit count of leaves.
+
+\paragraph{Coverage.} The search is exponential in $|U|$, so each state carries a
+cut-off. A state is attempted only when the capacity dynamic program reports at
+most \numOracleMaxDeals{} consistent deals, and the search is abandoned if the
+product of the support sizes or the node count exceeds a fixed multiple of that
+budget. A state that hits either bound is counted as skipped and reported ---
+\numOracleStatesSkipped{} of them against \numOracleStates{} enumerated --- rather
+than dropped silently, so the coverage of the test is visible rather than implied.
+Skipping is correlated with the property that makes a state hard, a large
+unresolved pool, so E15 is evidence about small reachable states and not about
+the whole state space.
+
+\paragraph{What is compared.} The block engine is built on the same constraint
+state, and seven quantities are compared on every enumerated state: the partition
+function $Z$; the per-card marginals \eqref{eq:q1} against the leaf tallies; the
+team-ownership probabilities \eqref{eq:q3}, for both teams and every half-suit
+still feasible for the team in question, against the summed counts of the
+allocations lying wholly inside it; the probability \eqref{eq:q2} of \emph{every}
+named allocation the enumeration produced rather than a sample of them; the
+equal-probability corollary (Corollary~\ref{cor:equalprob}), as the spread
+between the largest and the smallest enumerated probability within each
+count-vector class; the reference declarer's own named allocation, by locating
+\texttt{bestTeamAllocation}'s output in the enumerated table and asking both
+whether it has positive probability and whether it attains the maximum over that
+team's allocations; and the frequencies of the direct sampler of
+\S\ref{app:sampler} drawn on the same state, against the enumerated marginals.
+The command and its per-state draw budget are in \S\ref{app:repro-commands}.
+
+\paragraph{Why the deterministic differences are exactly zero.} Six of the seven
+comparisons are deterministic. Five of those are the zero entries of
+Table~\ref{tab:oracle}, and the sixth, the reference declarer's allocation, is
+reported in \S\ref{sec:results-verify} as \numOracleBestChecks{} checks with
+\numOracleBestBad{} inconsistent. Zero here is not rounding luck. Both sides
+compute integer counts over the same finite set of assignments --- the enumerator
+by incrementing a counter at each surviving leaf, the block engine by the
+counting recursions \eqref{eq:fwd}--\eqref{eq:Z} and the block tables
+\eqref{eq:blocktable} --- and both hold those counts in double precision, where
+the per-state cut-off of \numOracleMaxDeals{} consistent deals keeps every one of
+them far below $2^{53}$ and therefore exactly represented. The two sides form the
+same ratio
+$\text{count}/Z$ from identical operands and obtain identical doubles, so the
+difference is zero rather than small and the comparison has no tolerance
+absorbing an error. The seventh comparison, the sampler, is a Monte-Carlo
+frequency and differs at Monte-Carlo scale: \numOracleSampleDiff{} over
+\numOracleDraws{} accepted draws.
+
+\subsection{Declarations require no special handling}
+\label{app:decl}
+
+A declaration --- correct or incorrect --- removes six cards from play and
+changes the public hand counts of the players who held them. Both effects are
+public. In the constraint system this means the six cards leave $U$ with their
+holders known, the affected half-suit leaves $\mathcal{H}$, and each $h_p$ in
+\eqref{eq:capacity} drops by the number of those cards that seat held. The
+capacities $q_p = h_p - k_p$ therefore re-derive correctly with no bespoke rule:
+the same identity that absorbs a successful ask absorbs a declaration. The one
+thing the observer learns beyond the removal is the declarer's belief, which the
+rules posterior does not use; \S\ref{sec:policyprior} is where information of
+that kind would enter.
+
+The same argument explains why an incorrect declaration needs no special case
+either. It reveals the true holders of all six cards, which is strictly more
+information than a correct one gives the opposing team, and that information
+arrives through exactly the same channel: resolved holders and updated public
+counts.
+
+\subsection{The Sinkhorn conditioning step}
+\label{app:sinkhorn}
+
+The Fast path maintains a matrix $p_{c,p}$ over unresolved cards and seats,
+initialised to the prior weights \eqref{eq:prior} on the support $M_c$ and zero
+off it. One Sinkhorn iteration normalises each row to sum to one, then scales
+each column $p$ by $q_p / \sum_c p_{c,p}$, which enforces \eqref{eq:capacity} in
+expectation. The deployed setting is four outer sweeps of eight such iterations,
+with a conditioning step for the certificates applied between consecutive sweeps
+and a final row normalisation.
+
+The conditioning step derives as follows. Fix a certificate with asking seat $a$
+(the notation of (C5); $A$ remains the named allocation of \S\ref{sec:notation})
+and card set $D$, and let $E$ be the event $\bigvee_{d\in D}[\sigma(d)=a]$.
+Treating the entries $\{p_{d,a}\}_{d \in D}$ as independent Bernoulli indicators,
+\[
+  \Pr[\neg E] \;=\; \prod_{e \in D} (1 - p_{e,a}),
+  \qquad
+  \Pr[E] \;=\; 1 - \prod_{e \in D} (1 - p_{e,a}) .
+\]
+For a particular $d \in D$, the event $\sigma(d) = a$ implies $E$, so
+\[
+  \Pr[\sigma(d) = a \mid E] \;=\; \frac{p_{d,a}}{\Pr[E]} .
+\]
+For a seat $p \ne a$, the event $\sigma(d) = p$ is compatible with $E$ only if
+some other card of $D$ goes to $a$, whose independent probability is
+$1 - \prod_{e \in D\setminus\{d\}}(1 - p_{e,a})$. Together the two cases give the
+conditioning step of \S\ref{sec:fast},
+\begin{equation}
+  \Pr[\sigma(d) = a \mid E] = \frac{p_{d,a}}{1 - \prod_{e \in D}(1 - p_{e,a})},
+  \qquad
+  \Pr[\sigma(d) = p \mid E] = p_{d,p}\,
+    \frac{1 - \prod_{e \in D \setminus \{d\}}(1 - p_{e,a})}{1 - \prod_{e \in D}(1 - p_{e,a})}.
+  \label{eq:cond}
+\end{equation}
+Rows are renormalised afterwards, and
+the next Sinkhorn sweep restores the capacity constraints that the reweighting
+disturbed. The implementation guards two degenerate cases: when $\Pr[E]$
+underflows, the mass is forced onto the certificate rather than dividing by a
+near-zero denominator; when $\Pr[\neg E]$ underflows, the certificate is already
+implied and the step is skipped.
+
+The independence assumption is false --- the capacity constraints couple the
+cards of $D$ --- so \eqref{eq:cond} is an approximation, and interleaving it with
+capacity fitting does not converge to the exact marginals of
+\eqref{eq:q1}. E2 measures the residual gap directly against the reference
+engine: mean absolute difference \numSinkhornMean{}, maximum \numSinkhornMax{}
+(\S\ref{sec:results-verify}).
+
+\subsection{The deployed declaration estimator $\hat\alpha$}
+\label{app:alpha}
+
+The declaration query \eqref{eq:q2} asks for the joint probability of a named
+allocation. The Fast path has only marginals, so it evaluates the joint by
+sequential conditioning. Given a candidate allocation $A$ that assigns cards
+$c_1,\dots,c_6$ of one half-suit to seats $p_1,\dots,p_6$, the estimator is
+\[
+  \hat\alpha(A) \;=\; \prod_{j=1}^{6} \hat\mu^{(j)}_{c_j, p_j},
+\]
+where $\hat\mu^{(j)}$ is the Fast marginal recomputed on the constraint state in
+which $c_1,\dots,c_{j-1}$ have already been resolved to $p_1,\dots,p_{j-1}$. Each
+step fixes one card, decrements that seat's capacity in \eqref{eq:capacity},
+propagates the resulting support reductions, and refits. A card already resolved
+contributes a factor of one if it matches $A$ and zero otherwise; a card whose
+support excludes its assigned seat returns zero immediately; and the product
+short-circuits once it falls below $10^{-9}$, since candidates that weak are
+rejected regardless.
+
+The chain rule this implements is exact --- the joint is the product of
+successive conditionals in any fixed order --- so the estimator is exact in
+structure and approximate only through the marginal solver of
+\S\ref{app:sinkhorn}. Refitting between cards carries the capacity coupling of
+\eqref{eq:capacity}, which a product of unconditioned marginals ignores; no
+experiment in this paper measures the two estimators against each other, so the
+comparison is structural rather than empirical.
+
+Naming the allocation is a separate step, and the deployed default handles it
+more crudely. For each card of the candidate half-suit, the seat is chosen as the
+teammate with the largest \emph{unconditioned} Fast marginal $\hat\mu_{c,p}$,
+with a card the observer holds assigned to the observer and a card already
+resolved to a teammate assigned to that teammate. Only then is $\hat\alpha$
+evaluated on the resulting allocation. Choosing greedily under unconditioned
+marginals is not the same as maximising the joint, precisely because of the
+coupling just described; the alternative of choosing each seat under the
+\emph{conditioned} marginal at that step is implemented and is one of the
+frozen-policy ablations of E5, where it changed the win rate by \numAblGmap{}
+points with a 95\% paired percentile bootstrap interval over deals of
+\numAblGmapCI{} (\S\ref{app:ablations}). Under
+\vblock{} the naming step is replaced by \texttt{bestTeamAllocation}, which
+returns a maximum-probability survivor directly from the block table
+(\S\ref{app:groups}).
+
+\subsection{Where each path is used}
+\label{app:paths}
+
+To summarise the division of labour. \vfast{} runs the Fast path of
+\S\ref{sec:fast} for every query on the decision path: ask scoring, the two-ply
+branch re-evaluation, the declaration pre-gates, and $\hat\alpha$. The reference
+engine of \S\ref{sec:blocks} is invoked in three places only --- the cross-checks
+of E2, the brute-force oracle comparison of E15, and the \vblock{} substitution
+ablation --- none of which is part of the deployed policy. The throughput cost of
+the difference is reported in \S\ref{sec:throughput}.

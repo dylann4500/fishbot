@@ -3,6 +3,7 @@
 #pragma once
 #include "fish.hpp"
 #include "belief.hpp"
+#include <functional>
 
 namespace fish {
 
@@ -158,7 +159,13 @@ public:
       if ((t0 & m) == m || (t1 & m) == m) lockedAt[st] = g.pub.nEvents;
     }
     if (audit) runAudit();
+    if (observer) observer(*this);
   }
+
+  // Optional post-event hook.  Used by the brute-force oracle to inspect every
+  // agent's belief state at every public event; unset in ordinary play, so it
+  // costs one null check per event and changes nothing.
+  std::function<void(const Game&)> observer;
 
   void applyDeclaration(int actor, const Declaration& d, bool forced, double conf) {
     int team = teamOf(actor);
@@ -201,7 +208,10 @@ public:
       // was corrected for, so we take the lowest seat that wants to declare and
       // let the confidence be a reported diagnostic only.
       int bestSeat = -1; double bestConf = -1; Declaration bestDecl{};
-      for (int p = 0; p < NPLAY; p++) {
+      for (int ord = 0; ord < NPLAY; ord++) {
+        int p = rules.declArbitration == 1 ? (NPLAY - 1 - ord)
+              : rules.declArbitration == 2 ? ((g.turn + ord) % NPLAY)
+              : ord;
         if (!rules.outOfTurnDeclare && p != g.turn) continue;
         if (!rules.cardlessMayDeclare && !g.pub.handCount[p]) continue;
         Declaration d{}; double conf = 0;

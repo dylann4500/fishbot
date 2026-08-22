@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # FishBot v0.4 experiment battery.  Every command writes a JSON or text artifact
-# under research/v04/results/.  Seed banks are disjoint by design: tuning used
-# 20260821 / 770077, so every number reported in the paper comes from banks that
-# were never seen during fitting.
+# under research/v04/results/, and engine/build_manifest.py records their
+# checksums.  Seed banks are disjoint by design: fitting used base seeds
+# 20260821 (round 1), 770077 (round 2, superseded), 313131 (round 3) and 888111
+# (round 4); round 5's base seed was not captured in a committed script.  The
+# shipping configuration was selected on validation bank 1357911.  Every seed
+# below is disjoint from all of those, and the configuration was frozen before
+# any of them ran.
 set -uo pipefail
 cd "$(dirname "$0")"
 OUT=../research/v04/results
@@ -111,5 +115,38 @@ tail -1 "$OUT/E13-termination.jsonl"
 say "E14 value function"
 $BIN fitvalue --a="$V04" --b="$V04" --games=250 --seed=31415 > "$OUT/E14-valuefit.txt" 2> "$OUT/E14-valuefit-stats.txt"
 cat "$OUT/E14-valuefit-stats.txt"
+
+# --- E15 brute-force oracle for the exact reference engine -----------------
+# Exhaustive enumeration of the posterior on small reachable states, compared
+# against the block engine's Z, marginals, team-ownership and full allocation
+# probabilities, plus the sampler's frequencies.  Coverage (states skipped as
+# too large) is reported alongside the result.
+say "E15 brute-force oracle"
+$BIN oracle --games=150 --maxdeals=200000 --samples=3000 > "$OUT/E15-oracle.txt" 2>&1
+cat "$OUT/E15-oracle.txt"
+
+# --- E16 declaration pre-gate false-negative audit -------------------------
+# The two cheap gates that screen declaration candidates are not proved to be
+# upper bounds on the full evaluation.  Re-run the full evaluation on every
+# half-suit they reject, over the primary evaluation bank, and count how often
+# the full rule would have declared one.
+say "E16 declaration pre-gate audit"
+$BIN gateaudit --games=700 --rotations=6 --seed=90210 \
+  --panel=v03,lockout,detective,v02,diversifier,hunter,bluffer,random \
+  > "$OUT/E16-gateaudit.txt" 2>&1
+cat "$OUT/E16-gateaudit.txt"
+
+# --- E17 simultaneous-declaration arbitration sensitivity ------------------
+# Arbitration between simultaneous voluntary declarations is a modelling choice,
+# not a rule.  Replay the primary bank under three orders.
+say "E17 declaration arbitration"
+: > "$OUT/E17-arbitration.jsonl"
+for arb in low high turn; do
+  for opp in v03 lockout detective; do
+    $BIN match --a="$V04" --b=$opp --games=700 --rotations=6 --seed=90210 --arb=$arb --json --threads=$THREADS \
+      | sed "s/^{/{\"arb\":\"$arb\",/" >> "$OUT/E17-arbitration.jsonl"
+    echo >> "$OUT/E17-arbitration.jsonl"
+  done
+done
 
 echo "done"

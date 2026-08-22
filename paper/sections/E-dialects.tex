@@ -1,0 +1,231 @@
+\section{Population, rules-dialect and arbitration results}
+\label{app:dialects}
+
+
+\subsection{The round-robin population matrix}
+\label{app:pop-matrix}
+
+Table~\ref{tab:elo} in \S\ref{sec:results-pop} summarises the round-robin as
+Bradley--Terry ratings. Table~\ref{tab:matrix} gives the win rates the ratings
+were fitted to, so that a reader can check any individual pairing rather than
+taking the rating on trust --- which matters, because Bradley--Terry ratings are
+not redundancy-invariant and cannot represent cycles \cite{balduzzi-reeval}.
+
+\begin{table}[!htbp]
+\centering
+\caption{Primary head-to-head (E3). Population: \numHtHDeals{} held-out deals in
+all six seat rotations, \numHtHGames{} games per row, seed $90210$, full rules
+dialect, \vfast{} frozen at the shipping configuration before the bank was run,
+against the eight-policy panel. Intervals: deal-clustered percentile bootstrap on
+the per-deal win count, \numBootstrapDraws{} resamples. ``Mean half-suits'' is
+half-suits won of nine; the two declaration columns count \emph{voluntary}
+declarations only, forced endgame declarations being tallied separately in the
+run artifact and not shown here (\S\ref{sec:protocol-metrics}). Action-limit rate
+\numLimitRate{} on every row.}
+\label{tab:h2h}
+\small
+\input{tables/headtohead}
+\end{table}
+
+\numWorstCase\% is the \emph{lowest} win rate \vfast{} recorded against any
+member of this eight-policy panel, on this bank, under this rules dialect and
+under the default arbitration order of \S\ref{sec:rules}, two alternatives to
+which put it slightly lower (\S\ref{sec:robustness}). It is not a claim about
+arbitrary opponents. Deals were held out from fitting and selection, opponent
+identities mostly were not --- six of the eight panel members were also in the
+fitting panel, only the misdirection artist and the random legal control were
+withheld (\S\ref{sec:protocol-seeds}) --- so these experiments measure
+generalisation to new deals and only weakly to new strategic populations. That
+scoping governs every result in this section and is not repeated at each one. For
+scale, \vthree{}'s worst published result against its three credible challengers
+was \numVthreeWorstPublished\% \cite{fishbot03}.
+
+The margin is concentrated in declaration reliability rather than in ask
+conversion. Against the turn-starvation lockout \vfast{} converts the lowest
+fraction of asks in the panel (\numVsLockoutAskAcc\%) and still wins by a wider
+margin (\numVsLockout\%) than against the comparably strong \vthree{}
+(\numVsVthree\%, ask accuracy \numVsVthreeAskAcc\%) and posterior detective
+(\numVsDetective\%), while declaring correctly \numVsVthreeDeclAcc\% of the time
+on games where \vthree{} manages \numVthreeDeclAccSame\%. Every incorrect
+declaration awards the half-suit to the opposing team in this dialect, so a
+policy that converts fewer asks can still win by giving away fewer half-suits.
+This describes where the observed margin sits; it is not a causal decomposition,
+and \S\ref{sec:ablations} reports what the frozen-policy ablations do and do not
+establish about the components involved. \vfast{} also uses the out-of-turn rule
+heavily, \numVsVthreeOOT{} declarations out of turn per game against \vthree{};
+\S\ref{sec:robustness} reports how the margin moves without it.
+
+\subsection{Population ratings}
+\label{sec:results-pop}
+
+\begin{table}[!htbp]
+\centering
+\caption{Bradley--Terry ratings (E4) in Elo with \vthree{} at zero. Population:
+the round-robin of Table~\ref{tab:matrix} --- \numMatrixDeals{} deals in six seat
+rotations, \numMatrixGamesPair{} games per ordered pair, seed $515151$, nine
+policies, all weights frozen. The mean win-rate column averages over the row's
+opponents. Ratings are point estimates fitted to the full matrix; no intervals
+are constructed for them.}
+\label{tab:elo}
+\small
+\input{tables/elo}
+\end{table}
+
+\begin{table}[!htbp]
+\centering
+\caption{Round-robin win rates (E4), row policy against column policy, per cent.
+Population: \numMatrixDeals{} deals in all six seat rotations for every ordered
+pair, seed $515151$, full rules dialect, all weights frozen. Each cell pools both
+orderings, so a cell is \numMatrixGamesCell{} games, \numMatrixGamesPair{} per
+ordered pair. Cells are point estimates; no intervals per cell.}
+\label{tab:matrix}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\input{tables/matrix}
+\end{table}
+
+
+\subsection{Validating the ported \vthree{} baseline}
+\label{app:port}
+
+Every comparison in this paper is against a re-implementation of \vthree{} in the
+v0.4 engine, so that re-implementation has to be shown faithful before its scores
+mean anything. Table~\ref{tab:port} replays it under the v0.3 rules dialect on
+the v0.3 seed bank and compares against the published figures.
+
+\begin{table}[!htbp]
+\centering
+\caption{\vthree{} as published \cite{fishbot03} versus the C++ port. Population:
+\numPortDeals{} deals in two orientations, \numPortGames{} games per row, seed
+$20260820$, v0.3 dialect, the seven opponents of the v0.3 study, ported weights
+frozen. Intervals: deal-clustered percentile bootstrap on the port's win rate,
+\numBootstrapDraws{} resamples.}
+\label{tab:port}
+\small
+\input{tables/port}
+\end{table}
+
+The engine implements every consequential rule choice of \S\ref{sec:rules} as a
+switch, so the same frozen \vfast{} configuration can be replayed under other
+dialects and under other resolutions of simultaneous voluntary declarations
+without recompiling or refitting. This appendix reports both sweeps. Neither is
+a claim about which dialect is correct; both are sensitivity analyses on the
+modelling choices the main results are conditioned on.
+
+\subsection{Rules dialects}
+\label{app:dialects-rules}
+
+\begin{table}[ht]
+\centering
+\caption{E7: the frozen \vfast{} configuration (\texttt{v04:mgate=0.008}, the
+\numParams{}-coordinate fitted vector unchanged, no refitting) replayed under
+three rules dialects against three opponents. Each cell is \numEsevenDeals{}
+deals played in six seat rotations, \numEsevenGames{} games; seeds 828282 (v0.3
+dialect), 838383 (48-card, eight-half-suit form) and 848484 (out-of-turn
+declarations disabled), all disjoint from the fitting and selection banks.
+``Win rate'' is \vfast{}'s share of games won; intervals are deal-clustered
+percentile bootstrap, the 2.5\% and 97.5\% percentiles of \numBootstrapDraws{}
+resamples of deals. Every row recorded an action-limit rate of \numLimitRate.
+The full-dialect comparators quoted in the text come from E3
+(Table~\ref{tab:h2h}), which is a different bank (\numHtHDeals{} deals, seed
+90210), so the comparison is across banks as well as across dialects.}
+\label{tab:rules}
+\small
+\input{tables/rules}
+\end{table}
+
+Table~\ref{tab:rules} shows that the size of the margin depends on the dialect,
+and that the dependence is not in the same direction for every opponent.
+
+Against \vthree{}, the margin is most sensitive to the declaration timing rules.
+Under the v0.3 dialect, in which a player may declare only on their own turn,
+\vfast{} wins \numEsevenVthreeLegacy\% (95\% deal-clustered percentile-bootstrap
+interval \numEsevenVthreeLegacyCI). Under the full dialect with out-of-turn
+declarations disabled but everything else intact it wins
+\numEsevenVthreeNoOOT\% (\numEsevenVthreeNoOOTCI). Both are below the
+\numVsVthree\% recorded under the full dialect in E3. The 48-card,
+eight-half-suit form gives \numEsevenVthreeEight\% (\numEsevenVthreeEightCI).
+
+Against the turn-starvation lockout the ordering is different. Disabling
+out-of-turn declarations raises the margin to \numEsevenLockoutNoOOT\%, above
+the \numVsLockout\% of E3, while the v0.3 dialect gives
+\numEsevenLockoutLegacy\% and the 48-card form gives \numEsevenLockoutEight\%,
+the lowest of the three. Against the posterior detective the v0.3 dialect gives
+the highest of the three figures, \numEsevenDetectiveLegacy\%, against
+\numVsDetective\% under the full dialect in E3; disabling out-of-turn
+declarations gives \numEsevenDetectiveNoOOT\% and the 48-card form
+\numEsevenDetectiveEight\%. The interval for each of these six cells is in
+Table~\ref{tab:rules} and is a deal-clustered percentile bootstrap on the same
+construction.
+
+Two quantities do not move across the sweep. No cell in E7 recorded an
+action-limit game: on these three banks, under the graduated forcing rule of
+\S\ref{sec:locked}, every game terminated through play. That is a measurement on
+\numEsevenGames{} games per cell, not a termination guarantee, and it does not
+extend to dialects or configurations outside the three tested here
+(\S\ref{sec:termination}). And \vfast{} retains a substantial margin in every
+cell: the smallest figure in the table is \numEsevenVthreeLegacy\%. The dialect
+changes the size of the margin, not its sign, over the three dialects and three
+opponents tested. We do not attempt to explain the opponent-specific orderings;
+disentangling them would require an experiment that varies one rule at a time
+against a policy whose response to that rule is independently characterised,
+which E7 does not do.
+
+\subsection{Simultaneous-declaration arbitration}
+\label{app:dialects-arb}
+
+When more than one player would offer a declaration at the same declaration
+opportunity, the driver must choose one. The shipped choice is the lowest seat
+index. This is a modelling decision rather than a rule of the game, and the
+main results are conditioned on it, so E17 replays the primary bank under all
+three orders the engine supports: lowest seat index (\texttt{-{}-arb=low}, the
+default), highest seat index (\texttt{-{}-arb=high}) and a scan beginning from
+the current turn-holder (\texttt{-{}-arb=turn}).
+
+\begin{table}[ht]
+\centering
+\caption{E17: sensitivity of the primary head-to-head results to the order in
+which simultaneous voluntary declarations are arbitrated. The frozen \vfast{}
+configuration (\texttt{v04:mgate=0.008}, no refitting) replayed against three
+opponents under three arbitration orders; \numEseventeenDeals{} deals played in
+six seat rotations, \numHtHGames{} games per cell, seed 90210, full dialect.
+``Win rate'' is \vfast{}'s share of games won; intervals are deal-clustered
+percentile bootstrap, the 2.5\% and 97.5\% percentiles of \numBootstrapDraws{}
+resamples of deals. The last column is \vfast{}'s out-of-turn declarations per
+game. The lowest-seat rows are the shipped configuration and coincide with
+Table~\ref{tab:h2h}.}
+\label{tab:arbitration}
+\small
+\input{tables/arbitration}
+\end{table}
+
+Across the nine cells of Table~\ref{tab:arbitration} the win rate moves by at
+most \numArbMaxMove{} percentage points, and every deal-clustered
+percentile-bootstrap interval overlaps the corresponding intervals under the
+other two orders. Against \vthree{} the three orders give \numVsVthree\%,
+\numArbHighVthree\% and \numArbTurnVthree\%; against the lockout,
+\numVsLockout\%, \numArbHighLockout\% and \numArbTurnLockout\%; against the
+detective, \numVsDetective\%, \numArbHighDetective\% and
+\numArbTurnDetective\%. Declarations per game are unchanged to the reported
+precision under all three orders (Table~\ref{tab:arbitration}).
+
+The one quantity that does move is the rate of out-of-turn declarations. Under
+either seat-index order it is between \numArbOOTSeatLo{} and
+\numArbOOTSeatHi{} per game; under the scan from the turn-holder it falls to
+between \numArbOOTTurnLo{} and \numArbOOTTurnHi{}. That is the expected
+consequence of the change --- the turn-holder is examined first and, when it
+also offers a declaration, resolves the opportunity in turn rather than out of
+turn --- and it is a change in how declarations are labelled at least as much as
+a change in which declarations happen, since the total declaration rate is
+unchanged.
+
+The reported margins are therefore not an artifact of the arbitration order.
+Two limits on that statement should be kept in view. Only three orders were
+tested, all of them deterministic functions of seat index or turn position; a
+randomised tie-break, or an order that depends on the game state in some other
+way, was not run. And one candidate order was deliberately excluded: ranking
+simultaneous declarers by their stated confidence in their own allocation. That
+rule would compare private quantities across seats, so it would let the
+arbitration mechanism act as a channel through which one player's belief
+influences the outcome of another player's decision, and the resulting simulator
+would no longer satisfy the information-safety property audited in E1.

@@ -1,10 +1,11 @@
 # FishLab
 
 FishLab is a Canadian Fish simulation and research workbench. The current agent
-is **FishBot v0.4**, built on an exact posterior over the initial deal and a
-declaration rule derived from optimal stopping; it lives in the C++ engine under
-`engine/`. The browser lab (`app/`, `lib/fish-engine.ts`) hosts the earlier v0.3
-population and the interactive replay.
+is **FishBot v0.4**, which combines an exact observer-conditioned posterior over
+the initial deal — used as a reference and validation oracle — with a faster
+approximate inference path that the deployed policy runs. It lives in the C++
+engine under `engine/`. The browser lab (`app/`, `lib/fish-engine.ts`) hosts the
+earlier v0.3 population and the interactive replay.
 
 ## FishBot v0.4 (current)
 
@@ -12,17 +13,47 @@ Because every card movement in Fish is public, the entire hidden state is the
 initial deal. That makes the posterior exactly computable, including the
 certificate that an ask carries about the asker's own hand, and it yields a
 theorem: a half-suit held entirely by one team can never be asked in by the
-other, so it can never be taken back, so waiting to claim it is free. See
-`docs/FISHBOT_V04.md` for the specification and `paper/fishbot_v04.tex` for the
-full study.
+other, so its ownership can never change, so waiting to claim it carries no
+ownership risk.
+
+Two configurations are distinguished throughout:
+
+- **v0.4-Fast** — the default, deployed and primarily evaluated policy
+  (`BeliefMode::Fast`). Every reported performance number is this one.
+- **v0.4-Block** — the same fitted policy with the exact reference belief
+  substituted (`v04:belief=block`). It validates the probabilities and serves as
+  an ablation; it does not run in the inner loop.
+
+See `docs/FISHBOT_V04.md` for the specification and `paper/fishbot_v04.tex` for
+the full study.
 
 ```bash
 cd engine && make
-./fish verify   --games=600                     # rules + belief soundness audit
-./fish selftest --games=40                      # exact vs exact vs sampled posteriors
+./fish verify    --games=600                    # rules + belief soundness audit
+./fish selftest  --games=40                     # reference engine vs card DP vs sampling
+./fish oracle    --games=150                    # brute-force allocation oracle
+./fish gateaudit --games=700 --rotations=6      # declaration pre-gate false-negative audit
 ./fish match --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210
 ./experiments.sh                                # the full battery
+python3 build_manifest.py                       # artifact checksums + MANIFEST.json
 ```
+
+## Play it yourself
+
+`fish serve` opens a browser table where any mix of humans and bots takes the six
+seats. It is the same `Game` driver every published number came from — a human
+seat is just another `Agent` — so what you are playing is the deployed policy,
+not a reimplementation of it.
+
+```bash
+cd engine && make
+./fish serve                                    # then open http://127.0.0.1:8173
+```
+
+Pick a policy per seat, tick the seats you want to play yourself, and deal.
+Presets cover you plus two v0.4 teammates against three v0.4s, and you plus two
+v0.3 teammates against three v0.4s. You are sent your own hand and the public
+event stream and nothing else. See `docs/PLAY.md`.
 
 ## Run locally
 

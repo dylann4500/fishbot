@@ -1,89 +1,92 @@
 \section{Introduction}
 
-Canadian Fish --- Literature in most of the published literature --- is a
-six-player, two-team card game of imperfect information. On your turn you name a
-card and an opponent; if they hold it you take it and continue, and if they do
-not, the turn is theirs. At any moment either team may claim a half-suit by
-naming which teammate holds each of its six cards, and any error in that claim
-hands the half-suit to the opponents. Everything that happens is public.
+Canadian Fish, also called Literature, is a six-player card game of imperfect
+information: two teams of three, the whole deck dealt out. On turn a player names
+a card and an opponent; if the opponent holds it the card transfers and the
+asker continues, otherwise the turn passes to the opponent asked. Cards taken
+this way score nothing. A team scores only by declaring --- naming one half-suit
+and stating which of its own members holds each of the six cards --- a correct
+declaration awarding the half-suit to the declaring team and an incorrect one to
+the opponents. Teammates may not communicate outside the record of play, so a
+declaration must be assembled from what asking has revealed. \S\ref{sec:rules}
+specifies every consequential rule choice in the dialect studied: the 54-card
+deck of nine six-card half-suits, the requirement that an asker hold another card
+of the half-suit asked in, and declaration at any moment, including out of turn.
+Partial knowledge of where cards sit is worth nothing at the moment of
+declaration: what a team needs is the probability that one complete six-card
+assignment is correct, and a probability that is high but wrong transfers the
+half-suit to the other side.
 
-The game has almost no computational literature. There is no arXiv paper on it,
-no engine, and one open-source learning agent that plays a different variant.
-That absence is not because the game is easy: it has six players, two teams that
-cannot communicate, an information set of astronomical size, and a horizon of
-sixty to a hundred and twenty decisions. It is closer to Bridge or Skat than to
-anything solved.
+This paper asks how close to exact that quantity can be brought, what it costs to
+compute, and what a policy built on it gains. Cards in Fish move only through
+publicly observed transfers, so a card whose location has never been revealed is
+still held by the player who was dealt it, and the hidden state of the game is
+exactly the initial deal (Proposition~\ref{prop:transfer}). Conditioning on the
+public record is then a counting problem over deals, and that count is what an
+observer-conditioned deal posterior requires (\S\ref{sec:belief}).
 
-FishBot v0.3 \cite{fishbot03} was the first serious attempt: a transparent
-one-ply utility policy over an approximate posterior, fitted on 126{,}600
-simulated games and evaluated on held-out seeds. It established that remembering
-public asks and reconciling them against card counts dominate everything else,
-and it left three things open --- an approximate belief model, a confidence
-threshold in place of a declaration policy, and a simulator that did not
-implement the rule allowing a claim at any moment.
-
-This paper closes all three. The route runs through one structural observation.
-
-\begin{quote}
-\emph{Cards in Fish move only through publicly observed transfers. Therefore a
-card whose location has never been revealed is still with whoever was dealt it,
-and the entire hidden state of the game is the initial deal.}
-\end{quote}
-
-The consequences are unusually strong. Inference becomes a degree-constrained
-counting problem over a capacity vector, which we solve exactly --- exact
-marginals, exact probabilities for a named allocation, and rejection-free
-sampling --- for a few hundred thousand arithmetic operations
-(\S\ref{sec:belief}). The one constraint that resists a product form, the
-certificate that an ask carries about the asker's own hand, is confined to a
-single half-suit and can therefore be enumerated inside it exactly rather than
-approximated. And a one-line reading of ask legality yields a strategic result
-that no previous agent implements: a half-suit held entirely by one team can
-never be asked in by the other, so it can never be taken back, so waiting to
-claim it is free (\S\ref{sec:theory}). Declaration stops being a threshold and
-becomes an optimal-stopping problem.
-
-\subsection*{Claims}
-
-This paper defends four bounded claims.
+\vthree{} \cite{fishbot03} approached the same game with a one-ply utility policy
+over an approximate posterior. It established that tracking the public ask record
+and reconciling it against hand sizes dominated the other features it tested, and
+left three things open: its posterior was approximate and was not validated
+against any exact reference; its declaration decision was a fixed confidence
+threshold applied to an approximate allocation score; and its simulator did not
+implement declarations made outside the declarer's turn, which changes both the
+tempo of the game and what a player can wait for. This paper makes four
+contributions.
 
 \begin{enumerate}
-  \item \textbf{The exact posterior is computable and is computed.} Belief
-        marginals, the probability of a named allocation, and consistent deal
-        samples are exact with respect to every deduction the rules license, and
-        the implementation is validated against brute force, against an
-        independent dynamic program, and against exact rejection sampling.
-  \item \textbf{A half-suit held entirely by one team cannot be taken back}
-        (Theorem~\ref{thm:locked}), so declaration is optimal stopping rather
-        than a threshold. The agent that follows declares near-perfectly; we are
-        explicit in \S\ref{sec:ablations} that the ablations credit the exact
-        allocation probability rather than the stopping rule itself.
-  \item \textbf{FishBot v0.4 is the strongest policy in the tested population},
-        and --- the point of the exercise --- it is strongest against
-        \emph{every} member of that population, not merely on average.
-  \item \textbf{The forecasts it stops on are calibrated}, which is what makes
-        the third claim a statement about decision quality rather than about
-        one seed bank.
-  \item \textbf{It is much harder to counter than its predecessor.} An adversary
-        fitted specifically to beat it, in the same policy class and with the
-        same optimiser and budget, does not reach 50\% against it; the identical
-        procedure beats FishBot v0.3 comfortably. This is a lower bound on
-        exploitability rather than a bound, and we say so, but the comparison
-        between the two figures is the meaningful part.
+  \item \textbf{A formalised rules dialect, an information-safe engine, and the
+        constraints the record imposes.} We specify the dialect
+        (\S\ref{sec:rules}) and implement it in a simulator whose agent interface
+        exposes only what a seated player may observe, audited at runtime. We
+        state the constraint system C1--C5 --- hand sizes, cards whose holder is
+        known, voids established by failed asks, and the certificate an ask
+        carries about the asker's own hand --- that the public record places on
+        the initial deal.
+  \item \textbf{An exact observer-conditioned deal posterior, together with the
+        approximation the deployed policy runs.} We evaluate in closed form the
+        number of deals consistent with C1--C5, the per-card ownership marginals,
+        the probability that a team holds a half-suit outright and the
+        probability that a named allocation is correct, validated against a
+        brute-force enumeration oracle on small reachable states
+        (\S\ref{sec:results-verify}). The deployed \vfast{} policy runs a cheaper
+        fitted approximation instead; the exact engine serves as a reference and
+        validation oracle, and \vblock{} denotes the same fitted policy with the
+        reference belief substituted.
+  \item \textbf{An analysis of locked half-suits and a value-based declaration
+        rule.} We characterise half-suits one team already holds in full and
+        derive what ask legality implies about them, then build a declaration
+        timing rule on the allocation probability and a fitted value model rather
+        than a fixed confidence threshold (\S\ref{sec:locked}).
+  \item \textbf{A duplicate-controlled empirical evaluation.} Every deal on the
+        primary bank is played in all six seat rotations, with intervals
+        clustered on the deal; the frozen-policy ablations use a weaker
+        two-rotation block for budget reasons, and say so (\S\ref{sec:protocol}).
+        The protocol also covers calibration of the ask and allocation forecasts
+        and a local response probe fitted against the frozen policy. On that bank
+        --- \numHtHDeals{} held-out deals in six rotations, \numHtHGames{} games
+        (E3) --- \vfast{} defeated \vthree{} in \numVsVthreeWins{} games, a
+        \numVsVthree\% win rate with a deal-clustered 95\% interval of
+        \numVsVthreeCI\%.
 \end{enumerate}
 
-A sixth result was not among the claims we set out to make and is reported
-because it is a fact about the game rather than about the agent: because a
-half-suit frozen by Theorem~\ref{thm:locked} also admits no further information
-about itself, two policies that both correctly decline to cash an uncertain one
-deadlock permanently, and the rules as usually stated therefore do not guarantee
-termination against deterministic play (\S\ref{sec:termination}).
+Termination is a secondary empirical observation, not a theorem: ownership of a
+half-suit freezes once one team holds all six of its cards, but asks inside it
+stay legal and still carry ask-legality certificates, so allocation information
+can change while ownership cannot, and ownership monotonicity alone proves
+nothing about termination. In mirror self-play an earlier fitted configuration
+with no forcing rule reached the action cap without finishing in
+\numMirrorCycle\% of games, at both the 400-ask and the 1000-ask cap (E11),
+against zero under the graduated escalation rule the deployed policy uses;
+\S\ref{sec:locked} states what a general result would require.
 
-This paper does not claim a Nash or team equilibrium, an exploitability bound, or
-that Fish is solved. \S\ref{sec:limitations} is explicit about what remains, including
-the one caveat that most constrains the word ``exact'': the posterior is exact
-with respect to the \emph{rules}, and a fully Bayesian agent would additionally
-weight deals by how likely the observed actions are under each opponent's
-particular playstyle. We implement that correction, fit it, and report that it
-adds nothing once the rule-based certificates are enforced --- which is evidence
-about this population rather than a general theorem.
+This paper claims no Nash or team equilibrium, reports no exploitability bound,
+and does not claim that Fish is solved. The term ``held-out'' refers to deals
+except where \S\ref{sec:fitting} applies it to opponent identities: the
+evaluation deals were withheld from fitting and from configuration selection, but
+opponent identities largely were not. Six of the eight evaluation-panel policies
+were also in the fitting panel, and only the misdirection artist and the random
+legal control were withheld, so the experiments measure generalisation to new
+deals rather than to new strategic populations. \S\ref{sec:limitations} organises
+these and the remaining threats to validity.

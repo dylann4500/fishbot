@@ -1,25 +1,28 @@
-\begin{tabular}{lrrr}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.40\linewidth}rrr@{}}
 \toprule
-Change & Win rate & Full $-$ ablated & 95\% paired CI \\
+Group & Change (policy weights frozen) & Win rate & Full $-$ ablated & 95\% paired CI \\
 \midrule
-\emph{FishBot v0.4 (reference)} & 77.50\% & --- & --- \\
-Drop capacity conditioning as well (C4) & 21.48\% & +56.03 & +54.27--+57.75 \\
-Drop certificates and use plain Sinkhorn & 24.73\% & +52.78 & +50.98--+54.55 \\
-Drop ask-legality certificates (C5) & 28.60\% & +48.90 & +47.00--+50.78 \\
-Exact block posterior instead of the fast one & 71.30\% & +6.20 & +4.35--+8.05 \\
-Fast posterior with the policy prior off (matches block) & 73.62\% & +3.88 & +2.08--+5.73 \\
-Remove the fitted soft policy prior & 73.62\% & +3.88 & +2.08--+5.73 \\
-Zero the lock-completion weight & 74.30\% & +3.20 & +1.55--+4.85 \\
-Zero the hit-probability weight & 75.95\% & +1.55 & -0.25--+3.35 \\
-Remove the exact two-ply refinement & 76.28\% & +1.23 & -0.53--+3.05 \\
-Declaration threshold 0.99 & 77.30\% & +0.20 & -0.20--+0.60 \\
-Choose the allocation by conditioned greedy MAP & 77.33\% & +0.18 & -0.12--+0.47 \\
-Threshold declarations instead of optimal stopping & 77.38\% & +0.12 & -1.23--+1.47 \\
-Zero both information-leak weights & 77.38\% & +0.12 & -1.38--+1.65 \\
-Declaration threshold 0.80 & 77.48\% & +0.03 & -0.18--+0.22 \\
-Cash locked half-suits immediately & 77.50\% & +0.00 & +0.00--+0.00 \\
-Remove the one-ply value lookahead & 77.83\% & -0.33 & -1.88--+1.23 \\
-Zero the reply-threat weight & 77.85\% & -0.35 & -1.98--+1.27 \\
-Zero the runway weight & 77.85\% & -0.35 & -1.65--+0.97 \\
+& \emph{\vfast{} (reference configuration)} & 77.50\% & --- & --- \\
+\midrule
+Belief & Drop capacities (C4) and the certificates (C5) and the prior; uniform over the surviving support & 21.48\% & +56.03 & +54.27--+57.75 \\
+ & Drop the certificates (C5) and the prior; Sinkhorn over C1--C4 & 24.73\% & +52.78 & +50.98--+54.55 \\
+ & Drop the certificates (C5) and the prior; exact capacity dynamic program over C1--C4 & 28.60\% & +48.90 & +47.00--+50.78 \\
+ & \vblock{} belief substituted into the Fast-fitted policy (exact C1--C5, no prior) & 71.30\% & +6.20 & +4.35--+8.05 \\
+ & Fast belief with the policy prior off (matches the reference engine's prior-free belief) & 73.62\% & +3.88 & +2.08--+5.73 \\
+ & Remove the fitted policy-aware prior & 73.62\% & +3.88 & +2.08--+5.73 \\
+\addlinespace
+Ask & Zero the lock-completion weight & 74.30\% & +3.20 & +1.55--+4.85 \\
+ & Zero the hit-probability weight & 75.95\% & +1.55 & -0.25--+3.35 \\
+ & Remove the two-ply refinement & 76.28\% & +1.23 & -0.53--+3.05 \\
+ & Zero both information-leak weights & 77.38\% & +0.12 & -1.38--+1.65 \\
+ & Remove the one-ply value lookahead & 77.83\% & -0.33 & -1.88--+1.23 \\
+ & Zero the reply-threat weight & 77.85\% & -0.35 & -1.98--+1.27 \\
+ & Zero the runway weight & 77.85\% & -0.35 & -1.65--+0.97 \\
+\addlinespace
+Declaration & Declaration threshold 0.99 & 77.30\% & +0.20 & -0.20--+0.60 \\
+ & Name the allocation by conditioned greedy MAP & 77.33\% & +0.18 & -0.12--+0.47 \\
+ & Fixed threshold in place of the value-based stopping rule & 77.38\% & +0.12 & -1.23--+1.47 \\
+ & Declaration threshold 0.80 & 77.48\% & +0.03 & -0.18--+0.22 \\
+ & Cash locked half-suits immediately (inert while the stopping rule is active) & 77.50\% & +0.00 & +0.00--+0.00 \\
 \bottomrule
 \end{tabular}

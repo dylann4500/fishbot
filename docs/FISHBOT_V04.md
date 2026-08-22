@@ -12,7 +12,7 @@ teammates. It is implemented in `engine/src/v04.hpp`; the belief engines are in
 |---|---|---|
 | Rules | declarations only on your own turn; adjudication after an action cap | declarations at any moment; chosen successor on a turn gift; willingness-only endgame negotiation |
 | Belief | Sinkhorn scaling over soft ask-count weights | exact posterior over the initial deal, including ask-legality certificates |
-| Declaration | fixed confidence threshold on a geometric mean of per-card marginals | optimal stopping against a fitted value function, on the exact joint probability of the named allocation |
+| Declaration | fixed confidence threshold on a geometric mean of per-card marginals | value-based stopping rule against a fitted value function, on the joint probability of the named allocation |
 | Ask rule | 8 hand-set terms | 20 normalised features plus a one-ply expectimax, all fitted |
 | Evaluation | two-orientation swap, Wilson intervals | six-rotation duplicate blocks, cluster bootstrap over deals |
 
@@ -53,20 +53,32 @@ to one half-suit. Half-suits with a live certificate are enumerated exhaustively
 `g_S(t)`; the dynamic program then runs over blocks instead of cards. This
 yields, with no sampling:
 
-- `mu[c][p]` — exact per-card ownership;
-- `P(allocation A) = S_{t(A)} / Z` — the declaration query, which is a joint
-  probability, not a product of marginals;
+- `mu[c][p]` — exact per-card ownership marginals;
+- `P(allocation A) = S_{t(A)} / Z` for a **surviving** allocation — the
+  declaration query, which is a joint probability, not a product of marginals;
 - `P(team owns S)` — exact;
-- exact rejection-free deal sampling.
+- deal sampling that is rejection-free for C1–C4; with a live C5 certificate the
+  same sampler is used with an exact accept/reject test, so the combined
+  procedure is exact but not rejection-free.
 
-A consequence: under the uniform prior every surviving allocation sharing a
+A consequence: under the uniform prior every **surviving** allocation sharing a
 count vector has identical probability, so the MAP allocation is fixed by the
-count vector alone.
+count vector alone. An allocation whose count vector survives but which itself
+violates a certificate has probability zero, so survival has to be checked.
 
-A fast approximation (Sinkhorn fitting of C4 on the exact support of C1–C3,
-interleaved with an independence-conditioning step for C5) is used for
-large-scale fitting; its measured marginal error is small on average with a
-heavy tail, and the two are compared as an ablation.
+All four quantities are validated against exhaustive enumeration by
+`./fish oracle` (see `research/v04/results/E15-oracle.txt`), on small reachable
+states; larger states are skipped and the number skipped is reported.
+
+### The deployed path
+
+`BeliefMode::Fast` is the **default**, and it is what every reported performance
+number was produced with. It keeps the exact constraint bookkeeping of C1–C3 and
+the exact capacities of C4, fits them by Sinkhorn scaling, and interleaves an
+independence-conditioning step for C5. Measured marginal error against the
+reference engine is 0.017 mean, 0.498 max. The exact reference engine
+(`belief=block`) validates the probabilities and serves as an ablation; it runs
+about 14× slower in whole-game throughput and is not in the inner loop.
 
 ## The locked half-suit theorem
 
@@ -75,14 +87,23 @@ it — asking requires holding another card of that half-suit, and they hold non
 The half-suit is frozen until claimed. Therefore:
 
 - the "steal" risk of waiting is exactly zero for a locked half-suit;
-- the allocation probability can only improve;
+- the *support* of surviving allocations is non-increasing, though the
+  probability of the true allocation is not monotone;
 - the only costs of holding are positional — the six cards license no productive
-  ask, and a hand of locked cards makes your turn worthless;
+  ask, and a hand of locked cards makes your turn worth little;
 - and the only cost of claiming is information: the announced split resolves six
   cards that were absorbing probability mass in the opponents' counting.
 
-Declaration is therefore an optimal-stopping problem, decided against a fitted
-value function, with cashing valves that guarantee termination.
+Note what the theorem does **not** say. Asks inside a locked half-suit remain
+legal for the owning team and still carry C5 certificates, so allocation
+information about it can continue to arrive even though ownership cannot change.
+Ownership monotonicity alone therefore does not establish that such a position is
+informationally frozen.
+
+Declaration is decided by a **value-based stopping rule** against a fitted value
+function, with cashing valves that force termination. The frozen-policy ablation
+does not resolve a benefit for that rule over a fixed threshold (+0.12 points,
+95% paired CI −1.23 to +1.47), so the formulation is not claimed to be optimal.
 
 ## Ask rule
 
@@ -92,8 +113,9 @@ over 20 normalised features (hit probability and its square, certainty, own
 progress, team control, lock completion, continuation, completion, reply threat,
 information leak, target hand size, emptying the target, repeated half-suit,
 known team cards, entropy, team-owns, exposure, trailing pressure, runway, leak
-magnitude). The leading candidates are optionally re-scored with an exact
-posterior recomputation on each branch.
+magnitude). The leading candidates are optionally re-scored with a two-ply
+lookahead that recomputes the belief on each branch — with the **same Sinkhorn
+approximation** as the main path, so neither branch is exact.
 
 `V` is a linear value function over 16 public-belief-state features, ridge-fitted
 on self-play decision points and labelled with the final half-suit differential.
@@ -112,7 +134,20 @@ The misdirection artist, the random control and every rule variant are held out.
 
 ```bash
 cd engine && make
-./fish verify --games=600
-./fish selftest --games=40
-./experiments.sh
+./fish verify    --games=600                 # rules + information safety + belief soundness
+./fish selftest  --games=40                  # reference engine vs card DP vs exact sampling
+./fish oracle    --games=150                 # brute-force allocation oracle
+./fish gateaudit --games=700 --rotations=6   # declaration pre-gate false-negative audit
+./experiments.sh                             # the full battery, E1–E17
+python3 build_manifest.py                    # artifact checksums + MANIFEST.json
 ```
+
+### Known gaps
+
+- The declaration pre-gates are pruning heuristics, not proved upper bounds.
+  `./fish gateaudit` measures the loss: 1,017 false negatives over 24.1M gate
+  rejections, changing the chosen action at 0.0101% of declaration opportunities.
+- The 16 value-function coefficients compiled into `V04Config::vw` are **not**
+  those in `research/v04/results/E14-valuefit.txt`; `freeze_config.py` writes only
+  the 34 policy parameters.
+- Round 5's fitting base seed was not captured in a committed script.

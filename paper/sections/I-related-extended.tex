@@ -1,0 +1,254 @@
+\section{Extended related work}
+\label{app:related}
+
+This appendix records background that informed the design but that the main
+argument does not depend on. Nothing here is used to support a result in
+\S\ref{sec:results}; readers who want only the load-bearing literature should
+read \S\ref{sec:related} and stop there.
+
+\subsection{Further informal sources on the game}
+
+Beyond Pagat \cite{pagat} and Develin \cite{develin}, the descriptive corpus
+is thin. Pagat's tactics list covers deliberate misses that inform a partner,
+locking out a dangerous opponent by never asking them anything, and exhausting
+one rank across all opponents before switching rank; it also records a
+partner-signalling convention and a ``Forced Claims'' rule, both attributed to
+named contributors. Develin's chapter contains the corpus's only quantitative
+endgame discussion, in which the alternative to a coin-flip declaration would
+need a success probability greater than one. The Wikipedia entry
+\cite{wikiliterature} names the ``stalemate breaker'', and secondary strategy
+pages \cite{dorsa,strategy-site} restate blackballing, asking the asker, and
+an endgame delegation heuristic. We use these as evidence about how the game
+is played and talked about, not as sources of quantitative claims. The two
+substantial sources also disagree with each other on this point: Develin's
+chapter forbids pre-agreed conventions outright, where Pagat records a
+partner-signalling convention as an accepted tactic.
+
+On Somani's agent \cite{somani,somani-server}: it is a Python implementation
+with a complete rules engine and a sound deduction fixed point, and the
+four-player, 48-card variant it implements makes the declaration problem
+structurally easier than the one studied here. With a single teammate, naming
+the allocation of a six-card half-suit ranges over $2^6$ possibilities and is
+frequently forced by the deduction fixed point; with two teammates it ranges
+over $3^6 = 729$, and the allocation question stops being a formality. The
+published learner regresses a hand-written per-outcome score rather than a
+terminal game result, which penalises the deliberate miss that both Pagat and
+Develin recommend, and its move generator excludes known misses except as a
+fallback. Reading the published source, the terminal comparison that would
+supply the win/loss signal tests an integer team identity against an enumeration
+member, so it never succeeds; on that reading every move in every training game
+receives the losing reward and the released model never saw a win/loss gradient,
+which would make it a greedy maximum-likelihood asker rather than a learner of
+the game's objective. We record this as a reading of the source rather than as a
+reproduction: we did not run the training. No strength numbers have been
+published for it, so it is not usable as a baseline here in any case.
+
+One methodological caveat from the local-best-response literature bears directly
+on the probe of \S\ref{sec:lbr} and is recorded here because the probe does not
+address it. Lis\'y and Bowling report that restricting the point at which the
+response is allowed to deviate changes the measured exploitability substantially,
+so a single entry point understates it and the entry point has to be swept
+\cite{lisy-lbr}. Our response is fitted over the whole game with no sweep over
+where it may begin deviating, which is one of the reasons \S\ref{sec:lbr}'s
+figure is a lower bound rather than a bound.
+
+\subsection{Equilibrium computation}
+
+The equilibrium line runs from counterfactual regret minimisation
+\cite{zinkevich-cfr} through outcome- and external-sampling variants
+\cite{lanctot-mccfr}, CFR+ \cite{tammelin-cfrplus} and discounted CFR
+\cite{brown-dcfr} to function approximation
+\cite{brown-deepcfr,steinberger-dream}. Two properties of this family bear on
+Fish. CFR+ performs relatively poorly in games where some actions are very
+costly mistakes \cite{brown-dcfr}, and an incorrect declaration is exactly
+such an action; and DREAM's exploration term grows with depth
+\cite{steinberger-dream}, while a game in our dialect runs to
+\numEventsPerGame{} public events on average against \vthree{} in E3. Student
+of Games extends the belief-conditioned search line and identifies Scotland
+Yard as the closest published public-observation domain \cite{schmid-sog}. We
+did not attempt any of this.
+
+\subsection{Team-game complexity results}
+
+\S\ref{sec:related} names the target concept for a Fish team and states why we
+do not compute it; this subsection records the machinery that would be needed
+if one did. Celli and Gatti establish the complexity of the team-maxmin
+equilibrium with correlation and the worst-case cost of forgoing correlation
+\cite{celli-gatti}. Farina and coauthors connect ex-ante team collusion to
+extensive-form correlation \cite{farina-collusion}; the team belief DAG and
+the two-player conversion give a zero-sum game whose equilibria are
+realization-equivalent to a team-maxmin equilibrium with correlation
+\cite{zhang-tbdag,carminati-tpi}, at a representation cost exponential in how
+much private information distinguishes teammates inside a public state.
+Reductions to a continuous-state game over public beliefs \cite{brown-rebel},
+building on the common-information reduction of decentralised control
+\cite{nayyar-common}, are the other standard route. Learning-based attacks on
+team games exist \cite{mcaleer-teampsro,xu-fxp}; the fictitious-cross-play
+analysis proves that self-play converges to \emph{local} team equilibria
+\cite{xu-fxp}, which is the formal version of the informal complaint that a
+self-played agent's asks stop carrying meaning outside its own training
+population. Together with the information-set size quoted in
+\S\ref{sec:related}, these results are why this report makes no equilibrium
+claim of any kind.
+
+\subsection{Cooperative play through public actions}
+
+Hanabi is the reference benchmark for coordination through observable actions
+\cite{bard-hanabi}, and is relevant because Fish likewise has no side channel.
+The Bayesian Action Decoder made the public belief an explicit object of the
+policy \cite{foerster-bad}; the Simplified Action Decoder showed that letting
+teammates condition on the greedy rather than the exploratory action is a
+prerequisite for conventions to survive $\varepsilon$-greedy training
+\cite{hu-sad}; Other-Play demonstrated how much of a self-play score is
+convention rather than skill, with the same agents scoring far worse when
+paired across independent training runs \cite{hu-otherplay}; and Off-Belief
+Learning provides an explicit dial on convention depth together with a
+uniqueness result that makes independent runs interoperable \cite{hu-obl}.
+Test-time search over a fixed blueprint provides a further improvement
+\cite{lerer-sparta}. Bridge bidding is the other model system, an auction that
+is literally a learned language: bidding networks improved on a strong
+commercial program \cite{rong-bidding}, joint policy search --- which scores
+simultaneous changes at several information sets, which is what inventing a
+convention requires --- improved a system further \cite{tian-jps}, and
+training with human partners improved results again \cite{lockhart-bidding}.
+
+The asymmetry that separates Fish from both is the audience. Hanabi has no
+adversary, so every bit of signal is pure profit, and in bridge the harm done
+by a leaked auction is diffuse. In Fish a leaked card location is directly
+executable: once it is public that a player holds a card, any opponent holding
+another card of that half-suit can take it and keep the turn. The Hanabi
+construction that most clearly fails to port is the modular hat-guessing code,
+which works because each receiver sees every other receiver's hand and can
+subtract it \cite{cox-hanabi}; in Fish no player sees any hand. Any future
+claim that an agent has learned a convention would also have to survive the
+scramble ablation of \cite{lowe-pitfalls}, in which high speaker--listener
+consistency coexisted with no causal effect.
+
+\subsection{An informal secrecy argument}
+
+The following is an argument, not a theorem; we state it because it is the
+design rationale for building the agent with no private channel at all, and we
+have not proved it. Teammate and opponent hands are exchangeable given the
+public history. An absolute codebook --- one whose meaning is fixed by public
+information alone --- is therefore decoded identically by all five listeners,
+so with two teammates against three opponents the Wyner-style secrecy rate of
+such a convention is non-positive \cite{wyner,csiszar-korner}. Only a
+receiver-relative codebook, whose semantics depend on the receiver's own
+holdings, would have positive rate, and it pays for that with ambiguity at the
+encoder. The justification here is structural and informal: we give no proof,
+and none is claimed. Public-signalling economics predicts a similar outcome,
+with cheap talk separating before two audiences only when it is credible
+against both and otherwise collapsing toward pooling \cite{farrell-gibbons}.
+
+\subsection{Remaining determinization detail}
+
+\S\ref{sec:related} states that averaging perfect-information values over deals
+sampled from the public history collapses to a hit-probability heuristic in this
+game; the collapse is the following. Almost every reachable position carries the
+same perfect-information value, because the team on turn takes everything it can
+reach, so with $t$ ranging over opponents and $c$ over askable cards and $h$ the
+public history,
+\[
+  \arg\max_{(t,c)} \; \mathbb{E}\bigl[V^{\mathrm{PI}}(t,c)\bigr]
+  \;\approx\;
+  \arg\max_{(t,c)} \; \Pr[\,t \text{ holds } c \mid h\,].
+\]
+The right-hand side is one ply deep and blind to the information an ask leaks,
+the information a refusal supplies and the option value of postponing a
+declaration, which is why the hit probability enters \S\ref{sec:policy} as one
+feature among several rather than as an engine.
+
+Determinization for bridge was proposed well before it was made to work
+\cite{levy}, and constrained deal generation in practice is done by rejection:
+deal against suit-length restrictions, then discard deals whose auction the
+program's own bidding module would not have produced
+\cite{ginsberg-gib,pavlicek}. Frank and Basin named the two mechanisms that
+make the method unsound however many worlds are drawn: \emph{strategy fusion},
+in which the searcher plays a different strategy in each sampled world
+although a real player must commit to one strategy per information set, and
+\emph{non-locality}, in which a node's value depends on parts of the tree
+outside its own subtree \cite{frank-basin-ai}. Long, Sturtevant, Buro and
+Furtak characterise when determinization nevertheless performs well, through
+leaf correlation, bias and a disambiguation factor \cite{long-pimc}, and
+Information Set Monte Carlo Tree Search replaces the independent trees with a
+single tree over information sets, redeterminizing each iteration
+\cite{cowling-ismcts}. The repairs that work are those attacking non-locality
+as well as strategy fusion \cite{frank-basin-aaai}. Information Set Monte
+Carlo Tree Search has been extended by re-determinizing at non-root seats and
+by self-determinization, which allows a form of bluffing to emerge
+\cite{goodman-ris,cowling-bluffing}; it is nevertheless unsound, and its
+measured exploitability can \emph{increase} with additional computation
+\cite{lisy-oos}. A Spades post-mortem traced blunders to a sampler that placed
+a card of true probability $1/3$ into $87\%$ of its sampled worlds
+\cite{whitehouse-spades}, which is the failure mode our oracle test (E15) is
+designed to detect. One smaller result survives into our design: Go Fish sits
+at the maximum of Zuckerman, Felner and Kraus's Opponent Impact measure
+\cite{zuckerman-mpmix}, so the choice of which opponent to ask is a
+first-class decision rather than a tie-break, and our ask features treat it as
+one.
+
+\subsection{Sampling and history filtering}
+
+The matrix-scaling approximation \S\ref{sec:related} adopts for the Fast path
+carries a guarantee: the deterministic strongly polynomial analysis of Linial,
+Samorodnitsky and Wigderson bounds the permanent within a factor $e^n$
+\cite{lsw}. Of the permanent methods \S\ref{sec:related} sets aside, Ryser's
+inclusion--exclusion formula is exact in $O(2^n n)$ time \cite{ryser}, which
+is unusable at $n = 54$, and Glynn's sign-vector formula is the other exact
+method \cite{glynn}; the Jerrum--Sinclair--Vigoda chain is a fully polynomial
+randomised approximation scheme \cite{jsv} whose constants make it impractical
+at this scale, and a practical study measured it at tens of thousands of
+seconds on instances where Ryser's formula takes milliseconds
+\cite{newman-vardi}. Sequential importance sampling is the standard
+contingency-table alternative \cite{chen-sis}, with the documented warning
+that it can underestimate by an exponential factor under any row or column
+ordering while appearing to have converged \cite{bezakova-sis}. This is one
+reason \S\ref{sec:belief} uses a direct construction rather than an
+importance-weighted one. More generally, constructing a history consistent
+with a public state is FNP-complete in the worst case, and enumeration is
+polynomial only for sparse public trees \cite{solinas-history}; Fish escapes
+this because its public record determines every card movement, so the only
+object to be reconstructed is the initial deal.
+
+\subsection{Variance reduction, and why we do not use it}
+
+Poker supplies a family of control variates: advantage-sum estimators
+\cite{zinkevich-divat}, importance sampling over imaginary observations
+\cite{bowling-is}, MIVAT's least-squares value function \cite{white-mivat},
+and AIVAT \cite{burch-aivat,avaivat}. The reported gains are large in
+two-player settings and smaller in six-player ones, which is the closer
+analogue to our setting. We deliberately do not use AIVAT or MIVAT. AIVAT is
+unbiased for \emph{any} value function, which is a constraint on its
+expectation rather than on any realised estimate; \cite{kim-sandholm} tuned
+such a heuristic on a published six-player dataset until all fourteen players
+simultaneously appeared to be large winners, which the zero-sum structure
+makes impossible. A learned control variate fitted by us, on our own agent, on
+our own evaluation data, is the exact pathology this literature warns about,
+and the duplicate-block design of \S\ref{sec:protocol} already removes the
+largest part of deal variance without introducing a fitted estimator. That
+design is the standard remedy rather than a novel one: duplicate bridge
+replays each board with the same cards in the same seats, and the computer
+poker competition added common seeds across pairings for the same reason
+\cite{acpc}.
+
+\subsection{Rating systems and sequential testing}
+
+Bradley--Terry-style rating models \cite{coulom-whr,herbrich-trueskill} have
+two documented failure modes when the rated population is a training run's own
+checkpoints: they are not redundancy-invariant, so duplicating one agent
+redistributes every rating, and they cannot represent cyclic dominance.
+Maximum-entropy Nash averaging over the antisymmetric logit matrix
+\cite{balduzzi-reeval} and empirical-game response graphs
+\cite{omidshafiei-alpharank} are the proposed alternatives. We report
+Bradley--Terry ratings in \S\ref{sec:results-pop} as a compact summary of a
+fixed round-robin, not as a claim about a strategy space.
+
+Two further traps shaped \S\ref{sec:protocol}. Monitoring an interval computed
+for a fixed sample size and stopping when it looks favourable is not a test;
+in simulation this produced a false-positive rate far above nominal under the
+null \cite{avaivat}, which is why sequential designs on normalised Elo exist
+\cite{nelo}. Our seed banks are fixed in advance and reported at their planned
+size. Finally, refining an abstraction does not monotonically reduce
+exploitability \cite{waugh-abstraction}, which is the general form of the
+observation in \S\ref{sec:ablations} that substituting a more accurate belief
+into a policy fitted around a less accurate one does not improve it.

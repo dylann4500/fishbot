@@ -1,0 +1,213 @@
+{
+  "project": "FishBot v0.4",
+  "generated": "2026-08-21T13:40:17",
+  "commit": "bb3bc8afc92c848b421af87941c1a91de3bc5300",
+  "working_tree_dirty": true,
+  "policy_spec": "v04:mgate=0.008",
+  "belief_mode": "Fast (BeliefMode::Fast)",
+  "fitted_parameters": 34,
+  "ask_features": 20,
+  "value_features": 16,
+  "fitting_seeds_recorded": [
+    20260821,
+    770077,
+    313131,
+    888111
+  ],
+  "fitting_round5_seed": null,
+  "selection_seed": 1357911,
+  "selected_generation": 8,
+  "evaluation_seeds": {
+    "headtohead": 90210,
+    "matrix": 515151,
+    "ablations": 606060,
+    "calibration": 717171,
+    "dialects": [
+      828282,
+      838383,
+      848484
+    ],
+    "port": 20260820,
+    "unfitted_belief": 959595,
+    "termination": 464646,
+    "valuefit": 31415,
+    "oracle": 20260822,
+    "exploiter_fit": 515253,
+    "exploiter_eval": 6543210,
+    "gateaudit": 90210,
+    "arbitration": 90210
+  },
+  "runs": [
+    {
+      "id": "E1",
+      "artifact": "E1-verify.txt",
+      "command": "fish verify --games=600",
+      "design": "engine and information-safety audit, $9\\times9$ policy cross-product, full dialect",
+      "present": true,
+      "bytes": 119,
+      "sha256": "1cf3b1e6f9942d64d8c7ce091db45a5bd9b4ea78889adbe3b6da7903ec89480d"
+    },
+    {
+      "id": "E1L",
+      "artifact": "E1-verify-legacy.txt",
+      "command": "fish verify --games=300 --legacy",
+      "design": "the same audit under the v0.3 rules dialect",
+      "present": true,
+      "bytes": 119,
+      "sha256": "4651588f2627f1f5ab34ef39f80fe62b7d1bdb9dee01a7fdd0c8cb8f76b336e7"
+    },
+    {
+      "id": "E2",
+      "artifact": "E2-belief-selftest.txt",
+      "command": "fish selftest --games=40",
+      "design": "reference engine vs card-level DP vs exact rejection sampling",
+      "present": true,
+      "bytes": 224,
+      "sha256": "7145c2b68ef8d53a82e22931d59d653969695aa3355984fa48eee62216b708a8"
+    },
+    {
+      "id": "E3",
+      "artifact": "E3-headtohead.jsonl",
+      "command": "fish match --a=v04:mgate=0.008 --b=OPP --games=700 --rotations=6 --seed=90210",
+      "design": "primary head-to-head; 700 deals $\\times$ 6 rotations = 4{,}200 games per opponent",
+      "present": true,
+      "bytes": 4325,
+      "sha256": "5131b8f001fa08126ec86c0be734583993b1d9931d4c85a15a3c5a792ac0e67c"
+    },
+    {
+      "id": "E4",
+      "artifact": "E4-matrix.json",
+      "command": "fish matrix --policies=... --games=200 --rotations=6 --seed=515151",
+      "design": "round-robin over nine policies; 200 deals $\\times$ 6 rotations per ordered pair",
+      "present": true,
+      "bytes": 38319,
+      "sha256": "8c214b0404d1658ea121ba10faad823385be3c155be5f1a812768c0c6eae3811"
+    },
+    {
+      "id": "E5",
+      "artifact": "E5-ablations.json",
+      "command": "fish ablate --ref=v04:mgate=0.008 --games=500 --rotations=2 --seed=606060",
+      "design": "frozen-policy ablations; 500 deals $\\times$ 2 rotations against a four-policy panel",
+      "present": true,
+      "bytes": 2916,
+      "sha256": "32f0c3eb2fe50c9638fa5abf6722a0f0e5c08937f480e47d6841c15dc29fe1a9"
+    },
+    {
+      "id": "E6",
+      "artifact": "E6-calibration-v04.txt",
+      "command": "fish calibrate --a=v04:mgate=0.008 --b=v03 --games=600 --seed=717171",
+      "design": "forecast reliability, v0.4-Fast",
+      "present": true,
+      "bytes": 891,
+      "sha256": "a40617ce7a60d22d74c4bb65a70b574958c409da8646425302122ce513f43ed3"
+    },
+    {
+      "id": "E6b",
+      "artifact": "E6-calibration-v03.txt",
+      "command": "fish calibrate --a=v03 --b=v04:mgate=0.008 --games=600 --seed=717171",
+      "design": "forecast reliability, FishBot v0.3",
+      "present": true,
+      "bytes": 302,
+      "sha256": "00d15f78094284c772bd749365ee95ad6bc6f064f15d160e4aac2039132ceb2a"
+    },
+    {
+      "id": "E7",
+      "artifact": "E7-rules.jsonl",
+      "command": "fish match ... --seed=828282|838383|848484 (--legacy | --sets=8 | --no-out-of-turn)",
+      "design": "rules-dialect sensitivity; 400 deals $\\times$ 6 rotations per cell",
+      "present": true,
+      "bytes": 4804,
+      "sha256": "9e1c6f857762ff5d1c887a66120e87624835139cb058db58ecd668b6a7331aea"
+    },
+    {
+      "id": "E8",
+      "artifact": "E8-v03-port.jsonl",
+      "command": "fish match --a=v03 --b=OPP --games=1000 --rotations=2 --seed=20260820 --legacy",
+      "design": "v0.3 port validation against the published v0.3 figures",
+      "present": true,
+      "bytes": 3549,
+      "sha256": "658945dd10b040f99bb6aec3dda64af0942732da5d43c9bcb45c913b5ba8834c"
+    },
+    {
+      "id": "E9",
+      "artifact": "E9-throughput.txt",
+      "command": "fish bench --a=... --b=...",
+      "design": "whole-game throughput, v0.4-Fast vs v0.4-Block vs v0.3",
+      "present": true,
+      "bytes": 154,
+      "sha256": "d44073f72621aeaa4b94b89c2ab5c5467c167362bf84d9141daa76a45b76ec0e"
+    },
+    {
+      "id": "E10",
+      "artifact": "E10-lbr.jsonl",
+      "command": "fish tune --panel=TARGET --seed=515253 ; fish match ... --seed=6543210",
+      "design": "local response probe; response fitted, then re-measured on 600 deals $\\times$ 6 rotations",
+      "present": true,
+      "bytes": 2494,
+      "sha256": "491111e8d214f851142ae90f9b047dac3140119edcc8884dd70131bcd594cfc4"
+    },
+    {
+      "id": "E11",
+      "artifact": "E11-termination.md",
+      "command": "see the file",
+      "design": "termination study of four forcing rules in mirror self-play",
+      "present": true,
+      "bytes": 2417,
+      "sha256": "1260bf5fe4c9ac52cddac2988c93ad7dac34b66107c8eb08212519d1ff8fa2e7"
+    },
+    {
+      "id": "E12",
+      "artifact": "E12-exactness.txt",
+      "command": "fish match --a=v04:<greedy>,belief=fast|block --b=v03 --games=400 --rotations=6 --seed=959595",
+      "design": "belief substitution under a deliberately unfitted policy",
+      "present": true,
+      "bytes": 1297,
+      "sha256": "961b3aa73a491fccd4e1038bf4d1600040d65713ec3a7d0cbef254ee014ab90b"
+    },
+    {
+      "id": "E13",
+      "artifact": "E13-termination.jsonl",
+      "command": "fish match --a=v04:mgate=0.008 --b=OPP --games=300 --rotations=6 --seed=464646",
+      "design": "action-cap incidence across the population; 300 deals $\\times$ 6 rotations, including the mirror match",
+      "present": true,
+      "bytes": 4957,
+      "sha256": "1a6f0dc047f98d3d2c69ecf677e439d5ac5b504703fb227127cfbcc81dc3dfb6"
+    },
+    {
+      "id": "E14",
+      "artifact": "E14-valuefit-stats.txt",
+      "command": "fish fitvalue --a=v04:mgate=0.008 --b=v04:mgate=0.008 --games=250 --seed=31415",
+      "design": "ridge fit of the value function on self-play decision points",
+      "present": true,
+      "bytes": 36,
+      "sha256": "8b353b8c92f9dc2e2b9bc75a781e78261ff8678b16590c7167e295fa42b68599"
+    },
+    {
+      "id": "E15",
+      "artifact": "E15-oracle.txt",
+      "command": "fish oracle --games=150 --maxdeals=200000 --samples=3000",
+      "design": "brute-force oracle for the exact reference engine",
+      "present": true,
+      "bytes": 700,
+      "sha256": "6ea42ed280113475c3d8e88e6fe506867e86ca0360ae35dc22873936a2566c04"
+    },
+    {
+      "id": "E16",
+      "artifact": "E16-gateaudit.txt",
+      "command": "fish gateaudit --games=700 --rotations=6 --seed=90210",
+      "design": "false-negative audit of the declaration pre-gates over the primary bank",
+      "present": true,
+      "bytes": 370,
+      "sha256": "719c9e7c904eb861e44df727dbc2e1b4d7dc01cd2ce9ae8102813416cffdfb7e"
+    },
+    {
+      "id": "E17",
+      "artifact": "E17-arbitration.jsonl",
+      "command": "fish match ... --seed=90210 --arb=low|high|turn",
+      "design": "sensitivity of the results to the simultaneous-declaration arbitration order",
+      "present": true,
+      "bytes": 4980,
+      "sha256": "2a4afff2422be522e1523e780bb9d49e9c739c769a14f931c90294e884057386"
+    }
+  ]
+}

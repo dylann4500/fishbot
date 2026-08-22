@@ -46,6 +46,7 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
       else if (it->second == "fast") a->cfg.belief = BeliefMode::Fast;
       else if (it->second == "block") a->cfg.belief = BeliefMode::Block;
     }
+    a->cfg.gateAudit         = optI(o, "gateaudit", a->cfg.gateAudit ? 1 : 0) != 0;
     a->cfg.particles         = optI(o, "particles", a->cfg.particles);
     a->cfg.declThreshold     = optD(o, "decl", a->cfg.declThreshold);
     a->cfg.lockedAllocThresh = optD(o, "lockthr", a->cfg.lockedAllocThresh);

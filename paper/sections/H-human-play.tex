@@ -1,0 +1,271 @@
+\section{Extended implications for human play}
+\label{app:human}
+
+\vfast{} maintains a $54 \times 6$ posterior and re-scores its candidate asks
+after every public event. A person at a table cannot. The mechanisms that the
+frozen-policy ablations of \S\ref{app:ablations} identify as the ones this
+configuration depends on most heavily are, however, not the expensive ones, and
+several of them can be run by hand. This appendix records them at length; the
+condensed version is in \S\ref{sec:humanplay}.
+
+\subsection{How to read the labels}
+\label{app:human-labels}
+
+Each item below carries one of three tags, because the recommendations differ
+sharply in how well they are supported.
+
+\begin{description}[leftmargin=2.2em,style=nextline]
+\item[\textbf{[R]}] A logical consequence of the rules dialect of
+\S\ref{sec:rules}. It holds for any opponent and requires no experiment. A tag
+of \textbf{[R]} is never attached to a prescription about how to play; where a
+rules consequence suggests a course of action, the action is split off and
+tagged separately.
+\item[\textbf{[M]}] A measured result. The experiment is named. In
+every case the measurement is of \emph{this} fitted configuration on a specific
+bank against a specific panel, and in the case of an ablation it is a
+frozen-policy effect rather than the standalone value of the component.
+\item[\textbf{[U]}] An untested suggestion. It is consistent with
+the design of the agent or with the rules, but no experiment in this paper
+isolates it, and it should be treated as a hypothesis.
+\end{description}
+
+\subsection{What an ask tells the table}
+\label{app:human-ask}
+
+\textbf{[R] An ask is a confession about the asker.} Under this dialect a
+player may ask for a card only in a half-suit in which they already hold at
+least one card. So a player who asks for the queen of hearts has stated two
+things publicly: that they do not hold the queen of hearts, and that they hold
+at least one other card of the high hearts. The second is the one that is easy
+to miss. It applies to a teammate's ask exactly as much as to an opponent's.
+
+\textbf{[R] A miss is a second confession, about the target.} A failed ask
+establishes that the named card was not in the target's hand at that moment. The
+exclusion stands until a public transfer moves that card, and every transfer in
+this game is public, so the exclusion is never silently invalidated.
+
+\textbf{[R] The content of both events is an exclusion, not an impression.}
+What an ask and a miss add to the public record is a collection of statements of the
+form ``this card is not held by this player'' together with a disjunction over
+the asker's own hand. ``Somebody wanted low clubs'' is not among them; ``the
+seven of clubs is not held by seat 2 or seat 4, and seat 3 holds at least one of
+the other five low clubs'' is.
+
+\textbf{[U] Write them down in that form.} Exclusions and disjunctions combine
+with hand counts, and impressions do not, so a person keeping a record by hand
+is better served by the first. No experiment in this paper evaluates any human
+bookkeeping scheme.
+
+\textbf{[M] The certificates that encode these two deductions are removed by the
+largest frozen-policy ablations in the study.} In E5, dropping the ask-legality
+certificates --- while keeping capacity conditioning, keeping every exclusion
+from a miss, and keeping the entire decision policy unchanged --- moved the
+frozen policy from \numAblRef\% to \numAblSinkhornAbs\%. Dropping capacity
+conditioning as well moved it further, to \numAblCFourAbs\%. These are the
+largest decreases in the study, but none of them isolates a single constraint:
+the implementation applies the fitted policy prior only along the path these
+rows replace, so each removes the prior too (\S\ref{sec:ablations}).
+These are effects on this
+frozen parameter vector; they do not say what a policy refitted without those
+constraints would score.
+
+\subsection{Counting}
+\label{app:human-count}
+
+\textbf{[R] Hand sizes are public, and they close deductions that exclusions
+alone leave open.} If a player holds four cards and you have already located four
+specific cards in their hand, every other unresolved card is excluded from them
+at once. Conversely, if a player holds four cards and only four unresolved cards
+can possibly be theirs, they hold all four.
+
+\textbf{[U] Run the check after every transfer, on the two players whose
+counts changed.} That is where a new certainty is most likely to appear. The
+recommendation about \emph{when} to run the check is a suggestion about human
+bookkeeping; no experiment here evaluates it.
+
+\subsection{Locked half-suits, and what waiting does and does not buy}
+\label{app:human-locked}
+
+\textbf{[R] If your team holds all six cards of a half-suit, no opponent can
+take any of them.} An opponent needs a card of a half-suit to ask in it, and an
+opponent has none. Ownership of that half-suit is therefore frozen
+(Theorem~\ref{thm:locked}), and an opponent who claims it must claim it
+incorrectly, which awards it to you.
+
+\textbf{[R] Waiting therefore carries no risk to ownership}
+(Corollary~\ref{cor:wait}). No sequence of opponent asks can remove a card of a
+half-suit your side holds in full, so the passage of time cannot cost your team
+that half-suit.
+
+\textbf{[U] Spend the intervening turns resolving the split.} If you are
+certain your side holds all six but unsure which teammate holds what, there is
+no time pressure from the opponents. Whether turns are better spent that way
+than on anything else available is not measured here.
+
+\textbf{[R] The rules push declaration timing in both directions.} One
+consequence favours holding. A locked half-suit scores only when it is claimed,
+and claiming resolves six cards that were, from an opponent's point of view,
+part of the unresolved pool $U$; by \eqref{eq:capacity} that tightens every
+opponent's capacity constraint on the cards that remain, so holding the
+half-suit keeps six slots absorbing probability mass the opponents cannot
+allocate elsewhere. The other favours claiming. A card of a locked half-suit
+licenses only asks that are certain to fail, so a hand composed largely of
+locked cards yields little from a turn, whereas a player who claims and empties
+a hand leaves the asking cycle and passes the turn to a teammate whose asks can
+succeed. A third channel runs alongside both: asks inside a
+locked half-suit remain legal for the owning team and still carry ask-legality
+certificates, so information about the split continues to change while ownership
+does not (\S\ref{sec:termination}). Develin \cite{develin} records that
+channel from the human side --- such asks are available to the owning team and
+to nobody else --- and the fitted \vfast{} configuration was given no term that
+uses it (\S\ref{sec:limitations}).
+
+\textbf{[U] Which of the two dominates is a question about the position in
+front of you.} It is quantitative, it depends on the opponents, and
+Theorem~\ref{thm:locked} does not settle it. Nothing in this paper measures the
+trade-off directly.
+
+\textbf{[R] If a half-suit is not yet fully yours, the ownership guarantee does
+not apply.} An opponent holding a card of the half-suit has a legal ask in it,
+so a card you hold can still be taken away.
+
+\textbf{[U] In that case prefer the earlier claim.} Weigh the risk that an
+opponent removes one of your cards against the chance that the split is not yet
+resolved. No experiment here isolates the value of claiming earlier in an
+unlocked half-suit.
+
+\textbf{[R] A hand made entirely of locked cards licenses only asks that are
+certain to fail.} Every possible target of such an ask is void in the half-suit,
+so the ask transfers nothing and the turn produces no card movement.
+
+\textbf{[U] So claim the half-suit, empty the hand, and pass the turn to a
+teammate who can use it.} That is a suggestion about what to do with a turn
+that cannot produce a transfer; the rules consequence above is what is
+established, and the fitted configuration was not given a term that targets this
+case.
+
+\textbf{[M] No experiment here isolates the value of waiting.} The
+``cash locked half-suits immediately'' switch is inert in the shipped
+configuration --- the value-based stopping rule decides first, so the switch is
+never consulted --- and its E5 row is exactly zero by construction. What is
+observed, not manipulated, is that on the primary bank the fitted \vfast{}
+configuration held a locked half-suit for \numLockHoldFour{} public events
+before a correct declaration, against \numLockHoldThree{} for \vthree{}
+(\S\ref{sec:results}); that is a description of two policies' behaviour, not
+evidence that either duration is better. What the rules guarantee is the safety
+of waiting with respect to ownership, not its profit.
+
+\subsection{Ranking candidate asks}
+\label{app:human-rank}
+
+The ordering below is roughly what the fitted weights produce. The support
+behind the individual steps is very uneven, and the tags say so. Every interval
+quoted in this subsection is a paired percentile bootstrap over deals, the
+construction described in \S\ref{app:abl-design}.
+
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{[R] An ask for a card you have located cannot fail.} The card is
+in the named hand, so the ask succeeds and the turn stays with you.
+\textbf{[U] Take every such ask before anything speculative.} The ordering is a
+suggestion; no experiment here compares it against alternatives.
+\item \textbf{[R] A hit retains the turn, so an ask can start a sequence.} The
+value of an ask is therefore not confined to the single card it names.
+\textbf{[U] Prefer a likely card that leaves another likely card behind it over
+an equally likely card that leaves nothing.} No experiment here isolates this
+ordering.
+\item \textbf{[M] Then the ask that completes a lock.} An ask that would give
+your team the sixth card of a half-suit converts a contested half-suit into a
+frozen one. In E5, zeroing the lock-completion weight cost \numAblLockWeight{}
+points (95\% paired percentile-bootstrap interval \numAblLockWeightCI{}) on the
+frozen configuration --- one of the few individual ask weights whose interval
+excludes zero.
+\item \textbf{[U] Then consider who receives the turn on a miss.} A failed ask
+hands the turn to the player you named, so you are choosing a successor as much
+as a card; avoid handing it to a player visibly strong in a half-suit where your
+side is exposed. In E5, zeroing the reply-threat weight changed the win rate by
+\numAblThreat{} points with a paired interval of \numAblThreatCI{}, so this
+study does not establish the effect.
+\item \textbf{[U] Then consider what the ask gives away.} Your first ask in a
+half-suit announces that you hold one of its cards. Between two near-equal asks,
+the one in a half-suit you have already revealed leaks less. In E5, zeroing both
+information-leak weights changed the win rate by \numAblLeak{} points with a
+paired interval of \numAblLeakCI{}; again not established.
+\end{enumerate}
+
+\subsection{Checking a declaration before making it}
+\label{app:human-declare}
+
+\textbf{[R] Two different claims are involved, and only the stronger is
+sufficient.} ``Our side holds all six of these cards'' and ``I know which of us
+holds each one'' are not the same statement: a declaration names a
+card-to-player allocation, and an allocation that is right about the team and
+wrong about the split fails.
+
+\textbf{[U] Before claiming, name all six cards and a holder for each,
+explicitly.} If the team-level claim is solid but the split is not, and the
+half-suit is already locked, wait and resolve the split. If it is not locked,
+weigh the incomplete claim against the chance that an opponent removes one of
+your cards first. The procedure is a suggestion about how a person might make the
+check; nothing in this paper evaluates it.
+
+\textbf{[M] The measured difference between the two agents is in declaration
+accuracy; which half of the mechanism produces it is not resolved.} On the
+primary bank \vfast{} declared correctly \numVsVthreeDeclAcc\% of the time
+against \vthree{}'s \numVthreeDeclAccSame\% in the same games
+(\S\ref{sec:results}). In E5, replacing the fitted stopping rule with a fixed
+confidence threshold changed the win rate by \numAblStop{} points (95\% paired
+percentile-bootstrap interval \numAblStopCI{}), and moving the declaration
+confidence threshold between $0.80$ and $0.99$ also changes nothing the
+experiment can resolve. That stopping-rule ablation is
+unresolved from zero, so these experiments do not attribute the
+declaration-accuracy difference to the probability estimate rather than to the
+rule that consumes it. The calibration detail in \S\ref{app:calibration} is a
+description of that estimate, not an explanation of the behaviour.
+
+\subsection{The forced endgame}
+\label{app:human-endgame}
+
+\textbf{[R] Running out of cards is not a defeat.} A player with no cards cannot
+be asked, so nothing can be taken from them. A whole team with no cards forces
+the opponents to claim every remaining half-suit without asking, and some of
+those claims will be wrong, which awards those half-suits to the cardless team.
+
+\textbf{[U] Emptying a hand deliberately is an option worth knowing, not a
+measured recommendation.} The preceding paragraph follows from the rules; no
+experiment in this paper isolates the value of steering towards a cardless hand
+on purpose, and the fitted configuration was not given a term that rewards it.
+
+\textbf{[R] A correct claim is informative to everyone; an incorrect one is
+informative and costly.} A correct claim announces the exact split of six cards,
+which changes every player's count of what remains and can resolve a half-suit
+that was previously unresolved. An incorrect claim supplies the same information
+to the opponents and gives them the half-suit as well.
+
+\textbf{[U] When it is your team that must claim everything, claim the surest
+half-suit first.} Ordering the claims by confidence makes the later claims
+easier, on the argument above; the reverse order forgoes that help. The
+engine's forced endgame uses a fixed willingness ladder rather than a confidence
+ranking (\S\ref{sec:declare}), and no experiment here compares claim orders.
+
+\subsection{Deliberate misdirection}
+\label{app:human-bluff}
+
+\textbf{[M] Nothing in this study supports paying for theatre.} The
+v0.3 study reported no reliable benefit from deliberate misdirection, and this
+study does not change that. \vfast{} contains no bluffing rule, and on the
+primary bank it won \numVsBluffer\% of games against the misdirection artist,
+the archetype in the panel built around deceptive asking
+(Table~\ref{tab:h2h}). That is the second largest margin in the panel, behind
+the random legal control at \numVsRandom\% and ahead of the focused hunter at
+\numVsHunter\%, the adaptive diversifier at \numVsDiversifier\% and \vtwo{} at
+\numVsVtwo\%: the deception archetype is not separated from the panel's other
+weak baselines.
+
+That is a result about one archetype in one panel, and it is not an isolation
+experiment: the misdirection artist differs from the other baselines in more
+than its use of deception, so the margin cannot be attributed to the deception
+alone. The rules-level observation behind the negative result is narrower and
+firmer: an ask is legal only from a hand that holds another card of the
+half-suit, so the information an ask reveals is constrained by what the asker
+actually holds. Behaviour that changes neither what the other players can deduce
+nor who holds the turn changes nothing that the game scores.

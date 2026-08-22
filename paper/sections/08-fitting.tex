@@ -3,67 +3,94 @@
 
 \subsection{A population-robust objective}
 
-The question this project set out to answer is not ``which policy has the best
-average score against a fixed pool'' but ``is there a single policy that is best
-across playstyles''. A mean win rate answers the first and hides the second, so
-we fit against a soft minimum over the opponent panel $\mathcal{O}$:
+The quantity we optimise is not the mean win rate against a fixed pool but the
+worst win rate across a panel of opponents, softened so that a noisy search can
+make progress on it. For a parameter vector $w$ and an opponent panel
+$\mathcal{O}$, writing $\mathrm{wr}_o(w)$ for the win rate of the configuration
+$w$ against opponent $o$ on the current seed bank, the fitting objective is
 \begin{equation}
   \mathrm{score}(w) \;=\; -\frac{1}{\beta}\,
-     \log \sum_{o \in \mathcal{O}} \exp\bigl(-\beta\, \mathrm{wr}_o(w)\bigr),
-  \qquad \beta = 8,
+     \log \sum_{o \in \mathcal{O}} \exp\bigl(-\beta\, \mathrm{wr}_o(w)\bigr).
   \label{eq:softmin}
 \end{equation}
-which tends to $\min_o \mathrm{wr}_o$ as $\beta$ grows and is smooth enough for a
-noisy optimiser. The panel $\mathcal{O}$ holds six policies: FishBot v0.3, the
-turn-starvation lockout, the posterior detective, FishBot v0.2, the adaptive
-diversifier and the focused hunter. The misdirection artist and the random
-control are deliberately \emph{excluded} so that they remain held-out opponents,
-as are all rule variants.
+This tends to $\min_o \mathrm{wr}_o(w)$ as $\beta$ grows and is smooth in $w$ for
+finite $\beta$. The selection reported here used $\beta = 8$, the default of
+\filepath{engine/select_final.py}. Two other values appear in the repository and
+are not the reported ones: the tuner command line defaults to $\beta = 10$, and
+the local response probe of \S\ref{sec:lbr} used $\beta = 1$, because that search
+targets a single frozen opponent and the soft minimum degenerates to a mean.
+
+The panel $\mathcal{O}$ used for fitting holds six policies: \vthree{}, the
+turn-starvation lockout, the posterior detective, \vtwo{}, the adaptive
+diversifier and the focused hunter. The misdirection artist and the random legal
+control were excluded from every fitting and selection run so that they remain
+held-out opponent identities. Two of the eight opponents in the evaluation panel
+of \S\ref{sec:results} are therefore held-out identities and six are not, so the
+head-to-head results measure generalisation to new deals rather than to new
+strategic populations.
 
 \subsection{Optimiser}
 
-We use the cross-entropy method with a diagonal Gaussian: a population of
-candidates is sampled around the incumbent mean, the elite fraction is retained,
-and the mean and per-coordinate standard deviation are smoothed toward the elite
-statistics. CEM was chosen over gradient-free alternatives because the objective
-is a noisy win rate --- exactly the regime in which methods that trust small
-differences fail. Two devices keep the noise manageable. First, every candidate
-in a generation is evaluated on \emph{identical} seed banks, so comparisons
-within a generation are paired. Second, the banks are redrawn between
-generations, so the fit cannot lock onto a particular set of deals.
+We use the cross-entropy method with a diagonal Gaussian over the parameter
+vector. Each generation samples \numCEMPop{} candidates around the incumbent
+mean, retains the \numCEMElite{} best as the elite set, and smooths the mean and
+the per-coordinate standard deviation towards the elite statistics. The objective
+is a noisy win rate estimated from a finite bank of deals, a regime in which
+optimisers that trust small differences between candidates behave poorly. Every
+candidate within a generation is evaluated on \emph{identical} seed banks, so
+within-generation comparisons are paired and the deal draw cancels, and the banks
+are redrawn between generations, so the search cannot lock onto a particular set
+of deals.
 
-The parameter vector is fitted jointly and has 34 coordinates: the twenty ask
-weights of Table~\ref{tab:features}, the declaration threshold and the locked
-threshold, the ask floor, the patience pool size, the opponent-card floor, the
-value and linear mixing weights of \eqref{eq:askutil}, the minimum team
-probability, the stopping margin $\varepsilon$, the two policy-prior coefficients
-$\theta, \phi$ of \eqref{eq:prior}, and the three two-ply parameters of
-\S\ref{sec:twoply}. Bounds are imposed per coordinate so that probabilities stay
-probabilities.
+The parameter vector is fitted jointly and has \numParams{} coordinates: the
+\numAskFeats{} ask weights $w_0,\dots,w_{19}$ of Table~\ref{tab:features},
+followed by \numKnobs{} decision knobs --- five thresholds and pool sizes
+governing declaration and patience, the minimum team probability, the two mixing
+weights $\lambda_{\mathrm{val}}$ and $\lambda_{\mathrm{lin}}$ of
+\eqref{eq:askutil}, the stopping margin $\varepsilon$ of \eqref{eq:stop}, the two
+policy-prior coefficients $\theta$ and $\phi$ of \eqref{eq:prior}, and the
+lookahead width $K$ with the chain and threat weights of \S\ref{sec:twoply}.
+Bounds are imposed per coordinate so that probabilities stay in $[0,1]$, counts
+stay non-negative integers, and the lookahead width stays within its
+implementation limit; every knob is named with its bound in
+Table~\ref{tab:bounds} of \S\ref{app:params}.
 
-\subsection{Schedule}
+The value function of \S\ref{sec:value} is not part of this vector. It was fitted
+separately by ridge regression on self-play decision points and then held fixed
+while the policy weights were fitted around it, so the search never adjusted the
+value coefficients and the policy weights are conditional on them.
 
-Round one fitted the twenty ask weights alone with the fast posterior, on a
-four-opponent panel. Round two started from round one's mean and fitted all 31
-coordinates on the six-opponent panel. The value function was fitted separately
-by ridge regression on self-play decision points, as described in
-\S\ref{sec:value}, and then held fixed while the policy weights were fitted
-around it. Fitting used base seeds $20260821$, $770077$ and $313131$. The shipping
-configuration was then chosen on a further validation bank ($1357911$) that the
-search itself never saw, because the per-generation best reported by the
-optimiser is a maximum over a population evaluated on shared seeds and is
-therefore upward biased; generation \numSelectedGen\ won that selection. Every
-seed bank used in \S\ref{sec:results} onwards is disjoint from all of these,
-and the configuration was frozen before any of them was run.
+\subsection{Schedule and selection}
 
-Table~\ref{tab:params} lists the frozen values.
+Fitting ran in five rounds. Round one fitted the \numAskFeats{} ask weights alone
+against the Fast posterior on a four-opponent panel, from base seed $20260821$;
+round two started from its mean and fitted the joint vector on the six-opponent
+panel, from base seed $770077$, and is superseded because its coordinate layout
+predates the two ask features added afterwards; round three re-ran the joint fit
+on the aligned \numParams{}-coordinate vector from base seed $313131$; and round
+four repeated it from base seed $888111$ after a correction to the
+information-leak features. Round five produced the shipping configuration. Its
+base seed is not recorded in any committed script or artifact; this is a
+reproducibility gap, and the round can be inspected but not reproduced exactly
+from the trace \filepath{research/v04/runs/tune-round5.jsonl}.
 
-\begin{table}[ht]
-\centering
-\caption{The frozen FishBot v0.4 configuration. Note that the locked-half-suit
-threshold and the patience switch are inert while the stopping rule is active
-(\S\ref{sec:ablations}), so no meaning should be read into their fitted values.}
-\label{tab:params}
-\footnotesize
-\input{tables/params}
-\end{table}
+The shipping configuration was chosen on a validation bank the search itself
+never saw, because the per-generation best reported by the optimiser is a maximum
+over a population evaluated on shared seeds and is therefore biased upwards. The
+last six generation means of the round-five trace were re-evaluated on seed
+$1357911$ (500 deals, two rotations, panel \{\vthree{}, lockout, detective,
+\vtwo{}\}), and generation \numSelectedGen{} won that selection, with a
+validation soft-min of \numSelectSoftmin{} and per-opponent win rates of
+\numSelectPerOpp{}, as recorded in \filepath{research/v04/runs/selected.json}.
+Every seed bank used from \S\ref{sec:protocol} onwards is disjoint from the
+fitting and selection banks, and the configuration was frozen before any of those
+runs.
+
+Table~\ref{tab:params} in \S\ref{app:params} lists the frozen values. It is a
+reproducibility artifact and should not be read as a description of strategy: the
+ask features are correlated with one another and are normalised to different
+effective ranges, so the sign and magnitude of a single coefficient do not
+identify the contribution of the corresponding feature. Two of the decision
+knobs --- the locked-half-suit threshold and the patience switch --- are inert
+while the value-based rule of \eqref{eq:stop} is active, so their fitted values
+carry no behavioural meaning in the shipping configuration.
