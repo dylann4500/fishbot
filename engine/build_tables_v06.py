@@ -584,6 +584,39 @@ if 'v06' in pool and 'v05' in pool:
         worstloss = max(worstloss, 100*(a5 - a6))
     emit('vsixPoolWorstLoss', num(worstloss, 2), 'E4 + F4 pooled: largest per-style loss against v0.5')
 
+# ---- F11 + F12: the high-power head-to-head that settles the comparison -----
+# The battery's E3 cells are 1,800 games each, which the project's own planning
+# rule prices at +/-2.3 points -- too coarse to resolve a one-point difference.
+# These are 18,000 (v0.5) and 12,000 (v0.4) games a bank.
+import math as _mm
+def _hcells(path, opp):
+    tt = read(path)
+    if not tt: return []
+    out, cur = [], None
+    for bb in re.findall(r'\{.*?\}(?=\s*(?:\{|$))', tt, re.S):
+        try: dd = json.loads(bb)
+        except Exception: continue
+        if 'bank' in dd: cur = dd
+        elif cur is not None and 'winRateA' in dd:
+            if cur.get('b', opp) == opp: out.append((cur['bank'], dd['winRateA'], dd['games']))
+            cur = None
+    return out
+for opp, tg in (('v05','Five'), ('v04','Four')):
+    cs = _hcells('F11-bighead-v05.jsonl', opp) + _hcells('F12-bighead-extra.jsonl', opp)
+    if not cs: continue
+    tot = sum(x[2] for x in cs); w = sum(x[1]*x[2] for x in cs); pp = w/tot
+    hw = 98.0/_mm.sqrt(tot)
+    emit(f'vsixBig{tg}', num(100*pp, 2), f'F11+F12: high-power head-to-head against {opp}, pooled')
+    emit(f'vsixBig{tg}N', commafy(tot), 'F11+F12: games')
+    emit(f'vsixBig{tg}Banks', str(len(cs)), 'F11+F12: seed banks')
+    emit(f'vsixBig{tg}Above', str(sum(1 for x in cs if x[1] > 0.5)), 'F11+F12: banks above parity')
+    emit(f'vsixBig{tg}Lo', num(100*pp-hw, 2), "F11+F12: planning-rule interval, 98/sqrt(N)")
+    emit(f'vsixBig{tg}Hi', num(100*pp+hw, 2), 'F11+F12: planning-rule interval')
+    emit(f'vsixBig{tg}Min', num(100*min(x[1] for x in cs), 2), 'F11+F12: worst bank')
+    lines = ['%s & %.2f & %s \\\\' % (b, 100*wr, commafy(n)) for b, wr, n in cs]
+    TABLE_SPEC[f'bighead_{opp}.tex'] = ('lrr', 'Seed bank & Win rate (\\%) & Games')
+    writeTable(f'bighead_{opp}.tex', lines)
+
 # ---- every v0.6-vs-v0.5 head-to-head cell in the battery, pooled honestly ----
 # Reporting only the E3 banks would be selection on the experiment that agreed:
 # the battery contains two further default-rules cells on further disjoint banks,

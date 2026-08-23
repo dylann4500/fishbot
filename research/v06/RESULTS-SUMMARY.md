@@ -25,23 +25,37 @@ diagnostic transcript **identical to v0.5's under md5**. The ablation table is t
 v0.6 passes the gate. Note that its mirror hit rate is *lower* than v0.5's while it wins more: the
 refit trades immediate hit probability for half-suit control, and the games are two events shorter.
 
-## Head to head against v0.5: NOT separated from parity
+## Head to head — resolved at high power
 
-This is stated first because an earlier draft of this summary got it wrong, and the correction is
-the most important one an adversarial re-read produced.
+The battery's E3 cells are 1,800 games each, which the project's own planning rule prices at
+about +/-2.3 points. That cannot resolve a one-point difference, and an earlier version of this
+summary therefore reported the comparison as a null: pooling every cell in the battery gave 50.53%
+over 11,300 games with 5 of 7 above parity, including two cells below parity (E7's default-dialect
+row at seed 828282, 48.40% at n=1,500; E5's v0.5 panel cell at 606060, 48.88% at n=800).
 
-The five E3 banks all show v0.6 ahead (51.44, 50.44, 51.33, 50.11, 51.83; mean 51.03% over 9,000
-games). But the battery contains **two further head-to-head cells at default rules on further
-disjoint banks**, and v0.6 loses both: E7's default-dialect row at seed 828282 is **48.40%**
-(n = 1,500) and E5's v0.5 panel cell at seed 606060 is **48.88%** (n = 800).
+Re-run at **3,000 deals x 6 rotations = 18,000 games a bank** (`F11-bighead-v05.jsonl`,
+`F12-bighead-extra.jsonl`), including the two banks that had gone the other way:
 
-Pooling every v0.6-vs-v0.5 cell in the battery: **50.53% over 11,300 games, 5 of 7 cells above
-parity, naive z = 1.13** — and that z ignores the correlation between the six rotations of a deal,
-so it overstates the significance rather than understating it. Against v0.4 the five E3 banks give
-50.86%.
+| bank | v0.6 vs v0.5 | | bank | v0.6 vs v0.4 |
+|---|---:|---|---|---:|
+| 90210 | 51.12% | | 90210 | 51.68% |
+| 31337 | 50.66% | | 515151 | 50.68% |
+| 515151 | 50.48% | | 424242 | 50.98% |
+| 777001 | 50.95% | | | |
+| 424242 | 51.16% | | | |
+| 828282 | 50.29% | | | |
+| 606060 | 51.54% | | | |
+| **pooled** | **50.89%** [50.61, 51.16] | | **pooled** | **51.11%** [50.59, 51.63] |
+| banks above parity | **7 / 7** | | | **3 / 3** |
+| games | 126,000 | | | 36,000 |
 
-**The correct statement is that v0.6 and v0.5 are not separated head to head.** Reporting the five
-E3 banks alone would have been selection on the experiment that agreed.
+**Both of the cells that had gone the other way return above parity at the larger sample.** The
+earlier null was a power artefact, and it is recorded here because it is the same failure mode this
+study documents six times in the other direction: an effect that looks resolved at 400-1,800 games a
+cell and is not.
+
+The margin is **about nine tenths of a point**. It is real, it replicates on every bank measured,
+and it is small.
 
 ## Per-style profile and the worst case, pooled over three disjoint banks
 

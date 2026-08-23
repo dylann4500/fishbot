@@ -42,8 +42,13 @@ shipped vector is v0.4's; five mechanisms in this study cleared a 95\% paired in
 per-cell budget this project has always used and returned exactly zero at three times it.
 
 What ships is two configurations. \vsix{} is the deployed policy: the same mechanisms as \vfive{}
-with a vector found by a repaired optimiser, \vsixThroughputSix{} games per second, better than
-\vfive{} on the paired panel at all three banks measured and \emph{not} separated from it head to
-head (\vsixHeadPooled\% over \vsixHeadPooledN{} games, pooling every cell rather than the five that
-agreed). \vsixsearch{} adds the tie-resolving search and is the strongest configuration measured,
-at a cost of three orders of magnitude in throughput.
+with a vector found by a repaired optimiser, and \vsixThroughputSix{} games per second against
+\vfive{}'s \vsixThroughputFive{}. It beats \vfive{} head to head by \vsixBigFive\% $-$ 50 over
+\vsixBigFiveN{} games with every one of \vsixBigFiveBanks{} banks above parity
+$[\vsixBigFiveLo, \vsixBigFiveHi]$, and \vfour{} by \vsixBigFour\% $-$ 50 over
+\vsixBigFourN{} games; it is ahead on the paired panel comparison at all \vsixPairedBanks{} banks;
+its minimax regret over a thirteen-style set is \vsixPoolRegretSix{} against \vfive{}'s
+\vsixPoolRegretFive{}; and a fitted best response reaches parity against \vfour{} and \vfive{} and
+fails to reach it against \vsix{} (\vsixLbrSix\% $[\vsixLbrSixLo, \vsixLbrSixHi]$). Every one of
+those margins is about a point. \vsixsearch{} adds the tie-resolving search and is the strongest
+configuration measured, at a cost of three orders of magnitude in throughput.

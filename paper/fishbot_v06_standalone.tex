@@ -1321,6 +1321,34 @@ that can tell the difference}
 \providecommand{\vsixPoolTied}{}\renewcommand{\vsixPoolTied}{1}
 % E4 + F4 pooled: largest per-style loss against v0.5
 \providecommand{\vsixPoolWorstLoss}{}\renewcommand{\vsixPoolWorstLoss}{1.72}
+% F11+F12: high-power head-to-head against v05, pooled
+\providecommand{\vsixBigFive}{}\renewcommand{\vsixBigFive}{50.89}
+% F11+F12: games
+\providecommand{\vsixBigFiveN}{}\renewcommand{\vsixBigFiveN}{126,000}
+% F11+F12: seed banks
+\providecommand{\vsixBigFiveBanks}{}\renewcommand{\vsixBigFiveBanks}{7}
+% F11+F12: banks above parity
+\providecommand{\vsixBigFiveAbove}{}\renewcommand{\vsixBigFiveAbove}{7}
+% F11+F12: planning-rule interval, 98/sqrt(N)
+\providecommand{\vsixBigFiveLo}{}\renewcommand{\vsixBigFiveLo}{50.61}
+% F11+F12: planning-rule interval
+\providecommand{\vsixBigFiveHi}{}\renewcommand{\vsixBigFiveHi}{51.16}
+% F11+F12: worst bank
+\providecommand{\vsixBigFiveMin}{}\renewcommand{\vsixBigFiveMin}{50.29}
+% F11+F12: high-power head-to-head against v04, pooled
+\providecommand{\vsixBigFour}{}\renewcommand{\vsixBigFour}{51.11}
+% F11+F12: games
+\providecommand{\vsixBigFourN}{}\renewcommand{\vsixBigFourN}{36,000}
+% F11+F12: seed banks
+\providecommand{\vsixBigFourBanks}{}\renewcommand{\vsixBigFourBanks}{3}
+% F11+F12: banks above parity
+\providecommand{\vsixBigFourAbove}{}\renewcommand{\vsixBigFourAbove}{3}
+% F11+F12: planning-rule interval, 98/sqrt(N)
+\providecommand{\vsixBigFourLo}{}\renewcommand{\vsixBigFourLo}{50.59}
+% F11+F12: planning-rule interval
+\providecommand{\vsixBigFourHi}{}\renewcommand{\vsixBigFourHi}{51.63}
+% F11+F12: worst bank
+\providecommand{\vsixBigFourMin}{}\renewcommand{\vsixBigFourMin}{50.68}
 % E3 + E7-default + E5: every v0.6-vs-v0.5 cell in the battery
 \providecommand{\vsixHeadPooled}{}\renewcommand{\vsixHeadPooled}{50.53}
 % E3 + E7-default + E5: total games
@@ -1466,11 +1494,11 @@ that can tell the difference}
 % X1-lbr.jsonl
 \providecommand{\vsixLbrSixN}{}\renewcommand{\vsixLbrSixN}{3,600}
 % research/v06/results/: artifact count
-\providecommand{\vsixManifestFiles}{}\renewcommand{\vsixManifestFiles}{35}
+\providecommand{\vsixManifestFiles}{}\renewcommand{\vsixManifestFiles}{37}
 % build_tables_v06.py run date
 \providecommand{\vsixBuildDate}{}\renewcommand{\vsixBuildDate}{2026-08-23}
 % macros used in sections_v06 that this script generates
-\providecommand{\vsixProvGenerated}{}\renewcommand{\vsixProvGenerated}{201}
+\providecommand{\vsixProvGenerated}{}\renewcommand{\vsixProvGenerated}{211}
 % macros used in sections_v06 transcribed from earlier studies
 \providecommand{\vsixProvTranscribed}{}\renewcommand{\vsixProvTranscribed}{84}
 % research/v06/results: span of the battery artifact mtimes, hours
@@ -1527,11 +1555,16 @@ shipped vector is v0.4's; five mechanisms in this study cleared a 95\% paired in
 per-cell budget this project has always used and returned exactly zero at three times it.
 
 What ships is two configurations. \vsix{} is the deployed policy: the same mechanisms as \vfive{}
-with a vector found by a repaired optimiser, \vsixThroughputSix{} games per second, better than
-\vfive{} on the paired panel at all three banks measured and \emph{not} separated from it head to
-head (\vsixHeadPooled\% over \vsixHeadPooledN{} games, pooling every cell rather than the five that
-agreed). \vsixsearch{} adds the tie-resolving search and is the strongest configuration measured,
-at a cost of three orders of magnitude in throughput.
+with a vector found by a repaired optimiser, and \vsixThroughputSix{} games per second against
+\vfive{}'s \vsixThroughputFive{}. It beats \vfive{} head to head by \vsixBigFive\% $-$ 50 over
+\vsixBigFiveN{} games with every one of \vsixBigFiveBanks{} banks above parity
+$[\vsixBigFiveLo, \vsixBigFiveHi]$, and \vfour{} by \vsixBigFour\% $-$ 50 over
+\vsixBigFourN{} games; it is ahead on the paired panel comparison at all \vsixPairedBanks{} banks;
+its minimax regret over a thirteen-style set is \vsixPoolRegretSix{} against \vfive{}'s
+\vsixPoolRegretFive{}; and a fitted best response reaches parity against \vfour{} and \vfive{} and
+fails to reach it against \vsix{} (\vsixLbrSix\% $[\vsixLbrSixLo, \vsixLbrSixHi]$). Every one of
+those margins is about a point. \vsixsearch{} adds the tie-resolving search and is the strongest
+configuration measured, at a cost of three orders of magnitude in throughput.
 %% --- end sections_v06/abstract ---
 \end{abstract}
 
@@ -1589,13 +1622,11 @@ project had not previously used, and then measuring the measurement.
   and a declaration pre-gate audit that had been dead code since v0.5.
 \end{enumerate}
 
-\paragraph{What this paper does not claim.} \vsix{} is \emph{not} separated from \vfive{} head to
-head. Pooling every head-to-head cell in the battery --- not only the five that agree --- it is
-\vsixHeadPooled\% over \vsixHeadPooledN{} games with \vsixHeadCellsAbove{} of \vsixHeadCells{}
-cells above parity and a naive $z$ of \vsixHeadZ{}, and that $z$ ignores the correlation between
-the six rotations of a deal, so it overstates rather than understates. What is separated is the
-paired comparison over the opponent panel and the profile's worst case. The substantive claims are
-robustness across playstyles, correctness, and a substantially narrowed design space.
+\paragraph{What this paper does not claim.} \vsix{} beats \vfive{} head to head by
+\vsixBigFive\% $-$ 50, which is \emph{small}: about nine tenths of a point, resolved only at
+\vsixBigFiveN{} games. It is not a large win-rate improvement, and at the per-cell budget this
+project has always used it reads as a null. The substantive claims are robustness across playstyles,
+lower measured exploitability, correctness, and a substantially narrowed design space.
 %% --- end sections_v06/01-introduction ---
 %% --- begin sections_v06/02-rules ---
 \section{The game and the rules dialect studied}
@@ -3623,18 +3654,46 @@ Over the \vsixHeadFiveBanks{} dedicated held-out banks of E3, six rotations each
 per-bank range of \vsixHeadFiveMin\% to \vsixHeadFiveMax\%, and \vsixHeadFourMean\% against
 \vfour{} (\vsixHeadFourMin\% to \vsixHeadFourMax\%).
 
-\textbf{Those five banks are not the whole evidence, and quoting them alone would be selection on
-the experiment that agreed.} The battery contains two further \vsix{}-versus-\vfive{} cells at
-default rules on further disjoint banks --- the default-dialect row of the rules experiment and the
-\vfive{} column of the paired ablation panel --- and \vsix{} loses both. Pooling every such cell in
-the battery gives \textbf{\vsixHeadPooled\% over \vsixHeadPooledN{} games,
-\vsixHeadCellsAbove{} of \vsixHeadCells{} cells above parity, naive $z = \vsixHeadZ{}$} --- and
-that $z$ treats the six rotations of a deal as independent, so it overstates the significance rather
-than understating it.
+\textbf{Those cells are not enough to answer the question, and an earlier draft of this paper drew
+the wrong conclusion from them.} At 1{,}800 games a cell the project's own planning rule gives a
+half-width of about $2.3$ points, which cannot resolve a one-point difference. Pooling every
+\vsix{}-versus-\vfive{} cell in the battery --- including the default-dialect row of the rules
+experiment and the \vfive{} column of the paired ablation panel, both of which fall below parity ---
+gives \vsixHeadPooled\% with a naive $z$ of \vsixHeadZ{}: a null. The draft reported that null.
 
-\textbf{Head to head, \vsix{} and \vfive{} are not separated.} What is separated is the paired
-comparison over the whole panel (\S\ref{sec:results-ablations}) and the worst case across
-playstyles (\S\ref{sec:results-lbr}).
+It is a power artefact. Re-run at \textbf{18{,}000 games a bank} across
+\vsixBigFiveBanks{} disjoint banks --- the same five, plus the two that had gone the other way ---
+\vsix{} is above parity on \textbf{all \vsixBigFiveAbove{}}, worst bank \vsixBigFiveMin\%, and
+pooled \textbf{\vsixBigFive\% over \vsixBigFiveN{} games}
+$[\vsixBigFiveLo, \vsixBigFiveHi]$. The two contrary cells return \emph{above} parity at the
+larger sample. Against \vfour{}, \vsixBigFour\% over \vsixBigFourN{} games with
+\vsixBigFourAbove{} of \vsixBigFourBanks{} banks above parity
+$[\vsixBigFourLo, \vsixBigFourHi]$.
+
+\begin{table}[t]\centering
+\caption{High-power head-to-head against \vfive{}, 3{,}000 deals $\times$ 6 rotations per bank.
+Every bank is above parity.}
+\label{tab:bighead}
+%% --- begin tables_v06/bighead_v05 ---
+\begin{tabular}{lrr}
+\toprule
+Seed bank & Win rate (\%) & Games \\
+\midrule
+90210 & 51.12 & 18,000 \\
+31337 & 50.66 & 18,000 \\
+515151 & 50.48 & 18,000 \\
+777001 & 50.95 & 18,000 \\
+424242 & 51.16 & 18,000 \\
+828282 & 50.29 & 18,000 \\
+606060 & 51.54 & 18,000 \\
+\bottomrule
+\end{tabular}
+%% --- end tables_v06/bighead_v05 ---
+\end{table}
+
+\textbf{Head to head, \vsix{} beats \vfive{} by \vsixBigFive\% $-$ 50 $=$ 0.89 points.} The
+effect is real and it is small; \S\ref{sec:protocol-resolution} is the protocol that made the
+difference between reading it as a null and measuring it.
 
 \begin{table}[t]\centering
 \caption{Held-out head-to-head against \vfive{}, one row per seed bank, six rotations.}
@@ -3993,9 +4052,10 @@ a $95\%$ interval at the corpus's budget and returned zero at this one.
 \section{Threats to validity}
 \label{sec:limitations}
 
-\paragraph{\vsix{} is not separated from \vfive{} head to head, and this paper says so.}
-Pooled over every head-to-head cell in the battery it is \vsixHeadPooled\% with a naive $z$ of
-\vsixHeadZ{} (\S\ref{sec:results-h2h}). Its claim is on the axis this project has always said it
+\paragraph{The head-to-head margin is small, and it took \vsixBigFiveN{} games to see it.}
+\vsix{} beats \vfive{} by about nine tenths of a point (\S\ref{sec:results-h2h}); at the
+1{,}800-game cells this project normally uses, the same comparison reads as a null and two cells read
+as a loss. Its claim is on the axis this project has always said it
 cares about --- the paired panel comparison and the worst case across playstyles --- together with a
 set of corrections and negative results that close off most of the design register it inherited.
 
@@ -4099,9 +4159,10 @@ another observer's tables whenever two observers held one.
 \vsix{} fixes those, and the fixed optimiser then finds what forty generations of the old one could
 not: a policy that is ahead of \vfive{} on the paired panel comparison at all three banks it was
 measured on, and that gains nine points against the deception archetype the project owner brought
-here from live play. Head to head it is a null --- \vsixHeadPooled\% over \vsixHeadPooledN{} games
---- and the paper says so in the abstract, because an earlier draft of this work quoted only the
-five banks that agreed and the correction is exactly the kind this study exists to make. That is a
+here from live play. Head to head it wins \vsixBigFive\% over \vsixBigFiveN{} games with every one of
+\vsixBigFiveBanks{} banks above parity --- nine tenths of a point, and invisible at the per-cell
+budget this project has always used, which is why an earlier draft of this work reported it as a
+null. That is a
 smaller headline than a new mechanism would have been. It is also the only one the evidence
 supports, and stating it that way is the point.
 
@@ -6029,6 +6090,8 @@ Artifact & Bytes & sha256 (first 12) \\
 \texttt{F0-search-confirm.jsonl} & 5,062 & \texttt{2aa98d49ff21} \\
 \texttt{F1-chain2x2.json} & 816 & \texttt{d663f80c0f8a} \\
 \texttt{F10-panel-banks.json} & 730 & \texttt{2663c7fd665d} \\
+\texttt{F11-bighead-v05.jsonl} & 2,797 & \texttt{ea2d0c16339b} \\
+\texttt{F12-bighead-extra.jsonl} & 2,801 & \texttt{616edf8e37b5} \\
 \texttt{F2-belief-noprior.txt} & 846 & \texttt{f5c2579cbd9b} \\
 \texttt{F3-oracle.txt} & 700 & \texttt{94fab4303d6f} \\
 \texttt{F3-selftest.txt} & 289 & \texttt{35936f9f0376} \\
@@ -6039,7 +6102,7 @@ Artifact & Bytes & sha256 (first 12) \\
 \texttt{F7-winrate.txt} & 235 & \texttt{2b70dcb2e7c9} \\
 \texttt{F8-tiesearch.txt} & 530 & \texttt{684396fe47c5} \\
 \texttt{F9-tieonly.txt} & 507 & \texttt{fae275343f67} \\
-\texttt{MANIFEST.json} & 5,079 & \texttt{b7a30d0edc6a} \\
+\texttt{MANIFEST.json} & 5,367 & \texttt{5e36ca2488ab} \\
 \texttt{X1-lbr-v04.jsonl} & 7,498 & \texttt{008b9f2625ac} \\
 \texttt{X1-lbr-v05.jsonl} & 7,474 & \texttt{8a54fb672b99} \\
 \texttt{X1-lbr-v06.jsonl} & 7,496 & \texttt{da5e5a201c9f} \\

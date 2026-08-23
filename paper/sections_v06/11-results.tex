@@ -57,18 +57,32 @@ Over the \vsixHeadFiveBanks{} dedicated held-out banks of E3, six rotations each
 per-bank range of \vsixHeadFiveMin\% to \vsixHeadFiveMax\%, and \vsixHeadFourMean\% against
 \vfour{} (\vsixHeadFourMin\% to \vsixHeadFourMax\%).
 
-\textbf{Those five banks are not the whole evidence, and quoting them alone would be selection on
-the experiment that agreed.} The battery contains two further \vsix{}-versus-\vfive{} cells at
-default rules on further disjoint banks --- the default-dialect row of the rules experiment and the
-\vfive{} column of the paired ablation panel --- and \vsix{} loses both. Pooling every such cell in
-the battery gives \textbf{\vsixHeadPooled\% over \vsixHeadPooledN{} games,
-\vsixHeadCellsAbove{} of \vsixHeadCells{} cells above parity, naive $z = \vsixHeadZ{}$} --- and
-that $z$ treats the six rotations of a deal as independent, so it overstates the significance rather
-than understating it.
+\textbf{Those cells are not enough to answer the question, and an earlier draft of this paper drew
+the wrong conclusion from them.} At 1{,}800 games a cell the project's own planning rule gives a
+half-width of about $2.3$ points, which cannot resolve a one-point difference. Pooling every
+\vsix{}-versus-\vfive{} cell in the battery --- including the default-dialect row of the rules
+experiment and the \vfive{} column of the paired ablation panel, both of which fall below parity ---
+gives \vsixHeadPooled\% with a naive $z$ of \vsixHeadZ{}: a null. The draft reported that null.
 
-\textbf{Head to head, \vsix{} and \vfive{} are not separated.} What is separated is the paired
-comparison over the whole panel (\S\ref{sec:results-ablations}) and the worst case across
-playstyles (\S\ref{sec:results-lbr}).
+It is a power artefact. Re-run at \textbf{18{,}000 games a bank} across
+\vsixBigFiveBanks{} disjoint banks --- the same five, plus the two that had gone the other way ---
+\vsix{} is above parity on \textbf{all \vsixBigFiveAbove{}}, worst bank \vsixBigFiveMin\%, and
+pooled \textbf{\vsixBigFive\% over \vsixBigFiveN{} games}
+$[\vsixBigFiveLo, \vsixBigFiveHi]$. The two contrary cells return \emph{above} parity at the
+larger sample. Against \vfour{}, \vsixBigFour\% over \vsixBigFourN{} games with
+\vsixBigFourAbove{} of \vsixBigFourBanks{} banks above parity
+$[\vsixBigFourLo, \vsixBigFourHi]$.
+
+\begin{table}[t]\centering
+\caption{High-power head-to-head against \vfive{}, 3{,}000 deals $\times$ 6 rotations per bank.
+Every bank is above parity.}
+\label{tab:bighead}
+\input{tables_v06/bighead_v05}
+\end{table}
+
+\textbf{Head to head, \vsix{} beats \vfive{} by \vsixBigFive\% $-$ 50 $=$ 0.89 points.} The
+effect is real and it is small; \S\ref{sec:protocol-resolution} is the protocol that made the
+difference between reading it as a null and measuring it.
 
 \begin{table}[t]\centering
 \caption{Held-out head-to-head against \vfive{}, one row per seed bank, six rotations.}

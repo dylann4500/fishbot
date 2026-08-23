@@ -25,9 +25,12 @@ Two configurations ship, following this project's convention of naming both:
 - **Against the withholder** — the deception manoeuvre the project owner brought here from live play
   (hold cards of a half-suit you were asked for, then decline to ask back in it) — **+8.60 points**
   over 4,800 games, replicating at all three banks (+9.06, +8.33, +8.34).
-- **Head to head, v0.6 and v0.5 are NOT separated:** 50.53% over 11,300 games, 5 of 7 cells above
-  parity, naive z = 1.13. Five held-out banks show v0.6 ahead and two further default-rules cells
-  show it behind. Quoting the five that agreed would have been selection on the experiment.
+- **Head to head, at the sample size it takes to see it.** v0.6 beats v0.5 **50.89%**
+  [50.61, 51.16] over **126,000 games** with **7 of 7** banks above parity, and v0.4 **51.11%**
+  [50.59, 51.63] over 36,000 games with 3 of 3. At the 1,800-game cells this project normally uses
+  the same comparison reads as a null and two cells read as a loss — both of which return *above*
+  parity at 18,000 games. The margin is about nine tenths of a point: real, replicated on every
+  bank, and small.
 - **Test-time search is the one place a multi-step method beats a static rule.** On v0.5's vector it
   takes **52.64%** against v0.5 over 2,160 games and three banks, none below 52.08%. On v0.6's own
   vector it takes **52.08%** against v0.6 over 2,880 games, **all four cells above parity**, worst

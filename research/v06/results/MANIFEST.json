@@ -103,6 +103,16 @@
    "sha256": "2663c7fd665d088454d2b7484b0d99c126ef1d2fbdf2e6c381aaf1835df4de1e"
   },
   {
+   "file": "F11-bighead-v05.jsonl",
+   "bytes": 2797,
+   "sha256": "ea2d0c16339b180a15e59ad3e48c087b1c32c9f10307f56b40d3de65e1930a30"
+  },
+  {
+   "file": "F12-bighead-extra.jsonl",
+   "bytes": 2801,
+   "sha256": "616edf8e37b566011356d7920c6448e13fa3b2867aefc30161f1e8d6445e743e"
+  },
+  {
    "file": "F2-belief-noprior.txt",
    "bytes": 846,
    "sha256": "f5c2579cbd9b9f2a53205e7461e75e701bf573eeff4eb45fa44564348137a7e7"

@@ -1,0 +1,15 @@
+{"bank":90210,"b":"v05"}
+{"a":"v06","b":"v05","deals":3000,"games":18000,"winRateA":0.511167,"ci":[0.504056,0.518389],"wilsonCI":[0.503863,0.518466],"meanSetsA":4.53433,"meanSetsB":4.46567,"askAccA":0.550363,"askAccB":0.551369,"declAccA":0.98467,"declAccB":0.975739,"declPerGameA":4.48644,"declPerGameB":4.50206,"forcedAccA":0.307692,"forcedAccB":0.23871,"forcedPerGameA":0.00288889,"outOfTurnA":3.32522,"outOfTurnB":3.30828,"lockHoldA":4.58993,"lockHoldB":4.74562,"eventsPerGame":96.0108,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":54.63}
+
+{"bank":31337,"b":"v05"}
+{"a":"v06","b":"v05","deals":3000,"games":18000,"winRateA":0.506611,"ci":[0.499278,0.513944],"wilsonCI":[0.499307,0.513913],"meanSetsA":4.52756,"meanSetsB":4.47244,"askAccA":0.550334,"askAccB":0.551661,"declAccA":0.984127,"declAccB":0.975338,"declPerGameA":4.48,"declPerGameB":4.50767,"forcedAccA":0.276923,"forcedAccB":0.254777,"forcedPerGameA":0.00361111,"outOfTurnA":3.32139,"outOfTurnB":3.32217,"lockHoldA":4.56035,"lockHoldB":4.86992,"eventsPerGame":95.9331,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":60.5118}
+
+{"bank":515151,"b":"v05"}
+{"a":"v06","b":"v05","deals":3000,"games":18000,"winRateA":0.504833,"ci":[0.497778,0.512056],"wilsonCI":[0.497529,0.512136],"meanSetsA":4.51833,"meanSetsB":4.48167,"askAccA":0.548738,"askAccB":0.550868,"declAccA":0.984414,"declAccB":0.97547,"declPerGameA":4.46989,"declPerGameB":4.51828,"forcedAccA":0.389831,"forcedAccB":0.298701,"forcedPerGameA":0.00327778,"outOfTurnA":3.32128,"outOfTurnB":3.33744,"lockHoldA":4.66896,"lockHoldB":4.78215,"eventsPerGame":95.8316,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":61.8683}
+
+{"bank":777001,"b":"v05"}
+{"a":"v06","b":"v05","deals":3000,"games":18000,"winRateA":0.5095,"ci":[0.502278,0.516778],"wilsonCI":[0.502196,0.5168],"meanSetsA":4.53128,"meanSetsB":4.46872,"askAccA":0.548392,"askAccB":0.549683,"declAccA":0.984434,"declAccB":0.975637,"declPerGameA":4.48278,"declPerGameB":4.50361,"forcedAccA":0.122807,"forcedAccB":0.218085,"forcedPerGameA":0.00316667,"outOfTurnA":3.31744,"outOfTurnB":3.30867,"lockHoldA":4.6551,"lockHoldB":4.84579,"eventsPerGame":95.8207,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":62.4115}
+
+{"bank":424242,"b":"v05"}
+{"a":"v06","b":"v05","deals":3000,"games":18000,"winRateA":0.511556,"ci":[0.504278,0.519],"wilsonCI":[0.504251,0.518855],"meanSetsA":4.54083,"meanSetsB":4.45917,"askAccA":0.548547,"askAccB":0.549551,"declAccA":0.984398,"declAccB":0.974356,"declPerGameA":4.48667,"declPerGameB":4.49961,"forcedAccA":0.31746,"forcedAccB":0.25,"forcedPerGameA":0.0035,"outOfTurnA":3.32567,"outOfTurnB":3.31689,"lockHoldA":4.6273,"lockHoldB":4.95935,"eventsPerGame":95.8738,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":62.7688}
+

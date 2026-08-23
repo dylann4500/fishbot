@@ -15,7 +15,11 @@ the ablation table exact rather than approximate.
 | **FishBot v0.6-Search** | `v06:s1=1,det=12,cand=4,kappa=2.5,roll=v06` | 0.14 games/s (1 thread) | v0.6 plus determinized information-set search; the strongest configuration measured |
 
 On v0.5's parameter vector the same search takes **52.64%** against v0.5 over 2,160 games and three
-banks (none below 52.08%). On v0.6's own vector, v0.6-Search takes **52.08%** against **v0.6
+banks (none below 52.08%). On v0.6's own vector, **Head to head (`F11`/`F12`, 18,000 games a bank):** v0.6 beats v0.5 **50.89%** [50.61, 51.16] over
+126,000 games with **7 of 7** banks above parity, and v0.4 **51.11%** [50.59, 51.63] over 36,000
+games with 3 of 3. At 1,800-game cells the same comparison reads as a null.
+
+v0.6-Search takes **52.08%** against **v0.6
 itself** over 2,880 games with all four cells above parity (worst 50.83%). It is off by default on cost grounds, not on evidence.
 
 ## 1. What v0.6 is
