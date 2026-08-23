@@ -1,0 +1,169 @@
+\section{Corrections to the v0.4 study}
+\label{sec:corrections}
+
+The v0.4 study \cite{fishbot04} and its supporting artifacts contain claims that
+the measurements of \S\ref{sec:diagnosis} contradict. They are stated here as
+corrections, in one place, rather than quietly patched. Each entry gives what was
+claimed, where, what is now measured, and what replaces it. Where the v0.4
+\emph{paper} and a v0.4 \emph{artifact} disagree with each other, that is said
+explicitly, because in the load-bearing case the paper is right and the artifact
+is wrong.
+
+\paragraph{C1. The information-freeze account of non-termination is withdrawn.}
+The v0.4 termination artifact, \filepath{research/v04/results/E11-termination.md},
+states that the locked-half-suit theorem implies that such a half-suit is frozen
+``and, for the same reason, that no further information about its allocation can
+ever arrive,'' and concludes that two policies which both decline to cash an
+uncertain half-suit therefore deadlock. It repeats the claim as ``Theorem~1
+freezes information as well as ownership,'' and closes by offering that
+proposition as a contribution to the rules literature. That is false, and all
+three statements are retracted.
+
+It is false at the level of the rules before any measurement: an ask inside a
+half-suit locked to the asker's own team satisfies every legality condition, and
+the deduction machinery publishes the asker's own exclusion whether the ask
+succeeds or not. It is false as measured: \numCertRate\% of such asks strictly
+raise a teammate's exact probability of the correct allocation, mean
+$+\numCertMean$, maximum $+\numCertMax$, and \numEntropyRate\% strictly lower the
+exact marginal entropy, by a mean of \numEntropyMean{} nats
+(\S\ref{sec:diag-information}). And it is not the mechanism of the observed
+deadlock in any case: in \numNoLockPct\% of long games no half-suit is locked to
+any team at any point in the dead run, and only \numCycleInLock\% of long games
+have their entire cycle inside a lock. What replaces it is
+\S\ref{sec:diag-cycle}: the deadlock is a deterministic two-question cycle at a
+fixed point of the public information state, produced by an ask score in which
+ungated ownership features outbid the hit-probability term at $p = 0$.
+
+The v0.4 \emph{paper} is not implicated in this error and should not be read as
+if it were. Its Observation on locked half-suits states the correct position ---
+that ownership freezes while allocation information need not, that asks inside a
+locked half-suit stay legal and carry certificates, and that ownership
+monotonicity alone establishes neither informational freezing nor
+non-termination. The error is confined to the artifact, was flagged in the
+engine's own specification document, and was never corrected there.
+
+\paragraph{C2. The reported termination property was purchased, and the price was
+not reported.} The v0.4 study reports an action-limit rate of \numVfourLimitRate{}
+across its experiments and describes the graduated event-count escalation as the
+mechanism. Both statements are accurate. What was not reported is what the
+escalation does in the population where it actually fires. In mirror play
+\numPostHorizonDecl{} declarations are made at or after the forcing horizon and
+\numPostHorizonWrong\% of them are wrong, against a baseline declaration error of
+\numDeclWrong\%; bucketed by the confidence the policy itself attaches,
+\numLowConfDecl{} declarations in \numLowConfGames{} games are made below a
+self-assessed probability of \numLowConfThresh{} and every one is wrong. The escalation's second stage returns ``declare'' before
+inspecting the allocation probability at all, and removing it is worth
+\numStageTwoCost{} points against a mirror opponent while changing nothing
+against any weaker style tested. A zero cap-hit rate against a panel of weaker
+policies is therefore not evidence that termination was solved; it is evidence
+that the horizon was rarely reached in that panel. The correct statement is that
+\vfour{} converts non-termination into misdeclaration, and that the conversion
+rate is a strong-opponent tax.
+
+\paragraph{C3. Forced-endgame declarations were reported as inaccurate and
+recorded as a known gap; they are a certainty of loss with a mechanical cause.}
+The v0.4 evaluation tables carry a forced-declaration accuracy of zero, and the
+engine specification records that the allocation routine takes a per-card argmax
+with no capacity constraint. The two were never connected. \S\ref{sec:diag-forced}
+connects them: over \numForcedGames{} distinct mirror games, all \numForcedN{}
+forced declarations violate the declarer's own capacity constraint, all have
+exact posterior probability zero, and the declarer's own stated confidence is
+exactly zero in every one. The best feasible allocation would have been correct
+in \numFeasibleRight\% of them. This is not a hard inference problem being lost;
+it is a policy naming an allocation it has itself scored at zero. Two notes
+attach to the same measurement, neither of which touches the rate. The count of
+\numForcedN{} corrects, downward by half, the figure the diagnosis run first
+reported: in a mirror match the six seat rotations are three deal shifts times
+two team orientations, both orientations play byte-identical games, and every
+such run splits its forced declarations exactly evenly between them. And the
+result does not rest on that run alone --- an instrument sharing no code with it,
+recomputing each declaration from the opening deal, reproduces it at five further
+mirror seeds.
+
+\paragraph{C4. The known gap about the value-function coefficients has the sign
+backwards.} The v0.4 specification records that the sixteen compiled value
+coefficients are not the ones in the fitting artifact, framed as a defect. The
+compiled vector is the better of the two: substituting the fitted vector costs
+\numEfourteenRange{} win-rate points, including \numEfourteenCost{} points
+against \vthree{}, with the sign stable across nine opponents and three
+independent seed banks. Two riders on that figure are corrections to the present
+study rather than to the v0.4 one. The size is not uniform across the panel: at a
+fresh seed the mirror is the \emph{smallest} effect and the only one whose
+cluster-bootstrap interval includes zero, so a narrower per-opponent range stated
+in an earlier draft of this analysis, and the reading that the compiled vector's
+advantage is largest in mirror play, are both withdrawn. The real defect is
+larger and different. The model is
+effectively one feature: held-out $R^2$ is \numValueRSq{} for all sixteen and
+\numValueRSqScore{} for a bias term plus the score differential alone, two
+features are algebraically identical, and five more cancel at every call site ---
+moving all five to $\pm\numDeadFeatureSwing$ changes none of \numDeadFeatureDecisions{} declaration
+decisions. The v0.4 limitation that no goodness-of-fit figure was reported for
+the deployed coefficients is upgraded here to a measurement, and it is not
+flattering.
+
+\paragraph{C5. The policy prior is one channel, not two.} The v0.4 study
+describes the prior as two coefficients, a weight on having asked in a half-suit
+and a weight on having taken turns without asking there, and reports a
+frozen-policy ablation for the pair. The second is not an independent channel:
+the exponent rearranges so that its term is card-independent, and the capacity
+normalisation then removes it. Deleting it costs nothing measurable ---
+\numPhiWin\% [\numPhiCI] against the honest mirror, a paired delta of
+\numPhiPaired{} points across a four-opponent panel, and a fifteen-fold sweep flat
+inside its intervals. The ablation result for the pair stands, and the
+attribution of it to two channels does not. This also corrects a hypothesis of
+the present study rather than of the v0.4 one: the silence channel that the
+project owner's manoeuvre attacks was not misreading silence, it was not reading
+it at all.
+
+\paragraph{C6. Asks inside a locked half-suit: both halves of the v0.4 hedge are
+now measured, and they point in opposite directions.} The v0.4 limitations
+describe these asks as ``a channel the fitted configuration has no term for
+\dots\ unexploited here, not shown to be worthless.'' They are not worthless:
+\S\ref{sec:diag-information} prices them, and a greedy ladder of them reaches
+certainty in \numLadderRate\% of attempts at an information exchange rate of
+about $\numLeakRatio\!:\!1$ in the sender's favour. They are also not usable in
+the form the hedge implies. Selecting them requires the actor to know its team
+owns the half-suit, and that condition is provable from public information at
+only \numProvableOwn\% of mirror decisions; at the deadlock states the exact
+probability an owning team assigns to its own ownership averages
+\numOwnProbMean{} and peaks at \numOwnProbMax{}, so not one of the
+\numOwnProbPairs{} pairs measured comes near the \numProvableThresh{} bar. The channel has to be priced against ownership probability rather
+than gated on ownership. The first pass of the present study wrote ``provably
+owns'' where it meant ``in fact owns,'' and that wording is corrected here.
+
+\paragraph{C7. The eight-level forced-endgame willingness ladder does not
+function, and leaks more than the rules license.} The v0.4 dialect table presents
+the ladder as a graded willingness mechanism and contrasts it with v0.3's
+two-level version. It is inert: the statistic it thresholds is exactly zero in
+\numRungZeroPairs{} of \numRungZeroPairs{} surveyed (player, half-suit) pairs, a
+consequence of C3, and four ladder shapes including one with no rungs at all
+produce bit-identical output. Separately, a ladder of this shape transmits
+\numLadderLeak{} bits per candidate, against the roughly one bit of willingness
+the rules make public. M2 restores the ladder's function for free; the leak
+figure is the reason \S\ref{sec:mech-rejected} declines to extend the same device
+to mid-game turn transfer, where the audience still holds cards.
+
+\paragraph{C8. Waiting was free by construction, so observing that waiting
+dominates proves nothing.} The v0.4 declaration rule compares the value of acting
+against the value of waiting, and the waiting branch is evaluated by passing
+all-zero deltas to a value model in which the public event count appears nowhere.
+The value of waiting at time $t$ therefore equals the value of waiting at $t+1$
+as an identity of the implementation, not as an approximation or a finding. Any
+argument that patience weakly dominates in that model is self-fulfilling, and the
+only thing that ever broke the tie was the hand-set horizon whose cost C2
+records. \S\ref{sec:mech-rejected} reports that the literature's remedy for this
+--- a strictly positive holding cost --- was implemented and swept, and that it
+shifts the mean without touching the tail, so the correction here is not that
+v0.4 chose the wrong cost but that the well-posedness of its stopping problem
+came from a move cap rather than from anything in the model.
+
+\paragraph{C9. Scope: the published head-to-head result stands; its
+generalisation caveat now has an instance.} \vfour{}'s reported
+\numVfourVsVthree\% against \vthree{} is not contradicted by anything here, and
+the v0.4 study was explicit that it established nothing about generalisation to
+unseen opponent populations. \S\ref{sec:diag-baseline} supplies a concrete
+instance of that caveat biting: on the same instrument, against a population the
+panel did not contain, the dead-ask rate differs by a factor of fourteen and a
+third of games contain an extended run of guaranteed misses. The lesson is about
+evaluation design and is acted on in M10 --- the mirror belongs in the fitting
+panel and the pathology statistics belong in the commit gate.

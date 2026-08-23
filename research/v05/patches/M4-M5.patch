@@ -1,0 +1,410 @@
+FishBot v0.5 -- M4 (per-seat knowledge model) + M5 (target-dimension selection)
+Prepared 2026-08-22 against the WORKING TREE (HEAD fe21e19 "lets play" plus the
+lead session's uncommitted edits to engine/src/factory.hpp).  `git apply --check`
+passed at the moment this file was written; because the lead session is actively
+editing both target files, re-check before applying and regenerate the hunks from
+engine/src/v05_target.hpp if they have drifted.
+Byline: Dylan Nguyen, FishLab Research Project.
+
+NOT APPLIED.  engine/src/v05.hpp and engine/src/factory.hpp are owned by the lead
+session.  Apply with:
+
+    cd "/Users/dylan/Documents/GitHub/fish optimization"
+    git apply --check research/v05/patches/M4-M5.patch && git apply research/v05/patches/M4-M5.patch
+
+The new code is already in the tree and is NOT part of this diff, because both
+files are new and neither is protected:
+
+    engine/src/v05_target.hpp        the M4/M5 module (free functions + a mixin)
+    engine/src/probe_m45_test.cpp    the soundness and cost test
+
+===============================================================================
+1.  THE DEFECT
+===============================================================================
+
+askExpectedValue opens with `(void)target;` -- v04.hpp:435, inherited verbatim at
+v05.hpp:427 -- so the value half of the ask score cannot see who is being asked.
+Every target-dependent quantity anywhere in the ask score is material: hit
+probability, reply threat, hand size, exposure, follow-up hit probability
+(P5-verify-target-channel.md section 1).  Measured over 154,318 v0.4-mirror ask
+decisions, 46.6% offer at least two hard-indistinguishable holders of the card
+actually asked for, worth a mean 0.639 bits -- 43.9% and 0.607 bits at seed
+777001, 66.2% and 0.919 bits against v0.3 -- roughly 41 bits per team per game
+that no term consumes (P5-human-strategy.md section 3A, P5-verify-target-channel
+section 2).
+
+The verification report corrects the PRICE, and the correction shaped this
+design.  Inside that class the spread of v0.4's own posterior is 0.25-0.29, not
+the 0.081 of the capacity-marginal yardstick, and the intra-class spread of the
+total ask score is 3.0-3.4, exceeding v0.4's top1-top2 margin at 86-88% of such
+decisions (P5-verify-target-channel.md section 3).  The channel is priced, not
+free.  The same report also measures that the value part supplies 1.9% of the
+score variation that selects an ask against the linear part's 98.1% (section 4).
+
+  => Consequence for this patch: the target dimension is NOT folded into
+     askExpectedValue.  Doing so would expose a 0.64-0.92 bit channel to the
+     weakest half of the score.  `(void)target;` stays, with a comment saying
+     why, and the target dimension is priced by its own explicitly weighted term
+     at the top level of chooseAsk, on the linear score's scale.
+
+===============================================================================
+2.  M4 -- WHAT WAS BUILT, AND ONE CORRECTION TO THE DESIGN NOTE
+===============================================================================
+
+DESIGN.md M4 and the task budget "6x the bookkeeping".  It is 1x.
+
+The public deduction state is COMMON KNOWLEDGE.  In Knowledge::onEvent
+(belief.hpp:153-210) every write to owner/mask/unresolved/disj/askCount/
+missCount/totalAsks/handCount/publicKnown is a function of the event alone; the
+only two lines that consult `me` are belief.hpp:207-208, which maintain myHand.
+Six objects fed the same stream from an all-possible start therefore agree bit
+for bit outside me/myHand.  probe_m45_test.cpp check D asserts this empirically
+rather than resting on the code reading: 0 mismatches in 12,355 comparisons
+(25 games, seed 31, v05 mirror).
+
+So M4 maintains ONE incremental public object and derives a per-seat model
+lazily:
+
+    model(j) = public state, refined by every card OUR OWN k proves seat j holds.
+
+That refinement is what makes the models differ between seats at all -- the
+public state alone can only rank opponents by our belief about their cards, not
+by their knowledge -- and it is sound as a model of j's knowledge because j knows
+its own hand.
+
+LIMITATION, stated plainly because it changes how the output may be used.
+model(j) omits constraint C1 for seat j: every deduction j makes from the part of
+j's hand we cannot see.  It is a STRICT UNDER-APPROXIMATION.  Measured: the model
+resolves 0.124-0.152 of (observer, seat, card) triples against the seat's own
+0.274-0.298 -- it sees roughly HALF of what the seat itself has resolved.
+Therefore:
+
+  (i)  every fact in model(j) is genuinely known to j, so it is a sound LOWER
+       BOUND on opponent knowledge.  `owner[c] == u` in model(t) is a
+       certificate: "opponent t provably knows our seat u holds card c".  That is
+       the direction blackballing needs, which is why the hard lockout term is a
+       proof and not an estimate.
+  (ii) it can NEVER be used the other way.  model(t) not knowing something is not
+       evidence that t does not know it.  Nothing in this patch rewards an ask
+       for being unreadable, and nothing treats an ask as safe because the model
+       is ignorant of it.  If a later mechanism (M3's leak term is the obvious
+       candidate) wants that direction, it needs a different object.
+
+===============================================================================
+3.  M5 -- THE FOUR PARTS
+===============================================================================
+
+(a) LOCKOUT / BLACKBALL.  v0.5's f[8] = (1-p)*threatOf(target) estimates the
+    target's CARDS and fudges its knowledge with `0.7 + 0.3*min(1, askCount/3)`
+    (v05.hpp:211).  Develin's blackball turns on the opponent KNOWING where a
+    card is.  M5a scores that from the target's own model:
+
+      value(t) = max over live half-suits S, cards c of S,
+                     P(t can legally ask in S) * P_t(c is on our team)
+
+    with P_t read off model(t) (capacity-weighted, no dynamic program).  When
+    model(t) has c resolved to one of our seats the second factor is exactly 1
+    and the whole term is a certificate.  Measured: a hard certificate exists at
+    85.1% of decisions, at strength >0.5 for 67.7% and >0.9 for 37.5%
+    (25 games seed 31, v05 mirror; 85.2/62.2/29.1 for the v04 mirror at seed
+    90210, 82.8/61.0/18.3 for the v04 mirror at seed 31).
+
+    m5aPostMiss additionally prices the certificate THIS ask would emit: a miss
+    tells the table "the asker holds another card of S" (C5, belief.hpp:158-171),
+    and if that disjunction has exactly one survivor in the target's model, the
+    target learns precisely which card we hold and takes it with the turn we just
+    handed over.  That is Develin's worked example.  First-order only: the
+    cascades from the two exclusions are not chased, because that would need a
+    Knowledge copy and an onEvent per candidate ask.
+
+(b) VOID PROGRESS.  Taking an opponent's last card of a half-suit permanently
+    removes their right to ask in it -- legalAsk requires
+    `g.hand[actor] & setMask(s)` (fish.hpp:164).  v0.5's f[11] fires only at
+    handCount[target]==1, which is emptying the whole hand, not voiding a
+    half-suit.  M5b adds P(this ask takes the target's last card of S), scaled by
+    our team's stake in S.  An opportunity worth >0.25 exists at 26.9% of v0.5
+    mirror decisions (14.8% for the v0.4 mirror).
+
+(c) LAST-LIVE-OPPONENT TRAP.  f[11] is split.  Emptying one of several opponents
+    stays in f[11]; emptying the LAST live opponent triggers the forced endgame
+    and becomes two features, the upside (with the opposing team cardless every
+    remaining card is ours) and the downside (we must then allocate every
+    remaining half-suit blind), so the fit can price them separately.
+
+    HONEST NEGATIVE: this is insurance, not a scorer.  A last-live-opponent ask
+    is available at only 1.15-1.39% of decisions (1.39% v05 mirror, 1.15-1.16%
+    v04 mirror), and in a 20-game smoke test
+    m5c=1 alone reproduced the all-off result exactly.  M1 and M2 have already
+    removed most forced endgames.  Budget nothing for it; keep it because the
+    failure it guards against cost v0.4 100% of 28 forced declarations.
+
+(d) CODEBOOK ON THE TARGET INDEX.  Construction B of signalling.md 7.9, behind
+    `conventions=1`, OFF by default per owner decision D1.  Opponents at relative
+    seat offsets +1/+3 address teammates at +2/+4; the third opponent is reserved
+    as "no frame, material ask only".  Relative offsets, not absolute seats, so
+    the codebook means the same thing in every rotation of a duplicate block.
+
+    LIMITATION: sender side only.  The receiver-side decode belongs with M3 and
+    is not built here, so M5d alone should measure at approximately zero.  It is
+    included so the machinery and the D1 flag exist, not because it will score.
+
+===============================================================================
+4.  SWITCHES AND WEIGHTS
+===============================================================================
+
+    v05:m4=0        do not build the per-seat models (disables m5a and m5d)
+    v05:m5a=0       no lockout term
+    v05:m5b=0       no void-progress term
+    v05:m5c=0       restore v0.4's undifferentiated f[11]
+    v05:m5d=1,conventions=1     Construction B codebook
+    v05:m5ahard=1   lockout scored only where it is a certificate
+    v05:m5apost=0   drop the certificate this ask would emit
+    v05:m5af8=1     zero f[8], so the card-based threat does not double count
+    v05:mw0..mw4    the five M5 weights
+
+THE WEIGHTS IN M45Config ARE UNFITTED PLACEHOLDERS, scale-matched to the existing
+fitted vector (lockout takes f[8]'s -3.0978, the last-live upside keeps f[11]'s
++1.1660).  They are not measured and no strength claim may be made from them.
+The factory hunk extends the flat `allparams` vector by NM45 entries at K+14..
+K+18 so `fish tune` fits them with everything else; a vector produced before M4/M5
+existed is shorter and leaves them untouched, so old fits still load.
+
+Because m5c changes what f[11] MEANS, w[11] must be refit alongside mw[].  The
+round-1 fit running now (research/v05/runs/fit-round1.jsonl) is a fit of the
+pre-M4/M5 v0.5 and remains valid as that; it is not a fit of this configuration.
+
+CAUTION, and this is the practical one.  The placeholder weights are NOT neutral.
+In a 40-game smoke test against v0.4 (seed 4242, no duplicate rotations, far too
+small to mean anything on its own) the all-off build scored 171-189 in sets and
+the placeholder-weight build 170-190.  Do not switch M4/M5 on in a headline
+configuration before the refit.  The defaults ship the mechanisms ON only so that
+the ablation harness has something to turn OFF; if that is the wrong default for
+the lead session, set m5a=m5b=m5c=0 in M45Config and the build is byte-for-byte
+shipped v0.5 (verified below).
+
+===============================================================================
+5.  VERIFICATION RUN THIS SESSION
+===============================================================================
+
+Soundness (engine/src/probe_m45_test.cpp; the audit idea of Game::runAudit,
+game.hpp:120-146, applied to the derived models):
+
+    build:  c++ -std=c++20 -O2 -Isrc src/probe_m45_test.cpp -o m45test -pthread
+    runs:   ./m45test --games=25 --seed=31     --a=v05 --b=v05
+            ./m45test --games=25 --seed=90210  --a=v04 --b=v04
+            ./m45test --games=15 --seed=31     --a=v04 --b=v04
+            ./m45test --games=15 --seed=777001 --a=v05 --b=v04
+            ./m45test --games=15 --seed=90210  --a=v05 --b=v03
+
+    pooled over the five runs -- 95 games, 3 seeds, 4 matchups, 25.1M checks:
+
+    A  model excludes the true holder of a card   0 of 13,777,560
+    B  capacity mismatches                        0 of  2,414,232
+    C  unsatisfied C5 certificates                0 of  6,558,355
+    D  common-knowledge mismatches                0 of     55,885
+    E  model of self stronger than own knowledge  0 of  2,296,260
+    F  build contradictions                       0
+    every run also passes the pre-existing Game::runAudit with 0 violations.
+
+Cost, per ask decision (25 games, seed 31, v05 mirror):
+
+    public model onEvent      64 ns   (a real agent's own Knowledge::onEvent,
+                                       fed the same stream: 91 ns -- so M4's
+                                       public bookkeeping is CHEAPER than the
+                                       update the agent already performs)
+    lazy per-seat build      144 ns
+    beginDecision           1127 ns + 1772 ns to score 46.1 candidates
+    ONE Sinkhorn solve      5488 ns, and v0.5 already pays 13 per decision
+    => M4 + M5 overhead      4.1% of the posterior work already done
+                             (2.4% on the v0.4 mirror, whose posteriors are
+                              slower: 2,566 ns against 13 x 8,189 ns)
+
+    The per-event control was corrected after review: it previously timed a
+    SECOND public Knowledge (the check-D objects), which compares a public model
+    against a public model and says nothing about the agent's own cost.  It now
+    times a shadow copy of the live agent's `k`, resynced every event, so the
+    control carries constraint C1 the way the agent's knowledge does.  Timings
+    are load-sensitive -- these were taken while a parameter fit occupied every
+    core -- but the soundness and population counts below are exact and
+    reproducible.
+
+Does M5 use the channel it was built for?  Among (decision, card) pairs with two
+or more targets the hard certificates cannot separate, M5's score strictly
+separates them at 99.6% (v0.5 mirror) / 99.8% (v0.4 mirror); restricted to the
+best card by hit probability, 97.3% / 98.6%.  NOTE this is a different population
+from P5's 46.6%: P5 measured the card v0.4 ACTUALLY asked, and 36.6% of those
+were provably dead, which collapses the class to one member.
+
+Regression: with m4=0,m5a=0,m5b=0,m5c=0,m5d=0 the patched policy reproduces
+shipped v0.5 EXACTLY -- identical sets, wins, events/game and declaration
+accuracy over 40 games vs v04 and 40 games mirror (seed 4242).
+
+NOT MEASURED, and deliberately not claimed: whether M4/M5 make v0.5 stronger.
+That needs the ablation match after a refit that includes mw[], and the standing
+preference applies -- per-opponent breakdown, explicit worst case across styles,
+exploitability probe, never an aggregate win rate alone.
+
+===============================================================================
+--- a/engine/src/v05.hpp
++++ b/engine/src/v05.hpp
+@@ -20,6 +20,7 @@
+ // from 10.9% to 1.9% at no cost in win rate.
+ #pragma once
+ #include "v04.hpp"
++#include "v05_target.hpp"
+ 
+ namespace fish {
+ 
+@@ -114,6 +115,12 @@
+   bool   forceStage2        = false;
+   bool   repeatGuard        = true;
+   bool   feasibleDecl       = true;   // M2 on the voluntary path too
++
++  // M4 per-seat knowledge models + M5 target-dimension selection.  Switches and
++  // the five extra weights live in one struct so the module can be ablated,
++  // fitted and reported as a unit; engine/src/v05_target.hpp carries what each
++  // part scores and the soundness argument behind M4.
++  m45::M45Config m45;
+ };
+ 
+ struct V05Agent : Agent {
+@@ -130,6 +137,12 @@
+   // A structural backstop -- with M1 in place a repeat is almost always already
+   // provably dead, so this only catches the residue.
+   bool asked[NCARD][NPLAY] = {};
++  // M4/M5.  The module owns the public deduction state and the per-seat models.
++  // It is fed the same public event stream the agent gets and reaches into
++  // nothing of V05Agent's, which is why it lives in its own header and can be
++  // exercised standalone by engine/src/probe_m45_test.cpp.
++  m45::M45Module m45;
++  m45::M45Ctx m45ctx;
+   const char* label = "fishbot_v05";
+ 
+   const char* name() const override { return label; }
+@@ -141,10 +154,14 @@
+     memset(asked, 0, sizeof(asked));
+     teamMask = 0; oppMask = 0;
+     for (int p = 0; p < NPLAY; p++) { if (teamOf(p) == teamOf(s)) teamMask |= 1 << p; else oppMask |= 1 << p; }
++    m45.cfg = cfg.m45;
++    m45.reset(r.deckSets);
++    m45ctx = m45::M45Ctx{&k, &bel, nullptr, s, teamMask, oppMask};
+   }
+   void observe(const Event& e) override {
+     Agent::observe(e);
+     if (e.kind == Kind::Ask && int(e.actor) == seat) asked[e.card][e.target] = true;
++    m45.observe(e);
+     dirty = true;
+   }
+ 
+@@ -306,10 +323,22 @@
+     f[5]  = og * pTeamOther;
+     f[6]  = continuation;
+     f[7]  = og * (myHave >= 4 ? 1.0 : (myHave == 3 ? .35 : 0.0));
+-    f[8]  = (1 - p) * threatOf(pub, target);
++    // M5a variant: with the knowledge-based lockout term on, f[8]'s card-based
++    // proxy can be zeroed rather than left to double count.  Off by default --
++    // f[8]'s weight is already fitted, and the two terms answer different
++    // questions (can this opponent take a card, vs does it KNOW where one is).
++    f[8]  = (m45.cfg.m5a && m45.cfg.m5aReplaceF8) ? 0.0 : (1 - p) * threatOf(pub, target);
+     f[9]  = teamRevealedSet(S) ? 0.0 : 1.0;
+     f[10] = pub.handCount[target] / 9.0;
+-    f[11] = (pub.handCount[target] == 1) ? p : 0.0;
++    // M5c: emptying ONE opponent is good -- they cannot be asked, so they cannot
++    // receive the turn.  Emptying the LAST live opponent triggers the forced
++    // endgame, which v0.4 got wrong 100% of the time (28/28,
++    // P0-v04-pathology.md).  Split the two: this feature keeps the first case,
++    // and the second is priced by the M45_EMPTY_LAST_SAFE / _RISK pair, which
++    // separates the upside (every remaining card is then ours) from the
++    // downside (we must allocate every remaining half-suit blind).
++    f[11] = m45.cfg.m5c ? m45.emptiesNonLast(m45ctx, target, p)
++                        : ((pub.handCount[target] == 1) ? p : 0.0);
+     f[12] = (lastMySet == S) ? 1.0 : 0.0;
+     f[13] = teamKnown / 6.0;
+     f[14] = binEnt(p);
+@@ -424,6 +453,16 @@
+   // the turn; a miss excludes the target (which re-normalises that card's
+   // ownership among the remaining candidates) and hands the turn over.
+   double askExpectedValue(const PublicState& pub, int card, int target, double p) const {
++    // M5.  v0.4's `(void)target;` (v04.hpp:435) is the line the diagnosis names,
++    // but the target is deliberately NOT folded into this function.  The state
++    // deltas below genuinely do not depend on which opponent held the card, and
++    // the measured reason is stronger: the value part supplies only 1.9% of the
++    // score variation that selects an ask, against the linear part's 98.1%
++    // (P5-verify-target-channel.md section 4), so routing the target dimension
++    // through here would expose a 0.64-0.92 bit channel to the weakest half of
++    // the score.  The target dimension is instead priced by its own explicitly
++    // weighted term in chooseAsk (m45.score), where it competes with the linear
++    // score on the same scale.
+     (void)target;
+     int S = setOf(card);
+     int scoreDiff = int(pub.score[teamOf(seat)]) - int(pub.score[1 - teamOf(seat)]);
+@@ -496,6 +535,13 @@
+     if (!n) return AskMove{0, 0};
+     if (cfg.useValue) computeAggregates(pub);
+     prepareRunway(pub);
++    // M4/M5: build the per-seat knowledge models and everything about the target
++    // dimension that does not depend on the card.  Measured at 1.13 us per
++    // decision plus 38 ns per candidate, against the 13 Sinkhorn solves at
++    // 5.49 us each that this decision already pays for -- 4.1% overhead
++    // (engine/src/probe_m45_test.cpp, 25 games seed 31, v05 mirror).
++    m45ctx.pub = &pub;
++    m45.beginDecision(m45ctx);
+     double bestScore = -1e18; AskMove best = buf[0]; double bestP = 0;
+     double f[NFEAT];
+     for (int i = 0; i < n; i++) {
+@@ -504,6 +550,9 @@
+       for (int j = 0; j < NFEAT; j++) u += cfg.w[j] * f[j];
+       u *= cfg.linearWeight;
+       if (cfg.useValue) u += cfg.valueWeight * askExpectedValue(pub, buf[i].card, buf[i].target, f[0]);
++      // M5: the target dimension, on the linear score's scale rather than the
++      // value function's.  Zero for every candidate when m5a/b/c/d are all off.
++      u += m45.score(m45ctx, buf[i].card, buf[i].target, f[0]);
+       if (u > bestScore) { bestScore = u; best = buf[i]; bestP = f[0]; }
+     }
+     if (cfg.searchTopK > 1) {
+@@ -518,6 +567,7 @@
+         for (int j = 0; j < NFEAT; j++) u += cfg.w[j] * f[j];
+         u *= cfg.linearWeight;
+         if (cfg.useValue) u += cfg.valueWeight * askExpectedValue(pub, buf[i].card, buf[i].target, f[0]);
++        u += m45.score(m45ctx, buf[i].card, buf[i].target, f[0]);
+         cs[i] = Cand{u, i};
+       }
+       int K = std::min(cfg.searchTopK, n);
+--- a/engine/src/factory.hpp
++++ b/engine/src/factory.hpp
+@@ -98,6 +98,12 @@
+       a->cfg.searchTopK        = std::max(0, std::min(24, int(std::lround(get(K + 11, a->cfg.searchTopK)))));
+       a->cfg.chainWeight       = std::max(0.0, get(K + 12, a->cfg.chainWeight));
+       a->cfg.threatWeight      = std::max(0.0, get(K + 13, a->cfg.threatWeight));
++      // M5's five weights extend the same flat vector, so `fish tune` fits them
++      // with everything else instead of leaving them at the hand-set
++      // placeholders in M45Config.  A vector produced before M4/M5 existed is
++      // shorter than K + 14 and leaves them untouched, so old fits still load.
++      for (int i = 0; i < m45::NM45; i++)
++        a->cfg.m45.mw[i] = get(K + 14 + size_t(i), a->cfg.m45.mw[i]);
+     }
+     // v0.5 mechanism switches, for the ablation table.
+     a->cfg.liveAskGate       = optI(o, "m1", a->cfg.liveAskGate ? 1 : 0) != 0;
+@@ -105,6 +111,22 @@
+     a->cfg.feasibleDecl      = optI(o, "m2", a->cfg.feasibleDecl ? 1 : 0) != 0;
+     a->cfg.forceStage2       = optI(o, "stage2", a->cfg.forceStage2 ? 1 : 0) != 0;
+     a->cfg.repeatGuard       = optI(o, "norepeat", a->cfg.repeatGuard ? 1 : 0) != 0;
++    // M4 per-seat knowledge models, M5 target-dimension selection.  m5d is
++    // additionally gated on `conventions`, which ships OFF as the headline
++    // configuration per owner decision D1 (research/v05/BRIEF.md).
++    a->cfg.m45.m4            = optI(o, "m4",   a->cfg.m45.m4   ? 1 : 0) != 0;
++    a->cfg.m45.m5a           = optI(o, "m5a",  a->cfg.m45.m5a  ? 1 : 0) != 0;
++    a->cfg.m45.m5b           = optI(o, "m5b",  a->cfg.m45.m5b  ? 1 : 0) != 0;
++    a->cfg.m45.m5c           = optI(o, "m5c",  a->cfg.m45.m5c  ? 1 : 0) != 0;
++    a->cfg.m45.m5d           = optI(o, "m5d",  a->cfg.m45.m5d  ? 1 : 0) != 0;
++    a->cfg.m45.conventions   = optI(o, "conventions", a->cfg.m45.conventions ? 1 : 0) != 0;
++    a->cfg.m45.m5aHardOnly   = optI(o, "m5ahard", a->cfg.m45.m5aHardOnly   ? 1 : 0) != 0;
++    a->cfg.m45.m5aPostMiss   = optI(o, "m5apost", a->cfg.m45.m5aPostMiss   ? 1 : 0) != 0;
++    a->cfg.m45.m5aReplaceF8  = optI(o, "m5af8",   a->cfg.m45.m5aReplaceF8  ? 1 : 0) != 0;
++    for (int i = 0; i < m45::NM45; i++) {
++      char key[10]; snprintf(key, sizeof(key), "mw%d", i);
++      a->cfg.m45.mw[i] = optD(o, key, a->cfg.m45.mw[i]);
++    }
+     for (int i = 0; i < NFEAT; i++) {
+       char key[8]; snprintf(key, sizeof(key), "w%d", i);
+       a->cfg.w[i] = optD(o, key, a->cfg.w[i]);

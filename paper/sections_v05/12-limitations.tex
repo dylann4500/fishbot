@@ -1,0 +1,267 @@
+\section{Threats to validity}
+\label{sec:limitations}
+
+This section is in two parts. \S\ref{sec:lim-named} names the eight limitations
+that bound what \S\ref{sec:results} may be read to show, each with the experiment
+that would resolve it and none of which has been run. \S\ref{sec:lim-validity}
+groups the remaining threats by the kind of validity each bears on. Caveats
+stated in full at the point of measurement are cross-referenced rather than
+restated.
+
+\subsection{Named limitations, and the experiment each needs}
+\label{sec:lim-named}
+
+\paragraph{L1. The strength gain is small, and often within noise.}
+Head to head \vfive{} scores \numPanelVfiveVfour\% against \vfour{}
+[\numStyleCIVfour] --- $\numDeltaVfour$ points on \vfour{}'s
+\numPanelVfourVfour\% mirror baseline, on an interval that contains even money.
+The nine-style means are level at \numVfiveMean\% against
+\numVfourMean\%, and on minimax regret over that style set \vfour{} is
+marginally the better of the two, \numVfourRegret{} against \numVfiveRegret{}.
+Most of the per-style differences are a point or
+less --- hunter $\numDeltaHunter$, bluffer $\numDeltaBluffer$, random
+$\numDeltaRandom$, detective $\numDeltaDetective$, diversifier
+$\numDeltaDiversifier$, \vthree{} $\numDeltaVthree$ --- and the largest,
+\vtwo{} $\numDeltaVtwo$ and lockout $\numDeltaLockout$, are of a size the
+per-cell intervals do not separate. No style in the table is one on which the
+two policies' intervals fail to overlap. Nothing in this report should be read as
+\vfive{} playing better than \vfour{}; the case for it is the pathology table
+and the deception panel. \emph{Resolving experiment:} a paired common-deal
+evaluation at an order of magnitude more deals per cell, with a per-style
+optimum computed for each style, so that regret is measured against a best
+response and not against the better of two arms \cite{xu-mirror}.
+
+\paragraph{L2. No exploitability probe was run against \vfive{}.} The v0.4 study
+ran one; this one did not, and the battery of \S\ref{sec:results} contains no
+best-response search of any kind. \vfive{} therefore inherits no robustness
+property from \vfour{}'s probe and claims none of its own. This is a strict
+scope limit rather than a hedge: the deception panel measures performance against
+three \emph{fixed} deceptive rules, which is not the same quantity as
+performance against a policy that is searching for this policy's worst case.
+\emph{Resolving experiment:} a local best-response probe against \vfive{},
+reported as an achieved score that is a lower bound within its search class
+\cite{lisy-lbr}, run with and without M6, since a deterministic argmax sits at
+the deterministic leakage bound whatever its feature weights
+\cite{alvim-leakage}.
+
+\paragraph{L3. Mechanisms M3--M7 are specified and unbuilt, and two patches for
+them are unmeasured.} \S\ref{sec:mech-designed} specifies the net-information ask
+term, the per-seat knowledge model, target-dimension selection, partner-aware
+stochastic selection and the online opponent model. None is on \vfive{}'s
+decision path. Patches for M4/M5 and for M7 exist in the repository
+under \filepath{research/v05/patches/}; neither has been evaluated in play, and
+no number anywhere in this report is attributable to either. They are recorded
+because unmeasured code that looks finished is a hazard, not because they support
+a claim. \emph{Resolving experiment:} apply each patch, measure it alone against
+the frozen configuration and then jointly, in the build order of
+\S\ref{sec:mechanisms}, refitting after each --- since
+\S\ref{sec:mech-built} already shows frozen-parameter ablations understating a
+mechanism whose parameters were fitted for a different policy.
+
+\paragraph{L4. Forced-endgame accuracy is still far below the feasible
+ceiling.} M2 takes forced-endgame accuracy from \numVfourForcedAcc\% to
+\numVfiveForcedAcc\% over \numForcedEightGames{} games per arm, and the measured
+ceiling for the best capacity-feasible allocation at those states is
+\numFeasibleRight\%. The gap is not closed, and the reason is that feasibility
+is exact while the score that ranks the survivors is not: it runs on the
+deployed approximate belief. \emph{Resolving experiment:} a calibration study of
+M2's allocation estimate against exhaustive enumeration on small reachable
+states, to bound the gap between its exact feasibility test and its approximate
+score, followed by re-ranking survivors with the exact belief where the state is
+small enough to afford it.
+
+\paragraph{L5. A single fitting round.} The configuration evaluated here comes
+from \numFitRounds{} round of \numFitGens{} generations
+(\S\ref{sec:fitting}); the v0.4 configuration came from
+\numVfourFitRounds{} rounds.
+The gap between in-panel and held-out performance is already visible in the one
+round that was run: the best generation scored \numFitWorst\% against \vfour{}
+inside the panel, while the frozen configuration --- the distribution mean the
+winner's-curse guard preferred to it (\S\ref{sec:fit-guard}) --- scores
+\numPanelVfiveVfour\% against \vfour{} on a bank the fit never saw.
+The held-out figure is the one reported, and the difference is a regression to be
+expected of a single round rather than an anomaly. \emph{Resolving experiment:}
+further rounds on fresh deal banks, each evaluated on a bank the fit never saw,
+with the round-by-round in-panel and held-out figures published together so the
+regression can be read directly.
+
+\paragraph{L6. The feint exposure is real, replicated, and not addressable by
+retuning.} Against the feint archetype \vfive{} scores $\numDecFeintDelta$
+points relative to \vfour{}, and does so at both seed banks
+(\S\ref{sec:results}). The proximate
+cause is identified: the fit raised the weight on ``this player asked here'' from
+\numPriorThetaFour{} to \numPriorThetaFive{}, and \S\ref{sec:diag-prior}
+establishes that the exposure is over-weighting the policy prior rather than
+weighting it at all: against the deceptive archetypes themselves, deleting the
+prior outright is worse still, by
+\numPriorDeleteCost{} points [\numPriorDeleteCI]. A sweep of that weight over \numThetaSweepN{} values
+$\{\numThetaSweep\}$ at two seeds does not identify it: the ordering is unstable
+across seeds and every pairwise difference sits inside the cluster-bootstrap
+interval, so the fitted value is retained rather than tuned on noise.
+\emph{Resolving experiment:} M7, a per-seat online type posterior with
+data-biased shrinkage \cite{johanson-dbr}, evaluated against the deception panel
+at the seeds used here plus fresh ones, and reported as a frontier rather than an
+operating point \cite{johanson-rnash}.
+
+\paragraph{L7. Owner decision D2, partner-aware play, is specified and not
+implemented.} The design requires two regimes --- convention-rich,
+lower-temperature play with bot teammates, and grounded, less predictable play
+with human or unknown teammates --- reported separately, with the self-play
+configuration never headlined as the one a human will meet
+(\S\ref{sec:mech-partner}). \vfive{} implements neither. It is a single
+deterministic policy used in both regimes, and every number in this report is
+from the self-play regime. There is no human-teammate evaluation of \vfive{} at
+all, which matters most for the one result this study did not obtain by
+measurement: the report that a well-trained human outperforms \vfour{} on some
+reasoning. \emph{Resolving experiment:} build M6 with the temperature and the
+convention flag keyed on the partner regime, then evaluate the two regimes as
+separate arms --- bot-teammate self-play, and \vfive{} partnered with a policy it
+was not trained with as a stand-in for an unknown teammate --- before any
+human-teammate sessions are attempted.
+
+\paragraph{L8. Owner decision D1, conventions behind a flag, has no flag.}
+\S\ref{sec:mech-conventions} states the policy: build the signalling machinery
+behind an explicit switch, ship it off, and publish the with/without difference
+as a result in its own right. The switch does not exist. No codebook, no
+convention machinery and no receiver-side decoder were built, so the difference
+that was to be published is unmeasured, and the headline configuration is
+``conventions off'' only in the trivial sense that there is nothing to turn on.
+\emph{Resolving experiment:} implement M5's codebook term behind
+\texttt{--conventions}, and report the paired difference between the two settings
+on the same deal bank, separately for each partner regime of L7, since a
+codebook is worth nothing to a teammate who does not share it.
+
+\subsection{Threats grouped by kind of validity}
+\label{sec:lim-validity}
+
+\textbf{Internal validity.} Every ablation in Table~\ref{tab:mechanisms} is a
+frozen-parameter ablation: no row was refitted, so no row measures a mechanism's
+standalone value under parameters chosen for it. The causal isolation of
+\S\ref{sec:diag-features} was performed with a prototype filter applied to the
+\vfour{} policy, not with the shipped M1, and the two differ in the fallback rule
+and in the ownership scaling. The diagnosis probes are copies of the shipped
+policy rather than the shipped policy itself; equality with the original was
+checked by reproducing its aggregate statistics to the reported digits after
+every instrumentation change, which is a strong check and not a proof of
+identity. On the other side of the ledger, the evaluated configuration is the
+frozen one: the round-trip assertion that the compiled defaults and the fitted
+vector name the same policy passes, and the rules audit reports
+\numVerifyViolations{} violations in \numVerifyChecks{} checks with determinism
+reproduced.
+
+\textbf{Construct validity.} The provably-dead predicate of
+Definition~\ref{def:dead} is a hard deduction and admits no false positives, but
+several of the headline statistics that motivate M3 are ground-truth statistics:
+the lock census, the ``asks inside a half-suit the team already owns'' rate and
+the certificate-ladder measurements all classify half-suits by the true deal, not
+by what any observer can establish. \S\ref{sec:diag-information} and
+\S\ref{sec:corrections} state the consequence --- the provable version of the
+condition holds at \numProvableOwn\% of decisions --- but the reader should not
+read those rates as an achievable policy. M2's allocation probability is computed
+with the deployed approximate belief, so it is an estimate; the feasibility
+constraints it enforces are exact, the score it ranks survivors by is not.
+More generally, the posterior throughout this work is exact with respect to the
+rules and a uniform prior over consistent deals, which is the policy-agnostic
+object; the true posterior weights deals by opponent policy, and the two-scalar
+prior examined in \S\ref{sec:diag-prior} is a parametric stand-in for that
+correction rather than the correction --- which is also why L6's exposure is a
+modelling gap and not a tuning error. Finally, win rate does not capture
+declaration reliability, calibration, or the pathology statistics that gate this
+work, which is why they are reported separately.
+
+\textbf{External validity.} Every opponent in this study was written inside this
+project or ported from an earlier FishBot. The deceptive archetypes of
+\S\ref{sec:diag-prior} are commitment deceivers --- they follow a fixed deceptive
+rule for the whole game --- and while the withholder is a direct model of the
+manoeuvre the project owner reported, it does not reproduce what he actually
+did, which was to adapt within a game and across games. The gain of
+$\numDecWithholderDelta$ points against it is therefore a result about a fixed
+rule, not about a human. The report that a well-trained human outperforms
+\vfour{} on some reasoning rests on one player's account of live sessions, is not
+a controlled measurement, and is treated here as a hypothesis that generated
+experiments rather than as a result. No expert human logs exist for this dialect
+and no independently authored engine for it was located, so nothing here tests
+the agent against a strategy source outside this project. One point runs the
+other way and is worth stating: the three deceptive archetypes, together with
+\vtwo{}, the bluffer and the random opponent, were absent from the fitting panel
+(\S\ref{sec:fitting}), so the deception panel is a genuinely held-out
+measurement of deal bank \emph{and} opponent style, which most of the nine-style
+table is not.
+
+\textbf{Statistical validity.} The per-style table is a single seed bank
+(\numStyleDeals{} deals in six rotations per cell, seed \numStyleSeed{}), and the
+deception panel is two; only the \vfour{} pairing has been run at more
+(\numHeadSeeds{} banks, \numHeadDeals{} deals, mean \numHeadWin\%, range
+\numHeadRange\%). Several of the diagnosis figures are stable in rate and
+unstable in magnitude across seeds, and the pooled values are used above for that
+reason. Re-running the information measurement at two fresh seeds reproduced the
+rate (\numCertRate\% pooled against \numCertRateOrig\% at the original seed) but
+moved the mean improvement from $+\numCertMeanOrig$ to $+\numCertMean$ pooled;
+the certificate ladder reached certainty in \numLadderOrigN{} of
+\numLadderOrigN{} attempts at the original seed and in \numLadderRate\% pooled,
+at a median of \numLadderMedian{} asks rather than two; and the ratio at which a
+teammate's best allocation moves toward the truth rather than away from it fell
+from $\numMapRatioOrig\!:\!1$ to $\numMapRatioPooled\!:\!1$ pooled. All keep
+their sign. The ``information-free at every state'' result of
+\S\ref{sec:diag-features} is scoped to \numInfoFreeStates{} states already inside
+a repeat cycle and is not a claim about \vfour{}'s asks in general --- indeed
+\numOwnLocked\% of all its asks land inside a half-suit its team already owns and
+do emit certificates, by accident rather than by choice. Intervals quoted are
+deal-clustered percentile bootstrap intervals, which under-cover in evaluations
+of this kind \cite{jordan-rleval}.
+
+\textbf{Opponent-population dependence.} Nothing in this report bounds
+exploitability, and no such bound is claimed; L2 is the scope statement and
+\cite{lisy-lbr} the form the eventual measurement must take. Two of the
+mechanisms that would bear on it are unbuilt: while action selection remains a
+deterministic argmax, leakage sits at the deterministic bound whatever the
+feature weights \cite{alvim-leakage}, so any leak penalty in the ask score is
+acting on the wrong variable; and the opponent model remains a fixed global
+prior rather than a per-seat one, so the robustness frontier that M7 is supposed
+to expose does not yet exist to be reported.
+
+\textbf{Rules-dialect dependence.} All results are for the dialect of
+\S\ref{sec:rules}, which is one explicit selection among documented variants
+\cite{pagat}. Arbitration by lowest seat is a modelling choice rather than a
+rule, and the action cap is a backstop rather than part of the game. The
+deadlock measurements in particular are sensitive to the cap only in the patient
+configuration, where the cap is what ends the game.
+
+\textbf{Computational and model-class limits.} The ask score remains a
+twenty-feature linear function refined by a one-ply expectimax, which caps what
+any reweighting can express; M3 and M5 add terms to that class rather than
+replacing it. The value model inside it is effectively one feature --- held-out
+$R^2$ of \numValueRSq{} for all sixteen against \numValueRSqScore{} for a bias
+term plus the score differential alone, where a tree reaches \numValueRSqTree{}
+--- so M9's decision to rebuild or retire it is still open, and until it is
+taken the declaration rule is scoring on a model whose capacity has been
+measured and found wanting. M2's search is exhaustive over at most $3^6$
+assignments and returns no candidate at all when an opponent provably holds a
+card of the half-suit or when no teammate may hold one, so the declaration path
+still needs a defined behaviour at those states. The duplicate-certificate growth
+noted in \S\ref{sec:diag-cycle} makes the exact belief progressively more
+expensive inside a long cycle without changing what it computes; de-duplication
+is an unbuilt engine improvement.
+
+\textbf{Experiments not tied to a single limitation above}, none of which has
+been run: a provability oracle over the transportation polytope, to establish how
+far the \numProvableOwn\% provable-ownership rate can be widened, which decides
+whether M3 can ever gate rather than price; and an adaptive human-like opponent,
+or logged human play, to test whether the owner's live result survives a
+controlled setting that commitment deceivers do not reproduce.
+
+\textbf{Provenance of the figures in this report.} Of the \numProvUsed{}
+distinct quantities quoted in the text, \numProvGenerated{} are emitted directly
+from an experiment artifact by \filepath{engine/build_tables_v05.py} and cannot
+drift from it; the remaining \numProvTranscribed{} are transcribed out of the
+diagnosis reports of \S\ref{sec:diagnosis} rather than regenerated. Transcription
+is the weaker guarantee, and it is the mechanism by which a number goes stale
+when an artifact is regenerated and the prose is not. It is constrained rather
+than eliminated: \filepath{paper/check_provenance.py} requires every transcribed
+quantity to sit under a comment naming the artifact it came from and fails the
+build if that artifact is absent, and it reports the split above so that this
+paragraph cannot itself go stale. Extending the generator to parse the diagnosis
+reports would close the gap; it has not been done, and until it is, the
+\numProvTranscribed{} transcribed figures carry the same standard of evidence as
+the v0.4 study's hand-entered numbers, which is precisely the standard
+\S\ref{sec:corrections} criticises elsewhere.

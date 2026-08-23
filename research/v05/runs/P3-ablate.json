@@ -1,0 +1,6 @@
+{"reference":"v04","winRate":0.56750,"perOpponent":[0.50000,0.58200,0.51400,0.67400],"panel":["v04","silent:tol=0.10","feint","withholder:k=6"],"variants":[
+  {"spec":"v04:ptheta=0,pphi=0","winRate":0.52350,"deltaFromRef":0.04400,"ci":[0.01600,0.07150],"perOpponent":[0.43600,0.55800,0.47000,0.63000]},
+  {"spec":"v04:ptheta=0","winRate":0.55800,"deltaFromRef":0.00950,"ci":[-0.01750,0.03700],"perOpponent":[0.49200,0.56000,0.50600,0.67400]},
+  {"spec":"v04:pphi=0","winRate":0.57050,"deltaFromRef":-0.00300,"ci":[-0.03050,0.02400],"perOpponent":[0.52000,0.53400,0.54800,0.68000]},
+  {"spec":"v04:ptheta=0.5276,pphi=0.2656","winRate":0.51500,"deltaFromRef":0.05250,"ci":[0.02450,0.08050],"perOpponent":[0.47800,0.49000,0.50800,0.58400]}
+]}

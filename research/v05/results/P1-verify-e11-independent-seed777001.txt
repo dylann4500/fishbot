@@ -1,0 +1,30 @@
+VERIFY: scanned 120 games (v04 mirror, seed 777001)  long games: 22
+  [game seed 15190593729845910486 rot 0] event 19
+    locked set 3 (High Hearts) owned by team 1, observer s1: H=3.927673 support=15;  best teammate ask s3 asks KH of s2 -> dH=1.101812 nats
+    locked set 3 (High Hearts) owned by team 1, observer s3: H=5.772381 support=19;  best teammate ask s5 asks JH of s2 -> dH=0.627370 nats
+    locked set 3 (High Hearts) owned by team 1, observer s5: H=5.128730 support=18;  best teammate ask s3 asks JH of s2 -> dH=1.220390 nats
+    mover s1 played 9H@s0: dH to a teammate on set 3 = 0.000000;  best legal ask would give 0.407350
+  [game seed 15190593729845910486 rot 0] event 59
+    locked set 3 (High Hearts) owned by team 1, observer s1: H=3.927673 support=15;  best teammate ask s3 asks KH of s2 -> dH=1.101812 nats
+    locked set 3 (High Hearts) owned by team 1, observer s3: H=5.772381 support=19;  best teammate ask s5 asks JH of s2 -> dH=0.627370 nats
+    locked set 3 (High Hearts) owned by team 1, observer s5: H=5.128730 support=18;  best teammate ask s3 asks JH of s2 -> dH=1.220390 nats
+    mover s1 played 9H@s0: dH to a teammate on set 3 = 0.000000;  best legal ask would give 0.407350
+  [game seed 15190593729845910486 rot 0] event 99
+    locked set 3 (High Hearts) owned by team 1, observer s1: H=3.927673 support=15;  best teammate ask s3 asks KH of s2 -> dH=1.101812 nats
+    locked set 3 (High Hearts) owned by team 1, observer s3: H=5.772381 support=19;  best teammate ask s5 asks JH of s2 -> dH=0.627370 nats
+    locked set 3 (High Hearts) owned by team 1, observer s5: H=5.128730 support=18;  best teammate ask s3 asks JH of s2 -> dH=1.220390 nats
+    mover s1 played 9H@s0: dH to a teammate on set 3 = 0.000000;  best legal ask would give 0.407350
+
+--- INDEPENDENT RE-MEASUREMENT (support size + marginal entropy) ---
+(state x locked-half-suit x owning-team observer) triples: 117
+  legal teammate asks INSIDE that locked half-suit: 2484
+     strictly shrink the observer's support set: 912 (36.714976%)
+     strictly lower the observer's allocation entropy: 1437 (57.850242%)
+     mean dH 0.300922 nats,  max 1.677671,  mean support removed 0.582126 seat-slots
+  legal teammate asks OUTSIDE it: 9162
+     strictly shrink support: 0 (0.000000%)
+     strictly lower entropy: 2528 (27.592229%)
+     mean dH -0.005772 nats,  max 0.179341
+  triples where SOME legal own-locked ask was informative: 102 / 117
+  best available dH per triple: n=117  mean 0.721787  p50 0.676682  p90 1.220390  p99 1.677671  max 1.677671
+  mover states with a locked half-suit: 27;  ask v0.4 played was informative in 0;  some legal ask was informative in 24

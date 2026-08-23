@@ -1,0 +1,18 @@
+VERIFY: scanned 120 games (v04 mirror, seed 31)  long games: 14
+  [game seed 272135269103994248 rot 1] event 24
+  [game seed 272135269103994248 rot 1] event 64
+  [game seed 272135269103994248 rot 1] event 104
+
+--- INDEPENDENT RE-MEASUREMENT (support size + marginal entropy) ---
+(state x locked-half-suit x owning-team observer) triples: 81
+  legal teammate asks INSIDE that locked half-suit: 1836
+     strictly shrink the observer's support set: 786 (42.810458%)
+     strictly lower the observer's allocation entropy: 1398 (76.143791%)
+     mean dH 0.424952 nats,  max 2.115398,  mean support removed 0.815359 seat-slots
+  legal teammate asks OUTSIDE it: 6132
+     strictly shrink support: 0 (0.000000%)
+     strictly lower entropy: 2388 (38.943249%)
+     mean dH -0.002934 nats,  max 0.126587
+  triples where SOME legal own-locked ask was informative: 78 / 81
+  best available dH per triple: n=81  mean 0.937087  p50 0.883895  p90 1.909543  p99 2.115398  max 2.115398
+  mover states with a locked half-suit: 9;  ask v0.4 played was informative in 0;  some legal ask was informative in 9

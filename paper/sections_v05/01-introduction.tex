@@ -1,0 +1,125 @@
+\section{Introduction}
+\label{sec:intro}
+
+Canadian Fish, also called Literature, is a six-player card game of imperfect
+information: two teams of three, the whole deck dealt out, no communication
+outside the public record of play. On turn a player names a card and an opponent;
+if the opponent holds it the card transfers and the asker continues, otherwise
+the turn passes to the opponent asked. Cards taken this way score nothing. A team
+scores only by \emph{declaring} --- naming one half-suit and stating which of its
+own members holds each of its six cards --- a correct declaration awarding the
+half-suit to the declaring team and an incorrect one to the opponents.
+\S\ref{sec:rules} states every consequential rule choice in the dialect studied.
+Two of them govern everything in this report: a declaration may be made at any
+moment, and nothing in the rules ever obliges a player to make one.
+
+\vfour{} \cite{fishbot04} was built on that structure. It computes an
+observer-conditioned posterior over the initial deal, scores asks with a
+twenty-feature linear function refined by a one-ply expectimax over a
+sixteen-feature value model, and decides declarations by comparing fitted value
+estimates. On its published evaluation bank it defeated \vthree{} \cite{fishbot03} in
+\numVfourVsVthree\% of games. This report begins from the observation that the
+published evaluation could not have detected what \vfour{} does against a strong
+opponent, and that the project owner met the resulting behaviour directly at the
+table: bots repeating one question at one opponent indefinitely, and then
+misdeclaring in bulk when the game was hurried to a close.
+
+\paragraph{The measurement.} \S\ref{sec:diagnosis} reports it. In mirror
+self-play, \numDeadAsk\% of \vfour{}'s asks are \emph{provably dead}: the actor
+could prove from its own public deduction state that the target does not hold
+the named card. \numRepeatAsk\% of asks are exact repeats of an
+(actor, card, target) triple the same game has already seen.
+\numDeadRunGames\% of games contain a run of at least six consecutive provably
+dead asks; the longest such run is \numDeadRunLongest{} asks. Against \vthree{}
+on the identical instrument the dead-ask rate is \numVthreeDeadAsk\% and the
+longest run is \numVthreeDeadRun{}. The pathology is a strong-opponent
+phenomenon, which is precisely why a panel of weaker policies did not expose it,
+and why a competent human --- who is closer to the mirror case than \vthree{} is
+--- meets it and \vthree{} does not.
+
+\paragraph{Five claims this report makes, and one it retracts.}
+
+\begin{enumerate}
+  \item \textbf{The deadlock is an ask-policy fixed point, not an information
+        freeze.} The v0.4 termination study explains non-termination by appeal to
+        the locked-half-suit theorem, asserting that no further information about
+        a locked half-suit's allocation can ever arrive. Both halves of that
+        account fail. The observed deadlock is a deterministic two-question
+        cycle: in \numPureCycle{} of \numLongGames{} long games the entire dead
+        run consists of exactly two distinct (actor, card, target) triples, and
+        in \numNoLockPct\% of long games no half-suit is locked to any team at
+        any point during the run. Independently of that, the informational claim
+        is false on its own terms: \numCertRate\% of legal asks inside a
+        half-suit a team does in fact own strictly increase a teammate's exact
+        probability of the correct allocation, mean $+\numCertMean$, maximum
+        $+\numCertMax$, and \numEntropyRate\% strictly lower its exact marginal
+        entropy. \S\ref{sec:corrections} states the retraction.
+  \item \textbf{The cause is arithmetic, and it is in the ask score.} Four
+        ownership features are not gated by hit probability. Evaluated at the
+        compiled weights they pay up to $\numOwnershipPay$ at $p=0$, against
+        $\numHitWeight\cdot p$ for the hit-probability term, and the only
+        explicit information term in the score, the binary entropy of the ask
+        outcome, carries weight $\numEntropyWeight$ --- a negative
+        value-of-information term, so a certain miss is rewarded for being
+        certain. \numVoluntaryDead\% of the dead asks are voluntary: a live ask
+        existed and was passed over.
+  \item \textbf{Terminating by force is a strong-opponent tax, and terminating by
+        patience does not terminate.} A configuration whose event-count
+        escalation never fires beats the shipped one by \numPatientWin\%
+        (deal-clustered \numPatientWinCI\%) and declares at \numPatientDeclAcc\%
+        accuracy against \numForcingDeclAcc\%, but reaches the action cap in
+        \numPatientCap\% of mirror games. The escalation's second stage, which
+        cashes a best candidate without inspecting its probability at all, costs
+        \numStageTwoCost{} points against a mirror opponent and exactly nothing
+        against every weaker style tested. Both settings of the dial are bad; the
+        missing capability is an ask rule that terminates the cycle by choosing
+        informative asks rather than an event counter that ends the game by
+        guessing.
+  \item \textbf{The repairs that follow are keyed to measurements, and the ones
+        that failed are recorded as failures.} \S\ref{sec:mechanisms} specifies
+        ten mechanisms; three are built and seven are designed. It also records
+        four plausible fixes that were measured and rejected --- a time-varying
+        holding cost, deleting the policy prior, a turn-transfer willingness
+        ladder, and confidence-ranked declaration arbitration --- so that they
+        are not rebuilt.
+  \item \textbf{The repair removes the failure mode, and does not show up as a
+        win rate.} The three built mechanisms were refitted, on a panel that for
+        the first time in this project's history contains an opponent of the
+        agent's own strength (\S\ref{sec:fitting}), and frozen. In the mirror,
+        the dead-ask rate goes from \numFourDeadAsk\% to \numFiveDeadAsk\%, exact
+        repeats from \numFourRepeatAsk\% to \numFiveRepeatAsk\%, games containing
+        a dead run of six or more from \numFourDeadRunGames\% to
+        \numFiveDeadRunGames\%, and declaration error from \numFourDeclWrong\% to
+        \numFiveDeclWrong\% --- with the event-count escalation switched off.
+        Head to head \vfive{} scores
+        \numPanelVfiveVfour\% [\numStyleCIVfour] on the style bank and
+        \numHeadWin\% over \numHeadSeeds{} further banks; across the nine-style panel of
+        \S\ref{sec:results} the means are \numVfiveMean\% against
+        \numVfourMean\%; and on minimax regret over that panel \vfour{} is
+        marginally the better of the two, \numVfourRegret{} against
+        \numVfiveRegret{}. Where the two policies do separate is against
+        deception: \numDecWithholderDelta{} points on the withholding manoeuvre
+        that prompted this work and \numDecSilentDelta{} on a silent opponent,
+        against \numDecFeintDelta{} on a feint that manufactures a false
+        ask-legality certificate. Each replicates in sign at \numDecSeeds{}
+        independent seed banks; the withholding and feint results replicate in
+        size too, the silent one does not ($\numDecSilentDeltaA$ against
+        $\numDecSilentDeltaB$).
+\end{enumerate}
+
+\paragraph{What this report does not claim.} No result here is an equilibrium
+result, and nothing here bounds exploitability from above. The v0.4 study ran an
+exploitability probe; this one ran none at all, so \vfive{} makes no robustness
+claim that a best response could contradict, and the comparison of the two
+policies is not a comparison of their exploitability. Following the project's
+standing evaluation preference, no aggregate figure above appears without the
+per-opponent breakdown and an explicit worst case beside it: over the twelve
+styles tested, and on the per-style banks those figures come from, \vfive{}'s
+worst case is \numDecWorst\% against the \numDecWorstOpp{} and \vfour{}'s is
+\numVfourWorst\% against a copy of itself, which is the worst case for any
+policy in this family. The fit behind those
+figures is a single round from a single base seed, against \vfour{}'s
+\numVfourFitRounds{} rounds, and the sixteen-coefficient value model inside the
+policy was not refitted at all. Seven of the ten mechanisms of
+\S\ref{sec:mechanisms} are specified and unbuilt, so nothing here measures the
+design this report proposes --- only the three parts of it that exist.

@@ -1,0 +1,27 @@
+VERIFY: scanned 120 games (v04 mirror, seed 20260822)  long games: 12
+  [game seed 6255310055937094250 rot 0] event 31
+    locked set 0 (Low Spades) owned by team 1, observer s1: H=1.910493 support=10;  best teammate ask s3 asks 7S of s2 -> dH=0.307902 nats
+    locked set 0 (Low Spades) owned by team 1, observer s3: H=4.904071 support=17;  best teammate ask s1 asks 6S of s2 -> dH=0.894717 nats
+    locked set 0 (Low Spades) owned by team 1, observer s5: H=1.887105 support=10;  best teammate ask s3 asks 4S of s2 -> dH=0.305224 nats
+  [game seed 6255310055937094250 rot 0] event 71
+    locked set 0 (Low Spades) owned by team 1, observer s1: H=1.910493 support=10;  best teammate ask s3 asks 7S of s2 -> dH=0.307902 nats
+    locked set 0 (Low Spades) owned by team 1, observer s3: H=4.904071 support=17;  best teammate ask s1 asks 6S of s2 -> dH=0.894717 nats
+    locked set 0 (Low Spades) owned by team 1, observer s5: H=1.887105 support=10;  best teammate ask s3 asks 4S of s2 -> dH=0.305224 nats
+  [game seed 6255310055937094250 rot 0] event 111
+    locked set 0 (Low Spades) owned by team 1, observer s1: H=1.910493 support=10;  best teammate ask s3 asks 7S of s2 -> dH=0.307902 nats
+    locked set 0 (Low Spades) owned by team 1, observer s3: H=4.904071 support=17;  best teammate ask s1 asks 6S of s2 -> dH=0.894717 nats
+    locked set 0 (Low Spades) owned by team 1, observer s5: H=1.887105 support=10;  best teammate ask s3 asks 4S of s2 -> dH=0.305224 nats
+
+--- INDEPENDENT RE-MEASUREMENT (support size + marginal entropy) ---
+(state x locked-half-suit x owning-team observer) triples: 84
+  legal teammate asks INSIDE that locked half-suit: 1440
+     strictly shrink the observer's support set: 523 (36.319444%)
+     strictly lower the observer's allocation entropy: 613 (42.569444%)
+     mean dH 0.239406 nats,  max 1.731611,  mean support removed 0.588194 seat-slots
+  legal teammate asks OUTSIDE it: 5604
+     strictly shrink support: 0 (0.000000%)
+     strictly lower entropy: 1535 (27.391149%)
+     mean dH -0.000989 nats,  max 0.366714
+  triples where SOME legal own-locked ask was informative: 61 / 84
+  best available dH per triple: n=84  mean 0.509297  p50 0.523462  p90 1.030281  p99 1.731611  max 1.731611
+  mover states with a locked half-suit: 10;  ask v0.4 played was informative in 0;  some legal ask was informative in 9

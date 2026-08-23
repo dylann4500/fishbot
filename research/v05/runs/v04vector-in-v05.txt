@@ -1,0 +1,58 @@
+# v04vector-in-v05 -- the v0.5 mechanisms carrying v0.4's frozen parameter vector
+# generated 2026-08-23T08:58:27Z, engine commit fe21e19
+#
+# Two questions, one artifact.
+#
+# (1) The pre-refit figure sections 5 and 8 quote.  It was measured on the
+#     DESIGN-TIME assembly, which carried two mechanisms that were later
+#     measured, rejected and ship OFF: the ownership-by-p scaling (m1p) and the
+#     repetition guard (norepeat).  Recorded here at the bank it was taken on so
+#     the figure has a source, and beside the SHIPPED assembly on the same bank
+#     so the two are not confused.
+#
+# (2) What the refit was worth.  The shipped assembly on v0.4's frozen vector,
+#     against v0.4 on two larger banks, and in the mirror on the instrument and
+#     seed of research/v05/results/E2-pathology.txt.
+#
+# v0.4's vector is research/v04/runs/selected.json, "params" -- generation 8 of
+# the round-5 trace, the configuration freeze_config.py baked into V04Config.
+
+vector 11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127
+
+## design-time assembly (m1p and repeatGuard ON, both later rejected) vs v04
+## 200 deals x 6 rotations, seed 90210 -- the bank the pre-refit figure came from
+{"a":"v05:m1p=1,norepeat=1,allparams=11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127","b":"v04","deals":200,"games":1200,"winRateA":0.418333,"ci":[0.3925,0.445],"wilsonCI":[0.390728,0.44646],"meanSetsA":4.20333,"meanSetsB":4.79667,"askAccA":0.535328,"askAccB":0.552117,"declAccA":0.976836,"declAccB":0.987375,"declPerGameA":4.20917,"declPerGameB":4.7525,"forcedAccA":0.272727,"forcedAccB":0,"forcedPerGameA":0.00916667,"outOfTurnA":3.0375,"outOfTurnB":3.47167,"lockHoldA":6.51165,"lockHoldB":5.48162,"eventsPerGame":100.055,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":3.95977}
+
+## shipped assembly (m1p and repeatGuard OFF) vs v04, SAME bank
+{"a":"v05:allparams=11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127","b":"v04","deals":200,"games":1200,"winRateA":0.490833,"ci":[0.466667,0.515833],"wilsonCI":[0.462623,0.519102],"meanSetsA":4.42917,"meanSetsB":4.57083,"askAccA":0.540334,"askAccB":0.544998,"declAccA":0.981702,"declAccB":0.985168,"declPerGameA":4.4175,"declPerGameB":4.55083,"forcedAccA":0.111111,"forcedAccB":0,"forcedPerGameA":0.0075,"outOfTurnA":3.24833,"outOfTurnB":3.33167,"lockHoldA":5.58002,"lockHoldB":5.51729,"eventsPerGame":100.493,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":3.87743}
+
+## shipped assembly vs v04, two larger banks
+# seed 606060
+{"a":"v05:allparams=11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127","b":"v04","deals":500,"games":3000,"winRateA":0.503,"ci":[0.485667,0.520333],"wilsonCI":[0.485116,0.520876],"meanSetsA":4.526,"meanSetsB":4.474,"askAccA":0.538637,"askAccB":0.53747,"declAccA":0.980485,"declAccB":0.984565,"declPerGameA":4.50933,"declPerGameB":4.44867,"forcedAccA":0.26087,"forcedAccB":0.00970874,"forcedPerGameA":0.00766667,"outOfTurnA":3.318,"outOfTurnB":3.26367,"lockHoldA":5.69442,"lockHoldB":5.78487,"eventsPerGame":100.935,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":10.0449}
+
+# seed 909090
+{"a":"v05:allparams=11.506|3.2948|3.1978|1.6881|2.1333|4.0705|1.4679|1.4281|-3.0978|-0.8536|-2.0219|1.166|1.2697|0.9142|-2.6534|-0.8045|1.904|0.0473|1.4108|-0.999|0.8177|0.7969|0.3325|6.249|2.8676|6.0432|0.7667|0.7925|-0.0342|0.2638|0.1328|5.6239|3.358|2.6127","b":"v04","deals":500,"games":3000,"winRateA":0.501333,"ci":[0.484,0.518667],"wilsonCI":[0.483451,0.519212],"meanSetsA":4.49267,"meanSetsB":4.50733,"askAccA":0.533009,"askAccB":0.534076,"declAccA":0.981897,"declAccB":0.985801,"declPerGameA":4.47433,"declPerGameB":4.484,"forcedAccA":0.181818,"forcedAccB":0,"forcedPerGameA":0.00733333,"outOfTurnA":3.311,"outOfTurnB":3.26667,"lockHoldA":5.78128,"lockHoldB":5.92337,"eventsPerGame":100.705,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":10.8477}
+
+## pathology: shipped assembly, mirror, 300 deals x 2 rotations, seed 31 (E2's instrument)
+games              600
+events/game        97.8267   median 98  p90 111  p99 124  max 126
+asks/game          88.4633   hit rate 54.84%
+DEAD asks          10  (0.0188402% of asks)   -- actor could PROVE the target lacks the card
+dead runs          10  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      10  (0.0188402% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1578  (2.97298%)
+repeat (a,suit,t)  26394  (49.7268%)
+asks in own-locked 5828  (10.9801% of asks)   -- guaranteed miss, but emits a certificate
+declarations       5400   wrong 102 (1.88889%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   4   wrong 4 (100%)
+action-limit games 0 (0%)
+
+## commands of record (run from engine/, V4 = the vector above)
+## V4=$(python3 -c "import json;p=json.load(open('../research/v04/runs/selected.json'))['params'];print('|'.join(('%.5f'%x).rstrip('0').rstrip('.') for x in p))")
+## ./fish match --a="v05:m1p=1,norepeat=1,allparams=$V4" --b=v04 --games=200 --rotations=6 --seed=90210 --json
+## ./fish match --a="v05:allparams=$V4"                 --b=v04 --games=200 --rotations=6 --seed=90210 --json
+## ./fish match --a="v05:allparams=$V4"                 --b=v04 --games=500 --rotations=6 --seed=606060 --json
+## ./fish match --a="v05:allparams=$V4"                 --b=v04 --games=500 --rotations=6 --seed=909090 --json
+## ./fish pathology --a="v05:allparams=$V4" --b="v05:allparams=$V4" --games=300 --rotations=2 --seed=31

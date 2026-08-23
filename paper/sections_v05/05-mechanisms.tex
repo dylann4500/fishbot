@@ -1,0 +1,263 @@
+\section{The v0.5 mechanisms}
+\label{sec:mechanisms}
+
+\vfive{} is a new policy registered alongside \vfour{}, which stays unchanged and
+remains the reference opponent. Every mechanism is individually switchable, so
+each can be ablated; the switch names are given with each mechanism. Three are
+built and measured (\S\ref{sec:mech-built}); seven are specified and not built
+(\S\ref{sec:mech-designed}); four plausible repairs were measured, rejected, and
+are recorded here so that they are not rebuilt (\S\ref{sec:mech-rejected}).
+
+\subsection{Built: M1, M2 and M8}
+\label{sec:mech-built}
+
+\paragraph{M1 --- live-ask gating and ownership scaling (\texttt{m1}, \texttt{m1p}).}
+The candidate set is restricted to asks that are not provably dead in the sense of
+Definition~\ref{def:dead}, computed from the actor's own deduction state. Because
+the predicate is a hard deduction rather than a posterior quantity, the filter
+cannot introduce a modelling error; it removes moves whose probability of success
+is exactly zero and nothing else. When the filtered set is empty --- a genuinely
+starved turn, \numStarved\% of asks --- the policy falls back to the full legal
+set, because the rules still oblige it to move. A second half was designed
+alongside it and is \emph{not} in the shipped configuration: under \texttt{m1p},
+all four ownership features of \S\ref{sec:diag-features} --- own-set progress,
+team control, lock completion and the completion bonus --- are multiplied by the
+hit probability, so that a card nobody can hand over cannot outscore a live one
+inside the surviving set. The two halves are separately switchable because they
+are separate claims: the gate changes which asks are available, the scaling
+changes how the survivors are ranked. The gate ships on
+(\texttt{liveAskGate}); the scaling ships \emph{off}
+(\texttt{ownershipByP}, false in \filepath{engine/src/v05.hpp}), because it was
+measured and rejected --- once the gate has removed the $p = 0$ case there is no
+dead ask left for the scaling to suppress, and what remains costs
+\numMonePReject{} points on top of the other mechanisms at design time and
+$\numAblOwnershipPDelta$ at the frozen configuration
+(\S\ref{sec:results-ablations}). Every claim in this report about \vfive{}'s play
+is a claim about the gate alone.
+
+\paragraph{M2 --- capacity-feasible allocation (\texttt{m2}).} The per-card argmax
+of \S\ref{sec:diag-forced} is replaced by a search over allocations that respect
+the declarer's own capacity constraints. A half-suit has six cards and a team has
+three seats, so the assignment space is at most $3^6 = 729$; the implementation
+enumerates it, rejects any assignment that places a card at a seat excluded by a
+certificate or that gives a teammate more cards than their remaining hand can
+hold, and scores the survivors with the same joint estimator the declaration rule
+already uses --- which runs on the deployed approximate belief, so the resulting
+probability is an estimate and not an exact posterior value. The search is
+exhaustive over the feasible set and is cheaper than the dynamic program it
+replaces. The same routine feeds three call sites: the forced-endgame
+declaration, the willingness ladder that selects the forced declarer --- which
+recovers its function for free, since the statistic it thresholds is no longer
+identically zero --- and, under a separate switch, the voluntary declaration
+path.
+
+\paragraph{M8 --- termination without misdeclaration (\texttt{stage2},
+\texttt{norepeat}).} The second stage of the event-count escalation is off by
+default; the first stage, which requires a better-than-even allocation
+probability, is the only escalation that remains. With M1 in place the deadlock
+that the second stage existed to break is gone. The design intended to put a
+structural backstop where the event-count guillotine had been --- a repetition
+guard preventing the same agent from asking the same (card, target) pair twice,
+applied inside the candidate filter and relaxed before the starved-turn fallback
+--- and that guard is implemented, switchable, and \emph{off} in the shipped
+configuration (\texttt{repeatGuard}, false in \filepath{engine/src/v05.hpp}): it
+costs \numGuardReject{} points against \vfour{} at design time and
+$\numAblRepeatGuardDelta$ at the frozen configuration, for the reason
+\S\ref{sec:results-ablations} gives. M8 as shipped is therefore a deletion and
+nothing else. The design rule behind it is the project owner's, and it is a claim
+about the game: a risky ask is better than a declaration the policy itself scores
+at zero.
+
+\paragraph{What each is worth alone.} Each mechanism was measured in isolation
+against \vfour{} over \numMechDeals{} deals in six seat rotations at seed
+\numMechSeed{}, with \vfive{} configured to reproduce \vfour{} exactly as the
+control (\numControlWin\%). The results are in Table~\ref{tab:mechanisms}. Two
+readings are worth stating plainly. First, the three mechanisms that remove the
+pathology are close to strength-neutral in head-to-head play, and the one that is
+not --- M8 --- gains by \emph{withholding} a bad declaration rather than by
+playing better. Second, the repetition guard on its own is exactly neutral, which
+is consistent with \S\ref{sec:diag-features}: with the dead asks already gone,
+there is almost nothing left for it to catch.
+
+\begin{table}[t]
+\centering
+\caption{Single-mechanism win rate against \vfour{}, \numMechDeals{} deals in six
+rotations, seed \numMechSeed{}. The control is \vfive{} with every mechanism
+disabled, which reproduces \vfour{}. These are single-opponent measurements and
+are not a strength claim for the assembled policy; see \S\ref{sec:results}.}
+\label{tab:mechanisms}
+\begin{tabular}{llr}
+\toprule
+\textbf{Configuration} & \textbf{Mechanism} & \textbf{win rate} \\
+\midrule
+control (all off)       & ---                                & \numControlWin\% \\
+\texttt{m1}             & live-ask gate only                 & \numMoneAlone\% \\
+\texttt{m1p}            & ownership features scaled by $p$   & \numMonePAlone\% \\
+\texttt{m2}             & capacity-feasible allocation       & \numMtwoAlone\% \\
+\texttt{stage2=0}       & escalation stage 2 removed         & \numMeightAlone\% \\
+\texttt{norepeat}       & repetition guard only              & \numGuardAlone\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The pathology gates.} The build order was gated on the three pathology
+statistics rather than on win rate, following the standing preference that
+robustness is the research question. \S\ref{sec:results} reports the full
+comparison; the gates themselves were: after M1, no game may contain a dead run
+of six; after M2, forced-endgame accuracy must leave zero; after M8, no game may
+reach the action cap and no declaration may be made past the horizon.
+
+\paragraph{The parameters behind this table are not \vfive{}'s.}
+Table~\ref{tab:mechanisms} was measured before the refit, with the
+\numFitDims{} fitted coordinates still \vfour{}'s, and on the design-time
+assembly, which carried both of the mechanisms this subsection has just recorded
+as rejected. They had been fitted with the escalation of
+\S\ref{sec:diag-dilemma} present as a safety net, so with that net removed that
+assembly under-claims: it makes \numVfourParamDecl{}
+declarations per game against \vfour{}'s \numVfourDecl{}, and scores
+\numVfourParamWin\% [\numVfourParamCI] head-to-head. Most of that shortfall
+belongs to the two rejected mechanisms rather than to the coordinates, and the
+distinction matters because the figure has been read as a parameter mismatch:
+on the same bank, with the same \vfour{} coordinates, the assembly that actually
+ships scores \numShipParamSameBank\% [\numShipParamSameCI], which is
+\numRejectedCost{} points higher and level with \vfour{}
+(\filepath{research/v05/runs/v04vector-in-v05.txt}).
+\S\ref{sec:fitting} describes the refit that replaced those
+coordinates in the frozen configuration, and every strength figure for \vfive{}
+in this report is measured after it; the ablations of
+\S\ref{sec:results-ablations} repeat this table's comparisons on the fitted
+vector, and its control is correspondingly not \vfour{}.
+
+\subsection{Designed and not built}
+\label{sec:mech-designed}
+
+None of the following is on \vfive{}'s decision path. Prototype code exists
+outside it for the target-scoring and opponent-model mechanisms, and is used only
+to check that the quantities they need can be computed; nothing below has been
+measured in play, and each entry states the constraint the diagnosis places on
+its eventual construction.
+
+\paragraph{M3 --- a net-information term in the ask score.} Replace the negative
+value-of-information term with a signed net term: the information the ask
+delivers to teammates, minus the information it delivers to opponents, weighted
+separately. This is the secrecy-rate trade-off of \S\ref{sec:related-info}, and
+the two filters the engine already produces --- the policy-agnostic posterior and
+the policy-weighted one --- are enough to compute both sides. The design
+constraint established in \S\ref{sec:diag-information} is that the channel is
+almost never \emph{provably} free: it must be priced against the probability that
+the team owns the half-suit, which at the relevant states averages
+\numOwnProbMean{} and peaks at \numOwnProbMax{}, not
+gated on a certainty no observer has. A \vfive{} that signals only when signalling
+is free will never signal. M3 requires M4.
+
+\paragraph{M4 --- a knowledge model of the other five seats.} Maintain, for each
+seat, the public deduction state plus a posterior over that seat's hand. Nearly
+free because the transcript is public, and a precondition for M3, M5 and M7.
+
+\paragraph{M5 --- target-dimension selection.} Score the target explicitly:
+lockout value (which opponent must not receive the turn), void progress inside
+the half-suit, and, where conventions are enabled, codebook value. The measured
+headroom is in \S\ref{sec:diag-channels}, and the verification recorded there
+requires that the choice be priced against the capacity-marginal hit probability
+rather than treated as free.
+
+\paragraph{M6 --- partner-aware stochastic action selection.}
+\label{sec:mech-partner}
+Select by softmax over the near-optimal set rather than by argmax. This is
+required for any leak penalty to mean anything at all: leakage is a function of
+the distribution over actions, so a deterministic policy sits at the
+deterministic bound whatever its feature weights \cite{alvim-leakage}. The
+temperature and the convention flag are both keyed on the partner regime. With
+bot teammates --- the self-play condition, in which partners follow a known
+blueprint --- lower temperature and convention-rich play are appropriate, because
+the receiver decodes what the sender encodes. With human or unknown teammates the
+blueprint assumption fails, and play must be grounded and less predictable,
+because an opponent who has watched a deterministic argmax across many games
+learns to read it. The two regimes are to be reported separately, and the
+self-play configuration is never to be headlined as though it were the one a
+human will meet.
+
+\paragraph{M7 --- an online per-seat opponent model.} Replace the two global
+scalars with a per-player posterior over a small type library, updated from that
+player's public asks and from a \emph{time-local} silence statistic --- own turns
+since last asking in this half-suit, and having been asked in it without
+replying --- rather than from a whole-game ask count, which
+\S\ref{sec:diag-prior} shows is inert. Shape it as a data-biased response
+\cite{johanson-dbr}: confidence per information set, decaying to the population
+prior where evidence is absent, so that a deliberately silent opponent produces
+no evidence and receives the prior instead of being misread. Expose the
+exploitation/robustness dial explicitly and report the frontier
+\cite{johanson-rnash} rather than a single operating point.
+
+\paragraph{M9 --- the value model, rebuilt or retired.} Two options, to be decided
+by measurement: collect rows at declaration points as well as ask points, drop
+the degenerate features, and refit jointly with the policy vector so that the
+freeze step covers it; or retire it and score declarations directly on the
+allocation probability against a fitted threshold. \S\ref{sec:diag-value} shows
+that the ask-side use contributes nothing and the declaration-side use does, and
+that a tree model finds real structure the linear form cannot express.
+
+\paragraph{M10 --- fitting and evaluation.} Put the mirror in the panel. Replace
+the soft minimum, which at the panel's spread is a weighted mean
+(\S\ref{sec:diag-value}), with a worst-case or minimax-regret objective over the
+style set, and report both the minimum and the regret --- a raw minimum over a
+small style set stagnates on the hardest member \cite{beukman-remidi}. Promote
+the three pathology statistics --- longest dead run, share of games with a dead
+run of six, share of post-horizon declarations that are wrong --- to first-class
+metrics gating every commit.
+
+\subsection{Conventions, and which configuration is the headline}
+\label{sec:mech-conventions}
+
+The strategy corpus states that pre-agreed conventions are outside this game
+\cite{develin}; the rules corpus documents a named convention in real use
+\cite{pagat}; and a pair of policies trained together has an implicit
+pre-agreement whether or not anyone writes it down. \vfive{} therefore builds the
+signalling machinery behind an explicit switch, ships it \emph{off} as the
+headline configuration --- which is legal under every reading of the rules we
+found --- and publishes the with/without difference as a result in its own right
+rather than folding it into a single number.
+
+\subsection{Measured, rejected, and recorded so as not to be rebuilt}
+\label{sec:mech-rejected}
+
+\begin{enumerate}
+  \item \textbf{A time-varying holding cost in the value model.} The literature
+        prescription of \S\ref{sec:related-stopping} --- make waiting strictly
+        costly and the stopping problem becomes well posed
+        \cite{mguni-actioncost} --- was implemented as a linear penalty in
+        elapsed events and swept over a forty-fold range of magnitudes. It is a
+        mean-shifter. Events per game fall from \numHoldEventsBefore{} to
+        \numHoldEventsAfter{} and the frequency of dead runs from
+        \numHoldRunGamesBefore\% to \numHoldRunGamesAfter\%, but the tail does
+        not move at all: the 90th percentile of events goes from
+        \numHoldPninetyBefore{} to \numHoldPninetyAfter{} and the longest dead
+        run from \numHoldLongestBefore{} to \numHoldLongestAfter{}. Declaration
+        error rises from \numHoldDeclBefore\% to \numHoldDeclAfter\% and the
+        configuration loses \numHoldLoss{} points head-to-head. A constant holding cost is
+        also not missing --- the declaration margin already is one --- and in
+        deadlocked positions the urgency flag bypasses the value-based
+        declaration rule entirely, so the term binds in fewer than one in ten
+        late blocked opportunities.
+  \item \textbf{Deleting the policy prior.} Worse, not better: by
+        \numAgnosticCost{} points [\numAgnosticCI] on a mixed panel of three
+        deceptive archetypes and the honest mirror, and by
+        \numPriorDeleteCost{} points [\numPriorDeleteCI] against the deceptive
+        archetypes alone (\S\ref{sec:diag-prior}). The exposure is
+        over-weighting.
+  \item \textbf{A turn-transfer willingness ladder.} A genuine multi-candidate
+        transfer decision arises \numTransferRate{} times per game and governs
+        \numTransferAskShare\% of asks; the unilateral choice already matches an omniscient
+        oracle at \numTransferOracle{} of \numTransferOracleN{} of them, and
+        handing one team a ground-truth chooser is worth
+        $\numTransferValue \pm \numTransferSE$ sets per game over \numTransferGames{}
+        paired games --- indistinguishable from zero. The channel is also the leakier of
+        the two: an eight-rung ladder transmits \numLadderLeak{} bits per
+        candidate against the one bit the rules license, and it transmits them
+        mid-game to live opponents. Budget nothing for it.
+  \item \textbf{Confidence-ranked declaration arbitration.} Resolving
+        simultaneous declarations by lowest seat rather than by confidence costs
+        \numArbCost{} percentage points pooled over \numArbGames{} games. The
+        rules-legal willingness ladder may be added if it is convenient, but
+        nothing should be engineered for it.
+\end{enumerate}

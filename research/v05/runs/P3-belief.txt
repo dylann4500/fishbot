@@ -1,0 +1,320 @@
+### measured=v04 deceiver=v04 seats=1 games=400 seed=101 stride=2
+measured v04  vs  seats{1 }=v04, other opponents=v04
+games                 800   measured-team win rate 48.5%  [45, 52]
+events/game           139.262   measured ask hit rate 34.6992%
+mean |marg - truth|   0.225549   over 24855744 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.323352   confidently wrong (<0.10 on truth) 3.45549%
+mass on marked seats  held-by-them 0.32021   not-held 0.164173
+channel  holder&silent  0.22844 (n=636538)   holder&asked 0.665247 (n=169301)
+channel  nonhold&silent 0.176699 (n=2793579)   nonhold&asked 0.317209 (n=170820)
+measured declarations 3787   wrong 522 (13.784%)
+  mis-assigned cards  1363   truly at a MARKED seat 345 (25.3118%)   other opponent 720 (52.8247%)   own teammate 298 (21.8635%)
+  wrong decls touching a marked seat 263 (50.3831% of wrong)
+archetype asks        0   deviations 0 (0%)   forced 0
+  P(hit) on deviations  v04 pick 0 -> archetype pick 0
+  P(hit) over all asks  v04 pick 0 -> archetype pick 0
+
+### measured=v04 deceiver=v04 seats=1,3,5 games=400 seed=101 stride=2
+measured v04  vs  seats{1 3 5 }=v04, other opponents=v04
+games                 800   measured-team win rate 48.5%  [45, 52]
+events/game           139.262   measured ask hit rate 34.6992%
+mean |marg - truth|   0.225549   over 24855744 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.323352   confidently wrong (<0.10 on truth) 3.45549%
+mass on marked seats  held-by-them 0.654126   not-held 0.510629
+channel  holder&silent  0.233116 (n=1953103)   holder&asked 0.656812 (n=516611)
+channel  nonhold&silent 0.180529 (n=8400364)   nonhold&asked 0.32916 (n=481889)
+measured declarations 3787   wrong 522 (13.784%)
+  mis-assigned cards  1363   truly at a MARKED seat 1065 (78.1365%)   other opponent 0 (0%)   own teammate 298 (21.8635%)
+  wrong decls touching a marked seat 453 (86.7816% of wrong)
+archetype asks        0   deviations 0 (0%)   forced 0
+  P(hit) on deviations  v04 pick 0 -> archetype pick 0
+  P(hit) over all asks  v04 pick 0 -> archetype pick 0
+
+### measured=v04 deceiver=silent seats=1 games=400 seed=101 stride=2
+measured v04  vs  seats{1 }=silent, other opponents=v04
+games                 800   measured-team win rate 56.625%  [53, 60.125]
+events/game           136.666   measured ask hit rate 38.8449%
+mean |marg - truth|   0.224042   over 24139458 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.327875   confidently wrong (<0.10 on truth) 3.67912%
+mass on marked seats  held-by-them 0.33061   not-held 0.162546
+channel  holder&silent  0.226768 (n=559770)   holder&asked 0.587536 (n=226241)
+channel  nonhold&silent 0.17084 (n=2538677)   nonhold&asked 0.314157 (n=294410)
+measured declarations 3955   wrong 441 (11.1504%)
+  mis-assigned cards  1057   truly at a MARKED seat 287 (27.1523%)   other opponent 533 (50.4257%)   own teammate 237 (22.4219%)
+  wrong decls touching a marked seat 213 (48.2993% of wrong)
+archetype asks        15715   deviations 5870 (37.3528%)   forced 3232
+  P(hit) on deviations  v04 pick 0.468522 -> archetype pick 0.249994
+  P(hit) over all asks  v04 pick 0.443224 -> archetype pick 0.361597
+
+### measured=v04 deceiver=silent seats=1,3,5 games=400 seed=101 stride=2
+measured v04  vs  seats{1 3 5 }=silent, other opponents=v04
+games                 800   measured-team win rate 74.625%  [71.5, 77.625]
+events/game           149.584   measured ask hit rate 40.2196%
+mean |marg - truth|   0.22008   over 26657442 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.339759   confidently wrong (<0.10 on truth) 4.15883%
+mass on marked seats  held-by-them 0.666358   not-held 0.505824
+channel  holder&silent  0.237275 (n=1876560)   holder&asked 0.592579 (n=800471)
+channel  nonhold&silent 0.172182 (n=8362488)   nonhold&asked 0.32205 (n=986207)
+measured declarations 4601   wrong 530 (11.5192%)
+  mis-assigned cards  1289   truly at a MARKED seat 1005 (77.9674%)   other opponent 0 (0%)   own teammate 284 (22.0326%)
+  wrong decls touching a marked seat 462 (87.1698% of wrong)
+archetype asks        53279   deviations 20849 (39.1317%)   forced 11495
+  P(hit) on deviations  v04 pick 0.492699 -> archetype pick 0.242653
+  P(hit) over all asks  v04 pick 0.441548 -> archetype pick 0.343701
+
+### measured=v04 deceiver=silent:tol=0.10 seats=1 games=400 seed=101 stride=2
+measured v04  vs  seats{1 }=silent:tol=0.10, other opponents=v04
+games                 800   measured-team win rate 48.875%  [45.375, 52.5]
+events/game           139.847   measured ask hit rate 36.2181%
+mean |marg - truth|   0.224807   over 25202766 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.325579   confidently wrong (<0.10 on truth) 3.83684%
+mass on marked seats  held-by-them 0.32945   not-held 0.158634
+channel  holder&silent  0.226756 (n=585578)   holder&asked 0.605501 (n=217840)
+channel  nonhold&silent 0.16921 (n=2632203)   nonhold&asked 0.320544 (n=291667)
+measured declarations 3799   wrong 504 (13.2666%)
+  mis-assigned cards  1300   truly at a MARKED seat 299 (23%)   other opponent 710 (54.6154%)   own teammate 291 (22.3846%)
+  wrong decls touching a marked seat 218 (43.254% of wrong)
+archetype asks        19463   deviations 5508 (28.2999%)   forced 3585
+  P(hit) on deviations  v04 pick 0.148337 -> archetype pick 0.160323
+  P(hit) over all asks  v04 pick 0.31253 -> archetype pick 0.315922
+
+### measured=v04 deceiver=silent:tol=0.10 seats=1,3,5 games=400 seed=101 stride=2
+measured v04  vs  seats{1 3 5 }=silent:tol=0.10, other opponents=v04
+games                 800   measured-team win rate 50.25%  [46.875, 53.625]
+events/game           145.74   measured ask hit rate 36.4271%
+mean |marg - truth|   0.222771   over 26433606 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.331687   confidently wrong (<0.10 on truth) 3.85734%
+mass on marked seats  held-by-them 0.666358   not-held 0.513626
+channel  holder&silent  0.241454 (n=1990596)   holder&asked 0.608925 (n=680032)
+channel  nonhold&silent 0.177809 (n=8475214)   nonhold&asked 0.327521 (n=821404)
+measured declarations 3859   wrong 561 (14.5374%)
+  mis-assigned cards  1450   truly at a MARKED seat 1156 (79.7241%)   other opponent 0 (0%)   own teammate 294 (20.2759%)
+  wrong decls touching a marked seat 491 (87.5223% of wrong)
+archetype asks        54142   deviations 13479 (24.8956%)   forced 12454
+  P(hit) on deviations  v04 pick 0.19083 -> archetype pick 0.20592
+  P(hit) over all asks  v04 pick 0.349302 -> archetype pick 0.353059
+
+### measured=v04 deceiver=feint seats=1 games=400 seed=101 stride=2
+measured v04  vs  seats{1 }=feint, other opponents=v04
+games                 800   measured-team win rate 47%  [43.375, 50.625]
+events/game           143.814   measured ask hit rate 34.5041%
+mean |marg - truth|   0.225612   over 26232300 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.323165   confidently wrong (<0.10 on truth) 3.88895%
+mass on marked seats  held-by-them 0.324672   not-held 0.173011
+channel  holder&silent  0.235817 (n=699090)   holder&asked 0.647225 (n=192582)
+channel  nonhold&silent 0.185554 (n=2657391)   nonhold&asked 0.33566 (n=324890)
+measured declarations 3739   wrong 552 (14.7633%)
+  mis-assigned cards  1456   truly at a MARKED seat 396 (27.1978%)   other opponent 761 (52.2665%)   own teammate 299 (20.5357%)
+  wrong decls touching a marked seat 240 (43.4783% of wrong)
+archetype asks        18805   deviations 2851 (15.1609%)   forced 0
+  P(hit) on deviations  v04 pick 0.177366 -> archetype pick 0.189124
+  P(hit) over all asks  v04 pick 0.335299 -> archetype pick 0.337081
+
+### measured=v04 deceiver=feint seats=1,3,5 games=400 seed=101 stride=2
+measured v04  vs  seats{1 3 5 }=feint, other opponents=v04
+games                 800   measured-team win rate 51.5%  [48, 55]
+events/game           144.632   measured ask hit rate 36.9589%
+mean |marg - truth|   0.227493   over 26895450 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.317521   confidently wrong (<0.10 on truth) 4.45032%
+mass on marked seats  held-by-them 0.667105   not-held 0.523911
+channel  holder&silent  0.234006 (n=2185442)   holder&asked 0.624335 (n=555519)
+channel  nonhold&silent 0.182894 (n=8524990)   nonhold&asked 0.341081 (n=948613)
+measured declarations 3781   wrong 512 (13.5414%)
+  mis-assigned cards  1391   truly at a MARKED seat 1135 (81.596%)   other opponent 0 (0%)   own teammate 256 (18.404%)
+  wrong decls touching a marked seat 448 (87.5% of wrong)
+archetype asks        53868   deviations 7828 (14.5318%)   forced 0
+  P(hit) on deviations  v04 pick 0.207455 -> archetype pick 0.225171
+  P(hit) over all asks  v04 pick 0.366127 -> archetype pick 0.368701
+
+### measured=v04 deceiver=withholder:k=6 seats=1 games=400 seed=101 stride=2
+measured v04  vs  seats{1 }=withholder:k=6, other opponents=v04
+games                 800   measured-team win rate 54.125%  [50.75, 57.375]
+events/game           133.292   measured ask hit rate 37.5826%
+mean |marg - truth|   0.225784   over 23234184 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.322648   confidently wrong (<0.10 on truth) 3.80486%
+mass on marked seats  held-by-them 0.31434   not-held 0.162501
+channel  holder&silent  0.233043 (n=547072)   holder&asked 0.542768 (n=194703)
+channel  nonhold&silent 0.173955 (n=2499377)   nonhold&asked 0.305334 (n=242172)
+measured declarations 3944   wrong 456 (11.5619%)
+  mis-assigned cards  1027   truly at a MARKED seat 280 (27.2639%)   other opponent 493 (48.0039%)   own teammate 254 (24.7322%)
+  wrong decls touching a marked seat 227 (49.7807% of wrong)
+archetype asks        14358   deviations 3890 (27.0929%)   forced 1620
+  P(hit) on deviations  v04 pick 0.882932 -> archetype pick 0.269774
+  P(hit) over all asks  v04 pick 0.477938 -> archetype pick 0.311816
+
+### measured=v04 deceiver=withholder:k=6 seats=1,3,5 games=400 seed=101 stride=2
+measured v04  vs  seats{1 3 5 }=withholder:k=6, other opponents=v04
+games                 800   measured-team win rate 61.75%  [58.5, 65]
+events/game           130.472   measured ask hit rate 37.9847%
+mean |marg - truth|   0.221903   over 22836234 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.334291   confidently wrong (<0.10 on truth) 4.52841%
+mass on marked seats  held-by-them 0.641074   not-held 0.485255
+channel  holder&silent  0.238337 (n=1598845)   holder&asked 0.542093 (n=588764)
+channel  nonhold&silent 0.173461 (n=7275387)   nonhold&asked 0.290194 (n=777235)
+measured declarations 4384   wrong 575 (13.1159%)
+  mis-assigned cards  1179   truly at a MARKED seat 887 (75.2332%)   other opponent 0 (0%)   own teammate 292 (24.7668%)
+  wrong decls touching a marked seat 467 (81.2174% of wrong)
+archetype asks        46413   deviations 11427 (24.6203%)   forced 4795
+  P(hit) on deviations  v04 pick 0.92137 -> archetype pick 0.303869
+  P(hit) over all asks  v04 pick 0.484723 -> archetype pick 0.332692
+
+### measured=v04:ptheta=0,pphi=0 deceiver=v04 seats=1 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 }=v04, other opponents=v04
+games                 800   measured-team win rate 36.25%  [32.75, 39.75]
+events/game           154.972   measured ask hit rate 30.0293%
+mean |marg - truth|   0.225616   over 27338730 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.323151   confidently wrong (<0.10 on truth) 2.89155%
+mass on marked seats  held-by-them 0.314564   not-held 0.161611
+channel  holder&silent  0.228308 (n=672819)   holder&asked 0.610088 (n=196378)
+channel  nonhold&silent 0.175948 (n=3056868)   nonhold&asked 0.307437 (n=188822)
+measured declarations 3598   wrong 671 (18.6492%)
+  mis-assigned cards  1911   truly at a MARKED seat 474 (24.8038%)   other opponent 1017 (53.2182%)   own teammate 420 (21.978%)
+  wrong decls touching a marked seat 336 (50.0745% of wrong)
+archetype asks        0   deviations 0 (0%)   forced 0
+  P(hit) on deviations  v04 pick 0 -> archetype pick 0
+  P(hit) over all asks  v04 pick 0 -> archetype pick 0
+
+### measured=v04:ptheta=0,pphi=0 deceiver=v04 seats=1,3,5 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 3 5 }=v04, other opponents=v04
+games                 800   measured-team win rate 36.25%  [32.75, 39.75]
+events/game           154.972   measured ask hit rate 30.0293%
+mean |marg - truth|   0.225616   over 27338730 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.323151   confidently wrong (<0.10 on truth) 2.89155%
+mass on marked seats  held-by-them 0.648981   not-held 0.500997
+channel  holder&silent  0.233331 (n=2084750)   holder&asked 0.60464 (n=594403)
+channel  nonhold&silent 0.181093 (n=9178577)   nonhold&asked 0.311092 (n=550405)
+measured declarations 3598   wrong 671 (18.6492%)
+  mis-assigned cards  1911   truly at a MARKED seat 1491 (78.022%)   other opponent 0 (0%)   own teammate 420 (21.978%)
+  wrong decls touching a marked seat 577 (85.9911% of wrong)
+archetype asks        0   deviations 0 (0%)   forced 0
+  P(hit) on deviations  v04 pick 0 -> archetype pick 0
+  P(hit) over all asks  v04 pick 0 -> archetype pick 0
+
+### measured=v04:ptheta=0,pphi=0 deceiver=silent seats=1 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 }=silent, other opponents=v04
+games                 800   measured-team win rate 46.625%  [43.375, 50]
+events/game           155.954   measured ask hit rate 32.9826%
+mean |marg - truth|   0.224209   over 27722562 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.327374   confidently wrong (<0.10 on truth) 3.00552%
+mass on marked seats  held-by-them 0.32888   not-held 0.160735
+channel  holder&silent  0.222079 (n=609375)   holder&asked 0.558647 (n=283249)
+channel  nonhold&silent 0.1703 (n=2907846)   nonhold&asked 0.305169 (n=340735)
+measured declarations 3809   wrong 598 (15.6997%)
+  mis-assigned cards  1697   truly at a MARKED seat 420 (24.7496%)   other opponent 904 (53.2705%)   own teammate 373 (21.98%)
+  wrong decls touching a marked seat 289 (48.3278% of wrong)
+archetype asks        20046   deviations 7777 (38.7958%)   forced 4265
+  P(hit) on deviations  v04 pick 0.441842 -> archetype pick 0.196389
+  P(hit) over all asks  v04 pick 0.381818 -> archetype pick 0.286592
+
+### measured=v04:ptheta=0,pphi=0 deceiver=silent seats=1,3,5 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 3 5 }=silent, other opponents=v04
+games                 800   measured-team win rate 72.125%  [69, 75.125]
+events/game           169.161   measured ask hit rate 35.0386%
+mean |marg - truth|   0.220435   over 30129282 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.338696   confidently wrong (<0.10 on truth) 3.43561%
+mass on marked seats  held-by-them 0.659884   not-held 0.493792
+channel  holder&silent  0.234301 (n=2064586)   holder&asked 0.555202 (n=908607)
+channel  nonhold&silent 0.17387 (n=9427257)   nonhold&asked 0.303109 (n=1141887)
+measured declarations 4500   wrong 685 (15.2222%)
+  mis-assigned cards  1870   truly at a MARKED seat 1505 (80.4813%)   other opponent 0 (0%)   own teammate 365 (19.5187%)
+  wrong decls touching a marked seat 608 (88.7591% of wrong)
+archetype asks        61562   deviations 22438 (36.4478%)   forced 13366
+  P(hit) on deviations  v04 pick 0.475271 -> archetype pick 0.229771
+  P(hit) over all asks  v04 pick 0.394143 -> archetype pick 0.304664
+
+### measured=v04:ptheta=0,pphi=0 deceiver=silent:tol=0.10 seats=1 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 }=silent:tol=0.10, other opponents=v04
+games                 800   measured-team win rate 39.375%  [35.875, 42.875]
+events/game           153.743   measured ask hit rate 31.7773%
+mean |marg - truth|   0.22488   over 27585906 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.32536   confidently wrong (<0.10 on truth) 2.94696%
+mass on marked seats  held-by-them 0.328811   not-held 0.161129
+channel  holder&silent  0.225457 (n=631374)   holder&asked 0.58123 (n=258517)
+channel  nonhold&silent 0.173132 (n=2908323)   nonhold&asked 0.296406 (n=316808)
+measured declarations 3619   wrong 633 (17.491%)
+  mis-assigned cards  1790   truly at a MARKED seat 445 (24.8603%)   other opponent 985 (55.0279%)   own teammate 360 (20.1117%)
+  wrong decls touching a marked seat 290 (45.8136% of wrong)
+archetype asks        20560   deviations 4945 (24.0516%)   forced 4669
+  P(hit) on deviations  v04 pick 0.150042 -> archetype pick 0.163922
+  P(hit) over all asks  v04 pick 0.304467 -> archetype pick 0.307806
+
+### measured=v04:ptheta=0,pphi=0 deceiver=silent:tol=0.10 seats=1,3,5 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 3 5 }=silent:tol=0.10, other opponents=v04
+games                 800   measured-team win rate 43.875%  [40.25, 47.5]
+events/game           159.407   measured ask hit rate 32.9581%
+mean |marg - truth|   0.224076   over 28958052 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.327771   confidently wrong (<0.10 on truth) 3.22835%
+mass on marked seats  held-by-them 0.66117   not-held 0.504925
+channel  holder&silent  0.235989 (n=2113707)   holder&asked 0.562064 (n=774355)
+channel  nonhold&silent 0.178993 (n=9290196)   nonhold&asked 0.317161 (n=918315)
+measured declarations 3723   wrong 649 (17.4322%)
+  mis-assigned cards  1818   truly at a MARKED seat 1428 (78.5479%)   other opponent 0 (0%)   own teammate 390 (21.4521%)
+  wrong decls touching a marked seat 562 (86.5948% of wrong)
+archetype asks        60112   deviations 13730 (22.8407%)   forced 12935
+  P(hit) on deviations  v04 pick 0.179946 -> archetype pick 0.19705
+  P(hit) over all asks  v04 pick 0.326645 -> archetype pick 0.330551
+
+### measured=v04:ptheta=0,pphi=0 deceiver=feint seats=1 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 }=feint, other opponents=v04
+games                 800   measured-team win rate 39.625%  [36.25, 43]
+events/game           152.708   measured ask hit rate 32.3093%
+mean |marg - truth|   0.226684   over 27816318 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.319948   confidently wrong (<0.10 on truth) 3.05954%
+mass on marked seats  held-by-them 0.317721   not-held 0.175633
+channel  holder&silent  0.239865 (n=743658)   holder&asked 0.599577 (n=205418)
+channel  nonhold&silent 0.188286 (n=2838633)   nonhold&asked 0.316184 (n=357641)
+measured declarations 3599   wrong 632 (17.5604%)
+  mis-assigned cards  1854   truly at a MARKED seat 542 (29.2341%)   other opponent 943 (50.863%)   own teammate 369 (19.9029%)
+  wrong decls touching a marked seat 298 (47.1519% of wrong)
+archetype asks        19111   deviations 2468 (12.914%)   forced 0
+  P(hit) on deviations  v04 pick 0.202089 -> archetype pick 0.215222
+  P(hit) over all asks  v04 pick 0.343127 -> archetype pick 0.344823
+
+### measured=v04:ptheta=0,pphi=0 deceiver=feint seats=1,3,5 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 3 5 }=feint, other opponents=v04
+games                 800   measured-team win rate 45.25%  [41.75, 48.625]
+events/game           160.157   measured ask hit rate 32.4476%
+mean |marg - truth|   0.228068   over 29391846 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.315795   confidently wrong (<0.10 on truth) 3.77746%
+mass on marked seats  held-by-them 0.663784   not-held 0.519348
+channel  holder&silent  0.232383 (n=2328487)   holder&asked 0.580504 (n=645106)
+channel  nonhold&silent 0.183513 (n=9250368)   nonhold&asked 0.323279 (n=1114946)
+measured declarations 3681   wrong 667 (18.1201%)
+  mis-assigned cards  2023   truly at a MARKED seat 1640 (81.0677%)   other opponent 0 (0%)   own teammate 383 (18.9323%)
+  wrong decls touching a marked seat 581 (87.1064% of wrong)
+archetype asks        60596   deviations 8279 (13.6626%)   forced 0
+  P(hit) on deviations  v04 pick 0.193584 -> archetype pick 0.209672
+  P(hit) over all asks  v04 pick 0.329355 -> archetype pick 0.331553
+
+### measured=v04:ptheta=0,pphi=0 deceiver=withholder:k=6 seats=1 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 }=withholder:k=6, other opponents=v04
+games                 800   measured-team win rate 41.375%  [38, 44.75]
+events/game           149.924   measured ask hit rate 31.8849%
+mean |marg - truth|   0.226224   over 26424318 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.321328   confidently wrong (<0.10 on truth) 3.19658%
+mass on marked seats  held-by-them 0.309398   not-held 0.158079
+channel  holder&silent  0.22501 (n=581318)   holder&asked 0.514825 (n=238802)
+channel  nonhold&silent 0.174168 (n=2798813)   nonhold&asked 0.289973 (n=272721)
+measured declarations 3791   wrong 644 (16.9876%)
+  mis-assigned cards  1716   truly at a MARKED seat 427 (24.8834%)   other opponent 887 (51.69%)   own teammate 402 (23.4266%)
+  wrong decls touching a marked seat 330 (51.2422% of wrong)
+archetype asks        17168   deviations 3965 (23.0953%)   forced 1460
+  P(hit) on deviations  v04 pick 0.885239 -> archetype pick 0.257734
+  P(hit) over all asks  v04 pick 0.384033 -> archetype pick 0.239109
+
+### measured=v04:ptheta=0,pphi=0 deceiver=withholder:k=6 seats=1,3,5 games=400 seed=101 stride=2
+measured v04:ptheta=0,pphi=0  vs  seats{1 3 5 }=withholder:k=6, other opponents=v04
+games                 800   measured-team win rate 55.625%  [52.125, 59.125]
+events/game           149.014   measured ask hit rate 32.7621%
+mean |marg - truth|   0.222446   over 26661936 (unresolved card, seat) pairs;  max 1
+mean P(true holder)   0.332662   confidently wrong (<0.10 on truth) 3.69322%
+mass on marked seats  held-by-them 0.630027   not-held 0.473521
+channel  holder&silent  0.232275 (n=1778054)   holder&asked 0.505654 (n=716131)
+channel  nonhold&silent 0.174039 (n=8462198)   nonhold&asked 0.267979 (n=920427)
+measured declarations 4274   wrong 732 (17.1268%)
+  mis-assigned cards  1717   truly at a MARKED seat 1276 (74.3157%)   other opponent 0 (0%)   own teammate 441 (25.6843%)
+  wrong decls touching a marked seat 597 (81.5574% of wrong)
+archetype asks        54303   deviations 12273 (22.601%)   forced 4725
+  P(hit) on deviations  v04 pick 0.929454 -> archetype pick 0.302445
+  P(hit) over all asks  v04 pick 0.43658 -> archetype pick 0.29487
+

@@ -1,0 +1,267 @@
+\section{Fitting}
+\label{sec:fitting}
+
+The mechanisms of \S\ref{sec:mech-built} change what the ask score has to
+discriminate between, and they remove a forcing rule that the declaration
+thresholds had been fitted underneath, so the compiled coordinates were
+refitted. This section describes that refit, and is deliberately explicit about
+how little of it there is: one round, one base seed, and a value model that was
+not touched.
+
+It should be read alongside a measurement of what it was worth, because the
+refit is not what produces the result of this report, and the length of this
+section is not evidence that it is. Carrying \vfour{}'s frozen
+vector unchanged, the shipped mechanisms play level against \vfour{} ---
+\numShipParamWin\% [\numShipParamCI] over \numShipParamGames{} games at
+\numShipParamSeeds{} banks, range \numShipParamRange\%, and
+\numShipParamDecl{} declarations per game against \numShipParamVfourDecl{} ---
+which is the same wash \S\ref{sec:results} reports for the fitted vector. In the
+mirror, on the instrument and seed of \S\ref{sec:results}'s pathology bank, that
+same unfitted combination already takes the dead-ask rate to
+\numShipParamDeadAsk\%, the longest dead run to \numShipParamDeadRun{}, games
+containing a run of six or more to \numShipParamDeadRunGames\%, exact repeats
+to \numShipParamRepeat\%, declarations at or after the old horizon to
+\numShipParamPostHorizon{}, and declaration error to
+\numShipParamDeclWrong\% (\filepath{research/v05/runs/v04vector-in-v05.txt}).
+On every row of that instrument the repair is therefore mechanical rather than
+parametric --- the one exception being the forced endgame, which fires
+\numShipParamForcedN{} times on a bank this size and so cannot separate the two
+at all. The pre-refit shortfall reported in \S\ref{sec:mech-built},
+\numVfourParamWin\%, is not evidence against this: it was measured on the
+design-time assembly, and \numRejectedCost{} of its points belong to two
+mechanisms that were subsequently rejected and do not ship.
+
+What the refit does, then, is re-seat \numFitKnobs{} decision knobs that were
+fitted underneath a forcing rule which no longer fires. Every figure in
+\S\ref{sec:results} is measured at the vector it produced and is conditional on
+that vector; none of them is attributable to the refit rather than to the
+mechanisms, and this section should not be read as though they were.
+
+\subsection{The parameter vector, and why its offset is derived}
+\label{sec:fit-vector}
+
+The fitted vector has \numFitDims{} coordinates, in the same layout as
+\vfour{}'s so that a \vfour{} vector can seed a \vfive{} fit: the
+\numFitAskFeats{} ask-score weights $w_0,\dots,w_{19}$, followed by
+\numFitKnobs{} decision knobs --- the two declaration thresholds, the ask floor,
+the patience pool, the opponent-card floor, the two mixing weights, the minimum
+team probability, the stopping margin, the two policy-prior coefficients $\theta$
+and $\phi$, the lookahead width, and the chain and threat weights. Each knob is
+clamped to its own interval as the vector is parsed, so that probabilities stay
+in $[0,1]$ and counts stay non-negative integers.
+
+The value model is \emph{not} in this vector, exactly as in \vfour{}. Mechanism
+M9 of \S\ref{sec:mech-designed} left open whether to refit it jointly inside the
+search or retire it in favour of scoring declarations directly on allocation
+probability, and neither was done: the \numFitDims{} policy coordinates were
+fitted conditional on sixteen value coefficients that were never re-estimated,
+and whose measured behaviour \S\ref{sec:diag-value} describes.
+
+The one structural change is the offset at which the decision knobs begin. It is
+now \emph{derived} from the compiled ask-feature count in both places that touch
+the flat vector --- the spec parser in \filepath{engine/src/factory.hpp} and the
+freezer in \filepath{engine/freeze_config_v05.py} --- rather than written down in
+either. The v0.4 pipeline hard-coded the offset at \numAliasOffset{}. When the
+ask-feature count later grew to \numFitAskFeats{}, the last two ask weights were
+read as the first two decision knobs, and every knob after them shifted: the
+configuration the optimiser scored was not the configuration the freezer baked
+in. Nothing in the pipeline could notice. Both halves ran without error, and both
+produced a policy that plays legal Fish.
+
+\vfive{} therefore carries a mechanical assertion in place of a convention. The
+shipped configuration is played against the flat vector that is supposed to
+encode it: \texttt{v05} on one side, and on the other \texttt{v05:allparams=}
+followed by the frozen vector. Two identical policies meeting on deals each played in
+both team orientations must split every deal, so the assertion is that the match
+returns exactly one half, and any other value is a mismatch between the two
+representations. It \numRoundTripPass{}: \numRoundTrip\% over
+\numRoundTripGames{} games at \numRoundTripSeeds{} independent seeds, with a
+deal-clustered interval that is a single point
+(\filepath{research/v05/runs/roundtrip-assert.txt}).
+
+An assertion that always passes is worth showing to have teeth. Re-encoding the
+same vector so that a correct parser reconstructs exactly what a parser at offset
+\numAliasOffset{} would have built produces a policy that loses to the shipped
+one: it scores \numAliasWin\% [\numAliasCI] over \numAliasGames{} games, short of
+even by \numAliasLoss{} points. That is the magnitude of the silent error the
+v0.4 pipeline could not detect, and it is larger than most of the differences
+this report goes on to measure.
+
+One caveat belongs beside the assertion rather than in a footnote. The freezer
+writes ask weights to four decimal places and knobs to five, so what ships is a
+rounding of the optimiser's output and not the output itself. Played against the
+baked configuration, the full-precision vector scores \numQuantWin\%
+[\numQuantCI] over \numQuantGames{} games --- no measurable difference, but not
+an identical policy --- so the round trip is asserted, and run, at the precision
+that actually ships. The freezer's own convenience output does not currently do
+that: it prints a suggested assertion command with every coordinate formatted at
+five decimals, which therefore does not return one half. The vector it writes is
+correct and the assertion above is run against that; the printed command is
+recorded as a defect to fix, because a provenance check that fails silently is
+worse than none, and that is the class of defect this whole subsection exists to
+prevent.
+
+\subsection{Optimiser and schedule}
+\label{sec:fit-cem}
+
+The optimiser is unchanged from \vfour{}: the cross-entropy method with a
+diagonal Gaussian over the \numFitDims{} coordinates
+(\filepath{engine/src/tuner.hpp}). Each generation samples \numFitPop{}
+candidates around the incumbent mean, always evaluating the incumbent itself as
+one of them, scores every candidate against every panel member, keeps the
+\numFitElite{} best as the elite set, and smooths the mean and the
+per-coordinate standard deviation towards the elite statistics. Every candidate
+within a generation is evaluated on \emph{identical} seed banks, so
+within-generation comparisons are paired and the deal draw cancels; the banks are
+redrawn between generations, so the search cannot settle onto one set of deals.
+
+The run was \numFitGens{} generations at \numFitDeals{} deals per panel member
+per candidate, each deal played in both team orientations
+(\numFitCellGames{} games per cell, \numFitTotalGames{} games in total), from
+base seed $\numFitSeed$. The initial mean was \vfour{}'s frozen configuration, so
+what follows is a local refinement of \vfour{} and not a search from scratch.
+The base seed is recorded in \S9 of \filepath{docs/FISHBOT_V05.md} and in the
+artifact manifest; that closes one v0.4 gap cheaply, since the round that
+produced \vfour{}'s shipping configuration has no committed script carrying its
+base seed and can be inspected but not reproduced.
+
+\subsection{The objective, and the two corrections it makes}
+\label{sec:fit-objective}
+
+The quantity optimised is the same soft minimum over an opponent panel
+$\mathcal{O}$ that \vfour{} used. For a parameter vector $w$, writing
+$\mathrm{wr}_o(w)$ for its win rate against opponent $o$ on the current bank,
+\begin{equation}
+  \mathrm{score}(w) \;=\; -\frac{1}{\beta}\,
+    \log \sum_{o \in \mathcal{O}} \exp\bigl(-\beta\,\mathrm{wr}_o(w)\bigr).
+  \label{eq:softmin05}
+\end{equation}
+Two things about it changed, and \S\ref{sec:corrections} records both as
+corrections to the v0.4 study rather than as improvements on it.
+
+\paragraph{The panel now contains an opponent of the agent's own strength.} It is
+\numFitPanel{} --- \numFitPanelN{} members, with \vfour{} at the head. No
+recorded round of the v0.4 fit contained a self-play or mirror-strength opponent
+at any point. \S\ref{sec:diag-value} gives the recorded per-opponent floor over
+every committed v0.4 trace; a policy of a candidate's own strength sits near one
+half by construction, which is well beneath it. A candidate that
+deadlocked against a copy of itself while converting against everything weaker
+therefore scored exactly as well as one that did not. The pathology of
+\S\ref{sec:diagnosis} was not traded away during fitting; it was never priced.
+
+\paragraph{$\beta$ is \numFitBeta{} rather than \numSoftMinBeta{}.} A soft
+minimum is only a minimum if its gradient weights separate. The weight that
+\eqref{eq:softmin05} places on opponent $o$ is proportional to
+$\exp(-\beta\,\mathrm{wr}_o)$, so the ratio between the largest and the smallest
+weight on a panel is exactly $\exp(\beta\Delta)$, where $\Delta$ is the spread of
+win rates across that panel. \vfour{}'s selected profile spans
+$\Delta = \numSoftMinSpan$ over its \numSoftMinPanelN{} opponents, and at
+$\beta = \numSoftMinBeta$ that is a ratio of \numSoftMinRatio{}. Weights lying
+within a factor of two of one another describe a weighted mean, not a minimum,
+which is why the v0.4 description of the objective as a worst case across
+playstyles is corrected rather than repeated. \vfive{}'s panel profile spans
+$\Delta = \numFitSpan$, and at $\beta = \numFitBeta$ the ratio is
+\numFitRatio{}.
+
+Neither change alone accounts for that. The same $\beta = \numFitBeta$ applied to
+\vfour{}'s narrow spread would give a ratio of only \numFitRatioCross{}, and
+$\beta = \numSoftMinBeta$ applied to \vfive{}'s spread would give
+\numFitRatioAtTen{}. The temperature sharpens the objective; putting an
+even-strength opponent in the panel is what gives it something to sharpen.
+
+What is still missing is the objective M10 actually asks for. This remains a soft
+minimum with a raised temperature, not an explicit worst case, and not the
+minimax-regret objective of \S\ref{sec:mech-designed}. Regret over the style set
+is reported in \S\ref{sec:results}; it was never optimised, and \vfive{} does not
+come out ahead of \vfour{} on it.
+
+\subsection{The winner's-curse guard, and how to read a per-generation number}
+\label{sec:fit-guard}
+
+The score a cross-entropy trace reports for a generation is the best of
+\numFitPop{} candidates evaluated on one shared seed bank. It is a maximum over a
+noisy sample, so it estimates the winner's luck along with its strength. The
+tuner guards against shipping that luck: after the final generation it
+re-evaluates two candidates --- the distribution mean, and the single best
+candidate seen in any generation --- at one common seed that neither was selected
+on, and returns whichever of the two scores higher.
+
+Here it returned the \numFitGuardWinner{}, which scored \numFitGuardMu{} against
+the best generation's \numFitGuardBest{}, a gap of \numFitGuardGap{}. The
+distribution mean is what \filepath{engine/freeze_config_v05.py} baked into
+\texttt{V05Config}. The number to hold next to that is what the losing candidate
+had scored in its own generation: \numFitScore{} at generation
+\numFitBestGen{}, on a panel profile of \numFitProfile{}. The same vector,
+re-evaluated on a bank it had not been selected on, scored \numFitGuardBest{}.
+
+That single comparison is the reading rule for the whole trace, and it is worth
+stating as a rule because per-generation numbers are the ones a reader is most
+likely to quote. The per-generation scores in
+\filepath{research/v05/runs/fit-round1.jsonl} are \emph{selection statistics}:
+they rank candidates within a generation against a common bank, which is what
+they exist for, and they are not measurements of a candidate's strength. The best
+one in this trace overstated its own vector by \numFitCurse{} on the objective's
+scale. Only the final common-seed re-evaluation, and the held-out banks of
+\S\ref{sec:results}, are measurements.
+
+\subsection{The held-out regression}
+\label{sec:fit-heldout}
+
+The best generation's own profile puts \vfive{} at \numFitWorst\% against the
+mirror-strength member of the panel. Every seed bank used from
+\S\ref{sec:results} onwards is disjoint from the fitting banks, and the
+configuration was frozen before any of those runs. On them the same configuration
+wins \numHeadWin\% of games against \vfour{} across \numHeadSeeds{} seeds (range
+\numHeadRange\%, \numHeadGames{} games), and \numPanelVfiveVfour\%
+[\numStyleCIVfour] on the per-style bank. In-panel \numFitWorst\% against
+held-out \numHeadWin\% is a regression of \numFitRegression{} points, and the
+held-out figure is the one this report uses everywhere the two could be confused.
+
+The regression is what the guard above predicts and does not remove. The guard
+protects the \emph{choice} between two candidates from selection bias; it does
+nothing about the bias in the in-panel figure itself, which is a maximum taken
+over \numFitPop{} candidates on a shared bank in each of \numFitGens{}
+generations. An in-panel number from this pipeline should be read as an upper
+estimate by construction, and the size of the gap here --- rather than any
+argument about it --- is the calibration.
+
+One further scope limit belongs here rather than in \S\ref{sec:limitations}.
+Deals were held out; opponent \emph{identities} were not. All \numFitPanelN{} of
+the fitting panel's members reappear in the evaluation panel of
+\S\ref{sec:results}, so the held-out figures measure generalisation to new deals
+rather than to new strategic populations. The three deceptive archetypes of the
+deception panel are the exception: none of them was in the fitting panel, and
+\vfive{}'s loss against one of them is reported there.
+
+\subsection{What this fit is not}
+\label{sec:fit-limits}
+
+\begin{itemize}
+  \item \textbf{It is one round.} \vfour{} ran \numVfourFitRounds{} rounds; this
+        is \numFitRounds{}, from a single base seed, initialised at \vfour{}'s
+        frozen vector. Nothing here distinguishes a converged optimum from the
+        nearest local one, and no second round from a different seed was run to
+        check that the search lands in the same place twice. Every strength
+        figure in \S\ref{sec:results} is conditional on that.
+  \item \textbf{The value model was left where it was.} It was fitted
+        separately for \vfour{} by ridge regression on self-play decision points
+        and then held fixed while the policy weights moved around it, and that
+        arrangement is unchanged. \S\ref{sec:diag-value} measures what the model
+        contributes and where; the refit did not act on it.
+  \item \textbf{The panel is still unbalanced.} As the profile in
+        \S\ref{sec:fit-guard} shows, most of its members are dominated by a wide
+        margin, and a dominated opponent contributes almost no gradient at any
+        temperature. The resolution the objective has is spent largely where the
+        outcome was not in question.
+  \item \textbf{One fitted coordinate moved into a known exposure.} The policy
+        prior's $\theta$, the weight on ``this player asked in this half-suit,''
+        rose from \numPriorThetaFour{} to \numPriorThetaFive{}. The diagnosis had
+        already established that over-weighting that prior is precisely the
+        deception exposure --- while deleting it outright is worse still against
+        the deceptive archetypes themselves, by \numPriorDeleteCost{} points
+        [\numPriorDeleteCI] --- and the deception panel of
+        \S\ref{sec:results} measures the bill: \numDecFeintDelta{} points against
+        the archetype that manufactures a false ask-legality certificate. The
+        objective could not have seen this, because no deceptive archetype was in
+        the fitting panel either.
+\end{itemize}

@@ -83,7 +83,7 @@ struct HumanIO {
   bool abandon = false;
   bool paused  = false;
   int  stepBudget = 0;       // while paused, release this many further events
-  int  paceMs = 800;
+  int  paceMs = 2000;
   HumanSlot slot[NPLAY];
   uint64_t rev = 0;
   void bump() { rev++; cv.notify_all(); }   // call with mu held

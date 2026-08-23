@@ -1,0 +1,422 @@
+{
+  "project": "FishBot v0.5",
+  "generated": "2026-08-23T01:55:32",
+  "commit": "fe21e193999695792ae598561a91dbaff6ef1b55",
+  "working_tree_dirty": true,
+  "results_dir": "research/v05/results",
+  "policy_spec": "v05",
+  "belief_mode": "Fast (BeliefMode::Fast)",
+  "fitted_parameters": 34,
+  "ask_features": 20,
+  "value_features": 16,
+  "mechanisms_built": [
+    "M1 live-ask gating",
+    "M2 capacity-feasible allocation",
+    "M8 stage-2 removal"
+  ],
+  "mechanisms_off_by_default": [
+    "ownershipByP (m1p)",
+    "repeatGuard (norepeat)"
+  ],
+  "fitting_seed": 505101,
+  "fitting_beta": 25,
+  "fitting_panel": [
+    "v04",
+    "v03",
+    "lockout",
+    "detective",
+    "diversifier",
+    "hunter"
+  ],
+  "evaluation_seeds": {
+    "pathology": 31,
+    "pathology_cross": 90210,
+    "headtohead": [
+      90210,
+      31337,
+      515151,
+      777001,
+      424242
+    ],
+    "perstyle": 515253,
+    "ablations": 606060,
+    "calibration": 717171,
+    "dialects": 828282,
+    "forced_endgame": 909090,
+    "deception": [
+      31415926,
+      8675309
+    ]
+  },
+  "runs": [
+    {
+      "id": "E1",
+      "artifact": "E1-verify.txt",
+      "command": "fish verify --games=600",
+      "design": "engine and information-safety audit over the policy cross-product, full dialect",
+      "present": true,
+      "bytes": 119,
+      "sha256": "1cf3b1e6f9942d64d8c7ce091db45a5bd9b4ea78889adbe3b6da7903ec89480d"
+    },
+    {
+      "id": "E2",
+      "artifact": "E2-pathology.txt",
+      "command": "fish pathology --a=v05|v04 --b=v05|v04 --games=300 --rotations=2 --seed=31 (and --seed=90210 for the cross match)",
+      "design": "the commit-gate KPIs: dead asks, dead runs, repeats, post-horizon and forced declarations",
+      "present": true,
+      "bytes": 2210,
+      "sha256": "3badd3e7edbcba6b65a28d278e408c4b13ec5766a5c9da6fc02dda1c12988977"
+    },
+    {
+      "id": "E3",
+      "artifact": "E3-headtohead.jsonl",
+      "command": "fish match --a=v05 --b=v04 --games=300 --rotations=6 --seed=90210|31337|515151|777001|424242",
+      "design": "held-out head-to-head at five disjoint seed banks; 300 deals $\\times$ 6 rotations each",
+      "present": true,
+      "bytes": 2621,
+      "sha256": "bfebbf008201404dc2e9de4537c7cc5bb9dc419a3a72797f839ce8c154f28c21"
+    },
+    {
+      "id": "E4",
+      "artifact": "E4-perstyle.jsonl",
+      "command": "fish match --a=v05|v04 --b=OPP --games=300 --rotations=6 --seed=515253",
+      "design": "per-opponent profile over nine styles for both arms; the worst case, not the mean, is the headline",
+      "present": true,
+      "bytes": 9434,
+      "sha256": "7278d76bc891db04ee4fd4441aaeb16ff5a5f9006744217236772eb54cc76e48"
+    },
+    {
+      "id": "E5",
+      "artifact": "E5-ablations.jsonl",
+      "command": "fish match --a=v05:<switches> --b=v04 --games=250 --rotations=6 --seed=606060",
+      "design": "mechanism ablations: the factorial core of M1/M2/M8 plus the two rejected defaults",
+      "present": true,
+      "bytes": 5592,
+      "sha256": "b04e82b5eff544b9490fe36af87a01d395c2f79db85f228bf34010b4b184a430"
+    },
+    {
+      "id": "E6",
+      "artifact": "E6-calibration-v05.txt",
+      "command": "fish calibrate --a=v05 --b=v04 --games=400 --seed=717171",
+      "design": "forecast reliability of the declaration estimator",
+      "present": true,
+      "bytes": 936,
+      "sha256": "d5721f59833222e43caf4cd1fda430865d2fb9adc6c9bd75650c8c14c0ebef5c"
+    },
+    {
+      "id": "E7",
+      "artifact": "E7-rules.jsonl",
+      "command": "fish match --a=v05 --b=v04 --games=250 --rotations=6 --seed=828282 (--no-out-of-turn | --no-cardless-declare | --legacy)",
+      "design": "rules-dialect sensitivity across four dialects",
+      "present": true,
+      "bytes": 2172,
+      "sha256": "5e9861b6480c5be9c6929bc5aeeaf32413facda83e9e84f9bf1b96bbdf7c372c"
+    },
+    {
+      "id": "E8",
+      "artifact": "E8-forced-endgame.txt",
+      "command": "fish match --a=v05 --b=v04 --games=4000 --rotations=6 --seed=909090 (and the swapped arm)",
+      "design": "forced-endgame rate and accuracy per declaring team at volume; 24{,}000 games per arm",
+      "present": true,
+      "bytes": 248,
+      "sha256": "15f4785b661b3f8a9f7d1f0e946d6d9903f158e7357bb9c28e0d35029bc2f584"
+    },
+    {
+      "id": "E9",
+      "artifact": "E9-throughput.txt",
+      "command": "fish bench --a=v05 --b=v05 --games=300",
+      "design": "whole-game throughput of the shipped configuration",
+      "present": true,
+      "bytes": 31,
+      "sha256": "beabc77fabf3704e35798a29e60fb987a9937938f5c24257b868f04bb35015fb"
+    },
+    {
+      "id": "E10",
+      "artifact": "E10-deception.md",
+      "command": "fish match --a=v05|v04 --b=silent|feint|withholder --games=400 --rotations=6 --seed=31415926|8675309",
+      "design": "deception panel at two independent seed banks; 400 deals $\\times$ 6 rotations per cell",
+      "present": true,
+      "bytes": 3029,
+      "sha256": "5297a9bd780c034e601a70e8ed54f036af3ff2e2be190f558f5bb571f616a15d"
+    },
+    {
+      "id": "C1",
+      "artifact": "C1-v04-corrections.md",
+      "command": "see the file",
+      "design": "corrections register of record: every v0.4 claim the v0.5 diagnosis overturns, and every one it fails to overturn",
+      "present": true,
+      "bytes": 77692,
+      "sha256": "f3eba8dacebc828ad1d1ebf734aae7e0a4d21dda4ff3c07d4926370f2e0c4712"
+    },
+    {
+      "id": "F1",
+      "artifact": "../runs/fit-round1.jsonl",
+      "command": "fish tune --base=v05 --panel=v04,v03,lockout,detective,diversifier,hunter --full --games=200 --pop=24 --elite=6 --beta=25 --seed=505101",
+      "design": "the CEM fitting trace that produced the shipped vector",
+      "present": true,
+      "bytes": 14866,
+      "sha256": "898b125ea8cb9b8b0f02cbad72e50aa167767cfa9ab9796f6417264ceb9043a4"
+    },
+    {
+      "id": "F2",
+      "artifact": "../runs/v05-fitted.txt",
+      "command": "python3 engine/freeze_config_v05.py research/v05/runs/v05-fitted.txt",
+      "design": "the frozen 34-coordinate parameter vector baked into V05Config",
+      "present": true,
+      "bytes": 281,
+      "sha256": "ae569d9aa4a815a2852b54e77b5902c83d8d0d882adb16de925c61a8c5cba0d1"
+    },
+    {
+      "id": "D",
+      "artifact": "P0-v04-pathology.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 1630,
+      "sha256": "8d95b2a9eabc647a825852e4321587b1157e228d6b89ce0219b10bfd98cece3d"
+    },
+    {
+      "id": "D",
+      "artifact": "P0b-forcing-dilemma.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 2347,
+      "sha256": "ec8ab2aebd1b44a8632cf435663912b0abe7709d091d19b9287239000f6508fb"
+    },
+    {
+      "id": "D",
+      "artifact": "P1-deadlock-forensics.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 21597,
+      "sha256": "6ff29cf8cc2367d23ee3c7590cbb338f6206d288d57f1723c5b544665e63b6b9"
+    },
+    {
+      "id": "D",
+      "artifact": "P1-verify-deadlock-lock-census.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 4815,
+      "sha256": "ac20a0d0d564007530f9cb572125810b42587b16a0c70516ced9ccfd05599eee"
+    },
+    {
+      "id": "D",
+      "artifact": "P1-verify-e11-information.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 9286,
+      "sha256": "507cc6cd2c7e979d916e935a8cd7134177965cba74d69209fd7b6e3ad91bf60f"
+    },
+    {
+      "id": "D",
+      "artifact": "P2-forced-endgame.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 16955,
+      "sha256": "71a10633708c0edec055c9459eadd7b2d83bc4192cfa39ed698dde9cbc1a2312"
+    },
+    {
+      "id": "D",
+      "artifact": "P2-verify-forced-endgame.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 9050,
+      "sha256": "ab549c7bde61674b3ba05305f16a9016abe005464ca7ebba4cbfe89eb9673294"
+    },
+    {
+      "id": "D",
+      "artifact": "P2-verify-forced-ladder.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8501,
+      "sha256": "fc0f34e25574e0e4ec193010a2806f54b7c8079a36aea61986826d6cf85003cc"
+    },
+    {
+      "id": "D",
+      "artifact": "P2-verify-willingness-rungs.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 9303,
+      "sha256": "f5608c690e4ed4fe9231d53e9a95be0436a2ac72cd8528fe5543141a1e91a244"
+    },
+    {
+      "id": "D",
+      "artifact": "P3-deception.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 32678,
+      "sha256": "f6609ef4f20ad5c314409ef1512f896c839eedd1a523f4afff16b4ee360e14ab"
+    },
+    {
+      "id": "D",
+      "artifact": "P3-verify-deception.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8419,
+      "sha256": "a5aa150cacc2e7a688bef597acc0a951fff459c07887b2dfd0b2b11f319cecb7"
+    },
+    {
+      "id": "D",
+      "artifact": "P3-verify-prior-cliff.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 6369,
+      "sha256": "68bb58176791f8f8c1bddcafaf1e85fc305064e61305a56e862ef01fabca7d02"
+    },
+    {
+      "id": "D",
+      "artifact": "P4-policy-review.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 36409,
+      "sha256": "a247d1003dadd9e987ea53e0f5d7c7560417f889e9916423734f818cdf65c7d8"
+    },
+    {
+      "id": "D",
+      "artifact": "P4-verify-declaration-card-delta.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 6461,
+      "sha256": "09678dc793ec1875c80def3c097cb7c3ee2973f3e3ad005abfa5167b8e6b2d86"
+    },
+    {
+      "id": "D",
+      "artifact": "P4-verify-forcing-horizon.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8179,
+      "sha256": "d22654784cdc34305ac9aa05719b192f8ade19ae088bb62be195f76fa15a751c"
+    },
+    {
+      "id": "D",
+      "artifact": "P4-verify-policy-review.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8845,
+      "sha256": "d4372b84182d3481a30e9c1b6791df5e819ff624991d94b2b6c6090ec476909a"
+    },
+    {
+      "id": "D",
+      "artifact": "P5-human-strategy.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 29572,
+      "sha256": "c752f8c6457e38d0444fb03304e672af4c0d9e0989b1c9b73841c6a1b6497ba8"
+    },
+    {
+      "id": "D",
+      "artifact": "P5-verify-human-strategy.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 6844,
+      "sha256": "ebe272bf57e67ce4e5888aa9313a9a0d782f3b2d26e7794fd8420e401167770f"
+    },
+    {
+      "id": "D",
+      "artifact": "P5-verify-target-channel.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 9452,
+      "sha256": "c3dec7bd58911ce34cfc152c714b1ea286cac49c4ffccfb28edccdd6c8b71081"
+    },
+    {
+      "id": "D",
+      "artifact": "P6-declaration.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 27014,
+      "sha256": "65bfa82ffbdb4b873704588855300a256a742ffd994f4239cf67bcc45d2c3568"
+    },
+    {
+      "id": "D",
+      "artifact": "P6-verify-arbitration-cost.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 7904,
+      "sha256": "f07b4d75d6c1de0ad3869750a75ccacb1083343496215c7aac4a95acb72c99a8"
+    },
+    {
+      "id": "D",
+      "artifact": "P6-verify-declaration-races.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 10018,
+      "sha256": "089aeea3632115101d9d96ed638b4723311695a9a48cb310e5697d3ddc09eba1"
+    },
+    {
+      "id": "D",
+      "artifact": "P6-verify-willingness-ladder.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 5630,
+      "sha256": "dea7ce3ffb0437ce82020cff52e3edfea6c93f891f023ad7ea5243e976352e76"
+    },
+    {
+      "id": "D",
+      "artifact": "P7-valuefn.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 28132,
+      "sha256": "21b201e49168f773dd72b10ead5ef1cd98f132038fc15fff7921cbc7662bb12d"
+    },
+    {
+      "id": "D",
+      "artifact": "P7-verify-valuefn.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 4819,
+      "sha256": "efaed92d83950528186bbf7cbd1052285b3aa7b7dd2701b94e0091741eb13fb5"
+    },
+    {
+      "id": "D",
+      "artifact": "P8-coordination.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 27291,
+      "sha256": "6f3d43f38e69c86af504012497e5713e008f642d21ed59434e4765599653d916"
+    },
+    {
+      "id": "D",
+      "artifact": "P8-verify-turn-transfer.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8110,
+      "sha256": "694e33bff2645612acec5d89cac2a194d450fbc96dc16cffd8ac6743dc2a5127"
+    },
+    {
+      "id": "D",
+      "artifact": "Plit-verify-holding-cost-claim.md",
+      "command": "see the file",
+      "design": "diagnosis report",
+      "present": true,
+      "bytes": 8669,
+      "sha256": "2708098945ac9e091c9132972806484d09dbda17a3454199ba2b8cab5d93d43b"
+    }
+  ]
+}

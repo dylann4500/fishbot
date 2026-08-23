@@ -1,0 +1,10 @@
+== E1 verify: rules, information safety, belief soundness ==
+== E2 pathology: the KPIs that gate a v0.5 commit ==
+== E3 head-to-head, held-out seeds ==
+== E4 per-opponent profile and worst case (the headline is the MINIMUM) ==
+== E5 mechanism ablations (single mechanism, factorial core) ==
+== E6 calibration ==
+== E7 rule dialects ==
+== E8 forced-endgame accuracy at volume (a rare event: ~0.007/game) ==
+== E9 throughput ==
+done. artifacts in ../research/v05/results

@@ -1,0 +1,39 @@
+scanned 120 games (v04 mirror, seed 777001)   games with >300 events: 22
+
+long-game census: mean longest dead run 232.545455 asks, mean distinct (actor,card,target) triples in it 2.181818
+  runs that are a pure two-question cycle: 18 / 22
+  runs where ANY half-suit was already locked to a team (ground truth) at the run's start or end: 11 / 22
+
+=== PART 1: deadlock onset traces ===
+
+=== PART 2: is information obtainable in a deadlocked state? ===
+states examined (seat x state pairs with a team-locked half-suit): 108
+team-best pAlloc on the candidate half-suit: mean before 0.198671   mean best-after-one-ask 0.293717
+legal asks examined 5292  of which inside our own locked half-suit 1242
+  own-locked asks with dP > 0 for a teammate: 855 / 1242  (68.840580%)  mean dP 0.079401  max dP 0.591241
+  other asks with dP > 0 for a teammate:      1329 / 4050  (32.814815%)  mean dP 0.001014  max dP 0.040414
+  dP distribution, own-locked asks: n=1242  mean 0.079401  p50 0.011054  p90 0.409516  p99 0.591241  max 0.591241
+  dP distribution, other asks     : n=4050  mean 0.001014  p50 0.000000  p90 0.002807  p99 0.014084  max 0.040414
+  teammate MAP allocation flipped to the truth 216 times, away from the truth 171 times
+
+  generalised information audit at the mover's decision point (n=66 states; 33 with a locked half-suit, 33 without):
+    the ask v0.4 actually played was information-free for its teammates in 65 / 66 states (98.484848%)
+    at least one legal ask WAS informative in 66 / 66 states (100.000000%)
+    mean d(teammate certainty): played 0.000606   best available 0.032900
+    best-available d(certainty): n=66  mean 0.032900  p50 0.031470  p90 0.050466  p99 0.088889  max 0.088889
+    the most informative legal ask ranks on average #20.651515 in v0.4's own ask score, a mean deficit of 3.286547 score units below the leader
+
+--- certificate ladder (greedy information-only asks inside one locked half-suit) ---
+  ladders run 36  mean team-best pAlloc 0.198671 -> 0.905498
+  reached pAlloc > 0.9995 (allocation fully resolved): 28 / 36  (77.777778%)  mean asks needed 2.857143  median asks used 4
+  LEAK: opponents' mean per-card certainty 0.383567 -> 0.398056
+  LEAK: opponents' own best locked-half-suit pAlloc 0.265731 -> 0.281607  (n=6)
+
+=== PART 3: what the donated turn costs ===
+  inside a dead run (>=6): donations 6332   cards taken/donation 0.004106   half-suits scored/donation 0.002211   donations yielding nothing 99.747315%
+  everywhere else        : donations 4824   cards taken/donation 1.080846   half-suits scored/donation 0.151741   donations yielding nothing 56.571310%
+
+=== CAUSAL ISOLATION: v0.4 with exact repetition forbidden ===
+  events/game 100.466667  median 98  p90 119  max 153
+  dead asks 3.534799% of asks;  longest dead run 13;  games over 300 events 0 / 120
+  (baseline v0.4 on the same deals: events/game 146.166667, longest dead run 289, games over 300 events 22 / 120)

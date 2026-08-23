@@ -1,0 +1,34 @@
+# roundtrip-assert -- freeze/parse round-trip assertion for the v0.5 parameter vector
+# generated 2026-08-23T08:26:50Z, engine commit fe21e19
+#
+# The v0.4 pipeline parsed the flat vector with a HARD-CODED offset of 18.
+# When NFEAT grew to 20 the last two ask weights were aliased onto the first
+# two decision knobs, so the vector the optimiser scored was not the vector
+# that shipped.  v0.5 derives the offset from NFEAT in both the parser
+# (engine/src/factory.hpp) and the freezer (engine/freeze_config_v05.py),
+# and asserts the two agree by playing the shipped configuration against the
+# flat vector that encodes it.  Identical policies on duplicated deals must
+# split every deal exactly, so anything other than 50.0000% is a mismatch.
+
+NFEAT 20
+KNOBS 14
+DIMS 34
+ALIASED_OFFSET 18
+
+## roundtrip: v05 vs v05:allparams=<vector as baked by freeze_config_v05.py>
+vector 11.6423|3.3041|3.4785|2.5071|1.6882|4.0462|1.6052|1.2189|-2.9058|-1.2201|-2.2482|1.1596|1.3803|0.8384|-2.4266|-0.9583|2.5333|-0.2242|1.2455|-1.4031|0.81991|0.73250|0.25742|6|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|6|3.58301|2.70470
+{"a":"v05","b":"v05:allparams=11.6423|3.3041|3.4785|2.5071|1.6882|4.0462|1.6052|1.2189|-2.9058|-1.2201|-2.2482|1.1596|1.3803|0.8384|-2.4266|-0.9583|2.5333|-0.2242|1.2455|-1.4031|0.81991|0.73250|0.25742|6|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|6|3.58301|2.70470","deals":1500,"games":3000,"winRateA":0.5,"ci":[0.5,0.5],"wilsonCI":[0.48212,0.51788],"meanSetsA":4.5,"meanSetsB":4.5,"askAccA":0.557744,"askAccB":0.557744,"declAccA":0.979228,"declAccB":0.979228,"declPerGameA":4.49333,"declPerGameB":4.49333,"forcedAccA":0.3,"forcedAccB":0.3,"forcedPerGameA":0.00666667,"outOfTurnA":3.294,"outOfTurnB":3.294,"lockHoldA":4.92397,"lockHoldB":4.92397,"eventsPerGame":96.8893,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":21.1018}
+
+{"a":"v05","b":"v05:allparams=11.6423|3.3041|3.4785|2.5071|1.6882|4.0462|1.6052|1.2189|-2.9058|-1.2201|-2.2482|1.1596|1.3803|0.8384|-2.4266|-0.9583|2.5333|-0.2242|1.2455|-1.4031|0.81991|0.73250|0.25742|6|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|6|3.58301|2.70470","deals":1500,"games":3000,"winRateA":0.5,"ci":[0.5,0.5],"wilsonCI":[0.48212,0.51788],"meanSetsA":4.5,"meanSetsB":4.5,"askAccA":0.554766,"askAccB":0.554766,"declAccA":0.98116,"declAccB":0.98116,"declPerGameA":4.494,"declPerGameB":4.494,"forcedAccA":0.277778,"forcedAccB":0.277778,"forcedPerGameA":0.006,"outOfTurnA":3.31933,"outOfTurnB":3.31933,"lockHoldA":5.06212,"lockHoldB":5.06212,"eventsPerGame":96.6093,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":21.1791}
+
+## negative control: the same vector parsed at the v0.4 hard-coded offset of 18
+## (knobs read from v[18..31] instead of v[20..33]), re-encoded so the correct
+## parser reproduces exactly the aliased configuration
+vector 11.6423|3.3041|3.4785|2.5071|1.6882|4.0462|1.6052|1.2189|-2.9058|-1.2201|-2.2482|1.1596|1.3803|0.8384|-2.4266|-0.9583|2.5333|-0.2242|1.2455|-1.4031|1.2455|-1.4031|0.81991|0.73250|0.25742|6|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|6
+{"a":"v05","b":"v05:allparams=11.6423|3.3041|3.4785|2.5071|1.6882|4.0462|1.6052|1.2189|-2.9058|-1.2201|-2.2482|1.1596|1.3803|0.8384|-2.4266|-0.9583|2.5333|-0.2242|1.2455|-1.4031|1.2455|-1.4031|0.81991|0.73250|0.25742|6|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|6","deals":1500,"games":3000,"winRateA":0.541333,"ci":[0.523,0.559333],"wilsonCI":[0.523461,0.5591],"meanSetsA":4.653,"meanSetsB":4.347,"askAccA":0.551979,"askAccB":0.544002,"declAccA":0.983277,"declAccB":0.977605,"declPerGameA":4.62433,"declPerGameB":4.361,"forcedAccA":0.266667,"forcedAccB":0.275862,"forcedPerGameA":0.005,"outOfTurnA":3.46433,"outOfTurnB":3.02633,"lockHoldA":4.80856,"lockHoldB":7.52098,"eventsPerGame":98.702,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":20.7393}
+
+## quantisation note: the freezer writes ask weights at 4 decimals and knobs at 5,
+## so the full-precision optimiser output is a slightly different policy
+vector 11.64227|3.30409|3.47852|2.50714|1.68817|4.04617|1.60518|1.21892|-2.90583|-1.22009|-2.24823|1.15962|1.38026|0.83838|-2.42663|-0.95833|2.53330|-0.22422|1.24554|-1.40315|0.81991|0.73250|0.25742|5.64045|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|5.73502|3.58301|2.70470
+{"a":"v05","b":"v05:allparams=11.64227|3.30409|3.47852|2.50714|1.68817|4.04617|1.60518|1.21892|-2.90583|-1.22009|-2.24823|1.15962|1.38026|0.83838|-2.42663|-0.95833|2.53330|-0.22422|1.24554|-1.40315|0.81991|0.73250|0.25742|5.64045|2.61651|6.47680|0.75393|0.85876|-0.03044|0.44458|0.12198|5.73502|3.58301|2.70470","deals":1500,"games":3000,"winRateA":0.495667,"ci":[0.486,0.505667],"wilsonCI":[0.477792,0.513552],"meanSetsA":4.484,"meanSetsB":4.516,"askAccA":0.557216,"askAccB":0.558173,"declAccA":0.979238,"declAccB":0.979521,"declPerGameA":4.47933,"declPerGameB":4.50867,"forcedAccA":0.210526,"forcedAccB":0.294118,"forcedPerGameA":0.00633333,"outOfTurnA":3.28233,"outOfTurnB":3.303,"lockHoldA":4.94005,"lockHoldB":4.8589,"eventsPerGame":96.979,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":21.8338}
+

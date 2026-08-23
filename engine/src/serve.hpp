@@ -34,6 +34,11 @@ inline std::string mimeFor(const std::string& p) {
   return "application/octet-stream";
 }
 
+// Upper bound on the per-event delay.  A human watching six seats and trying to
+// track 54 cards wants far more thinking time than a plausible animation delay,
+// so this is generous rather than cosmetic.
+static constexpr int PACE_MAX = 20000;
+
 struct Server {
   Table table;
   std::string webDir;
@@ -67,6 +72,19 @@ struct Server {
       d.owner[i] = uint8_t(v[i]);
     }
     return true;
+  }
+
+  // Display names are free text from the setup screen.  They are trimmed, kept
+  // printable, length-capped, and de-duplicated, because the whole point of
+  // naming six seats is that "which bot was that?" has an answer.
+  static std::string cleanName(std::string s) {
+    std::string o;
+    for (char c : s) if ((unsigned char)c >= 0x20 && c != 0x7f) o.push_back(c);
+    size_t a = o.find_first_not_of(" \t");
+    size_t b = o.find_last_not_of(" \t");
+    o = (a == std::string::npos) ? std::string() : o.substr(a, b - a + 1);
+    if (o.size() > 20) o = o.substr(0, 20);
+    return o;
   }
 
   HttpResponse handle(const HttpRequest& req) {
@@ -111,8 +129,14 @@ struct Server {
         char hk[4]; snprintf(hk, sizeof(hk), "h%d", p);
         cfg[p].human = req.getb(hk, false);
         if (cfg[p].human) nHuman++;
+        char nk[4]; snprintf(nk, sizeof(nk), "n%d", p);
+        cfg[p].name = cleanName(req.get(nk, ""));
+        if (cfg[p].name.empty()) cfg[p].name = cfg[p].human ? "You" : Table::defaultName(p);
       }
       (void)nHuman;
+      for (int p = 0; p < NPLAY; p++)
+        for (int q = 0; q < p; q++)
+          if (cfg[q].name == cfg[p].name) cfg[p].name += " " + std::to_string(p + 1);
       Rules r;
       r.deckSets = 9;
       r.maxAsks = std::max(40, std::min(2000, req.geti("maxasks", 400)));
@@ -122,7 +146,7 @@ struct Server {
         sd = mixSeed(sd, 0xC0FFEEull);
         if (!sd) sd = 1;
       }
-      int pace = std::max(0, std::min(6000, req.geti("pace", 800)));
+      int pace = std::max(0, std::min(PACE_MAX, req.geti("pace", 2000)));
       std::lock_guard<std::mutex> ck(ctl);
       table.stop();
       for (int p = 0; p < NPLAY; p++) table.seats[p] = cfg[p];
@@ -157,7 +181,7 @@ struct Server {
     }
     if (req.path == "/api/pace") {
       std::lock_guard<std::mutex> lk(table.io.mu);
-      table.io.paceMs = std::max(0, std::min(6000, req.geti("ms", 800)));
+      table.io.paceMs = std::max(0, std::min(PACE_MAX, req.geti("ms", 2000)));
       table.io.bump();
       return okj();
     }

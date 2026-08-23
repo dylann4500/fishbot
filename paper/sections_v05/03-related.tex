@@ -1,0 +1,215 @@
+\section{Related work}
+\label{sec:related}
+
+The v0.4 study surveyed inference, search, team equilibria and signalling, and
+that survey stands. This section covers what the present report additionally
+depends on, and it is organised around a gap: a coverage sweep of the eight
+reviews assembled for v0.4 finds no occurrence of \emph{war of attrition},
+\emph{minimax regret}, \emph{distributionally robust}, \emph{Dynkin},
+\emph{restricted Nash}, \emph{data-biased} or \emph{safe opponent exploitation},
+and one occurrence of \emph{deadlock}. Those are exactly the two bodies of work
+this report needs: the theory of voluntary stopping when both sides may wait, and
+the theory of performing well against the worst opponent style rather than the
+average one.
+
+\subsection{Fish and Literature}
+
+The published material on this game remains human and informal. McLeod's Pagat
+entry \cite{pagat} is the canonical rules source and records the points on which
+dialects differ; Develin's chapter \cite{develin} is the most detailed strategy
+writing located, and supplies two observations this design uses --- that an ask
+teaches the opponents as much as it teaches a teammate, and that pre-agreed
+conventions are outside the game. A repeat search on 22 August 2026 --- the arXiv
+API for \texttt{"Canadian Fish"}, \texttt{"Literature card game"} and
+\texttt{"half-suit"}, returning zero results, plus a web sweep that surfaced only
+adjacent games --- reproduced the v0.4 finding. Every novelty statement in this
+report therefore takes the form ``we found no prior published work that \dots''
+and should be read against that scope. The one agent located, Somani's
+\texttt{literature} \cite{somani}, plays the four-player 48-card variant and
+publishes no strength numbers; a closed-source mobile application advertises
+six-player bots with no stated methodology \cite{playstore}; Literature is not
+among the environments packaged with RLCard \cite{rlcard}.
+
+\subsection{Voluntary stopping when waiting is free}
+\label{sec:related-stopping}
+
+The declaration decision in Fish is a multi-player, nonzero-sum, undiscounted
+optimal-stopping game: each side chooses when to claim, the payoff depends on who
+claims first and whether the claim was right, and waiting costs nothing in the
+rules. Games of this shape are known to be badly behaved. Christensen,
+Lindensj\"o and Neumann \cite{christensen-dynkin} record that for undiscounted
+Dynkin games only $\epsilon$-equilibria are established in general, with
+counterexamples showing that Nash equilibria need not exist even for
+deterministic stationary rewards, and that this survives enlargement to
+randomised stopping times. Hamad\`ene, Hassani and Morlais
+\cite{hamadene-dynkin} prove existence of an $\epsilon$-Nash equilibrium for the
+$N$-player discrete-time case by a constructive algorithm, under a payoff
+structure that is the Fish structure: payoffs depend on the set of players who
+stop at the first stage at which anyone stops. These are results for general
+Markovian reward processes rather than theorems about Fish, so the correspondence
+is one of structure and is used here to name the missing ingredient, not to
+assert a property of the game.
+
+The classical model of mutual refusal to move is the war of attrition. Hendricks,
+Weiss and Wilson \cite{hendricks-attrition} characterise the complete-information
+continuous-time case and find a continuum of equilibria including arbitrarily
+long delay: delay is an equilibrium phenomenon that a symmetric deterministic
+pair will select, and \vfour{}'s mirror match is exactly symmetric and exactly
+deterministic. The constructive converse is Mguni \cite{mguni-actioncost}: impose
+a strictly positive cost on each action and the stochastic game acquires a unique
+value and a Markovian saddle point at strategically chosen stopping times. That
+is the cleanest published statement of the natural fix, and \S\ref{sec:diagnosis}
+reports that in this game it does not work --- the cost is a mean-shifter that
+leaves the tail of the distribution untouched.
+
+There is a reason to be careful with holding costs beyond their measured
+ineffectiveness. Admati and Perry \cite{admati-perry} show that delay is used as
+a signalling device precisely because it is a more efficient signal of strength
+than the alternatives, and that the delay does not vanish as the interval between
+moves goes to zero. Applied to Fish this is Farrell--Gibbons two-audience cheap
+talk \cite{farrell-gibbons} on the \emph{timing} channel: if how long a seat
+waits before declaring depends on its private confidence, three opponents can
+read that confidence. Any holding cost must therefore be a deterministic function
+of public state, or be deliberately randomised.
+
+We found no substantive literature on self-inflicted non-termination in
+game-playing agents. Three distinct query formulations returned only anecdote,
+resolved in every case by an arbitrary move cap --- which is what \vfour{} does,
+and what \S\ref{sec:diagnosis} measures the cost of. That absence is itself a
+result: voluntary-claiming games are an under-studied class and Fish is a clean
+instance of one.
+
+\subsection{Information-seeking actions, and what an ask leaks}
+\label{sec:related-info}
+
+An ask in Fish is simultaneously a request for material, a certificate to one's
+teammates and a disclosure to one's opponents. The v0.4 review formalised the
+trade-off as a per-decision secrecy rate in the Wyner \cite{wyner} sense --- the
+mutual information the action carries to teammates minus the mutual information
+it carries to opponents --- and built none of the four instruments it listed.
+\vfour{} contains three information terms in its ask score and all three are
+negative; \S\ref{sec:diag-features} gives the arithmetic.
+
+Two results bear directly on the repair. Alvim et al.\ \cite{alvim-leakage} model
+information flow as a game in which the defender's utility is a convex function
+of the \emph{distribution} over its actions rather than the expected utility of
+the action played, and show that a Nash equilibrium nevertheless exists. The
+consequence for Fish is sharp: a deterministic argmax ask policy has maximal
+leakage by construction, so no reweighting of leak-penalty features can reduce
+leakage below the deterministic bound. Reducing it requires randomising over
+near-tied asks. The second consequence is a caveat --- because utility is convex
+in the mixed strategy, the leakage game is not bilinear and standard regret
+matching does not apply unmodified.
+
+Lervold, Peterson and King \cite{lervold-infogain} appear to be the only
+published work that places an explicit information-gain incentive inside an
+information-set tree search, reporting improvement over baseline and over a
+cheating search in a hidden-information multi-action wargame. We were unable to
+obtain the full text, so the finding is used here and the formula is not.
+Serrino et al.\ \cite{serrino-deeprole} integrate deductive reasoning directly
+into vector-form counterfactual regret minimisation for five-player Avalon; it is
+the closest published system to Fish's structure, a hidden-role adversarial team
+game in which every action is public and its informational content is the whole
+game, and it is the existence proof that hard deduction can live inside a solver
+rather than beside it.
+
+\subsection{Online opponent modelling, and robustness to being modelled}
+\label{sec:related-opponent}
+
+\vfour{} models the other five seats with two global scalars, identical for every
+opponent and never updated during a game (\S\ref{sec:diag-prior}). The literature
+on doing better within a single short episode is mature and was absent from the
+v0.4 corpus. Ganzfried, Wang and Chiswick \cite{ganzfried-multiplayer} give the
+only opponent-modelling result located that is explicitly in the more-than-two
+player regime. Rosman, Hawasly and Ramamoorthy \cite{rosman-bpr} pose exactly
+this problem --- select online, from a library of policies, a response to a novel
+task instance, under a short episode --- and a Fish game is
+\numMirrorEvents{} public events long. Smith et al.\ \cite{smith-qmixing} learn a
+value function against each pure opponent and combine them for any mixture
+without retraining, with a classifier that refines the mixture weights during the
+episode.
+
+The robustness half matters more here, because the behaviour that prompted this
+work is an opponent deliberately feeding a model. Johanson, Zinkevich and Bowling
+\cite{johanson-rnash} give the shape of the dial: solve a game in which the
+opponent plays a fixed model with probability $p$ and is free otherwise, so that
+$p=1$ is a best response and $p=0$ an equilibrium, and intermediate $p$ traces an
+exploitation/robustness frontier. Johanson and Bowling \cite{johanson-dbr} set
+$p$ per information set as a function of how much data is actually available
+there --- the right refinement for Fish, where the per-half-suit evidence about a
+given opponent is a handful of observations, and the one that makes a
+deliberately silent opponent fall back to the population prior instead of being
+misread. Ganzfried and Sandholm \cite{ganzfried-safe} guarantee at least the game
+value per period while still exploiting mistakes; M\"uller et al.\
+\cite{muller-bestofboth} give the modern bandit-feedback formalisation of the
+same idea. Yang et al.\ \cite{yang-bayestomop} handle opponents that are
+themselves running Bayesian opponent models, and Milec, Kova\v{r}\'ik and Lis\'y
+\cite{milec-abd} adapt to sub-rational opponents beyond a depth limit while
+remaining robust against rational play.
+
+\subsection{Worst case rather than mean case}
+\label{sec:related-worstcase}
+
+The standing evaluation preference of this project --- report the per-opponent
+breakdown and an explicit worst case, never an aggregate alone --- has a matching
+equilibrium concept. Aggarwal and How \cite{aggarwal-prmre} define a
+probabilistically robust minimax-regret equilibrium for adversarial team games
+under asymmetric information, minimising worst-case regret over a
+high-confidence subset of the type space rather than over the whole of it, and
+solve it inside a robust double-oracle loop. Translated to Fish, the type is the
+opponent style, the high-confidence subset is the style set actually built, and
+the prescription is to optimise worst-case regret rather than either the mean or
+the absolute worst case --- promoting a reporting rule to a training objective.
+Two practical notes come with it. Xu et al.\ \cite{xu-mirror} observe that
+computing max-regret requires the per-style optimum first, which in this setting
+is one arena run per style, so minimax regret is available as a post-hoc
+selection criterion over checkpoints and not only as a training objective.
+Beukman et al.\ \cite{beukman-remidi} document the failure mode of a naive
+worst-case objective: once the bound is attained everywhere, learning stagnates
+because the objective stops distinguishing policies --- which is a direct warning
+against a raw minimum over a small style set. Vinitsky et al.\
+\cite{vinitsky-rap} report that a single adversary produces exploitable policies
+and replace it with a sampled population.
+
+\subsection{Team games, and the concepts this report does not compute}
+
+Three teammates share a payoff, hold different information and cannot
+communicate, so the target concept is a team-maxmin equilibrium with correlation
+\cite{celli-gatti}. Nothing here computes one. Two recent results scope the
+ambition. Anagnostides et al.\ \cite{anagnostides-teamzero} show that computing
+Nash equilibria in team zero-sum games is PPAD-complete, and remains so at
+inverse-polynomial precision and with two-player teams; that concerns the
+uncorrelated equilibrium, which is what three independently acting seats without
+a shared per-episode seed actually implement. Liu et al.\ \cite{liu-hpsro}
+identify a concrete defect in Team-PSRO \cite{mcaleer-teampsro}: its policy
+sharing cannot cover the joint policy space in \emph{heterogeneous} team games
+where teammates play distinct roles, yielding higher exploitability. Fish seats
+are heterogeneous in the relevant sense, since turn flow and distance to the next
+opponent differ by seat, so any future population loop for this game should be
+the heterogeneous variant.
+
+Two design questions in \S\ref{sec:mechanisms} are the Hanabi-style zero-shot
+coordination questions \cite{bard-hanabi} in another game: how much a policy may
+rely on its partner running the same blueprint, and how to keep a convention from
+degenerating into a private code. Off-belief learning \cite{hu-obl} and
+other-play \cite{hu-otherplay} are the reference treatments, and the level of
+grounding is the natural explicit knob for the partner-regime distinction of
+\S\ref{sec:mech-partner}.
+
+\subsection{Determinization, and why it is not the foundation used here}
+
+Perfect Information Monte Carlo --- sample hidden cards consistently with the
+public history, solve the resulting perfect-information game, average
+\cite{ginsberg-gib} --- is unsound however many worlds are drawn
+\cite{frank-basin-ai}, and is degenerate in Fish for a structural reason as well:
+a clairvoyant player never fails an ask, so almost every reachable position
+carries the same perfect-information value and the average collapses to choosing
+the ask most likely to hit. The v0.4 study gives the collapse in full. It is
+worth restating here because the collapse target --- ``choose the ask most likely
+to hit'' --- is a policy that would not have deadlocked. \vfour{}'s pathology is
+not that it is a hit-maximiser; it is that its ownership features outbid the
+hit-probability term at $p=0$ (\S\ref{sec:diag-features}). The policy-aware
+reweighting of a rules posterior that the Skat literature uses
+\cite{solinas-supervised,rebstock-inference,buro-kermit} is the correct frame for
+the prior that \S\ref{sec:diag-prior} examines, and the counting machinery
+underneath \cite{lsw,cryan-dyer} is unchanged from v0.4.

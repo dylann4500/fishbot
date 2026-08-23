@@ -1,0 +1,6 @@
+### v0.5
+  declarations  4.49358/game at 98.0936%   opp 4.47125/game at 98.5118%
+  forced decls  0.00483333/game at 25%
+### v0.4
+  declarations  4.47125/game at 98.5118%   opp 4.49358/game at 98.0936%
+  forced decls  0.0303333/game at 0.137363%

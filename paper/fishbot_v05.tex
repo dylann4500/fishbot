@@ -1,0 +1,106 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.9in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+% hyperref is loaded BEFORE tikz on purpose.  hyperref pulls in url, which
+% defines \path; tikz defines \path too, and whichever loads last wins.  TikZ
+% needs its own (\draw and \node are built on it), so we capture url's verbatim
+% behaviour as \filepath first and then let tikz take \path back.
+\usepackage{hyperref}
+\DeclareUrlCommand\filepath{\urlstyle{tt}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+
+\definecolor{fishgreen}{HTML}{0B5D46}
+\definecolor{fishlight}{HTML}{EAF4EF}
+\definecolor{fishgray}{HTML}{4B5954}
+\hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{1.2em}
+\setlength{\tabcolsep}{4.5pt}
+\setlength{\parskip}{0pt plus 1pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small FishBot v0.5}
+\rhead{\small Live-ask gating, feasible declaration, and a retracted freeze claim}
+\cfoot{\thepage}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+
+% Consistent names for the policies compared.  v0.4-Fast is the policy shipped
+% and evaluated by the v0.4 study; v0.4-Block is the same fitted policy with the
+% exact reference belief substituted.  v0.5 is the policy of this report.
+% These names appear inside captions and section titles, which are moving
+% arguments, so the commands must be robust; and they end up in PDF bookmarks,
+% so \texorpdfstring supplies a plain spelling for the bookmark text.
+\DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{FishBot v0.5}}{FishBot v0.5}}
+\DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{FishBot v0.4}}{FishBot v0.4}}
+\DeclareRobustCommand{\vthree}{\texorpdfstring{\mbox{FishBot v0.3}}{FishBot v0.3}}
+\DeclareRobustCommand{\vtwo}{\texorpdfstring{\mbox{FishBot v0.2}}{FishBot v0.2}}
+\DeclareRobustCommand{\vfast}{\texorpdfstring{\mbox{v0.4-Fast}}{v0.4-Fast}}
+\DeclareRobustCommand{\vblock}{\texorpdfstring{\mbox{v0.4-Block}}{v0.4-Block}}
+
+\title{\textbf{FishBot v0.5: A Self-Inflicted Deadlock, Its Measurement,\\
+and the Repair of the Ask Policy That Caused It}\\[5pt]
+\large Live-ask gating, capacity-feasible declaration, and the retraction\\
+of an information-freeze claim in six-player Canadian Fish}
+\author{Dylan Nguyen\\\small FishLab Research Project}
+\date{%
+  \small Technical report --- \today\\[2pt]
+  \small Repository: \filepath{https://github.com/dylann29/fish-optimization}\\[1pt]
+  \small The diagnosis of \S\ref{sec:diagnosis} and the corrections of
+  \S\ref{sec:corrections} were produced at commit \texttt{fe21e19}; the \vfive{}
+  policy of \S\ref{sec:mechanisms} is built on top of that commit. Diagnosis
+  artifacts are in \filepath{research/v05/results/}.%
+}
+
+\input{numbers_v05}
+% Generated from the experiment artifacts by engine/build_tables_v05.py.  It
+% \renewcommand's every macro the artifacts settle, so the \providecommand
+% defaults above act only as a compile-before-the-battery-runs fallback and can
+% never silently reach the PDF once the battery has been run.
+\InputIfFileExists{numbers_v05_generated}{}{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\input{sections_v05/abstract}
+\end{abstract}
+
+\input{sections_v05/01-introduction}
+\input{sections_v05/02-rules}
+\input{sections_v05/03-related}
+\input{sections_v05/04-diagnosis}
+\input{sections_v05/05-mechanisms}
+% Slots 06, 07 and 09 are reserved, matching the v0.4 numbering: 06 for the
+% knowledge model of the other five seats (M4), 07 for the net-information ask
+% term (M3/M5), 09 for the evaluation protocol.  They are not yet written.
+\input{sections_v05/08-fitting}
+\input{sections_v05/10-results}
+\input{sections_v05/11-corrections}
+\input{sections_v05/12-limitations}
+\input{sections_v05/13-conclusion}
+
+\input{sections_v05/bibliography}
+
+\end{document}

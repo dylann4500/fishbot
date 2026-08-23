@@ -3,6 +3,22 @@
 #include "blockdp.hpp"
 #include "oracle.hpp"
 #include "serve.hpp"
+#include "diag.hpp"
+#include "probe_deadlock.hpp"
+#include "probe_vdeadlock.hpp"
+#include "probe_coordination.hpp"
+#include "probe_turnxfer.hpp"
+#include "probe_deception_run.hpp"   // appended: P3
+#include "probe_valuefn.hpp"
+#include "probe_forcedendgame.hpp"
+#include "probe_human.hpp"           // appended: P5
+#include "probe_policy.hpp"          // appended: P4
+#include "probe_literature.hpp"      // appended: P-lit
+#include "probe_verifyforced.hpp"    // appended: adversarial check of the forced ladder
+#include "probe_passverify.hpp"     // appended: adversarial verify (turn-transfer)
+#include "probe_polreview.hpp"      // appended: adversarial verify (P4 policy review)
+#include "probe_vpolicy.hpp"        // appended: adversarial verify (P4/D1 forcing horizon)
+#include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -549,9 +565,585 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  if (cmd == "pathology") {
+    PathologyConfig pc;
+    pc.specA = argVal(argc, argv, "a", "v04");
+    pc.specB = argVal(argc, argv, "b", "v04");
+    pc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    pc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    pc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    pc.rules = rulesFrom(argc, argv);
+    pc.threads = threads;
+    PathologyStats st = runPathology(pc);
+    std::cout << pc.specA << " vs " << pc.specB << "\n";
+    printPathology(st, std::cout);
+    return 0;
+  }
+
+  if (cmd == "blockalias") {
+    Rules r = rulesFrom(argc, argv);
+    AliasReport rp = blockAliasCheck(argVal(argc, argv, "a", "v04"),
+                                     atoi(argVal(argc, argv, "games", "20").c_str()),
+                                     strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10), r);
+    std::cout << "same BlockDP object, same query, before/after a second build() elsewhere\n";
+    std::cout << "  checks " << rp.checks << "   mismatches " << rp.mismatches
+              << "   worst |delta| " << rp.worst << "\n";
+    return 0;
+  }
+
+  if (cmd == "forcedprobe") {
+    FEConfig fc;
+    fc.specA = argVal(argc, argv, "a", "v04");
+    fc.specB = argVal(argc, argv, "b", "v04");
+    fc.games = atoi(argVal(argc, argv, "games", "300").c_str());
+    fc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    fc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    fc.rules = rulesFrom(argc, argv);
+    fc.threads = threads;
+    FEStats st = runForcedProbe(fc);
+    std::cout << fc.specA << " vs " << fc.specB << "  seed=" << fc.seed << "\n";
+    printForcedProbe(st, std::cout);
+    std::string csv = argVal(argc, argv, "csv", "");
+    if (!csv.empty()) {
+      std::ofstream f(csv);
+      f << "game,rot,ordinal,nactive,set,declarer,declhand,rung,th,conf,correct,matched,"
+           "violmask,violcap,violdisj,maxover,zeropost,pnamed,pbest,ptrue,bestistruth,nunknown,"
+           "ncapseats,nnamedseats,ntrueseats,margspread,walloc,wok,wfeas,wtruth,named,truth\n";
+      for (const auto& d : st.decls) {
+        f << d.gameId << "," << d.rot << "," << d.ordinal << "," << d.nActiveAtDecl << ","
+          << d.set << "," << d.declarer << "," << d.declHand << "," << d.rung << ","
+          << d.th << "," << d.conf << "," << int(d.correct) << "," << int(d.predictedMatched) << ","
+          << int(d.violMask) << "," << int(d.violCap) << "," << int(d.violDisj) << "," << d.maxOver << ","
+          << int(d.zeroPost) << "," << d.pNamed << "," << d.pBest << "," << d.pTrue << ","
+          << int(d.bestIsTruth) << "," << d.nUnknown << "," << d.nCapSeats << ","
+          << d.nNamedSeats << "," << d.nTrueSeats << "," << d.margSpread << ","
+          << d.wAlloc << "," << int(d.wOk) << "," << int(d.wFeasible) << "," << int(d.wIsTruth) << ",";
+        for (int i = 0; i < SETSZ; i++) f << d.named[i];
+        f << ",";
+        for (int i = 0; i < SETSZ; i++) f << d.truth[i];
+        f << "\n";
+      }
+      fprintf(stderr, "wrote %s (%zu rows)\n", csv.c_str(), st.decls.size());
+    }
+    return 0;
+  }
+
+  if (cmd == "coord") {
+    using namespace fish::probecoord;
+    CoordConfig cc;
+    cc.specA = argVal(argc, argv, "a", "v04");
+    cc.specB = argVal(argc, argv, "b", "v04");
+    cc.games = atoi(argVal(argc, argv, "games", "300").c_str());
+    cc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    cc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    cc.rules = rulesFrom(argc, argv);
+    cc.threads = threads;
+    std::string pol = argVal(argc, argv, "pass", "unilateral");
+    cc.cc.policy = pol == "oracle" ? PassPolicy::Oracle
+                 : pol == "ladder" ? PassPolicy::Ladder
+                 : pol == "low"    ? PassPolicy::LowSeat
+                 : pol == "cards"  ? PassPolicy::MostCards
+                 : PassPolicy::Unilateral;
+    if (argFlag(argc, argv, "both-teams")) cc.cc.policyTeam = -2;
+    cc.cc.measure = !argFlag(argc, argv, "no-measure");
+    cc.cc.leak = argFlag(argc, argv, "leak");
+    { std::string L = argVal(argc, argv, "rungs", "");
+      if (!L.empty()) { std::stringstream ss(L); std::string tok; int i = 0;
+        while (std::getline(ss, tok, '|') && i < MAXRUNG) cc.cc.rung[i++] = atof(tok.c_str());
+        cc.cc.nRung = i; } }
+    { std::string L = argVal(argc, argv, "forcedth", "");
+      if (!L.empty()) { std::stringstream ss(L); std::string tok; int i = 0;
+        while (std::getline(ss, tok, '|') && i < 8) cc.rules.forcedTh[i++] = atof(tok.c_str());
+        cc.rules.nForcedTh = i; } }
+    std::cout << cc.specA << " (pass=" << pol << ") vs " << cc.specB << " (pass=unilateral)\n";
+    std::vector<int> perGame;
+    std::string dump = argVal(argc, argv, "dump", "");
+    if (!dump.empty()) { perGame.assign(size_t(cc.games) * cc.rotations, 0); cc.perGameA = &perGame; }
+    CoordStats st = runCoord(cc);
+    if (!dump.empty()) { std::ofstream f(dump); for (size_t i = 0; i < perGame.size(); i++) f << perGame[i] << "\n"; }
+    printCoord(st, cc, std::cout);
+    return 0;
+  }
+
+  if (cmd == "deadlock") {
+    DeadlockCfg dc;
+    dc.spec = argVal(argc, argv, "spec", "v04");
+    dc.games = atoi(argVal(argc, argv, "games", "60").c_str());
+    dc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    dc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    dc.minEvents = atoi(argVal(argc, argv, "minev", "300").c_str());
+    dc.dump = atoi(argVal(argc, argv, "dump", "4").c_str());
+    dc.stride = atoi(argVal(argc, argv, "stride", "40").c_str());
+    dc.maxStates = atoi(argVal(argc, argv, "states", "3").c_str());
+    dc.h2h = atoi(argVal(argc, argv, "h2h", "0").c_str());
+    dc.rules = rulesFrom(argc, argv);
+    runDeadlockProbe(dc, std::cout);
+    return 0;
+  }
+
   if (cmd == "serve") {
     int port = atoi(argVal(argc, argv, "port", "8173").c_str());
     return runServe(port, argVal(argc, argv, "web", ""), argv[0]);
+  }
+
+  if (cmd == "dumpvalue") {
+    DumpConfig dc;
+    dc.specA = argVal(argc, argv, "a", "v04");
+    dc.specB = argVal(argc, argv, "b", "v04");
+    dc.games = atoi(argVal(argc, argv, "games", "400").c_str());
+    dc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    dc.seed = strtoull(argVal(argc, argv, "seed", "31415").c_str(), nullptr, 10);
+    dc.rules = rulesFrom(argc, argv);
+    dc.threads = threads;
+    dc.out = argVal(argc, argv, "out", "rows.csv");
+    DumpRows rows;
+    runDump(dc, rows, NVFEAT);
+    int rc = writeDump(dc, rows, NVFEAT);
+    fprintf(stderr, "rows=%zu games=%d out=%s\n", rows.y.size(), dc.games * dc.rotations, dc.out.c_str());
+    return rc;
+  }
+
+  // --- appended (P3 deception probe) ---------------------------------------
+  if (cmd == "deceit") {
+    DeceitConfig dc;
+    dc.measured  = argVal(argc, argv, "m", "v04");
+    dc.deceptive = argVal(argc, argv, "d", "silent");
+    dc.control   = argVal(argc, argv, "ctrl", "v04");
+    dc.games     = atoi(argVal(argc, argv, "games", "200").c_str());
+    dc.seed      = strtoull(argVal(argc, argv, "seed", "4242").c_str(), nullptr, 10);
+    dc.stride    = atoi(argVal(argc, argv, "stride", "1").c_str());
+    dc.rules     = rulesFrom(argc, argv);
+    dc.threads   = threads;
+    { std::string ds = argVal(argc, argv, "dseats", "1");
+      int mask = 0;
+      std::stringstream ss(ds); std::string tok;
+      while (std::getline(ss, tok, ',')) if (!tok.empty()) mask |= 1 << atoi(tok.c_str());
+      dc.dseatMask = mask; }
+    decCost().reset();
+    DeceitStats st = runDeceit(dc);
+    std::cout << "measured " << dc.measured << "  vs  seats{";
+    for (int p = 0; p < NPLAY; p++) if (dc.dseatMask & (1 << p)) std::cout << p << " ";
+    std::cout << "}=" << dc.deceptive << ", other opponents=" << dc.control << "\n";
+    printDeceit(st, std::cout);
+    return 0;
+  }
+
+  // --- appended (P5 human-strategy channel probe) ---------------------------
+  if (cmd == "humanchan") {
+    HumanChanConfig pc;
+    pc.specA = argVal(argc, argv, "a", "v04");
+    pc.specB = argVal(argc, argv, "b", "v04");
+    pc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    pc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    pc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    pc.rules = rulesFrom(argc, argv);
+    pc.threads = threads;
+    HumanChanStats st = runHumanChan(pc);
+    std::cout << pc.specA << " vs " << pc.specB << "\n";
+    printHumanChan(st, std::cout);
+    return 0;
+  }
+
+
+  // --- appended (P4 adversarial policy-correctness probe) -------------------
+  if (cmd == "p4probe") {
+    std::string spec = argVal(argc, argv, "a", "p4:instr=1");
+    int games = atoi(argVal(argc, argv, "games", "200").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    Rules r = rulesFrom(argc, argv);
+    MatchStats ms;
+    p4::P4Stats st = p4::runProbe(spec, games, sd, r, &ms);
+    printf("spec=%s games=%d seed=%llu\n", spec.c_str(), games, (unsigned long long)sd);
+    printf("  events/game            %.1f   limitHits %d\n", double(ms.events) / games, ms.limitHits);
+    printf("  declarations           %lld  wrong %.2f%%\n", ms.decl[0] + ms.decl[1],
+           100.0 * double((ms.decl[0] + ms.decl[1]) - (ms.declCorrect[0] + ms.declCorrect[1])) /
+           std::max(1.0, double(ms.decl[0] + ms.decl[1])));
+    printf("  forced declarations    %lld  wrong %.2f%%\n", ms.fdecl[0] + ms.fdecl[1],
+           100.0 * double((ms.fdecl[0] + ms.fdecl[1]) - (ms.fdeclCorrect[0] + ms.fdeclCorrect[1])) /
+           std::max(1.0, double(ms.fdecl[0] + ms.fdecl[1])));
+    printf("[expectedRun]\n");
+    printf("  calls                  %lld\n", st.runCalls);
+    printf("  own entry dropped      %lld (%.2f%%)\n", st.runSkipFired, 100.0 * st.runSkipFired / std::max(1LL, st.runCalls));
+    printf("  own entry DOUBLE-COUNTED %lld (%.2f%%)\n", st.runSelfCounted, 100.0 * st.runSelfCounted / std::max(1LL, st.runCalls));
+    printf("  mean |f18 shipped-fixed| %.5f   max %.5f\n", st.runAbsErr / std::max(1LL, st.runCalls), st.runMaxErr);
+    printf("[threatOf/exposureOf]\n");
+    printf("  threat set-evals       %lld  activity=0 %.2f%%  activity=1 %.2f%%  mean %.4f\n",
+           st.threatCalls, 100.0 * st.threatActivity0 / std::max(1LL, st.threatCalls),
+           100.0 * st.threatActivityFull / std::max(1LL, st.threatCalls),
+           st.threatActivitySum / std::max(1LL, st.threatCalls));
+    printf("  exposure calls         %lld  saturated(=1) %.2f%%  mean %.4f\n",
+           st.expCalls, 100.0 * st.expSat / std::max(1LL, st.expCalls), st.expSum / std::max(1LL, st.expCalls));
+    printf("[evaluateSet Fast]\n");
+    printf("  evaluations            %lld\n", st.evalFast);
+    printf("  pAlloc > cheap         %lld (%.2f%%)  mean excess %.4f  max %.4f\n",
+           st.evalAllocGtCheap, 100.0 * st.evalAllocGtCheap / std::max(1LL, st.evalFast),
+           st.evalAllocCheapExcess / std::max(1LL, st.evalAllocGtCheap), st.evalMaxExcess);
+    printf("  teamFloor passed ONLY because of the max() %lld\n", st.evalFloorSavedByMax);
+    printf("[declareByValue]\n");
+    printf("  calls %lld  fired %lld (%.2f%%)\n", st.dbvCalls, st.dbvTrue,
+           100.0 * st.dbvTrue / std::max(1LL, st.dbvCalls));
+    printf("  breakeven pAlloc: mean %.4f  min %.4f  max %.4f  <0.70 %.2f%%  <0.60 %.2f%%\n",
+           st.dbvThreshSum / std::max(1LL, st.dbvCalls), st.dbvThreshMin, st.dbvThreshMax,
+           100.0 * st.dbvBelow70 / std::max(1LL, st.dbvCalls), 100.0 * st.dbvBelow60 / std::max(1LL, st.dbvCalls));
+    printf("[stale aggregates in proposeDeclaration]\n");
+    printf("  declaration opportunities %lld  (press0 %lld press1 %lld press2 %lld)\n",
+           st.declOpps, st.press0, st.press1, st.press2);
+    printf("  opportunities with a STALE belief %lld (%.2f%%)\n", st.staleOpps,
+           100.0 * st.staleOpps / std::max(1LL, st.declOpps));
+    printf("  mean max|eH stale-fresh| %.4f   max %.4f\n",
+           st.staleEHSum / std::max(1LL, st.staleOpps), st.staleEHMax);
+    printf("  declareNow decisions flipped by the staleness %lld\n", st.staleDeclFlip);
+    printf("[ask-score decision influence: mean spread of each term across the candidate list]\n");
+    { static const char* fn[20] = {"hit p","hit p^2","certain hit","own progress","team control",
+        "lock completion","continuation","completion bonus","reply threat","info leak","target hand",
+        "empties target","repeats set","known team cards","location entropy","team owns set",
+        "exposure on miss","trailing pressure","runway","leak magnitude"};
+      p4::P4Config dflt;
+      double tot = 0; for (int j = 0; j < 20; j++) tot += st.featRange[j];
+      for (int j = 0; j < 20; j++)
+        printf("  f%-2d %-20s w=%8.4f  mean spread %.4f  (%.1f%% of linear)\n", j, fn[j],
+               dflt.w[j], st.featRange[j] / std::max(1LL, st.featDecisions),
+               100.0 * st.featRange[j] / std::max(1e-9, tot));
+      printf("  f8+f16 combined spread %.4f (vs %.4f + %.4f separately)\n",
+             st.f8f16Range / std::max(1LL, st.featDecisions),
+             st.featRange[8] / std::max(1LL, st.featDecisions), st.featRange[16] / std::max(1LL, st.featDecisions));
+      printf("  linear total spread %.4f   one-ply EV spread %.4f   two-ply add-on spread %.4f\n",
+             st.linRange / std::max(1LL, st.featDecisions), st.evRange / std::max(1LL, st.featDecisions),
+             st.twoPlyRange / std::max(1LL, st.featDecisions)); }
+    printf("[declareNow branch that authorised a candidate declaration]\n");
+    printf("  press>=2 (unconditional) %lld   press>=1 && pAlloc>=0.5 %lld\n", st.brPress2, st.brPress1);
+    printf("  urgent && pAlloc>=declThreshold %lld   urgent && LOCKED && pAlloc>=0.5 %lld\n", st.brUrgThr, st.brUrgLocked);
+    printf("  declareByValue %lld   non-value paths %lld\n", st.brValue, st.brOther);
+    printf("[declaration pre-gate / bypass]\n");
+    printf("  (opportunity,set) pairs %lld   cheapTeamProb below the gate %lld (%.2f%%)\n",
+           st.gateSeen, st.gateWouldReject, 100.0 * st.gateWouldReject / std::max(1LL, st.gateSeen));
+    printf("  opportunities with bypass on %lld, of which bypass actually re-admitted a set %lld (%.2f%%)\n",
+           st.bypassOpps, st.bypassLoadBearing, 100.0 * st.bypassLoadBearing / std::max(1LL, st.bypassOpps));
+    printf("[searchTopK]\n");
+    printf("  ask decisions %lld   two-ply rerank changed the pick %lld (%.2f%%)\n",
+           st.askDecisions, st.runChangedPick, 100.0 * st.runChangedPick / std::max(1LL, st.askDecisions));
+    return 0;
+  }
+
+  if (cmd == "p4match") {
+    MatchConfig mc;
+    mc.specA = argVal(argc, argv, "a", "p4");
+    mc.specB = argVal(argc, argv, "b", "v04");
+    mc.games = atoi(argVal(argc, argv, "games", "600").c_str());
+    mc.seed = strtoull(argVal(argc, argv, "seed", "20260821").c_str(), nullptr, 10);
+    mc.rules = rulesFrom(argc, argv);
+    mc.threads = threads;
+    mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    MatchStats st = p4::runMatchP4(mc);
+    double m, lo, hi;
+    clusterBootstrap(st.paired, mc.rotations, m, lo, hi);
+    long long dA = st.decl[0], cA = st.declCorrect[0], dB = st.decl[1], cB = st.declCorrect[1];
+    long long fA = st.fdecl[0], fcA = st.fdeclCorrect[0];
+    printf("A=%s  B=%s  deals=%d rot=%d seed=%llu\n", mc.specA.c_str(), mc.specB.c_str(),
+           st.games, mc.rotations, (unsigned long long)mc.seed);
+    printf("  A win %.2f%% [%.2f, %.2f]   sets %lld-%lld   events/game %.1f   %.1fs (%.1f g/s)\n",
+           100 * m, 100 * lo, 100 * hi, st.sets[0], st.sets[1],
+           double(st.events) / (st.games * mc.rotations), st.seconds,
+           st.games * mc.rotations / std::max(1e-9, st.seconds));
+    printf("  A decl %lld wrong %.2f%%  (forced %lld wrong %.2f%%)   B decl %lld wrong %.2f%%\n",
+           dA, 100.0 * double(dA - cA) / std::max(1.0, double(dA)),
+           fA, 100.0 * double(fA - fcA) / std::max(1.0, double(fA)),
+           dB, 100.0 * double(dB - cB) / std::max(1.0, double(dB)));
+    printf("  limit-hit games %d/%d\n", st.limitHits, st.games * mc.rotations);
+    return 0;
+  }
+
+  if (cmd == "p4horizon") {
+    std::string spec = argVal(argc, argv, "a", "p4");
+    int games = atoi(argVal(argc, argv, "games", "300").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    int hz = atoi(argVal(argc, argv, "horizon", "220").c_str());
+    int cut = atoi(argVal(argc, argv, "deadcut", "6").c_str());
+    Rules r = rulesFrom(argc, argv);
+    p4::HorizonStats hs = p4::runHorizon(spec, games, sd, r, hz, cut);
+    printf("spec=%s games=%lld horizon=%d deadRunCut=%d\n", spec.c_str(), hs.games, hz, cut);
+    printf("  games reaching the horizon        %lld (%.2f%%)\n", hs.reached, 100.0 * hs.reached / std::max(1LL, hs.games));
+    printf("    of which deadlocked (run>=%d)   %lld (%.2f%% of reached)\n", cut, hs.reachedDeadlocked,
+           100.0 * hs.reachedDeadlocked / std::max(1LL, hs.reached));
+    printf("    of which NOT deadlocked         %lld (%.2f%% of reached)\n", hs.reachedHealthy,
+           100.0 * hs.reachedHealthy / std::max(1LL, hs.reached));
+    printf("  voluntary declarations before the horizon %lld, wrong %.2f%%\n", hs.declPre,
+           100.0 * hs.declPreWrong / std::max(1LL, hs.declPre));
+    printf("  voluntary declarations at/after  the horizon %lld, wrong %.2f%%\n", hs.declPost,
+           100.0 * hs.declPostWrong / std::max(1LL, hs.declPost));
+    printf("    of those, in NON-deadlocked games %lld, wrong %.2f%%\n", hs.declPostHealthy,
+           100.0 * hs.declPostHealthyWrong / std::max(1LL, hs.declPostHealthy));
+    printf("  forced-endgame declarations %lld, wrong %.2f%%\n", hs.forced,
+           100.0 * hs.forcedWrong / std::max(1LL, hs.forced));
+    printf("  wrong voluntary declarations: team DID hold all six (allocation misnamed) %lld;"
+           " an opponent held one or more %lld\n", hs.wrongTeamOwnedAll, hs.wrongOppHeldSome);
+    printf("  mean cards of the six actually held by the declaring team, on a WRONG declaration: %.2f\n",
+           double(hs.ourHeldOnWrong) / std::max(1LL, hs.wrongTeamOwnedAll + hs.wrongOppHeldSome));
+    printf("  stated confidence (pAlloc) bucket -> wrong rate:\n");
+    for (int b = 0; b < 10; b++) if (hs.confN[b])
+      printf("    [%.1f,%.1f)  n=%lld  wrong %.2f%%\n", b / 10.0, (b + 1) / 10.0, hs.confN[b],
+             100.0 * hs.confW[b] / hs.confN[b]);
+    return 0;
+  }
+
+  if (cmd == "declcard") {
+    int games = atoi(argVal(argc, argv, "games", "150").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    int mode = atoi(argVal(argc, argv, "mode", "1").c_str());
+    Rules r = rulesFrom(argc, argv);
+    auto st = fish::declcard::runDeclCard(games, sd, r, mode);
+    double n = std::max(1LL, st.dbvCalls);
+    printf("declcard games=%d seed=%llu mode=%d (1=posterior split, 2=fixed 4.21/1.79)\n",
+           games, (unsigned long long)sd, mode);
+    printf("  declareByValue calls (both variants took the value branch) %lld\n", st.dbvCalls);
+    printf("  shipped verdict=declare %lld (%.2f%%)   corrected verdict=declare %lld (%.2f%%)\n",
+           st.shipDeclare, 100.0*st.shipDeclare/n, st.fixDeclare, 100.0*st.fixDeclare/n);
+    printf("  flips wait->declare %lld (%.3f%%)   declare->wait %lld (%.3f%%)\n",
+           st.flipW2D, 100.0*st.flipW2D/n, st.flipD2W, 100.0*st.flipD2W/n);
+    printf("  |dvWrong| per call: mean %.5f  max %.5f      (|declareMargin| = %.5f)\n",
+           st.sumBranchErr/n, st.maxBranchErr, 0.03420);
+    printf("  |dvDeclare| = (1-pAlloc)*|dvWrong|: mean %.5f  max %.5f\n",
+           st.sumEvErr/n, st.maxEvErr);
+    printf("  mean shipped slack (vDeclare - vWait - margin) %.5f\n", st.sumSlack/n);
+    printf("  mean corrected E[our cards of the six] used in the wrong branch %.3f (n=%lld)\n",
+           st.sumOurW/std::max(1LL, st.nOurW), st.nOurW);
+    printf("  [faithfulness] voluntary decls %lld correct %lld  events %lld\n", st.setsA, st.setsB, st.evts);
+    printf("  pAlloc bucket -> calls / flips:\n");
+    for (int b = 0; b < 10; b++) if (st.pallocBucketN[b])
+      printf("    [%.1f,%.1f)  n=%lld  flips=%lld (%.2f%%)\n", b/10.0, (b+1)/10.0,
+             st.pallocBucketN[b], st.pallocBucketFlip[b],
+             100.0*st.pallocBucketFlip[b]/st.pallocBucketN[b]);
+    return 0;
+  }
+
+  if (cmd == "p4blockcmp") {
+    int games = atoi(argVal(argc, argv, "games", "40").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    double floorv = atof(argVal(argc, argv, "floor", "0.7925").c_str());
+    Rules r = rulesFrom(argc, argv);
+    std::string bspec = argVal(argc, argv, "a", "p4");
+    p4::BlockCmp bc = p4::runBlockCmp(games, sd, r, floorv, bspec);
+    printf("games=%d seed=%llu teamFloor=%.4f   samples=%lld\n", games, (unsigned long long)sd, floorv, bc.n);
+    printf("  Fast pAlloc > Fast cheap          %lld (%.2f%%)\n", bc.allocOverTeamFast,
+           100.0 * bc.allocOverTeamFast / std::max(1LL, bc.n));
+    printf("  Fast pAlloc > EXACT P(team owns)  %lld (%.2f%%)   <- impossible for a correct pair\n",
+           bc.allocOverTeamExact, 100.0 * bc.allocOverTeamExact / std::max(1LL, bc.n));
+    printf("  cheap - exact pTeam:   mean signed %+.4f  mean abs %.4f  max abs %.4f  cheap>exact %.2f%%\n",
+           bc.sumCheapSigned / std::max(1LL, bc.n), bc.sumCheapErr / std::max(1LL, bc.n), bc.maxCheapErr,
+           100.0 * bc.cheapOverExact / std::max(1LL, bc.n));
+    printf("  Fast pAlloc - exact alloc: mean signed %+.4f\n", bc.sumAllocSigned / std::max(1LL, bc.n));
+    printf("  |max(cheap,pAlloc) - exact pTeam| mean %.4f  max %.4f\n", bc.sumMaxErr / std::max(1LL, bc.n), bc.maxMaxErr);
+    printf("  |Fast pAlloc - exact best alloc|  mean %.4f  max %.4f   >0.10 in %lld (%.2f%%)\n",
+           bc.sumAllocErr / std::max(1LL, bc.n), bc.maxAllocErr, bc.declFlip,
+           100.0 * bc.declFlip / std::max(1LL, bc.n));
+    printf("  teamFloor passed by the shipped value but NOT by the exact %lld (%.2f%%)\n",
+           bc.gateFlipUp, 100.0 * bc.gateFlipUp / std::max(1LL, bc.n));
+    printf("  teamFloor failed by the shipped value but passed by the exact %lld (%.2f%%)\n",
+           bc.gateFlipDown, 100.0 * bc.gateFlipDown / std::max(1LL, bc.n));
+    printf("  half-suits called LOCKED (pTeam>.9995) %lld, of which not locked exactly %lld (%.2f%%)\n",
+           bc.lockClaim, bc.lockClaimWrong, 100.0 * bc.lockClaimWrong / std::max(1LL, bc.lockClaim));
+    return 0;
+  }
+
+  if (cmd == "shadow") {
+    std::string base = argVal(argc, argv, "base", "v04");
+    std::string vs = argVal(argc, argv, "variants", "");
+    std::vector<std::string> variants;
+    { std::stringstream ss(vs); std::string it; while (std::getline(ss, it, ';')) if (!it.empty()) variants.push_back(it); }
+    int g = atoi(argVal(argc, argv, "games", "60").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "99001").c_str(), nullptr, 10);
+    Rules r = rulesFrom(argc, argv);
+    ShadowStats st;
+    runShadow(base, variants, g, sd, r, threads, st);
+    printf("base=%s games=%d seed=%llu\n", base.c_str(), g, (unsigned long long)sd);
+    for (size_t i = 0; i < variants.size(); i++)
+      printf("  %-46s ask-decisions %lld/%lld differ (%.4f%%)   decl-decisions %lld/%lld differ (%.4f%%)\n",
+             variants[i].c_str(), st.askDiff[i], st.askTotal[i],
+             st.askTotal[i] ? 100.0 * double(st.askDiff[i]) / double(st.askTotal[i]) : 0.0,
+             st.declDiff[i], st.declTotal[i],
+             st.declTotal[i] ? 100.0 * double(st.declDiff[i]) / double(st.declTotal[i]) : 0.0);
+    return 0;
+  }
+
+  if (cmd == "litpath") {
+    LitPathCfg c;
+    c.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    c.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    c.seed = strtoull(argVal(argc, argv, "seed", "777001").c_str(), nullptr, 10);
+    c.rules = rulesFrom(argc, argv);
+    c.threads = threads;
+    c.liveOnly = atoi(argVal(argc, argv, "liveonly", "0").c_str());
+    c.timeCost = atof(argVal(argc, argv, "timecost", "0").c_str());
+    { std::string vm = argVal(argc, argv, "vmargin", ""); if (!vm.empty()) { c.haveMargin = true; c.vmargin = atof(vm.c_str()); } }
+    { std::string af = argVal(argc, argv, "askfloor", ""); if (!af.empty()) c.askFloor = atof(af.c_str()); }
+    PathologyStats st = runLitPathology(c);
+    printf("litpath seed=%llu liveonly=%d timecost=%g vmargin=%s askfloor=%s\n",
+           (unsigned long long)c.seed, c.liveOnly, c.timeCost,
+           c.haveMargin ? std::to_string(c.vmargin).c_str() : "default",
+           c.askFloor >= 0 ? std::to_string(c.askFloor).c_str() : "default");
+    printPathology(st, std::cout);
+    return 0;
+  }
+
+  if (cmd == "lith2h") {
+    LitPathCfg c;
+    c.games = atoi(argVal(argc, argv, "games", "400").c_str());
+    c.seed = strtoull(argVal(argc, argv, "seed", "777001").c_str(), nullptr, 10);
+    c.rules = rulesFrom(argc, argv);
+    c.threads = threads;
+    c.liveOnly = atoi(argVal(argc, argv, "liveonly", "0").c_str());
+    c.timeCost = atof(argVal(argc, argv, "timecost", "0").c_str());
+    LitH2H h = runLitH2H(c);
+    printf("lith2h games=%lld liveonly=%d timecost=%g  A sets %lld  B sets %lld  A winrate %.3f%% (draws %lld)\n",
+           h.games, c.liveOnly, c.timeCost, h.setsA, h.setsB,
+           h.games ? 100.0 * (double(h.winA) + 0.5 * double(h.draws)) / double(h.games) : 0.0, h.draws);
+    return 0;
+  }
+
+  if (cmd == "litdecl") {
+    int g = atoi(argVal(argc, argv, "games", "200").c_str());
+    int rot = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "777001").c_str(), nullptr, 10);
+    Rules r = rulesFrom(argc, argv);
+    bool vdOff = argVal(argc, argv, "vdecl", "1") == "0";
+    std::string vm = argVal(argc, argv, "vmargin", "");
+    litp::LitStats st;
+    runLitProbe(g, rot, sd, r, threads, st, vdOff, vm.empty() ? 0.0 : atof(vm.c_str()), !vm.empty());
+    printf("litdecl games=%d rot=%d seed=%llu vdecl=%d vmargin=%s\n", g, rot,
+           (unsigned long long)sd, vdOff ? 0 : 1, vm.empty() ? "default" : vm.c_str());
+    printLitProbe(st, std::cout);
+    return 0;
+  }
+
+  if (cmd == "passverify") {
+    fish::passverify::PVConfig pc;
+    pc.games = atoi(argVal(argc, argv, "games", "1500").c_str());
+    pc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    pc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    pc.rules = rulesFrom(argc, argv);
+    pc.threads = threads;
+    fish::passverify::PVStats st = fish::passverify::runPassVerify(pc);
+    printf("passverify games=%d rot=%d seed=%llu\n", pc.games, pc.rotations,
+           (unsigned long long)pc.seed);
+    fish::passverify::printPassVerify(st, std::cout);
+    return 0;
+  }
+
+  if (cmd == "vforced") {
+    vfe::VFCfg c;
+    c.specA = argVal(argc, argv, "a", "v04");
+    c.specB = argVal(argc, argv, "b", "v04");
+    c.games = atoi(argVal(argc, argv, "games", "300").c_str());
+    c.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    c.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    c.rules = rulesFrom(argc, argv);
+    { std::string fl = argVal(argc, argv, "forcedlow", "");
+      if (!fl.empty()) c.rules.forcedTh[6] = atof(fl.c_str()); }
+    vfe::VFOut o = vfe::runVerifyForced(c);
+    std::cout << c.specA << " vs " << c.specB << "  seed=" << c.seed
+              << "  games=" << c.games << "x" << c.rotations << "\n";
+    vfe::printVerifyForced(c, o, std::cout);
+    return 0;
+  }
+
+  // --- appended (adversarial verification of P1 deadlock finding) ----------
+  if (cmd == "vdeadlock") {
+    DeadlockCfg dc;
+    dc.spec = argVal(argc, argv, "spec", "v04");
+    dc.games = atoi(argVal(argc, argv, "games", "60").c_str());
+    dc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    dc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    dc.minEvents = atoi(argVal(argc, argv, "minev", "300").c_str());
+    dc.dump = atoi(argVal(argc, argv, "dump", "2").c_str());
+    dc.stride = atoi(argVal(argc, argv, "stride", "40").c_str());
+    dc.maxStates = atoi(argVal(argc, argv, "states", "3").c_str());
+    dc.rules = rulesFrom(argc, argv);
+    runVDeadlock(dc, std::cout);
+    return 0;
+  }
+
+  // --- appended (adversarial verification of P8 turn-transfer finding) -----
+  if (cmd == "vturnxfer") {
+    using namespace fish::probeturnxfer;
+    CoordConfig cc;
+    cc.specA = argVal(argc, argv, "a", "v04");
+    cc.specB = argVal(argc, argv, "b", "v04");
+    cc.games = atoi(argVal(argc, argv, "games", "300").c_str());
+    cc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    cc.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    cc.rules = rulesFrom(argc, argv);
+    cc.threads = threads;
+    std::string pol = argVal(argc, argv, "pass", "unilateral");
+    cc.cc.policy = pol == "oracle" ? PassPolicy::Oracle
+                 : pol == "ladder" ? PassPolicy::Ladder
+                 : pol == "low"    ? PassPolicy::LowSeat
+                 : pol == "cards"  ? PassPolicy::MostCards
+                 : PassPolicy::Unilateral;
+    cc.cc.measure = !argFlag(argc, argv, "no-measure");
+    std::cout << cc.specA << " (pass=" << pol << ") vs " << cc.specB << " (pass=unilateral)\n";
+    std::vector<int> perGame;
+    std::string dump = argVal(argc, argv, "dump", "");
+    if (!dump.empty()) { perGame.assign(size_t(cc.games) * cc.rotations, 0); cc.perGameA = &perGame; }
+    CoordStats st = runCoord(cc);
+    if (!dump.empty()) { std::ofstream f(dump); for (size_t i = 0; i < perGame.size(); i++) f << perGame[i] << "\n"; }
+    printCoord(st, cc, std::cout);
+    return 0;
+  }
+
+  if (cmd == "polreview") {
+    using namespace fish::polreview;
+    RevCfg c;
+    c.games = atoi(argVal(argc, argv, "games", "100").c_str());
+    c.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    c.seed = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    c.rules = rulesFrom(argc, argv);
+    c.fixA = atoi(argVal(argc, argv, "fixa", "0").c_str());
+    c.fixB = atoi(argVal(argc, argv, "fixb", "0").c_str());
+    c.measure = atoi(argVal(argc, argv, "measure", "1").c_str()) != 0;
+    c.dump = atoi(argVal(argc, argv, "dump", "0").c_str()) != 0;
+    c.dumpThresh = atof(argVal(argc, argv, "dumpthresh", "0.5").c_str());
+    std::string bm = argVal(argc, argv, "belief", "fast");
+    if (bm == "block") c.belief = BeliefMode::Block;
+    RevOut o = runReview(c);
+    const RevStats& s = o.st;
+    int n2 = o.ms.games * c.rotations;
+    double lo, hi; wilson(o.ms.winsA, n2, lo, hi);
+    std::cout << "polreview games=" << c.games << " rot=" << c.rotations << " seed=" << c.seed
+              << " fixA=" << c.fixA << " fixB=" << c.fixB << " belief=" << bm << "\n";
+    std::cout << "  A win " << 100.0 * o.ms.winsA / n2 << "% [" << 100 * lo << ", " << 100 * hi
+              << "]  sets " << o.ms.sets[0] << "-" << o.ms.sets[1]
+              << "  events/game " << double(o.ms.events) / n2
+              << "  A decl " << o.ms.decl[0] << " wrong "
+              << (o.ms.decl[0] ? 100.0 * (o.ms.decl[0] - o.ms.declCorrect[0]) / o.ms.decl[0] : 0.0) << "%\n";
+    if (c.measure) {
+      std::cout << "  declaration opportunities        " << s.opps
+                << "  (press0 " << s.oppsPress[0] << " press1 " << s.oppsPress[1]
+                << " press2 " << s.oppsPress[2] << ")\n";
+      std::cout << "  ... with dirty belief on entry   " << s.oppsStale
+                << " (" << (s.opps ? 100.0 * s.oppsStale / s.opps : 0.0) << "%)\n";
+      std::cout << "  ... reaching refresh()           " << s.refreshReached << "\n";
+      std::cout << "  mean events since last refresh   " << (s.opps ? double(s.ageSum) / s.opps : 0.0)
+                << "   max " << s.ageMax << "\n";
+      std::cout << "  eH compared (stale vs fresh)     " << s.cmp
+                << "  differing " << s.cmpDiff
+                << " (" << (s.cmp ? 100.0 * s.cmpDiff / s.cmp : 0.0) << "%)\n";
+      std::cout << "  mean max|eH stale-fresh|         " << (s.cmp ? s.sumMaxDiff / s.cmp : 0.0)
+                << "   max " << s.maxMaxDiff << "\n";
+      std::cout << "  declareNow calls                 " << s.declNowCalls
+                << "  (via declareByValue " << s.valueRuleCalls << ")\n";
+      std::cout << "  declareNow verdicts flipped      " << s.flips
+                << "  (of which value-rule " << s.valueFlips << ")\n";
+      std::cout << "  final actions changed            " << s.actionChanged << "\n";
+    }
+    return 0;
+  }
+
+  if (cmd == "vhorizon") {
+    uint64_t sd = strtoull(argVal(argc, argv, "seed", "4242").c_str(), nullptr, 10);
+    int deals = atoi(argVal(argc, argv, "deals", "200").c_str());
+    fish::vpol::runHorizonUnit(sd, deals);
+    fish::vpol::runGateAttribution(sd, deals);
+    return 0;
   }
 
   std::cout << "usage: fish <match|verify|matrix|bench|serve> [--a=SPEC] [--b=SPEC] [--games=N] [--seed=S] [--legacy] [--json] [--audit]\n";

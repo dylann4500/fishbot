@@ -1,0 +1,801 @@
+%% numbers_v05.tex -- every number quoted in the v0.5 manuscript.
+%%
+%% PLACEHOLDER.  This file is hand-written for now so that fishbot_v05.tex
+%% compiles before the v0.5 mode of engine/build_tables.py exists.  Each value
+%% below is the figure carried by the artifact named in the comment above it;
+%% the generator will replace this file wholesale with \newcommand definitions
+%% read straight from those artifacts.  \providecommand is used so that a
+%% partially generated file can be \input first without a clash.
+%%
+%% Discipline: no number appears as a literal anywhere in sections_v05/.  If a
+%% section needs a figure, it gets a macro here and the macro cites its source.
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P0-v04-pathology.md -- v0.4 mirror, 600 games, seed 31
+%% ---------------------------------------------------------------------------
+\providecommand{\numMirrorGames}{300}
+\providecommand{\numMirrorEvents}{143.6}
+\providecommand{\numMirrorHit}{34.2}
+\providecommand{\numDeadAsk}{39.0}
+\providecommand{\numRepeatAsk}{40.0}
+\providecommand{\numDeadRunLongest}{286}
+\providecommand{\numDeadRunGames}{34.3}
+\providecommand{\numStarved}{0.20}
+\providecommand{\numOwnLocked}{16.5}
+\providecommand{\numDeclWrong}{10.4}
+\providecommand{\numPostHorizonDecl}{384}
+\providecommand{\numPostHorizonWrong}{58.6}
+\providecommand{\numForcedWrongRate}{100}
+
+%% research/v05/results/P0-v04-pathology.md -- v0.4 vs v0.3, 600 games, seed 90210
+\providecommand{\numVthreeEvents}{101.7}
+\providecommand{\numVthreeHit}{54.9}
+\providecommand{\numVthreeDeadAsk}{2.82}
+\providecommand{\numVthreeRepeat}{5.29}
+\providecommand{\numVthreeDeadRun}{5}
+\providecommand{\numVthreeDeclWrong}{8.96}
+\providecommand{\numVthreeDeadRunGames}{0}
+\providecommand{\numVthreeStarved}{0.03}
+\providecommand{\numVthreeOwnLocked}{11.7}
+
+%% research/v05/results/P0-v04-pathology.md -- exact-belief substitution
+\providecommand{\numBlockDeadAsk}{28}
+\providecommand{\numBlockDeadRun}{280}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P0b-forcing-dilemma.md -- the forcing dilemma
+%% ---------------------------------------------------------------------------
+\providecommand{\numPatientWin}{56.2}
+\providecommand{\numPatientWinCI}{54.93--57.47}
+\providecommand{\numPatientDeclAcc}{98.40}
+\providecommand{\numForcingDeclAcc}{85.66}
+\providecommand{\numPatientCap}{22.5}
+\providecommand{\numPatientDeadAsk}{51.2}
+\providecommand{\numPatientDeadRun}{379}
+\providecommand{\numPatientDeclWrong}{2.1}
+\providecommand{\numPatientN}{1{,}500}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P1-deadlock-forensics.md and its two verifications
+%% (P1-verify-deadlock-lock-census.md, P1-verify-e11-information.md)
+%% ---------------------------------------------------------------------------
+\providecommand{\numScanGames}{120}
+\providecommand{\numLongGames}{14}
+\providecommand{\numCycleLen}{245.1}
+\providecommand{\numCycleTriples}{2.14}
+\providecommand{\numPureCycle}{12}
+\providecommand{\numNoLockPooled}{41}
+\providecommand{\numNoLockPooledN}{62}
+\providecommand{\numNoLockPct}{66}
+\providecommand{\numRunAsksLocked}{13.0}
+\providecommand{\numCycleInLock}{3.2}
+\providecommand{\numCertN}{2{,}880}
+\providecommand{\numCertRate}{68.5}
+\providecommand{\numCertMean}{0.096}
+\providecommand{\numCertMax}{0.664}
+\providecommand{\numEntropyRate}{59.9}
+\providecommand{\numEntropyMean}{0.325}
+\providecommand{\numOutsideSupport}{20{,}898}
+\providecommand{\numLadderRate}{82.9}
+\providecommand{\numLadderMedian}{4}
+\providecommand{\numTeamGain}{0.780}
+\providecommand{\numOppGain}{0.021}
+\providecommand{\numLeakRatio}{37}
+\providecommand{\numDonationCost}{0.128}
+\providecommand{\numDonationDead}{0.002}
+\providecommand{\numInfoFreeStates}{42}
+\providecommand{\numInfoRank}{17.6}
+\providecommand{\numNoRepeatWin}{42.2}
+\providecommand{\numTraceLive}{51}
+\providecommand{\numTraceLegal}{54}
+\providecommand{\numTraceRepeats}{142}
+\providecommand{\numDonationNil}{99.6}
+\providecommand{\numOwnProbPairs}{36}
+\providecommand{\numOwnProbMean}{0.068}
+\providecommand{\numOwnProbMax}{0.342}
+\providecommand{\numProvableThresh}{0.999}
+\providecommand{\numNoRepeatBaseEvents}{140.6}
+\providecommand{\numNoRepeatEvents}{101.1}
+\providecommand{\numNoRepeatBaseRun}{284}
+\providecommand{\numNoRepeatRun}{4}
+\providecommand{\numNoRepeatGames}{2{,}000}
+%% P1-verify-e11-information.md sections 5-6 -- the original-seed figures that the
+%% pooled re-measurement moved, quoted in sec:limitations
+\providecommand{\numCertRateOrig}{70.6}
+\providecommand{\numCertMeanOrig}{0.126}
+\providecommand{\numLadderOrigN}{21}
+\providecommand{\numMapRatioOrig}{14.3}
+\providecommand{\numMapRatioPooled}{3.3}
+
+%% ---------------------------------------------------------------------------
+%% The compiled v0.4 ask weights (engine/src/v04.hpp:70--92) and the static
+%% score evaluation in research/v05/lit/v05-refresh.md 2.1
+%% ---------------------------------------------------------------------------
+\providecommand{\numHitWeight}{11.506}
+\providecommand{\numOwnershipPay}{+8.76}
+\providecommand{\numOwnSetWeight}{1.688}
+\providecommand{\numTeamControlWeight}{2.133}
+\providecommand{\numLockWeight}{4.071}
+\providecommand{\numCompletionWeight}{1.428}
+\providecommand{\numRepeatWeight}{1.270}
+\providecommand{\numEntropyWeight}{-2.6534}
+\providecommand{\numDeadScore}{7.44}
+\providecommand{\numLiveScore}{5.09}
+
+%% research/v05/DESIGN.md 0.2 -- voluntariness of the dead asks, and the
+%% dead-ask-filter prototype that isolates the cause
+\providecommand{\numVoluntaryDead}{99.3}
+\providecommand{\numFilterBaseDeadRun}{289}
+\providecommand{\numFilterBaseGames}{32}
+\providecommand{\numFilterBaseDeclWrong}{10.9}
+\providecommand{\numFilterDeadRun}{1}
+\providecommand{\numFilterDeclWrong}{1.9}
+\providecommand{\numFilterWin}{49.75}
+\providecommand{\numFilterBasePostHorizon}{474}
+
+%% research/v05/DESIGN.md 0.3 -- the time-varying holding cost, measured and rejected
+\providecommand{\numHoldEventsBefore}{146}
+\providecommand{\numHoldEventsAfter}{121}
+\providecommand{\numHoldRunGamesBefore}{32}
+\providecommand{\numHoldRunGamesAfter}{18.5}
+\providecommand{\numHoldPninetyBefore}{313}
+\providecommand{\numHoldPninetyAfter}{311}
+\providecommand{\numHoldLongestBefore}{289}
+\providecommand{\numHoldLongestAfter}{289}
+\providecommand{\numHoldDeclBefore}{10.9}
+\providecommand{\numHoldDeclAfter}{13.4}
+\providecommand{\numHoldLoss}{3.9}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P2-forced-endgame.md and P8-coordination.md
+%% ---------------------------------------------------------------------------
+%% NOTE on the sample size.  P2-forced-endgame.md quotes 562 forced declarations
+%% over 12,000 mirror games at --rotations=6.  P2-verify-forced-endgame.md section 5
+%% and P2-verify-forced-ladder.md section 4 establish that in a MIRROR match the six
+%% rotations are three deal shifts x two team orientations, and both orientations
+%% run identical policies, so each game is played twice: the 562 events are 281
+%% distinct declarations over 6,000 distinct games (2,000 deals x three seat
+%% shifts; \numForcedGames counts games, not deals).  The rate is unaffected
+%% (281/281 = 100%); the sample size is halved here.
+\providecommand{\numForcedGames}{6{,}000}
+\providecommand{\numForcedN}{281}
+\providecommand{\numForcedMissRate}{92.2}
+\providecommand{\numFeasibleRight}{40.6}
+\providecommand{\numRungZeroPairs}{210}
+\providecommand{\numLadderBottomRung}{0.10}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P4-policy-review.md -- the forcing horizon
+%% ---------------------------------------------------------------------------
+\providecommand{\numStageTwoCost}{8.13}
+\providecommand{\numPreHorizonWrong}{1.83}
+\providecommand{\numHorizonWrong}{66.54}
+\providecommand{\numHorizonReach}{23.0}
+\providecommand{\numEfourteenCost}{2.67}
+\providecommand{\numEfourteenRange}{1--5}
+\providecommand{\numLowConfDecl}{130}
+\providecommand{\numLowConfGames}{200}
+\providecommand{\numLowConfThresh}{0.1}
+\providecommand{\numHorizonGames}{46}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P3-deception.md -- the policy prior under deception
+%% ---------------------------------------------------------------------------
+\providecommand{\numAgnosticCost}{4.4}
+\providecommand{\numAgnosticCI}{1.6, 7.2}
+\providecommand{\numPriorDoubleCost}{5.3}
+\providecommand{\numPhiWin}{49.00}
+\providecommand{\numPhiCI}{45.8, 52.2}
+\providecommand{\numPhiPaired}{+0.3}
+\providecommand{\numFeintTrue}{28.2}
+\providecommand{\numFeintBelief}{37.8}
+\providecommand{\numFeintBias}{0.096}
+\providecommand{\numBeliefErrHonest}{0.2255}
+\providecommand{\numVsFeint}{54.0}
+\providecommand{\numVsSilent}{56.1}
+\providecommand{\numVsWithholder}{67.8}
+\providecommand{\numFeintCalib}{0.07}
+\providecommand{\numBeliefErrTol}{0.004}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P5-human-strategy.md and P5-verify-target-channel.md
+%% ---------------------------------------------------------------------------
+\providecommand{\numAskDecisions}{154{,}318}
+\providecommand{\numTargetTwo}{46.6}
+\providecommand{\numTargetBits}{0.639}
+\providecommand{\numTargetSpread}{0.081}
+\providecommand{\numTargetTwoVthree}{66.2}
+\providecommand{\numTargetBitsVthree}{0.919}
+\providecommand{\numProvableOwn}{0.34}
+\providecommand{\numRouteTwo}{45.5}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P6-declaration.md and P8-coordination.md -- channels
+%% ---------------------------------------------------------------------------
+\providecommand{\numArbCost}{0.37}
+\providecommand{\numArbGames}{30{,}000}
+\providecommand{\numTransferRate}{0.148}
+\providecommand{\numTransferOracle}{800}
+\providecommand{\numTransferOracleN}{886}
+\providecommand{\numTransferValue}{-0.0007}
+\providecommand{\numTransferSE}{0.0024}
+\providecommand{\numLadderLeak}{2.19}
+\providecommand{\numTransferAskShare}{0.92}
+\providecommand{\numTransferGames}{6{,}000}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/results/P7-valuefn.md -- the value model and the fitting panel
+%% ---------------------------------------------------------------------------
+\providecommand{\numValueRSq}{0.2327}
+\providecommand{\numValueRSqScore}{0.2354}
+\providecommand{\numValueRSqTree}{0.388}
+\providecommand{\numValueRSqTail}{0.168}
+\providecommand{\numDeadFeatureDecisions}{31{,}788}
+\providecommand{\numAskSideValue}{+0.006}
+\providecommand{\numAskSideCI}{-0.016, +0.029}
+\providecommand{\numDeclSideValue}{+0.025}
+\providecommand{\numDeclSideCI}{+0.004, +0.047}
+\providecommand{\numSoftMinBeta}{10}
+\providecommand{\numSoftMinRatio}{1.9}
+\providecommand{\numDeadFeatureSwing}{9}
+\providecommand{\numPanelFloor}{0.664}
+\providecommand{\numTailEvents}{160}
+
+%% ---------------------------------------------------------------------------
+%% v0.5 single-mechanism measurements (200 deals x 6 rotations, seed 90210),
+%% and the v0.4 figures they are compared against.  These are regenerated by
+%% the v0.5 mode of engine/build_tables.py once sec:results is written.
+%% ---------------------------------------------------------------------------
+\providecommand{\numMechDeals}{200}
+\providecommand{\numMechSeed}{90210}
+\providecommand{\numControlWin}{50.17}
+\providecommand{\numMoneAlone}{49.50}
+\providecommand{\numMonePAlone}{50.75}
+\providecommand{\numMtwoAlone}{51.08}
+\providecommand{\numMeightAlone}{55.17}
+\providecommand{\numGuardAlone}{50.17}
+
+%% ---------------------------------------------------------------------------
+%% research/v05/runs/v04vector-in-v05.txt -- the v0.5 mechanisms on v0.4's frozen
+%% 34-coordinate vector.  TWO configurations, which must not be pooled:
+%%   numVfourParam*  the DESIGN-TIME assembly (ownership-by-p scaling and the
+%%                   repetition guard both ON, both later rejected), 200 deals x
+%%                   6 rotations at seed 90210 -- the bank sec:mech-built's
+%%                   pre-refit figure came from;
+%%   numShipParam*   the assembly that actually SHIPS, on the same bank
+%%                   (numShipParamSameBank), on two larger banks, and on E2's
+%%                   mirror pathology instrument.
+%% numRejectedCost is the gap between the two on the shared bank.
+%% Every one of these is \renewcommand'ed from that artifact.
+%% ---------------------------------------------------------------------------
+\providecommand{\numVfourParamWin}{41.8}
+\providecommand{\numVfourParamCI}{39.25--44.50}
+\providecommand{\numVfourParamDecl}{4.21}
+\providecommand{\numVfourDecl}{4.75}
+\providecommand{\numShipParamSameBank}{49.08}
+\providecommand{\numShipParamSameCI}{46.67--51.58}
+\providecommand{\numRejectedCost}{7.3}
+\providecommand{\numShipParamWin}{50.22}
+\providecommand{\numShipParamCI}{48.40--52.03}
+\providecommand{\numShipParamRange}{50.13--50.30}
+\providecommand{\numShipParamSeeds}{2}
+\providecommand{\numShipParamGames}{6{,}000}
+\providecommand{\numShipParamDecl}{4.49}
+\providecommand{\numShipParamVfourDecl}{4.47}
+\providecommand{\numShipParamDeadAsk}{0.02}
+\providecommand{\numShipParamDeadRun}{1}
+\providecommand{\numShipParamDeadRunGames}{0}
+\providecommand{\numShipParamRepeat}{2.97}
+\providecommand{\numShipParamDeclWrong}{1.89}
+\providecommand{\numShipParamPostHorizon}{0}
+\providecommand{\numShipParamForcedN}{4}
+
+%% ---------------------------------------------------------------------------
+%% Carried over from the v0.4 study (paper/numbers.tex) for the corrections
+%% ---------------------------------------------------------------------------
+\providecommand{\numVfourVsVthree}{75.07}
+\providecommand{\numVfourLimitRate}{0.000\%}
+
+%% ---------------------------------------------------------------------------
+%% v0.5 EVALUATION BATTERY.  Defaults for the macros the results, limitations
+%% and conclusion sections quote; every one of them is \renewcommand'ed by
+%% paper/numbers_v05_generated.tex from the artifact named above it, so these
+%% values only reach the PDF if the battery has not been run.
+%% ---------------------------------------------------------------------------
+
+%% research/v05/results/E1-verify.txt -- the rules audit on the frozen config
+\providecommand{\numVerifyViolations}{0}
+\providecommand{\numVerifyChecks}{23{,}594{,}580}
+
+%% research/v05/results/E2-pathology.txt -- 600 mirror games per arm, seed 31
+\providecommand{\numFourDeadAsk}{39.04}
+\providecommand{\numFourDeadRunGames}{34.33}
+\providecommand{\numFourDeadRunLongest}{286}
+\providecommand{\numFourDeclWrong}{10.44}
+\providecommand{\numFourPostHorizonDecl}{768}
+\providecommand{\numFourRepeatAsk}{40.03}
+\providecommand{\numFiveRepeatAsk}{2.63}
+\providecommand{\numFiveDeadAsk}{0}
+\providecommand{\numFiveDeadRunGames}{0}
+\providecommand{\numFiveDeadRunLongest}{0}
+\providecommand{\numFiveDeclWrong}{2.07}
+\providecommand{\numFivePostHorizonDecl}{0}
+
+%% research/v05/results/E3-headtohead.jsonl -- v0.5 vs v0.4 at five seed banks
+\providecommand{\numHeadWin}{50.79}
+\providecommand{\numHeadRange}{49.50--52.33}
+\providecommand{\numHeadSeeds}{5}
+\providecommand{\numHeadDeals}{1{,}500}
+\providecommand{\numHeadGames}{9{,}000}
+\providecommand{\numHeadGames}{9{,}000}
+
+%% research/v05/results/E4-perstyle.jsonl -- the nine-style panel, 300 deals in
+%% six rotations per cell, seed 515253 (engine/experiments_v05.sh).  Per-style
+%% cells carry the "Panel" prefix so that they cannot collide with the v0.4
+%% study's published figures quoted in sec:corrections.
+\providecommand{\numStyleDeals}{300}
+\providecommand{\numStyleSeed}{515253}
+\providecommand{\numStyleCIVfour}{48.83--53.39}
+\providecommand{\numPanelVfiveVfour}{51.11}
+\providecommand{\numDeltaVfour}{+1.11}
+\providecommand{\numDeltaVthree}{-1.00}
+\providecommand{\numDeltaVtwo}{-1.78}
+\providecommand{\numDeltaLockout}{+1.61}
+\providecommand{\numDeltaDiversifier}{+0.89}
+\providecommand{\numDeltaHunter}{+0.06}
+\providecommand{\numDeltaBluffer}{-0.06}
+\providecommand{\numDeltaRandom}{0.00}
+\providecommand{\numVfiveMean}{83.60}
+\providecommand{\numVfourMean}{83.57}
+\providecommand{\numVfiveWorst}{51.11}
+\providecommand{\numVfourWorst}{50.00}
+\providecommand{\numVfiveRegret}{1.78}
+\providecommand{\numVfourRegret}{1.61}
+
+%% research/v05/results/E8-forced-endgame.txt -- 4,000 deals in six rotations
+%% per arm, seed 909090, reported per DECLARING team
+\providecommand{\numVfiveForcedAcc}{24.35}
+\providecommand{\numVfourForcedAcc}{0.14}
+\providecommand{\numForcedRateRatio}{6.4}
+\providecommand{\numForcedEightGames}{24{,}000}
+
+%% research/v05/results/E10-deception.md -- 400 deals in six rotations per cell
+%% at two independent seed banks
+\providecommand{\numDecSeeds}{2}
+\providecommand{\numDecGames}{2{,}400}
+\providecommand{\numDecSilentDelta}{+2.3}
+\providecommand{\numDecFeintFive}{51.52}
+\providecommand{\numDecFeintFour}{53.71}
+\providecommand{\numDecFeintDelta}{-2.2}
+\providecommand{\numDecWithholderFive}{72.53}
+\providecommand{\numDecWithholderFour}{65.35}
+\providecommand{\numDecWithholderDelta}{+7.2}
+\providecommand{\numDecWorst}{50.96}
+\providecommand{\numDecWorstOpp}{feint}
+\providecommand{\numThetaSweep}{0.20, 0.26, 0.35, 0.445, 0.60}
+\providecommand{\numThetaSweepN}{5}
+
+%% research/v05/runs/v05-fitted.txt and engine/src/v04.hpp -- the policy-prior
+%% weight before and after the v0.5 fit
+\providecommand{\numPriorThetaFour}{0.264}
+\providecommand{\numPriorThetaFive}{0.445}
+
+%% research/v05/runs/fit-round1.jsonl, research/v04/runs/ -- the fit itself
+\providecommand{\numFitRounds}{1}
+\providecommand{\numFitGens}{40}
+\providecommand{\numFitWorst}{57.00}
+\providecommand{\numVfourFitRounds}{5}
+
+%% research/v05/results/P5-human-strategy.md -- the discarded target dimension
+\providecommand{\numTargetBitsGame}{41}
+
+%% ---------------------------------------------------------------------------
+%% sec:fitting.  The flat parameter vector, the freeze/parse round-trip
+%% assertion, the CEM schedule, the objective, and the winner's-curse guard.
+%% ---------------------------------------------------------------------------
+
+%% engine/src/factory.hpp, engine/freeze_config_v05.py -- the vector's shape and
+%% the offset the v0.4 pipeline hard-coded
+\providecommand{\numFitDims}{34}
+\providecommand{\numFitAskFeats}{20}
+\providecommand{\numFitKnobs}{14}
+\providecommand{\numAliasOffset}{18}
+
+%% research/v05/runs/roundtrip-assert.txt -- the mechanical assertion that the
+%% parser and the freezer agree, its negative control at the v0.4 offset, and
+%% the bake-precision check
+\providecommand{\numRoundTrip}{50.0000}
+\providecommand{\numRoundTripPass}{passes}
+\providecommand{\numRoundTripSeeds}{2}
+\providecommand{\numRoundTripGames}{6{,}000}
+\providecommand{\numAliasWin}{45.87}
+\providecommand{\numAliasCI}{44.07--47.70}
+\providecommand{\numAliasLoss}{4.13}
+\providecommand{\numAliasGames}{3{,}000}
+\providecommand{\numQuantWin}{50.43}
+\providecommand{\numQuantCI}{49.43--51.40}
+\providecommand{\numQuantGames}{3{,}000}
+
+%% docs/FISHBOT_V05.md section 9 -- the fitting command of record
+\providecommand{\numFitPop}{24}
+\providecommand{\numFitElite}{6}
+\providecommand{\numFitSeed}{505101}
+\providecommand{\numFitDeals}{200}
+\providecommand{\numFitCellGames}{400}
+\providecommand{\numFitTotalGames}{2{,}304{,}000}
+
+%% research/v05/runs/fit-round1.jsonl -- the panel, the objective's temperature,
+%% and the gradient-weight arithmetic that makes a soft minimum a minimum
+\providecommand{\numFitPanel}{v0.4, v0.3, lockout, detective, diversifier, hunter}
+\providecommand{\numFitPanelN}{6}
+\providecommand{\numFitBeta}{25}
+\providecommand{\numFitSpan}{0.415}
+\providecommand{\numFitRatio}{32048.3}
+\providecommand{\numFitRatioAtTen}{63.43}
+\providecommand{\numFitRatioCross}{4.83}
+
+%% research/v04/runs/selected.json -- the v0.4 objective read the same way
+\providecommand{\numSoftMinSpan}{0.063}
+\providecommand{\numSoftMinPanelN}{4}
+
+%% research/v05/runs/fit-round1.jsonl -- the best generation, and the final
+%% common-seed re-evaluation the tuner returns from
+\providecommand{\numFitScore}{0.5693}
+\providecommand{\numFitBestGen}{24}
+\providecommand{\numFitProfile}{57.0 / 75.2 / 80.5 / 79.0 / 94.8 / 98.5}
+\providecommand{\numFitGuardWinner}{mean}
+\providecommand{\numFitGuardMu}{0.5272}
+\providecommand{\numFitGuardBest}{0.4798}
+\providecommand{\numFitGuardGap}{0.0474}
+\providecommand{\numFitCurse}{0.0895}
+
+%% derived: the best generation's in-panel mirror cell against the held-out
+%% multi-seed mean of the frozen configuration
+\providecommand{\numFitRegression}{6.21}
+
+%% ===========================================================================
+%% sec:results (paper/sections_v05/10-results.tex).  Defaults for the whole
+%% results macro set.  Every value below is the figure carried by the artifact
+%% named above it and is regenerated by engine/build_tables_v05.py, which
+%% \renewcommand's over these; they exist so the manuscript compiles when the
+%% battery has not been run.
+%% ===========================================================================
+
+% research/v05/results/E1-verify.txt
+\providecommand{\numVerifyDeterminism}{PASS}
+\providecommand{\numVerifyLimitGames}{0}
+\providecommand{\numVerifySetFail}{0}
+
+% engine/experiments_v05.sh
+\providecommand{\numAblFiveSeed}{606060}
+\providecommand{\numCalibFiveDeals}{400}
+\providecommand{\numCalibFiveSeed}{717171}
+\providecommand{\numDialectSeed}{828282}
+\providecommand{\numForcedEightDeals}{4{,}000}
+\providecommand{\numForcedEightSeed}{909090}
+\providecommand{\numHeadSeedFive}{424242}
+\providecommand{\numHeadSeedFour}{777001}
+\providecommand{\numHeadSeedOne}{90210}
+\providecommand{\numHeadSeedThree}{515151}
+\providecommand{\numHeadSeedTwo}{31337}
+\providecommand{\numPathologyCrossSeed}{90210}
+\providecommand{\numPathologyDeals}{300}
+\providecommand{\numPathologySeed}{31}
+\providecommand{\numVerifyGames}{600}
+
+% research/v05/results/E2-pathology.txt
+\providecommand{\numCrossAsks}{90.5}
+\providecommand{\numCrossCapRate}{0}
+\providecommand{\numCrossDeadAsk}{3.07}
+\providecommand{\numCrossDeadRunGames}{0}
+\providecommand{\numCrossDeadRunLongest}{1}
+\providecommand{\numCrossDeadRuns}{1{,}665}
+\providecommand{\numCrossDeclN}{5{,}400}
+\providecommand{\numCrossDeclWrong}{2.26}
+\providecommand{\numCrossEventsMean}{99.8}
+\providecommand{\numCrossEventsMedian}{99}
+\providecommand{\numCrossEventsPninety}{115}
+\providecommand{\numCrossEventsPninetynine}{132}
+\providecommand{\numCrossForced}{29}
+\providecommand{\numCrossForcedWrong}{89.66}
+\providecommand{\numCrossHit}{54.6}
+\providecommand{\numCrossOwnLocked}{9.2}
+\providecommand{\numCrossPostHorizonDecl}{0}
+\providecommand{\numCrossRepeatAsk}{4.98}
+\providecommand{\numCrossStarved}{0.0018}
+\providecommand{\numFiveAsks}{87.2}
+\providecommand{\numFiveCapRate}{0}
+\providecommand{\numFiveDeadRuns}{0}
+\providecommand{\numFiveDeclN}{5{,}400}
+\providecommand{\numFiveEventsMean}{96.6}
+\providecommand{\numFiveEventsMedian}{96}
+\providecommand{\numFiveEventsPninety}{112}
+\providecommand{\numFiveEventsPninetynine}{125}
+\providecommand{\numFiveForced}{2}
+\providecommand{\numFiveForcedWrong}{0}
+\providecommand{\numFiveHit}{55.47}
+\providecommand{\numFiveOwnLocked}{9.63}
+\providecommand{\numFiveStarved}{0}
+\providecommand{\numFourAsks}{134.3}
+\providecommand{\numFourCapRate}{0}
+\providecommand{\numFourDeadRuns}{2{,}610}
+\providecommand{\numFourDeclN}{5{,}400}
+\providecommand{\numFourEventsMean}{143.6}
+\providecommand{\numFourEventsMedian}{106}
+\providecommand{\numFourEventsPninety}{312}
+\providecommand{\numFourEventsPninetynine}{321}
+\providecommand{\numFourForced}{28}
+\providecommand{\numFourForcedWrong}{100}
+%% mirror columns are reported per distinct game: `fish pathology --rotations=2`
+%% plays both team orientations, and in a mirror those are byte-identical games
+\providecommand{\numFourGames}{300}
+\providecommand{\numFiveGames}{300}
+\providecommand{\numCrossGames}{600}
+\providecommand{\numFourHit}{34.25}
+\providecommand{\numFourOwnLocked}{16.46}
+\providecommand{\numFourPostHorizonWrong}{58.59}
+\providecommand{\numFourStarved}{0.2}
+
+% research/v05/results/E3-headtohead.jsonl
+\providecommand{\numHeadCIFive}{48.61--53.61}
+\providecommand{\numHeadCIFour}{48.67--53.11}
+\providecommand{\numHeadCIOne}{47.89--52.33}
+\providecommand{\numHeadCIThree}{50.00--54.72}
+\providecommand{\numHeadCITwo}{47.22--51.83}
+\providecommand{\numHeadWinFive}{51.11}
+\providecommand{\numHeadWinFour}{50.89}
+\providecommand{\numHeadWinOne}{50.11}
+\providecommand{\numHeadWinThree}{52.33}
+\providecommand{\numHeadWinTwo}{49.50}
+
+% research/v05/results/E3-headtohead.jsonl (derived)
+\providecommand{\numHeadDeclAccFive}{98.15}
+\providecommand{\numHeadDeclAccFour}{98.54}
+\providecommand{\numHeadDeclRateFive}{4.51}
+\providecommand{\numHeadDeclRateFour}{4.46}
+\providecommand{\numHeadEvents}{99.8}
+\providecommand{\numHeadSetsFive}{4.52}
+\providecommand{\numHeadSetsFour}{4.48}
+
+% research/v05/results/E4-perstyle.jsonl
+\providecommand{\numPanelVfiveBluffer}{99.89}
+\providecommand{\numPanelVfiveDetective}{76.78}
+\providecommand{\numPanelVfiveDiversifier}{93.78}
+\providecommand{\numPanelVfiveHunter}{97.72}
+\providecommand{\numPanelVfiveLockout}{79.56}
+\providecommand{\numPanelVfiveRandom}{100.00}
+\providecommand{\numPanelVfiveVthree}{72.33}
+\providecommand{\numPanelVfiveVtwo}{81.28}
+\providecommand{\numPanelVfourBluffer}{99.94}
+\providecommand{\numPanelVfourDetective}{77.28}
+\providecommand{\numPanelVfourDiversifier}{92.89}
+\providecommand{\numPanelVfourHunter}{97.67}
+\providecommand{\numPanelVfourLockout}{77.94}
+\providecommand{\numPanelVfourRandom}{100.00}
+\providecommand{\numPanelVfourVfour}{50.00}
+\providecommand{\numPanelVfourVthree}{73.33}
+\providecommand{\numPanelVfourVtwo}{83.06}
+\providecommand{\numStyleGames}{1{,}800}
+\providecommand{\numVfiveStyleN}{9}
+\providecommand{\numVfiveWorstOpp}{v0.4}
+\providecommand{\numVfourWorstOpp}{v0.4}
+
+% research/v05/results/E4-perstyle.jsonl (derived)
+\providecommand{\numDeltaDetective}{-0.50}
+\providecommand{\numVfiveRegretOpp}{v0.2}
+\providecommand{\numVfourRegretOpp}{lockout}
+
+% research/v05/results/E5-ablations.jsonl
+\providecommand{\numAblControl}{50.87}
+\providecommand{\numAblControlCI}{48.60--53.20}
+\providecommand{\numAblControlDeclAcc}{89.02}
+\providecommand{\numAblControlEvents}{141.2}
+\providecommand{\numAblControlOppDeclAcc}{88.63}
+\providecommand{\numAblFiveDeals}{250}
+\providecommand{\numAblFiveGames}{1{,}500}
+\providecommand{\numAblFull}{49.07}
+\providecommand{\numAblFullCI}{46.60--51.53}
+\providecommand{\numAblFullDeclAcc}{98.31}
+\providecommand{\numAblFullEvents}{99.7}
+\providecommand{\numAblFullHit}{53.61}
+\providecommand{\numAblFullOppDeclAcc}{98.49}
+\providecommand{\numAblMeight}{56.60}
+\providecommand{\numAblMeightCI}{54.27--58.93}
+\providecommand{\numAblMeightDeclAcc}{96.60}
+\providecommand{\numAblMeightEvents}{141.7}
+\providecommand{\numAblMeightOppDeclAcc}{83.55}
+\providecommand{\numAblMone}{49.53}
+\providecommand{\numAblMoneCI}{47.07--52.00}
+\providecommand{\numAblMoneDeclAcc}{98.76}
+\providecommand{\numAblMoneEvents}{99.7}
+\providecommand{\numAblMoneMeight}{49.53}
+\providecommand{\numAblMoneMeightCI}{47.07--52.00}
+\providecommand{\numAblMoneMeightDeclAcc}{98.76}
+\providecommand{\numAblMoneMeightEvents}{99.7}
+\providecommand{\numAblMoneMeightOppDeclAcc}{98.49}
+\providecommand{\numAblMoneMtwo}{49.07}
+\providecommand{\numAblMoneMtwoCI}{46.60--51.53}
+\providecommand{\numAblMoneMtwoDeclAcc}{98.31}
+\providecommand{\numAblMoneMtwoEvents}{99.7}
+\providecommand{\numAblMoneMtwoOppDeclAcc}{98.49}
+\providecommand{\numAblMoneOppDeclAcc}{98.49}
+\providecommand{\numAblMtwo}{52.60}
+\providecommand{\numAblMtwoCI}{50.27--54.93}
+\providecommand{\numAblMtwoDeclAcc}{91.20}
+\providecommand{\numAblMtwoEvents}{141.4}
+\providecommand{\numAblMtwoMeight}{56.40}
+\providecommand{\numAblMtwoMeightCI}{54.07--58.80}
+\providecommand{\numAblMtwoMeightDeclAcc}{96.16}
+\providecommand{\numAblMtwoMeightEvents}{141.7}
+\providecommand{\numAblMtwoMeightOppDeclAcc}{83.55}
+\providecommand{\numAblMtwoOppDeclAcc}{86.78}
+\providecommand{\numAblOwnershipP}{47.73}
+\providecommand{\numAblOwnershipPCI}{45.13--50.33}
+\providecommand{\numAblOwnershipPDeclAcc}{97.50}
+\providecommand{\numAblOwnershipPEvents}{99.2}
+\providecommand{\numAblOwnershipPHit}{54.51}
+\providecommand{\numAblOwnershipPOppDeclAcc}{98.72}
+\providecommand{\numAblRepeatGuard}{42.93}
+\providecommand{\numAblRepeatGuardCI}{40.47--45.33}
+\providecommand{\numAblRepeatGuardDeclAcc}{98.37}
+\providecommand{\numAblRepeatGuardEvents}{99.6}
+\providecommand{\numAblRepeatGuardHit}{52.67}
+\providecommand{\numAblRepeatGuardOppDeclAcc}{98.56}
+
+% research/v05/results/E5-ablations.jsonl (derived)
+\providecommand{\numAblOwnershipPDelta}{-1.33}
+\providecommand{\numAblRepeatGuardDelta}{-6.13}
+\providecommand{\numThroughputFixed}{279}
+\providecommand{\numThroughputPatho}{164}
+\providecommand{\numThroughputRatioFive}{1.7}
+
+% research/v05/results/E6-calibration-v05.txt
+\providecommand{\numCalibAskBrier}{0.12187}
+\providecommand{\numCalibAskECE}{0.02234}
+\providecommand{\numCalibAskLogloss}{0.36529}
+\providecommand{\numCalibAskLowN}{3{,}593}
+\providecommand{\numCalibAskLowObs}{2.0}
+\providecommand{\numCalibAskLowPred}{4.6}
+\providecommand{\numCalibAskMidN}{2{,}775}
+\providecommand{\numCalibAskMidObs}{51.5}
+\providecommand{\numCalibAskMidPred}{45.0}
+\providecommand{\numCalibAskN}{36{,}467}
+\providecommand{\numCalibAskObs}{53.2}
+\providecommand{\numCalibAskPred}{53.0}
+\providecommand{\numCalibDeclBrier}{0.01500}
+\providecommand{\numCalibDeclECE}{0.01542}
+\providecommand{\numCalibDeclLogloss}{0.05373}
+\providecommand{\numCalibDeclMidN}{184}
+\providecommand{\numCalibDeclMidObs}{89.7}
+\providecommand{\numCalibDeclMidPred}{75.7}
+\providecommand{\numCalibDeclN}{3{,}609}
+\providecommand{\numCalibDeclObs}{98.2}
+\providecommand{\numCalibDeclPred}{96.7}
+\providecommand{\numCalibDeclTopObs}{99.9}
+\providecommand{\numCalibDeclTopPred}{99.8}
+
+% research/v05/results/E6-calibration-v05.txt (derived)
+\providecommand{\numCalibDeclTopShare}{86.6}
+
+% research/v05/results/E7-rules.jsonl
+\providecommand{\numDialectDeals}{250}
+\providecommand{\numDialectDefault}{51.60}
+\providecommand{\numDialectDefaultCI}{49.13--54.07}
+\providecommand{\numDialectDefaultForcedFive}{42.86}
+\providecommand{\numDialectDefaultForcedFour}{0.00}
+\providecommand{\numDialectDefaultForcedRate}{0.0047}
+\providecommand{\numDialectDefaultHit}{53.91}
+\providecommand{\numDialectGames}{1{,}500}
+\providecommand{\numDialectLegacy}{52.13}
+\providecommand{\numDialectLegacyCI}{49.60--54.60}
+\providecommand{\numDialectLegacyForcedFive}{94.41}
+\providecommand{\numDialectLegacyForcedFour}{88.20}
+\providecommand{\numDialectLegacyForcedRate}{0.2027}
+\providecommand{\numDialectNoCardless}{51.87}
+\providecommand{\numDialectNoCardlessCI}{49.40--54.33}
+\providecommand{\numDialectNoCardlessForcedFive}{42.86}
+\providecommand{\numDialectNoCardlessForcedFour}{0.00}
+\providecommand{\numDialectNoCardlessForcedRate}{0.0047}
+\providecommand{\numDialectNoOOT}{52.47}
+\providecommand{\numDialectNoOOTCI}{50.00--54.87}
+\providecommand{\numDialectNoOOTDeclFive}{98.47}
+\providecommand{\numDialectNoOOTDeclFour}{95.43}
+\providecommand{\numDialectNoOOTForcedFive}{98.36}
+\providecommand{\numDialectNoOOTForcedFour}{88.14}
+\providecommand{\numDialectNoOOTForcedRate}{0.2027}
+\providecommand{\numDialectNoOOTHit}{44.81}
+
+% research/v05/results/E7-rules.jsonl (derived)
+\providecommand{\numDialectForcedRatio}{43}
+
+% research/v05/results/E8-forced-endgame.txt
+\providecommand{\numVfiveDeclAccEight}{98.13}
+\providecommand{\numVfiveDeclRateEight}{4.50}
+\providecommand{\numVfiveForcedRate}{0.0048}
+\providecommand{\numVfourDeclAccEight}{98.51}
+\providecommand{\numVfourDeclRateEight}{4.47}
+\providecommand{\numVfourForcedRate}{0.0307}
+
+% research/v05/results/E9-throughput.txt
+\providecommand{\numThroughputFive}{286}
+\providecommand{\numThroughputGamesFive}{600}
+
+% research/v05/results/E10-deception.md
+\providecommand{\numDecDeals}{400}
+\providecommand{\numDecFeintFiveA}{50.96}
+\providecommand{\numDecFeintFiveB}{52.08}
+\providecommand{\numDecFeintFourA}{54.13}
+\providecommand{\numDecFeintFourB}{53.29}
+\providecommand{\numDecSeedA}{31415926}
+\providecommand{\numDecSeedB}{8675309}
+\providecommand{\numDecSilentFiveA}{80.42}
+\providecommand{\numDecSilentFiveB}{83.17}
+\providecommand{\numDecSilentFourA}{79.96}
+\providecommand{\numDecSilentFourB}{79.00}
+\providecommand{\numDecWithholderFiveA}{73.63}
+\providecommand{\numDecWithholderFiveB}{71.42}
+\providecommand{\numDecWithholderFourA}{66.25}
+\providecommand{\numDecWithholderFourB}{64.46}
+\providecommand{\numTwelveStyles}{12}
+
+% research/v05/results/P3-verify-deception.md
+\providecommand{\numPriorDeleteCI}{2.63, 6.58}
+\providecommand{\numPriorDeleteCost}{4.60}
+\providecommand{\numPriorCells}{14}
+\providecommand{\numPriorCellsWorse}{12}
+\providecommand{\numPriorCellsTie}{1}
+\providecommand{\numPriorCellsReversed}{1}
+\providecommand{\numPriorSignP}{0.003}
+
+% engine/src/v05.hpp
+\providecommand{\numGuardReject}{6.0}
+\providecommand{\numMonePReject}{5.6}
+
+%% research/v05/results/E3-headtohead.jsonl
+\providecommand{\numHeadBankDeals}{300}
+\providecommand{\numHeadBankGames}{1{,}800}
+
+%% research/v05/results/E3,E4,E5,E7 (derived)
+\providecommand{\numLimitRows}{37}
+\providecommand{\numLimitNonzero}{0}
+
+%% research/v05/results/E4-perstyle.jsonl (derived)
+\providecommand{\numStyleMeanGap}{0.04}
+
+%% engine/src/main.cpp -- the policy pool `fish verify` sweeps
+\providecommand{\numVerifyPool}{9}
+\providecommand{\numVerifyPairs}{81}
+
+%% ---- audit pass: denominators, spans and per-bank deltas ----------------
+%% research/v05/results/E8-forced-endgame.txt (derived)
+\providecommand{\numVfiveForcedN}{115}
+\providecommand{\numVfiveForcedRightN}{28}
+\providecommand{\numVfourForcedN}{737}
+\providecommand{\numVfourForcedRightN}{1}
+
+%% research/v05/results/E3-headtohead.jsonl (derived)
+\providecommand{\numHeadDeclErrFour}{1.46}
+
+%% research/v05/results/E3,E4,E5,E7 (derived) -- every independent
+%% v0.5-against-v0.4 bank in the report, at the frozen configuration
+\providecommand{\numHeadBanks}{8}
+\providecommand{\numHeadBankSpan}{49.07--52.33}
+\providecommand{\numHeadBankLow}{49.07}
+
+%% research/v05/results/E10-deception.md (derived) -- per-bank deltas
+\providecommand{\numDecSilentDeltaA}{+0.46}
+\providecommand{\numDecSilentDeltaB}{+4.17}
+\providecommand{\numDecFeintDeltaA}{-3.17}
+\providecommand{\numDecFeintDeltaB}{-1.21}
+\providecommand{\numDecWithholderDeltaA}{+7.38}
+\providecommand{\numDecWithholderDeltaB}{+6.96}
+
+%% ---------------------------------------------------------------------------
+%% engine/build_tables_v05.py -- provenance of the manuscript's own figures,
+%% computed by the generator over paper/sections_v05/ so the paragraph in
+%% section 12 that quotes them cannot itself go stale.  Audited by
+%% paper/check_provenance.py.
+%% ---------------------------------------------------------------------------
+\providecommand{\numProvUsed}{0}
+\providecommand{\numProvGenerated}{0}
+\providecommand{\numProvTranscribed}{0}

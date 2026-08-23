@@ -1,0 +1,59 @@
+Canadian Fish, also called Literature, is a six-player imperfect-information card
+game in which two teams of three score only by declaring an exact allocation of a
+six-card half-suit among their own members, and in which nothing in the rules
+compels anyone to declare. \vfour{} was evaluated against a panel of weaker
+policies and won decisively. Played against a copy of itself it does something
+else: over \numMirrorGames{} mirror games, \numDeadAsk\% of its asks name a card
+it can \emph{prove} the target does not hold, \numRepeatAsk\% are exact repeats
+of an ask the same seat has already made, \numDeadRunGames\% of games contain a
+run of at least six consecutive provably dead asks --- the longest run is
+\numDeadRunLongest{} --- and \numDeclWrong\% of its declarations are wrong,
+rising to \numPostHorizonWrong\% for the declarations its own termination rule
+forces. Against \vthree{} on the same instrument the dead-ask rate is
+\numVthreeDeadAsk\%. The failure is invisible to the evaluation that shipped it
+because it is a strong-opponent phenomenon.
+This report diagnoses that failure, corrects the account of it given in the v0.4
+study, and specifies the policy that repairs it. The deadlock is not an
+information freeze: it is a deterministic two-question cycle, present in
+\numPureCycle{} of \numLongGames{} long games at the forensic seed, and across
+pooled seed banks no half-suit is locked to any team at any point in the cycle
+in \numNoLockPct\% of long games. Where a
+half-suit \emph{is} locked, further information is still obtainable ---
+\numCertRate\% of legal asks inside such a half-suit strictly raise a teammate's
+exact probability of the correct allocation, by a mean of \numCertMean{} and up
+to \numCertMax{} --- so the claim in the v0.4 termination study that ownership
+monotonicity freezes allocation information is false, and is retracted here with
+the measurement that refutes it. The mechanism is arithmetic in the ask score:
+four ownership features that are not gated by hit probability pay up to
+$\numOwnershipPay$ at hit probability zero, against $\numHitWeight \cdot p$ for
+the hit-probability term, so a card the team already owns outscores a genuine
+chance at one it does not, and \numVoluntaryDead\% of dead asks are chosen when a
+live ask was available. \vfive{} restricts the candidate set to asks with
+strictly positive hard-consistent probability, replaces an unconstrained
+per-card allocation guess ---
+responsible for \emph{all} \numForcedN{} forced-endgame declarations over
+\numForcedGames{} distinct mirror games being wrong --- with a capacity-feasible one, and
+deletes an event-count rule that cashes a best candidate without inspecting its
+probability at a measured cost of \numStageTwoCost{} points against a mirror
+opponent. Refitted on a panel that for the first time contains an opponent of its
+own strength, and frozen, it takes the mirror dead-ask rate to
+\numFiveDeadAsk\%, exact repeats to \numFiveRepeatAsk\%, games containing a dead
+run of six or more to \numFiveDeadRunGames\%, declarations at or after the old
+horizon to \numFivePostHorizonDecl{}, and declaration error to
+\numFiveDeclWrong\%, with the forcing rule switched off and no game reaching the
+action cap. None of that shows up as an aggregate win rate. Head to head it scores
+\numPanelVfiveVfour\% [\numStyleCIVfour] on the style bank and \numHeadWin\% over
+\numHeadSeeds{} further banks of \numHeadGames{} games; over a nine-style panel the two means
+are level, \numVfiveMean\% against \numVfourMean\%; and on minimax regret over
+that panel \vfour{} is marginally the better of the two, \numVfourRegret{}
+against \numVfiveRegret{}. Against three deceptive archetypes held out of the
+fit, the differences are larger and run both ways: \numDecWithholderDelta{}
+points on the withholding manoeuvre that prompted this work,
+\numDecSilentDelta{} on a silent opponent, and \numDecFeintDelta{} against a
+feint that manufactures a false ask-legality certificate. Each replicates in
+sign at \numDecSeeds{} independent seed banks, and the withholding result
+replicates in size as well ($\numDecWithholderDeltaA$ and
+$\numDecWithholderDeltaB$); the silent one does not
+($\numDecSilentDeltaA$ and $\numDecSilentDeltaB$). Seven further mechanisms are specified and
+not yet built. This report claims no equilibrium and no bound on exploitability,
+and, unlike the v0.4 study, it ran no exploitability probe at all.

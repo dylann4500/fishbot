@@ -2,6 +2,8 @@
 #pragma once
 #include "baselines.hpp"
 #include "v04.hpp"
+#include "v05.hpp"
+#include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
 #include <sstream>
@@ -34,6 +36,96 @@ inline int optI(const std::map<std::string, std::string>& o, const char* k, int 
 inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
   std::string base;
   auto o = parseOpts(spec, base);
+  if (base == "v05" || base == "fishbot_v05") {
+    auto a = std::make_unique<V05Agent>();
+    auto it = o.find("belief");
+    if (it != o.end()) {
+      if (it->second == "exact") a->cfg.belief = BeliefMode::Exact;
+      else if (it->second == "exactdisj") a->cfg.belief = BeliefMode::ExactDisj;
+      else if (it->second == "sinkhorn") a->cfg.belief = BeliefMode::Sinkhorn;
+      else if (it->second == "indep") a->cfg.belief = BeliefMode::Independent;
+      else if (it->second == "hybrid") a->cfg.belief = BeliefMode::Hybrid;
+      else if (it->second == "fast") a->cfg.belief = BeliefMode::Fast;
+      else if (it->second == "block") a->cfg.belief = BeliefMode::Block;
+    }
+    a->cfg.particles         = optI(o, "particles", a->cfg.particles);
+    a->cfg.declThreshold     = optD(o, "decl", a->cfg.declThreshold);
+    a->cfg.lockedAllocThresh = optD(o, "lockthr", a->cfg.lockedAllocThresh);
+    a->cfg.minTeamProb       = optD(o, "minteam", a->cfg.minTeamProb);
+    a->cfg.patientLocked     = optI(o, "patient", a->cfg.patientLocked ? 1 : 0) != 0;
+    a->cfg.askFloor          = optD(o, "askfloor", a->cfg.askFloor);
+    a->cfg.patiencePool      = optI(o, "pool", a->cfg.patiencePool);
+    a->cfg.forceDeclareEvents= optI(o, "force", a->cfg.forceDeclareEvents);
+    a->cfg.oppCardFloor      = optD(o, "oppfloor", a->cfg.oppCardFloor);
+    a->cfg.gateTeamProb      = optD(o, "gate", a->cfg.gateTeamProb);
+    a->cfg.marginalGate      = optD(o, "mgate", a->cfg.marginalGate);
+    a->cfg.sinkOuter         = optI(o, "souter", a->cfg.sinkOuter);
+    a->cfg.sinkInner         = optI(o, "sinner", a->cfg.sinkInner);
+    a->cfg.useValue          = optI(o, "value", a->cfg.useValue ? 1 : 0) != 0;
+    a->cfg.valueWeight       = optD(o, "vweight", a->cfg.valueWeight);
+    a->cfg.linearWeight      = optD(o, "lweight", a->cfg.linearWeight);
+    a->cfg.valueDeclare      = optI(o, "vdecl", a->cfg.valueDeclare ? 1 : 0) != 0;
+    a->cfg.declareMargin     = optD(o, "vmargin", a->cfg.declareMargin);
+    a->cfg.priorTheta        = optD(o, "ptheta", a->cfg.priorTheta);
+    a->cfg.priorPhi          = optD(o, "pphi", a->cfg.priorPhi);
+    a->cfg.greedyMAP         = optI(o, "gmap", a->cfg.greedyMAP ? 1 : 0) != 0;
+    a->cfg.searchTopK        = optI(o, "topk", a->cfg.searchTopK);
+    a->cfg.chainWeight       = optD(o, "chain", a->cfg.chainWeight);
+    a->cfg.threatWeight      = optD(o, "threat", a->cfg.threatWeight);
+    a->cfg.declareEnabled    = optI(o, "declare", 1) != 0;
+    // Flat parameter vector for the optimiser, identical in layout to v0.4's so
+    // a v0.4 vector can seed a v0.5 fit.  The offset is derived from NFEAT, not
+    // hard-coded -- that aliasing bug cost v0.4 a whole fitting round.
+    auto ap5 = o.find("allparams");
+    if (ap5 != o.end()) {
+      std::vector<double> v;
+      std::stringstream ws(ap5->second); std::string tok;
+      while (std::getline(ws, tok, '|')) v.push_back(atof(tok.c_str()));
+      for (int i = 0; i < NFEAT && i < (int)v.size(); i++) a->cfg.w[i] = v[i];
+      auto get = [&](size_t i, double d) { return i < v.size() ? v[i] : d; };
+      const size_t K = size_t(NFEAT);
+      a->cfg.declThreshold     = std::min(0.9999, std::max(0.5, get(K + 0, a->cfg.declThreshold)));
+      a->cfg.lockedAllocThresh = std::min(0.99999, std::max(0.5, get(K + 1, a->cfg.lockedAllocThresh)));
+      a->cfg.askFloor          = std::min(0.9, std::max(0.0, get(K + 2, a->cfg.askFloor)));
+      a->cfg.patiencePool      = std::max(0, std::min(45, int(std::lround(get(K + 3, a->cfg.patiencePool)))));
+      a->cfg.oppCardFloor      = std::max(0.0, std::min(20.0, get(K + 4, a->cfg.oppCardFloor)));
+      a->cfg.valueWeight       = std::max(0.0, get(K + 5, a->cfg.valueWeight));
+      a->cfg.linearWeight      = std::max(0.0, get(K + 6, a->cfg.linearWeight));
+      a->cfg.minTeamProb       = std::min(0.99, std::max(0.05, get(K + 7, a->cfg.minTeamProb)));
+      a->cfg.declareMargin     = get(K + 8, a->cfg.declareMargin);
+      a->cfg.priorTheta        = std::max(0.0, std::min(2.0, get(K + 9, a->cfg.priorTheta)));
+      a->cfg.priorPhi          = std::max(0.0, std::min(1.0, get(K + 10, a->cfg.priorPhi)));
+      a->cfg.searchTopK        = std::max(0, std::min(24, int(std::lround(get(K + 11, a->cfg.searchTopK)))));
+      a->cfg.chainWeight       = std::max(0.0, get(K + 12, a->cfg.chainWeight));
+      a->cfg.threatWeight      = std::max(0.0, get(K + 13, a->cfg.threatWeight));
+    }
+    // v0.5 mechanism switches, for the ablation table.
+    a->cfg.liveAskGate       = optI(o, "m1", a->cfg.liveAskGate ? 1 : 0) != 0;
+    a->cfg.ownershipByP      = optI(o, "m1p", a->cfg.ownershipByP ? 1 : 0) != 0;
+    a->cfg.feasibleDecl      = optI(o, "m2", a->cfg.feasibleDecl ? 1 : 0) != 0;
+    a->cfg.forceStage2       = optI(o, "stage2", a->cfg.forceStage2 ? 1 : 0) != 0;
+    a->cfg.repeatGuard       = optI(o, "norepeat", a->cfg.repeatGuard ? 1 : 0) != 0;
+    for (int i = 0; i < NFEAT; i++) {
+      char key[8]; snprintf(key, sizeof(key), "w%d", i);
+      a->cfg.w[i] = optD(o, key, a->cfg.w[i]);
+    }
+    for (int i = 0; i < NVFEAT; i++) {
+      char key[10]; snprintf(key, sizeof(key), "v%d", i);
+      a->cfg.vw[i] = optD(o, key, a->cfg.vw[i]);
+    }
+    auto wv = o.find("weights");
+    if (wv != o.end()) {
+      std::stringstream ws(wv->second); std::string tok; int i = 0;
+      while (std::getline(ws, tok, '|') && i < NFEAT) a->cfg.w[i++] = atof(tok.c_str());
+    }
+    auto vv2 = o.find("vweights");
+    if (vv2 != o.end()) {
+      std::stringstream vs(vv2->second); std::string tok; int i = 0;
+      while (std::getline(vs, tok, '|') && i < NVFEAT) a->cfg.vw[i++] = atof(tok.c_str());
+    }
+    return a;
+  }
+
   if (base == "v04" || base == "fishbot_v04") {
     auto a = std::make_unique<V04Agent>();
     auto it = o.find("belief");
@@ -121,6 +213,22 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     }
     return a;
   }
+  // --- appended (P3): deceptive archetypes, see probe_deception.hpp ---------
+  if (base == "silent" || base == "feint" || base == "withholder") {
+    auto a = std::make_unique<DeceptiveAgent>();
+    a->style = base == "silent" ? DeceitStyle::Silent
+             : base == "feint"  ? DeceitStyle::Feint
+                                : DeceitStyle::Withholder;
+    a->labelStr = base == "silent" ? "silent" : (base == "feint" ? "feint" : "withholder");
+    a->cooldownK = optI(o, "k", a->cooldownK);
+    a->feintTol  = optD(o, "tol", a->feintTol);
+    a->silentTol = optD(o, "tol", a->silentTol);
+    a->cfg.priorTheta = optD(o, "ptheta", a->cfg.priorTheta);
+    a->cfg.priorPhi   = optD(o, "pphi", a->cfg.priorPhi);
+    a->cfg.declareEnabled = optI(o, "declare", 1) != 0;
+    return a;
+  }
+
   Baseline b = Baseline::Detective;
   bool known = false;
   if (base == "random") b = Baseline::Random;

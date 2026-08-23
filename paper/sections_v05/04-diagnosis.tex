@@ -1,0 +1,493 @@
+\section{Diagnosis: what \vfour{} does against a strong opponent}
+\label{sec:diagnosis}
+
+This is the central section of the report. It establishes four things in order:
+what the failure is, that it is not the failure the v0.4 study described, what
+causes it, and what each contributing defect costs. Every number is produced by
+an instrument described in \S\ref{sec:diag-instrument} and carries the artifact
+it came from.
+
+\subsection{The instrument}
+\label{sec:diag-instrument}
+
+The measurements below come from a diagnostic command added for this study,
+\texttt{fish pathology}, together with five probes that re-derive its headline
+quantities independently. Three definitions do the work.
+
+\begin{definition}[Provably dead ask]
+\label{def:dead}
+An ask of card $c$ from target $t$ by actor $a$ is \emph{provably dead} if $a$'s
+own public deduction state establishes that $t$ does not hold $c$: either $c$'s
+holder is already known and is not $t$, or $t$ has been excluded from $c$'s
+candidate set by a certificate. The predicate is a deduction from the actor's own
+hand and the public record. No posterior and no policy prior enter it, so a
+policy that filters on it cannot acquire a modelling error --- it can only lose
+moves whose probability of success is exactly zero.
+\end{definition}
+
+\begin{definition}[Dead run]
+A maximal sequence of consecutive asks in one game, every one of which is
+provably dead in the sense of Definition~\ref{def:dead}.
+\end{definition}
+
+\begin{definition}[Starved turn]
+A turn at which \emph{every} legal ask is provably dead, so the actor has no live
+alternative. Starved turns separate a policy that chooses dead asks from a policy
+that is forced into them.
+\end{definition}
+
+Two populations are used throughout: \emph{mirror} play, in which both teams run
+the same policy, and the \emph{held-out} contrast against \vthree{}, which is the
+population on which \vfour{} was evaluated for publication.
+
+\subsection{The baseline, and why the published evaluation could not see it}
+\label{sec:diag-baseline}
+
+\begin{table}[t]
+\centering
+\caption{\vfour{} measured on the same instrument against itself and against
+\vthree{}. Mirror: \numMirrorGames{} games, seed 31. Held-out: 600 games, seed
+90210. Source: \texttt{research/v05/results/P0-v04-pathology.md}.}
+\label{tab:baseline}
+\begin{tabular}{lrr}
+\toprule
+& \textbf{mirror} & \textbf{vs.\ \vthree{}} \\
+\midrule
+events per game                       & \numMirrorEvents{}   & \numVthreeEvents{} \\
+ask hit rate                          & \numMirrorHit\%      & \numVthreeHit\% \\
+provably dead asks                    & \numDeadAsk\%        & \numVthreeDeadAsk\% \\
+exact repeat (actor, card, target)    & \numRepeatAsk\%      & \numVthreeRepeat\% \\
+longest dead run                      & \numDeadRunLongest{} & \numVthreeDeadRun{} \\
+games with a dead run $\geq 6$        & \numDeadRunGames\%   & \numVthreeDeadRunGames\% \\
+starved turns                         & \numStarved\%        & \numVthreeStarved\% \\
+asks inside a half-suit the actor's team already owns & \numOwnLocked\% & \numVthreeOwnLocked\% \\
+declarations wrong                    & \numDeclWrong\%      & \numVthreeDeclWrong\% \\
+declarations at or after the forcing horizon & \numPostHorizonDecl{} & 0 \\
+\quad of those, wrong                 & \numPostHorizonWrong\% & --- \\
+forced-endgame declarations wrong     & \numForcedWrongRate\% & \numForcedWrongRate\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:baseline} is the whole problem in one place. On the population
+\vfour{} was published against, it is a clean policy: \numVthreeDeadAsk\% dead
+asks, no game containing a dead run of six, no game reaching the forcing horizon
+at all. Against a copy of itself, two in five of its asks name a card it can
+prove the target does not hold, two in five are exact repetitions, and a third of
+games contain an extended run of guaranteed misses. The two columns differ by a
+factor of fourteen in dead-ask rate. A policy panel of weaker opponents cannot
+detect this, and a competent human opponent is closer to the mirror column than
+\vthree{} is --- which is how the failure was first reported, from live play, and
+not from any experiment in the v0.4 study.
+
+The pathology is not caused by the approximate inference path. Substituting the
+exact reference belief reduces dead asks from \numDeadAsk\% to
+\numBlockDeadAsk\% and leaves the longest dead run at \numBlockDeadRun{}. The
+belief reports the hit probability correctly and the score prefers the move
+anyway: this is a policy defect, not an inference defect.
+
+\subsection{The deadlock is a two-question cycle}
+\label{sec:diag-cycle}
+
+Of \numScanGames{} mirror games scanned in the forensic probe, \numLongGames{}
+exceed 300 events. In those games the mean longest dead run is \numCycleLen{}
+asks, and the mean number of distinct (actor, card, target) triples inside that
+run is \numCycleTriples{}: in \numPureCycle{} of \numLongGames{} the entire run
+consists of exactly two questions, alternating, each asked well over a hundred
+times. Two seats on opposite teams ask each other the same guaranteed-miss
+question until an event counter stops them.
+
+The reason a deterministic policy can do this is that the position is a fixed
+point. Sampling each dumped run at its onset and at $+40$ and $+80$ events, every
+observer's exact mean per-card certainty is identical to the last digit at all
+three samples, as are the hand counts, the unresolved counts and the score. The
+only quantity that changes is a counter: each repeated ask appends a fresh
+ask-legality certificate that duplicates one already held, so the stored
+certificate list grows without bound while the posterior it induces does not
+move. Both policies re-derive the same argmax from the same information state,
+and the cycle closes.
+
+\subsection{The deadlock is not an information freeze}
+\label{sec:diag-information}
+
+The v0.4 termination study attributes non-termination to the locked-half-suit
+theorem, stating that such a half-suit is frozen and that, for the same reason,
+no further information about its allocation can ever arrive. That account fails
+in two independent ways, and \S\ref{sec:corrections} retracts it.
+
+\paragraph{First: the deadlock is mostly not in a locked half-suit.} A ground-truth
+lock census taken at \emph{every} event of the dead run --- not only at its ends
+--- finds no half-suit locked to any team at any point in the run in
+\numNoLockPooled{} of \numNoLockPooledN{} long games pooled over four seeds
+(\numNoLockPct\%). Measuring the stronger and more relevant condition, only
+\numRunAsksLocked\% of dead-run asks sit inside a half-suit that is locked at that
+moment, and only \numCycleInLock\% of long games have their entire cycle inside a
+lock. In the majority of deadlocks the theorem has nothing to bite on: at the
+onset of one traced run all nine half-suits are live and genuinely split,
+\numTraceLive{} of \numTraceLegal{} legal asks are not provably dead, and the
+policy ranks a guaranteed miss first and then repeats it \numTraceRepeats{}
+times.
+
+\paragraph{Second: where a half-suit \emph{is} locked, information still arrives.}
+This is a statement about the rules before it is a measurement. An ask inside a
+half-suit locked to the asker's own team is legal --- the set is active, the
+target is a live opponent, the asker holds another card of the set and lacks the
+one named --- and the deduction machinery publishes the asker's own exclusion
+regardless of whether the ask succeeds. ``The asker does not hold this card'' is
+public, permanent information about the allocation of a locked half-suit, and
+with six cards split among three teammates it frequently resolves a card
+outright.
+
+Pooled over three independent seeds and \numCertN{} legal asks inside a
+half-suit the asker's team in fact owns: \numCertRate\% strictly increase a
+teammate's exact probability of the correct allocation, by a mean of
+$+\numCertMean$ and a maximum of $+\numCertMax$. Re-measured with two statistics
+that avoid the disputed estimator entirely --- the combinatorial support size of
+the half-suit's cards, and the Shannon entropy of the exact marginals ---
+\numEntropyRate\% strictly lower the entropy, by a mean of \numEntropyMean{}
+nats. Asks \emph{outside} the locked half-suit shrink its support in
+0 of \numOutsideSupport{} cases at any seed, which is the expected structural
+result and confirms that the certificate lands where it is aimed. Playing such
+asks greedily, a team's best allocation probability reaches certainty in
+\numLadderRate\% of attempts in a median of \numLadderMedian{} asks.
+
+Ownership monotonicity therefore does not imply informational monotonicity, and
+the two must not be merged. The v0.4 \emph{paper} states this correctly as an
+observation; the v0.4 termination artifact does not, and it is that artifact's
+claim which \S\ref{sec:corrections} withdraws.
+
+\paragraph{The leak, priced.} These certificates are public, so opponents read
+them too. Over the same ladders, the team's allocation probability on the
+half-suit it is trying to cash rises by $+\numTeamGain$ while the opponents' best
+locked-half-suit allocation probability rises by $+\numOppGain$ --- an exchange
+rate of about $\numLeakRatio\!:\!1$ in the sender's favour. The opponents' gain
+is indirect, arriving through capacity coupling rather than through the locked
+half-suit itself, which they can never take.
+
+\paragraph{What the channel costs, and the qualification that matters.} A
+guaranteed miss donates the turn. In \vfour{}'s own value function a donated turn
+is worth \numDonationCost{} half-suits of final differential, and empirically the
+receiving team's take from a miss inside a dead run is \numDonationDead{}
+half-suits, with \numDonationNil\% of such donations yielding the opponents
+nothing at all.
+The qualification is important and was overstated in the first pass of this
+analysis: the lock census that selects these asks is a ground-truth statistic. At
+the deadlock states examined, the exact probability an owning team assigns to its
+own ownership has mean \numOwnProbMean{} and maximum \numOwnProbMax{}, and not
+one of the \numOwnProbPairs{} (observer, half-suit) pairs clears the
+\numProvableThresh{} bar at which ownership would be provable. A \vfive{} ask rule therefore \emph{cannot} condition on ``a
+half-suit my team provably owns''; the same conclusion is reached independently
+in \S\ref{sec:diag-channels}, where the provable version of the condition holds
+at \numProvableOwn\% of mirror decisions. The channel is real and it must be
+priced against ownership probability, not gated on a certainty nobody has.
+
+\subsection{The cause: ownership features that are not gated by hit probability}
+\label{sec:diag-features}
+
+The ask score is a twenty-feature linear function refined by a one-ply
+expectimax. Four of its features measure ownership progress and none of them is
+multiplied by the probability that the ask succeeds: own-set progress
+($+\numOwnSetWeight$), team control ($+\numTeamControlWeight$), lock completion
+($+\numLockWeight$) and the completion bonus ($+\numCompletionWeight$).
+Evaluated at the compiled weights they pay up to $\numOwnershipPay$ at $p = 0$,
+against $\numHitWeight \cdot p$ for the hit-probability term. A card the actor's whole team already owns
+therefore outscores a genuine chance at a card it does not.
+
+Three further features push the same way. The score's only explicit information
+term is the binary entropy of the ask outcome, at weight $\numEntropyWeight$: the
+ask whose result would resolve a full bit is penalised most, and the ask whose
+result is already known is penalised not at all. This is a negative
+value-of-information term in the literal sense --- the policy does not merely
+ignore information, it charges for it. A second feature rewards re-asking in the
+half-suit last asked in ($+\numRepeatWeight$), which is a direct mechanism for the
+\numRepeatAsk\% exact-repeat rate. A third scales the exposure penalty by $(1-p)$
+and is therefore maximised exactly when the ask is certain to miss.
+
+Evaluating the compiled weight vector at two representative feature vectors, a
+provably dead ask inside a half-suit the team already owns outright scores
+\numDeadScore{} while a maximally informative fresh ask scores \numLiveScore{}.
+That is an illustration rather than a game measurement --- the shipped policy
+adds an expectimax term, so the argmax is not the linear argmax --- but the
+decomposition of real decisions agrees with it. At the traced deadlock onsets the
+gap between the dead ask ranked first and the best live ask decomposes into the
+same three contributions every time: entropy, exposure-on-miss and target hand
+size outvote the hit-probability term.
+
+Two facts establish that this is a choice and not a constraint. Starved turns,
+at which no live ask exists, are \numStarved\% of asks; \numVoluntaryDead\% of
+provably dead asks are made with a live alternative available. And the most
+informative legal ask available at a deadlock state ranks, in \vfour{}'s own
+score, \numInfoRank{} out of roughly forty on average. At the \numInfoFreeStates{}
+deadlock states examined the ask actually played moved no teammate's exact
+posterior in every case, while an ask that would have moved it existed in every
+case. The ask rule is not slightly mispriced on information; it does not contain
+the term.
+
+\paragraph{Causal isolation.} Filtering provably dead asks out of the candidate
+set, with nothing else changed, collapses the longest dead run from
+\numFilterBaseDeadRun{} to \numFilterDeadRun{}, takes games containing a dead run
+of six from \numFilterBaseGames\% to 0\%, takes declarations at or after the
+horizon from \numFilterBasePostHorizon{} to zero, takes misdeclarations from \numFilterBaseDeclWrong\% to
+\numFilterDeclWrong\%, and scores \numFilterWin\% against the shipped policy ---
+neutral. The single change removes the pathology at no measured cost in strength,
+which identifies it as the load-bearing defect.
+
+Removing the repetition without pricing information is a different matter, and it
+fails. Forbidding exact repeats alone terminates every game, taking events per
+game from \numNoRepeatBaseEvents{} to \numNoRepeatEvents{} and the longest dead
+run from \numNoRepeatBaseRun{} to \numNoRepeatRun{}, but it loses to the shipped
+policy at \numNoRepeatWin\% over \numNoRepeatGames{} games. Breaking the cycle is
+not sufficient; the candidate set has to be restricted to asks that can actually
+do something.
+
+\subsection{Terminating by force, and terminating by patience}
+\label{sec:diag-dilemma}
+
+\vfour{} terminates deadlocks with a graduated escalation keyed on the public
+event count. Raising the horizon so that the rule never fires is worth
+\numPatientWin\% against the shipped configuration (deal-clustered
+\numPatientWinCI\%, $n = \numPatientN$), with the patient side declaring at
+\numPatientDeclAcc\% accuracy against the forcing side's \numForcingDeclAcc\%.
+But pure patience does not terminate: the unforced mirror reaches the action cap
+in \numPatientCap\% of games, with \numPatientDeadAsk\% of asks provably dead and
+a longest run of \numPatientDeadRun{}. Table~\ref{tab:dilemma} states the
+dichotomy.
+
+\begin{table}[t]
+\centering
+\caption{The two settings \vfour{} has, and what each costs. Sources:
+\texttt{research/v05/results/P0-v04-pathology.md},
+\texttt{research/v05/results/P0b-forcing-dilemma.md}.}
+\label{tab:dilemma}
+\begin{tabular}{lrr}
+\toprule
+& \textbf{forcing (shipped)} & \textbf{patient} \\
+\midrule
+declarations wrong                        & \numDeclWrong\%     & \numPatientDeclWrong\% \\
+games ending by action-cap adjudication   & 0\%                 & \numPatientCap\% \\
+provably dead asks                        & \numDeadAsk\%       & \numPatientDeadAsk\% \\
+longest dead run                          & \numDeadRunLongest{} & \numPatientDeadRun{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Note the third row. In the patient mirror more than half of all asks are already
+provably dead: the turns are being burned either way. They are simply not being
+spent on asks that emit useful certificates. That is the sense in which the
+project owner's judgement --- that a risky ask is better than a guaranteed-zero
+declaration --- is a statement about the ask policy and not about the
+declaration rule.
+
+\paragraph{The second stage of the escalation is an unconditional cash.} Past a
+second horizon the rule returns ``declare'' before inspecting the allocation
+probability at all, and simultaneously zeroes the team-ownership floor and the
+marginal pre-gate. The consequence is measurable in the policy's own stated
+confidence: bucketing declarations by the probability the policy itself attached
+to them, \numLowConfDecl{} declarations in \numLowConfGames{} games are made at a
+self-assessed probability below \numLowConfThresh{} and every one of them is
+wrong. Pre-horizon declarations are wrong
+\numPreHorizonWrong\%; at or after the horizon, \numHorizonWrong\%. Disabling the
+second stage is worth \numStageTwoCost{} points against a mirror opponent and
+changes nothing against \vthree{}, the detective, the lockout policy, the hunter
+or the bluffer --- differences of at most a third of a point, in both directions.
+It is a pure strong-opponent tax.
+
+One hypothesis about this rule did \emph{not} hold and is recorded so that it is
+not repeated: the horizon does not fire on healthy long games. Every one of the
+\numHorizonGames{} games (\numHorizonReach\% of \numLowConfGames{}) that reached it was genuinely deadlocked,
+and raising the deadlock threshold to a run of 80 leaves the split unchanged. The
+cost is not when the rule fires but what it does when it fires.
+
+\subsection{The forced endgame: an allocation with posterior probability zero}
+\label{sec:diag-forced}
+
+When one team is cardless the other must declare every remaining half-suit. Over
+\numForcedGames{} distinct mirror games, all \numForcedN{} forced declarations
+are wrong. An independently instrumented replay that shares no code with the
+diagnostic probe and recomputes each declaration's correctness from the opening
+deal reproduces the result at five further mirror seeds, disagreeing with the
+engine's own flag on none of the declarations it re-scored.
+This is not a hard decision problem and not an accounting artefact; it is one
+mechanical defect with a deterministic consequence. The routine that names the
+allocation picks each card's owner by an independent per-card argmax over
+ownership marginals, with no capacity constraint. In every observed forced
+endgame the truth splits the unresolved cards across two teammates and the argmax
+piles them onto one. The named allocation therefore violates the declarer's own
+capacity constraint, has exact posterior probability zero, and loses the
+half-suit with certainty. All \numForcedN{} violate capacity; all
+\numForcedN{} have exact posterior probability zero; the declarer's own stated
+confidence is exactly zero in all \numForcedN{}; and the best \emph{feasible}
+allocation would have been correct in \numFeasibleRight\% of them. The policy
+misses by the minimum possible margin every time --- one card in
+\numForcedMissRate\% of them, two in the remainder, never more.
+
+The same defect disables the willingness ladder that selects the declarer. The
+ladder thresholds a statistic that the unconstrained allocation drives to a hard
+zero, and that statistic is exactly zero in \numRungZeroPairs{} of
+\numRungZeroPairs{} surveyed (player, live half-suit) pairs. Four different
+ladder shapes, including one with a bottom rung at \numLadderBottomRung{} and one with no rungs at
+all, produce bit-identical output. The allocator is the defect; the ladder is
+merely inert.
+
+\subsection{The opponent model is two scalars, and one of them is decorative}
+\label{sec:diag-prior}
+
+\vfour{} reweights its rules posterior by a policy prior with two coefficients:
+a weight on ``this seat asked in this half-suit'' and a weight on ``this seat took
+turns but never asked here''. They are identical for all five other players and
+never updated during a game, so a deliberately silent opponent is misread by
+construction --- which is what the project owner exploited at the table.
+
+Three measured findings qualify that story, and two of them contradict the
+hypothesis this study began with.
+
+\begin{enumerate}
+  \item \textbf{Deleting the prior is worse, not better.} The policy-agnostic
+        configuration loses to the shipped one by \numAgnosticCost{} points
+        [\numAgnosticCI] in a paired ablation over a panel of three deceptive
+        archetypes and the honest mirror, and by \numPriorDeleteCost{} points
+        [\numPriorDeleteCI] against the three deceptive archetypes alone, which
+        is the figure a claim about deception should quote. Per cell the effect
+        is not uniform at the resolution these banks have: over
+        \numPriorCells{} (seed, archetype) cells the ablation is worse in
+        \numPriorCellsWorse{}, tied in \numPriorCellsTie{} and reversed in
+        \numPriorCellsReversed{} (sign test $p \approx \numPriorSignP$).
+        The exposure is over-weighting, not weighting: doubling the pair costs
+        \numPriorDoubleCost{} points.
+  \item \textbf{The silence channel does not exist.} Deleting the second
+        coefficient entirely costs nothing measurable anywhere ---
+        \numPhiWin\% [\numPhiCI] against the honest mirror, a paired delta of
+        \numPhiPaired{} points over a four-opponent panel, and a fifteen-fold
+        sweep that is flat inside its intervals. The algebra explains it: the
+        exponent rearranges so that the second term is card-independent, and the
+        capacity normalisation then removes it. The channel the owner's manoeuvre
+        attacks is carrying no information to begin with.
+  \item \textbf{The damage deception does is a signed, cell-local
+        miscalibration.} Against a table of feinting opponents, a seat that has
+        asked once in a half-suit really holds a given unresolved card of it
+        \numFeintTrue\% of the time and the policy believes \numFeintBelief\% ---
+        an over-confidence of $+\numFeintBias$, rising at two asks. Against
+        honest opponents the same cells are calibrated to within \numFeintCalib{} and
+        conservative. The exploit runs through the hard certificate, which the
+        soft prior only amplifies; global belief accuracy is essentially
+        untouched, mean absolute marginal error moving from \numBeliefErrHonest{}
+        under an honest opponent to within $\pm\numBeliefErrTol$ of it under every archetype
+        tested.
+\end{enumerate}
+
+No archetype converted its corruption of the policy's beliefs into wins: shipped
+\vfour{} beats all three (\numVsFeint\%, \numVsSilent\%, \numVsWithholder\%).
+The silent figure here is against the hit-probability-capped variant of that
+archetype, which is the competent one and the one this subsection's belief
+measurements use; \S\ref{sec:results-deception} runs the uncapped variant, on
+which both policies score far higher, so the two figures are not the same
+measurement. The
+owner's live result is therefore not reproduced by commitment deception alone,
+and \S\ref{sec:limitations} records what distinguishes the two settings.
+
+\subsection{The value function carries one feature, and the mirror was never fitted against}
+\label{sec:diag-value}
+
+The sixteen-feature value model is, to measurement precision, one feature. Its
+held-out game-clustered $R^2$ is \numValueRSq{}; the $R^2$ of a bias term plus
+the score differential alone is \numValueRSqScore{}, which is higher. Two of the
+sixteen features are algebraically the same feature, and five more cancel
+identically at every call site --- moving all five to $\pm\numDeadFeatureSwing$ changes none of
+\numDeadFeatureDecisions{} declaration decisions. Capacity is not the binding
+constraint: a depth-3 gradient-boosted tree on the same rows reaches
+\numValueRSqTree{}. And the model is least informative exactly where it is needed
+most, reaching only \numValueRSqTail{} in the tail of games past \numTailEvents{}
+events.
+
+Splitting the model by use is the actionable result. Deleting the ask-side
+expectimax entirely is worth \numAskSideValue{} [\numAskSideCI] --- nothing ---
+while reverting declarations to fixed thresholds costs \numDeclSideValue{}
+[\numDeclSideCI]. The part of the value model that earns its keep is the
+declaration rule; the ask-side use, which is the side the deadlock lives on,
+does not.
+
+Finally, the fitting objective could not have caught any of this. The mirror was
+absent from the fitting panel in every recorded round, and the recorded
+per-opponent win rates never fall below \numPanelFloor{}, so no roughly even opponent was
+ever present. The objective is a soft minimum at $\beta = \numSoftMinBeta$, which
+over a panel whose win rates span about six points gives a maximum-to-minimum
+gradient weight ratio of \numSoftMinRatio{}: it is a weighted mean wearing the
+name of a minimum. That is the direct explanation for why a mirror pathology of
+this size survived fitting.
+
+\subsection{Channels the policy cannot express}
+\label{sec:diag-channels}
+
+Two capabilities are absent rather than mispriced.
+
+\paragraph{The target dimension.} Over \numAskDecisions{} mirror ask decisions,
+at \numTargetTwo\% of decisions at least two opponents are hard-indistinguishable
+holders of the card actually asked for, carrying a mean of \numTargetBits{} free
+bits per ask at a mean hit-probability spread of \numTargetSpread{}; against
+\vthree{} the figures are \numTargetTwoVthree\% and \numTargetBitsVthree{} bits.
+The dominant refinement term in the ask score discards the target's identity
+outright, and every target-dependent quantity anywhere in the score is material
+--- hit probability, the target's reply threat, hand size and exposure. Nothing
+prices what the choice of target tells a teammate. A separate verification
+qualifies the ``free'' in that description: the indistinguishability classes are
+defined by hard consistency, and choosing within one is not free once the
+capacity-marginal probabilities are compared, so the channel must be priced.
+Turn routing is available on the same dimension --- at \numRouteTwo\% of mirror
+decisions the actor could hand the turn to any of two or more chosen opponents by
+a provably dead ask --- and the policy has one soft penalty for donating the turn
+to a dangerous seat and no concept of choosing whom to donate it to.
+
+\paragraph{A knowledge model of anybody else.} The policy builds deduction state
+only for itself; the only such objects it ever constructs are clones of its own.
+Every technique that turns on what another seat knows --- teammate-directed
+signalling, blackballing, choosing the best-informed declarer, baiting --- is out
+of reach not because a feature is missing but because the state it would read
+does not exist. Since the transcript is public, this is nearly free to add:
+seat $j$'s knowledge is the public deduction state plus a posterior over $j$'s
+hand.
+
+\subsection{Summary of confirmed defects}
+\label{sec:diag-summary}
+
+\begin{table}[t]
+\centering
+\caption{Confirmed defects, each with the measurement that establishes it and the
+mechanism of \S\ref{sec:mechanisms} that addresses it. Rows marked
+``\emph{designed}'' are specified but not built.}
+\label{tab:defects}
+\begin{tabular}{p{0.30\textwidth}p{0.42\textwidth}l}
+\toprule
+\textbf{Defect} & \textbf{Measured cost} & \textbf{Fix} \\
+\midrule
+Ownership features not gated by hit probability &
+\numDeadAsk\% dead asks, \numVoluntaryDead\% of them voluntary; longest dead run
+\numDeadRunLongest{} & M1 \\
+Unconstrained per-card allocation guess &
+\numForcedWrongRate\% of \numForcedN{} distinct forced declarations wrong; willingness
+ladder inert at \numRungZeroPairs{} of \numRungZeroPairs{} pairs & M2 \\
+Escalation stage 2 cashes without inspecting probability &
+\numStageTwoCost{} points against a mirror opponent, zero against every weaker
+style & M8 \\
+Negative value-of-information term &
+weight $\numEntropyWeight$ on outcome entropy; most informative ask ranks
+\numInfoRank{} of $\approx$40 & M3 (\emph{designed}) \\
+Refinement term discards the target's identity &
+\numTargetBits{} free bits per ask at \numTargetTwo\% of decisions & M5
+(\emph{designed}) \\
+No knowledge model of other seats &
+every ``what does he know'' technique unreachable & M4 (\emph{designed}) \\
+Deterministic argmax ask selection &
+leakage pinned at the deterministic bound \cite{alvim-leakage};
+\numRepeatAsk\% exact repeats & M6 (\emph{designed}) \\
+Opponent model is two fixed global scalars &
+silence channel measurably inert; feint miscalibration $+\numFeintBias$ & M7
+(\emph{designed}) \\
+Value model is effectively one feature &
+held-out $R^2$ \numValueRSq{} against \numValueRSqScore{} for bias plus score
+differential & M9 (\emph{designed}) \\
+Mirror absent from the fitting panel &
+soft-minimum gradient ratio \numSoftMinRatio{} at $\beta=\numSoftMinBeta$ & M10
+(\emph{designed}) \\
+\bottomrule
+\end{tabular}
+\end{table}

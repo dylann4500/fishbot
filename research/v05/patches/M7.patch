@@ -1,0 +1,396 @@
+M7 -- online per-seat opponent model: wiring into the v0.5 belief path
+
+Dylan Nguyen, FishLab Research Project
+Repository /Users/dylan/Documents/GitHub/fish optimization, base commit fe21e19
+plus the lead session's working v0.5 (M1 + M2 + M8 as built in engine/src/v05.hpp).
+
+NOT APPLIED.  engine/src/v05.hpp, factory.hpp and main.cpp are owned by the lead
+session.  The mechanism itself lives entirely in the new, unprotected header
+engine/src/v05_oppmodel.hpp, which is already in the tree; this patch is only the
+wiring.  Design note: research/v05/results/M7-design.md.
+
+Apply from the repository root:      git apply research/v05/patches/M7.patch
+Check it first:                      git apply --check research/v05/patches/M7.patch
+
+WHAT THE PATCH DOES
+
+  engine/src/v05.hpp
+    * includes v05_oppmodel.hpp;
+    * adds nine V05Config knobs (m7, m7ask, m7decl, m7bias, m7cap, m7tcap,
+      m7carry, m7sil, m7th), all individually ablatable;
+    * gives V05Agent an m7::OppModel, fed from observe() AFTER Agent::observe so
+      it always reads the post-event Knowledge (this is the ordering hazard the
+      diagnosis found as defect H, avoided by construction);
+    * carries the per-seat type posterior between deals ONLY while the agent
+      keeps the same seat -- a seat change means the opponents at those indices
+      are different players and the evidence is void.  Note that the arena's
+      duplicate-block rotation flips seats every rotation, so `m7carry` can only
+      engage under --rotations=1 or at a fixed table;
+    * replaces the five Belief::sinkhornDisj / jointSequential* call sites with
+      the tilted equivalents from the new header;
+    * adds a SECOND posterior, belDecl, for the declaration path.  Gating the
+      final pAlloc is not sufficient: feasibleAllocation and bestGuess CHOOSE the
+      allocation from bel.marg, so a tilted marginal steers which allocation is
+      proposed even when its confidence is scored untilted.  belDecl is the same
+      fit at m7DeclWeight (default 0) and is built only when the two weights
+      differ, so the extra Sinkhorn pass disappears when they do not.
+
+  engine/src/factory.hpp
+    * one appended block of option parsing.  No existing line is altered.
+
+  engine/src/main.cpp
+    * one new command, `fish m7check`: the divergence guard.  m7::fitTilted is a
+      structural copy of Belief::sinkhornDisj with a generalised initialiser, and
+      belief.hpp is frozen so that v0.4 stays byte-identical as the reference
+      opponent.  m7check asserts the copy has not drifted, by requiring exact
+      equality on every state visited with the model disabled.
+
+VERIFIED WITH THE PATCH APPLIED TO A SANDBOX COPY OF THE TREE
+
+  $ make                                       # clean build, no new warnings
+  $ ./fish m7check --games=30 --seed=20260822 --a=v05:m7=0
+    m7check: 1054 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+  $ ./fish m7check --games=20 --seed=777 --a=v05
+    m7check:  698 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+  $ ./fish m7check --games=20 --seed=777 --a=v04
+    m7check:  840 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+
+  Off-switch equivalence -- `v05:m7=0` on the patched binary reproduces the
+  unpatched `v05` exactly (same statistics to every printed digit, two seeds):
+    patched   v05:m7=0 vs v05:m7=0, 20 deals seed 31    ask acc 55.2529%  decl 4.5/g 97.7778%
+    unpatched v05      vs v05     , 20 deals seed 31    ask acc 55.2529%  decl 4.5/g 97.7778%
+    patched   v05:m7=0 vs v04     , 20 deals seed 90210 ask acc 54.4669% / 56.1667%
+    unpatched v05      vs v04     , 20 deals seed 90210 ask acc 54.4669% / 56.1667%
+
+  NOT VERIFIED: whether M7 helps.  See M7-design.md §5 -- 50-game sanity runs at
+  two seeds disagree in SIGN on every cell, so nothing about strength is claimed
+  and no parameter was chosen from them.
+
+
+AMENDED BY THE VERIFICATION PASS (2026-08-22)
+
+  The first version of this patch routed bestGuess, feasibleAllocation and the
+  jointSequential* confidences through the declaration posterior but left
+  evaluateSet's `cheap` product reading pTeamCard(), i.e. the TILTED belief.
+  `cheap` gates the voluntary declaration through cfg.marginalGate and becomes
+  v.pTeam in Fast mode, so M7 could still unlock a declaration at m7decl = 0 --
+  the same class of leak the patch's own note describes, one call site short.
+  The amended patch adds V05Agent::dPTeamCard() and uses it there; the ask path
+  is untouched and still reads pTeamCard().  Off-switch equivalence and m7check
+  are unchanged (re-verified below).  Against `withholder:k=6`, 25 deals seed
+  515151, declaration accuracy moves 94.57% -> 95.34% -- the predicted direction,
+  but 50 games, so no strength claim.
+
+  Re-verified with the amended patch applied to a sandbox copy:
+    $ make                                       # clean build, no new warnings
+    $ ./fish m7check --games=30 --seed=20260822 --a=v05:m7=0   -> 1054 states, 0  PASS
+    $ ./fish m7check --games=20 --seed=777 --a=v05             ->  700 states, 0  PASS
+    patched v05:m7=0 vs v04, 20 deals seed 90210: ask acc 54.4669% / 56.1667%
+    unpatched v05    vs v04, 20 deals seed 90210: ask acc 54.4669% / 56.1667%
+
+--- a/engine/src/v05.hpp
++++ b/engine/src/v05.hpp
+@@ -20,6 +20,7 @@
+ // from 10.9% to 1.9% at no cost in win rate.
+ #pragma once
+ #include "v04.hpp"
++#include "v05_oppmodel.hpp"   // M7: online per-seat opponent model
+ 
+ namespace fish {
+ 
+@@ -114,6 +115,23 @@ struct V05Config {
+   bool   forceStage2        = false;
+   bool   repeatGuard        = true;
+   bool   feasibleDecl       = true;   // M2 on the voluntary path too
++  // M7 online per-seat opponent model (engine/src/v05_oppmodel.hpp).  v0.4 models
++  // all five other seats with one fixed (priorTheta, priorPhi) pair, and the
++  // algebra in that header shows priorPhi is not a second channel at all: the
++  // exponent rearranges to (theta+phi)*askCount - phi*totalAsks, and the second
++  // term depends on the SEAT ALONE, so Sinkhorn's capacity normalisation erases
++  // it exactly.  M7 replaces the pair with a per-seat posterior over a small type
++  // library, driven by a time-local silence statistic that IS card-dependent, and
++  // shrunk toward the population prior in proportion to the evidence available.
++  bool   m7                 = true;   // master switch for the mechanism
++  double m7AskWeight        = 0.30;   // tilt strength on the ask path (derived, not fitted)
++  double m7DeclWeight       = 0.00;   // ... and on the declaration path (P3 6.3.5)
++  double m7DataBias         = 2.00;   // Johanson-Bowling n0: THE robustness dial
++  double m7TiltCap          = 0.90;   // |z_M7| clip
++  double m7ThetaCap         = 1.50;   // per-seat certificate multiplier bound
++  double m7Carry            = 0.70;   // type-posterior retention between deals
++  bool   m7Silence          = true;   // ablate the silence channel alone
++  bool   m7Theta            = true;   // ablate the per-seat certificate weight alone
+ };
+ 
+ struct V05Agent : Agent {
+@@ -130,6 +148,35 @@ struct V05Agent : Agent {
+   // A structural backstop -- with M1 in place a repeat is almost always already
+   // provably dead, so this only catches the residue.
+   bool asked[NCARD][NPLAY] = {};
++  // M7.  The type posterior is keyed by seat index, so it may only be carried
++  // between deals while this agent keeps the same seat at the same table; a seat
++  // change means the opponents at those indices are different players and the
++  // evidence is void.  reset() enforces that.
++  m7::OppModel opp;
++  int lastSeat = -1;
++  // M7 keeps a SECOND posterior for the declaration path.  The ask path reads a
++  // posterior tilted at m7AskWeight; the declaration path must not, because P3
++  // §6.3.5 measured that the tilt buys ask quality by accepting more
++  // over-confident marginals.  Gating only the final pAlloc is not enough -- the
++  // ALLOCATION is chosen from bel.marg by feasibleAllocation and bestGuess, so a
++  // tilted marginal steers which allocation is proposed even when its confidence
++  // is scored untilted.  belDecl is the same fit at m7DeclWeight; it is built
++  // only when the two weights differ, so the extra Sinkhorn pass disappears when
++  // they do not.
++  Belief belDecl;
++  bool declSeparate = false;
++  const Belief& dbel() const { return declSeparate ? belDecl : bel; }
++  // P(this half-suit's card c sits somewhere on my team) under the DECLARATION
++  // posterior.  evaluateSet's `cheap` product is a gate on the voluntary
++  // declaration (cfg.marginalGate) and becomes v.pTeam in Fast mode, so it must
++  // read the untilted posterior for the same reason bestGuess does -- otherwise
++  // M7 unlocks declarations at m7decl = 0, which is exactly what P3 §6.3.5
++  // forbids.  The ask path keeps pTeamCard() and the tilted belief.
++  inline double dPTeamCard(int c) const {
++    double s = 0;
++    for (int p = 0; p < NPLAY; p++) if (teamMask & (1 << p)) s += dbel().marg[c][p];
++    return s;
++  }
+   const char* label = "fishbot_v05";
+ 
+   const char* name() const override { return label; }
+@@ -139,25 +186,57 @@ struct V05Agent : Agent {
+     rng = Rng(mixSeed(seed, 0x0404ull));
+     dirty = true; lastMySet = -1; lastAskP = -1;
+     memset(asked, 0, sizeof(asked));
++    {
++      m7::M7Config mc;
++      mc.enabled = cfg.m7;
++      mc.dataBias = cfg.m7DataBias;
++      mc.tiltCap = cfg.m7TiltCap;
++      mc.thetaMulCap = cfg.m7ThetaCap;
++      mc.askWeight = cfg.m7AskWeight;
++      mc.declWeight = cfg.m7DeclWeight;
++      mc.silenceChannel = cfg.m7Silence;
++      mc.thetaChannel = cfg.m7Theta;
++      mc.carryWeight = cfg.m7Carry;
++      mc.persistTypes = cfg.m7Carry > 0;
++      if (s != lastSeat) { opp.reset(s, mc); lastSeat = s; }
++      else { opp.cfg = mc; opp.newDeal(); }
++    }
+     teamMask = 0; oppMask = 0;
+     for (int p = 0; p < NPLAY; p++) { if (teamOf(p) == teamOf(s)) teamMask |= 1 << p; else oppMask |= 1 << p; }
+   }
+   void observe(const Event& e) override {
+-    Agent::observe(e);
++    Agent::observe(e);                       // updates k first: opp reads post-event
+     if (e.kind == Kind::Ask && int(e.actor) == seat) asked[e.card][e.target] = true;
++    opp.onEvent(e, k);
+     dirty = true;
+   }
+ 
++  // True when the two M7 weights differ, so the declaration path needs its own fit.
++  bool needDeclBelief() const { return cfg.m7 && cfg.m7DeclWeight != cfg.m7AskWeight; }
++
++  void buildDeclBelief() {
++    for (int c = 0; c < NCARD; c++) for (int p = 0; p < NPLAY; p++) belDecl.marg[c][p] = 0;
++    for (int c = 0; c < NCARD; c++) if (k.owner[c] < NPLAY) belDecl.marg[c][k.owner[c]] = 1;
++    m7::fitTilted(belDecl, k, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi,
++                  &opp, cfg.m7DeclWeight);
++    declSeparate = true;
++  }
++
+   void refresh() {
+     if (!dirty) return;
+     bel.dpBuilt = false;
+     blockOk = false;
++    declSeparate = false;
+     if (cfg.belief == BeliefMode::Block) {
+       for (int c = 0; c < NCARD; c++) for (int p = 0; p < NPLAY; p++) bel.marg[c][p] = 0;
+       for (int c = 0; c < NCARD; c++) if (k.owner[c] < NPLAY) bel.marg[c][k.owner[c]] = 1;
+       blockOk = block.build(k);
+       if (blockOk) block.marginals(bel.marg);
+-      else bel.sinkhornDisj(k, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi);
++      else {
++        m7::fitTilted(bel, k, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi,
++                      cfg.m7 ? &opp : nullptr, cfg.m7AskWeight);
++        if (needDeclBelief()) buildDeclBelief();
++      }
+       bel.dpOk = false; bel.nParticles = 0; bel.k = &k;
+       dirty = false;
+       return;
+@@ -174,7 +253,9 @@ struct V05Agent : Agent {
+     } else if (cfg.belief == BeliefMode::Fast) {
+       for (int c = 0; c < NCARD; c++) for (int p = 0; p < NPLAY; p++) bel.marg[c][p] = 0;
+       for (int c = 0; c < NCARD; c++) if (k.owner[c] < NPLAY) bel.marg[c][k.owner[c]] = 1;
+-      bel.sinkhornDisj(k, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi);
++      m7::fitTilted(bel, k, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi,
++                    cfg.m7 ? &opp : nullptr, cfg.m7AskWeight);
++      if (needDeclBelief()) buildDeclBelief();
+       bel.dpOk = false; bel.nParticles = 0; bel.k = &k;
+     } else if (cfg.belief == BeliefMode::Sinkhorn || cfg.belief == BeliefMode::Hybrid) {
+       for (int c = 0; c < NCARD; c++) for (int p = 0; p < NPLAY; p++) bel.marg[c][p] = 0;
+@@ -538,7 +619,8 @@ struct V05Agent : Agent {
+           Belief bh;
+           for (int c2 = 0; c2 < NCARD; c2++) for (int q = 0; q < NPLAY; q++) bh.marg[c2][q] = 0;
+           for (int c2 = 0; c2 < NCARD; c2++) if (kh.owner[c2] < NPLAY) bh.marg[c2][kh.owner[c2]] = 1;
+-          bh.sinkhornDisj(kh, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi);
++          m7::fitTilted(bh, kh, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi,
++                        cfg.m7 ? &opp : nullptr, cfg.m7AskWeight);
+           PublicState ph = pub;
+           ph.handCount[seat]++; ph.handCount[target]--;
+           AskMove b2[NSET * SETSZ * 3];
+@@ -552,7 +634,8 @@ struct V05Agent : Agent {
+           Belief bm;
+           for (int c2 = 0; c2 < NCARD; c2++) for (int q = 0; q < NPLAY; q++) bm.marg[c2][q] = 0;
+           for (int c2 = 0; c2 < NCARD; c2++) if (km.owner[c2] < NPLAY) bm.marg[c2][km.owner[c2]] = 1;
+-          bm.sinkhornDisj(km, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi);
++          m7::fitTilted(bm, km, cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi,
++                        cfg.m7 ? &opp : nullptr, cfg.m7AskWeight);
+           for (int st = 0; st < NSET; st++) {
+             if (!pub.setActive[st]) continue;
+             double none = 1, bestCard = 0;
+@@ -628,8 +711,9 @@ struct V05Agent : Agent {
+     if (!nFree) {
+       int cards[SETSZ];
+       for (int i = 0; i < SETSZ; i++) cards[i] = cardOf(set, i);
+-      prob = bel.jointSequential(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+-                                 cfg.priorTheta, cfg.priorPhi);
++      prob = m7::jointSequentialTilted(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
++                                       cfg.priorTheta, cfg.priorPhi,
++                                       cfg.m7 ? &opp : nullptr, cfg.m7DeclWeight);
+       return true;
+     }
+ 
+@@ -647,7 +731,7 @@ struct V05Agent : Agent {
+         int idx = free_[i], c = cardOf(set, idx), p = pick[i];
+         if (!(k.mask[c] & (1u << p))) { ok = false; break; }   // excluded by a certificate
+         if (++cnt[p] > int(q[p]) + used[p]) { ok = false; break; }  // capacity
+-        score *= bel.marg[c][p];
++        score *= dbel().marg[c][p];
+       }
+       if (!ok || score <= bestScore) continue;
+       bestScore = score; found = true;
+@@ -658,8 +742,9 @@ struct V05Agent : Agent {
+ 
+     int cards[SETSZ];
+     for (int i = 0; i < SETSZ; i++) cards[i] = cardOf(set, i);
+-    prob = bel.jointSequential(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+-                               cfg.priorTheta, cfg.priorPhi);
++    prob = m7::jointSequentialTilted(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
++                                     cfg.priorTheta, cfg.priorPhi,
++                                     cfg.m7 ? &opp : nullptr, cfg.m7DeclWeight);
+     return true;
+   }
+ 
+@@ -699,10 +784,10 @@ struct V05Agent : Agent {
+       if (k.owner[c] < NPLAY && !(teamMask & (1u << k.owner[c]))) return v;   // opponent holds it
+       if (!(k.mask[c] & teamMask) && k.owner[c] >= NPLAY) return v;
+       cards[i] = c; allow[i] = uint8_t(teamMask);
+-      cheap *= (k.myHand & bit(c)) ? 1.0 : pTeamCard(c);
++      cheap *= (k.myHand & bit(c)) ? 1.0 : dPTeamCard(c);
+       int bestQ = seat; double bestP = -1;
+       for (int q = 0; q < NPLAY; q++) if (teamMask & (1 << q)) {
+-        double pr = (k.myHand & bit(c)) ? (q == seat ? 1.0 : 0.0) : bel.marg[c][q];
++        double pr = (k.myHand & bit(c)) ? (q == seat ? 1.0 : 0.0) : dbel().marg[c][q];
+         if (pr > bestP) { bestP = pr; bestQ = q; }
+       }
+       players[i] = bestQ;
+@@ -737,12 +822,15 @@ struct V05Agent : Agent {
+       }
+       if (cfg.greedyMAP) {
+         int chosen[SETSZ];
+-        v.pAlloc = bel.jointSequentialMAP(k, cards, SETSZ, teamMask, chosen,
+-                                          cfg.sinkOuter, cfg.sinkInner, cfg.priorTheta, cfg.priorPhi);
++        v.pAlloc = m7::jointSequentialMAPTilted(k, cards, SETSZ, teamMask, chosen,
++                                               cfg.sinkOuter, cfg.sinkInner,
++                                               cfg.priorTheta, cfg.priorPhi,
++                                               cfg.m7 ? &opp : nullptr, cfg.m7DeclWeight);
+         for (int i = 0; i < SETSZ; i++) v.decl.owner[i] = uint8_t(chosen[i]);
+       } else {
+-        v.pAlloc = bel.jointSequential(k, cards, players, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+-                                       cfg.priorTheta, cfg.priorPhi);
++        v.pAlloc = m7::jointSequentialTilted(k, cards, players, SETSZ, cfg.sinkOuter, cfg.sinkInner,
++                                            cfg.priorTheta, cfg.priorPhi,
++                                            cfg.m7 ? &opp : nullptr, cfg.m7DeclWeight);
+       }
+       v.pTeam = std::max(v.pTeam, v.pAlloc);
+       if (v.pTeam < teamFloor) return v;
+@@ -909,7 +997,7 @@ struct V05Agent : Agent {
+       else {
+         for (int q = 0; q < NPLAY; q++) {
+           if (!(teamMask & (1 << q))) continue;
+-          double pr = bel.marg[c][q];
++          double pr = dbel().marg[c][q];
+           if (pr > best) { best = pr; chosen = q; }
+         }
+       }
+@@ -925,8 +1013,9 @@ struct V05Agent : Agent {
+         return;
+       }
+     }
+-    conf = bel.jointSequential(k, cards, players, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+-                               cfg.priorTheta, cfg.priorPhi);
++    conf = m7::jointSequentialTilted(k, cards, players, SETSZ, cfg.sinkOuter, cfg.sinkInner,
++                                     cfg.priorTheta, cfg.priorPhi,
++                                     cfg.m7 ? &opp : nullptr, cfg.m7DeclWeight);
+     (void)pub;
+   }
+ 
+--- a/engine/src/factory.hpp
++++ b/engine/src/factory.hpp
+@@ -105,6 +105,16 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
+     a->cfg.feasibleDecl      = optI(o, "m2", a->cfg.feasibleDecl ? 1 : 0) != 0;
+     a->cfg.forceStage2       = optI(o, "stage2", a->cfg.forceStage2 ? 1 : 0) != 0;
+     a->cfg.repeatGuard       = optI(o, "norepeat", a->cfg.repeatGuard ? 1 : 0) != 0;
++    // M7 online per-seat opponent model.
++    a->cfg.m7                = optI(o, "m7", a->cfg.m7 ? 1 : 0) != 0;
++    a->cfg.m7AskWeight       = optD(o, "m7ask", a->cfg.m7AskWeight);
++    a->cfg.m7DeclWeight      = optD(o, "m7decl", a->cfg.m7DeclWeight);
++    a->cfg.m7DataBias        = optD(o, "m7bias", a->cfg.m7DataBias);
++    a->cfg.m7TiltCap         = optD(o, "m7cap", a->cfg.m7TiltCap);
++    a->cfg.m7ThetaCap        = optD(o, "m7tcap", a->cfg.m7ThetaCap);
++    a->cfg.m7Carry           = optD(o, "m7carry", a->cfg.m7Carry);
++    a->cfg.m7Silence         = optI(o, "m7sil", a->cfg.m7Silence ? 1 : 0) != 0;
++    a->cfg.m7Theta           = optI(o, "m7th", a->cfg.m7Theta ? 1 : 0) != 0;
+     for (int i = 0; i < NFEAT; i++) {
+       char key[8]; snprintf(key, sizeof(key), "w%d", i);
+       a->cfg.w[i] = optD(o, key, a->cfg.w[i]);
+--- a/engine/src/main.cpp
++++ b/engine/src/main.cpp
+@@ -1138,6 +1138,36 @@ int main(int argc, char** argv) {
+     return 0;
+   }
+ 
++  // M7 divergence guard.  m7::fitTilted is a structural copy of
++  // Belief::sinkhornDisj with a generalised initialiser; belief.hpp is frozen, so
++  // this asserts the copy has not drifted.  With the model disabled the two must
++  // agree exactly on every state visited.
++  if (cmd == "m7check") {
++    int games = atoi(argVal(argc, argv, "games", "30").c_str());
++    uint64_t sd = strtoull(argVal(argc, argv, "seed", "20260822").c_str(), nullptr, 10);
++    std::string spec = argVal(argc, argv, "a", "v05:m7=0");
++    Rules r = rulesFrom(argc, argv);
++    double worst = 0; long long n = 0;
++    for (int gi = 0; gi < games; gi++) {
++      std::unique_ptr<Agent> ag[NPLAY]; Agent* ap[NPLAY];
++      for (int i = 0; i < NPLAY; i++) { ag[i] = makeAgent(spec); ap[i] = ag[i].get(); }
++      Game gm;
++      gm.observer = [&](const Game& gg) {
++        const Knowledge& kk = gg.agents[0]->k;
++        if (!kk.unresolved || gg.g.pub.nEvents % 5) return;
++        double d = fish::m7::selfTest(kk, 4, 8, 0.26380, 0.13280);
++        if (d > worst) worst = d;
++        d = fish::m7::selfTest(kk, 4, 8, 0.0, 0.0);
++        if (d > worst) worst = d;
++        n += 2;
++      };
++      gm.run(mixSeed(sd, gi), r, ap);
++    }
++    std::cout << "m7check: " << n << " states, max |fitTilted(off) - sinkhornDisj| = "
++              << worst << (worst == 0.0 ? "   PASS\n" : "   FAIL\n");
++    return worst == 0.0 ? 0 : 1;
++  }
++
+   if (cmd == "vhorizon") {
+     uint64_t sd = strtoull(argVal(argc, argv, "seed", "4242").c_str(), nullptr, 10);
+     int deals = atoi(argVal(argc, argv, "deals", "200").c_str());

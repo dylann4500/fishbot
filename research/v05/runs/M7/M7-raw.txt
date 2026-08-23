@@ -1,0 +1,182 @@
+# M7 raw output. Harnesses in this directory; build with:
+#   clang++ -std=c++20 -O2 -I engine/src <file>.cpp -o /tmp/h -pthread
+
+=== m7_algebra_replica  20 4242 4 8   (shipped outer/inner)
+outer=4 inner=8   states 1852  cells 275046
+replica vs belief.hpp sinkhornDisj (th,ph)           max 0.000e+00  mean 0.000e+00
+CLIP ON : (th,ph) vs (th+ph,0)                       max 4.440e-01  mean 2.556e-03
+CLIP OFF: (th,ph) vs (th+ph,0)                       max 8.596e-01  mean 1.393e-03
+CLIP OFF: (0,ph)  vs (0,0)   [pure silence]          max 9.195e-01  mean 6.509e-03
+(0,0) vs (seat,half-suit) statistic tilt             max 4.155e-01  mean 4.846e-03
+
+=== m7_algebra_replica  20 4242 4 200 (converged)
+outer=4 inner=200   states 1852  cells 275046
+replica vs belief.hpp sinkhornDisj (th,ph)           max 0.000e+00  mean 0.000e+00
+CLIP ON : (th,ph) vs (th+ph,0)                       max 4.441e-01  mean 2.562e-03
+CLIP OFF: (th,ph) vs (th+ph,0)                       max 4.261e-04  mean 1.919e-07
+CLIP OFF: (0,ph)  vs (0,0)   [pure silence]          max 9.437e-01  mean 6.460e-03
+(0,0) vs (seat,half-suit) statistic tilt             max 4.077e-01  mean 4.851e-03
+
+=== m7_algebra_totalsupport  20 4242 8 / 200
+states with TOTAL SUPPORT   : 1845   residual max 7.842e-01  mean 6.703e-03  (cells 274866)
+states WITHOUT total support: 5   residual max 4.075e-03  mean 1.189e-04  (cells 156)
+mask-legal cells: 212988 live, 29 capacity-infeasible (0.01%)
+states with TOTAL SUPPORT   : 1845   residual max 1.132e-03  mean 9.117e-07  (cells 274866)
+states WITHOUT total support: 5   residual max 8.421e-06  mean 2.269e-07  (cells 156)
+mask-legal cells: 212988 live, 29 capacity-infeasible (0.01%)
+
+=== m7_episode_census (30 games/policy, seed 20260822)
+== v05, 30 games, seed 20260822
+divergence guard: 744 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 131 / 9691 cells (1.4%)
+reply | holds S  n=   504  fast 0.946  slow 0.046  never 0.008
+reply | no card  n=   122  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  1781  fast 0.946  slow 0.034  never 0.021
+probe | no card  n=    35  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+== v04, 30 games, seed 20260822
+divergence guard: 1000 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 114 / 12656 cells (0.9%)
+reply | holds S  n=   476  fast 0.941  slow 0.042  never 0.017
+reply | no card  n=   121  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  2687  fast 0.978  slow 0.016  never 0.006
+probe | no card  n=    62  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+== v03, 30 games, seed 20260822
+divergence guard: 814 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 178 / 10884 cells (1.6%)
+reply | holds S  n=   490  fast 0.890  slow 0.084  never 0.027
+reply | no card  n=   175  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  2016  fast 0.931  slow 0.040  never 0.030
+probe | no card  n=    27  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+== silent:tol=0.10, 30 games, seed 20260822
+divergence guard: 1190 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 256 / 15954 cells (1.6%)
+reply | holds S  n=   600  fast 0.915  slow 0.073  never 0.012
+reply | no card  n=   169  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  3291  fast 0.932  slow 0.054  never 0.014
+probe | no card  n=    82  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+== feint, 30 games, seed 20260822
+divergence guard: 1278 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 248 / 17847 cells (1.4%)
+reply | holds S  n=   690  fast 0.912  slow 0.068  never 0.020
+reply | no card  n=   209  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  3561  fast 0.910  slow 0.068  never 0.022
+probe | no card  n=   118  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+== withholder:k=6, 30 games, seed 20260822
+divergence guard: 1332 states, max |fitTilted(off) - sinkhornDisj| = 0.000e+00
+opportunity weight varies within a (seat,half-suit): 298 / 16538 cells (1.8%)
+reply | holds S  n=   159  fast 0.333  slow 0.164  never 0.503
+reply | no card  n=    68  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+probe | holds S  n=  3963  fast 0.974  slow 0.015  never 0.012
+probe | no card  n=    14  fast 0.000  slow 0.000  never 1.000   <-- fast/slow MUST be 0
+
+=== m7_feint_statistics (40 games/policy, seed 20260822)
+v05                breadth (distinct sets / ask) 0.3281   mean cards held in S at ask 2.336   asks with exactly 1 card of S 27.2%
+v04                breadth (distinct sets / ask) 0.2810   mean cards held in S at ask 2.237   asks with exactly 1 card of S 33.2%
+v03                breadth (distinct sets / ask) 0.2962   mean cards held in S at ask 2.572   asks with exactly 1 card of S 22.9%
+silent:tol=0.10    breadth (distinct sets / ask) 0.2898   mean cards held in S at ask 2.001   asks with exactly 1 card of S 38.7%
+feint              breadth (distinct sets / ask) 0.2972   mean cards held in S at ask 2.260   asks with exactly 1 card of S 34.1%
+withholder:k=6     breadth (distinct sets / ask) 0.2663   mean cards held in S at ask 2.065   asks with exactly 1 card of S 33.6%
+
+=== m7_online_model (40 deals, seat 1 marked, seed 515151, dataBias 2)
+marked seat 1 = withholder:k=6    40 deals  dataBias=2.00  carry=0.00  (observer = seat 0)
+seat   ordinary v03like  silent   withholder  feint    | MAP=with theta_eff episodes/game
+1      0.472    0.151    0.149    0.228    0.000      | 0.07     0.4181    4.9
+2      0.506    0.162    0.163    0.169    0.000      | 0.07     0.4084    2.3
+3      0.498    0.158    0.159    0.185    0.000      | 0.07     0.4085    2.1
+4      0.515    0.169    0.170    0.147    0.000      | 0.00     0.4079    2.4
+5      0.510    0.152    0.153    0.185    0.000      | 0.03     0.4062    2.1
+tilt: 1.95% of (card,seat) cells non-zero, mean |z| over all cells 0.0086, max 0.9000
+
+marked seat 1 = withholder:k=6    40 deals  dataBias=2.00  carry=0.70  (observer = seat 0)
+seat   ordinary v03like  silent   withholder  feint    | MAP=with theta_eff episodes/game
+1      0.349    0.128    0.126    0.397    0.000      | 0.50     0.4324    4.9
+2      0.506    0.165    0.166    0.163    0.000      | 0.10     0.4077    2.3
+3      0.474    0.153    0.154    0.218    0.000      | 0.20     0.4111    2.1
+4      0.493    0.180    0.184    0.143    0.000      | 0.03     0.4085    2.4
+5      0.500    0.146    0.148    0.206    0.000      | 0.07     0.4068    2.1
+tilt: 1.95% of (card,seat) cells non-zero, mean |z| over all cells 0.0083, max 0.9000
+
+marked seat 1 = withholder:k=6    40 deals  dataBias=2.00  carry=0.90  (observer = seat 0)
+seat   ordinary v03like  silent   withholder  feint    | MAP=with theta_eff episodes/game
+1      0.229    0.115    0.114    0.542    0.000      | 0.70     0.4437    4.9
+2      0.519    0.161    0.163    0.157    0.000      | 0.10     0.4073    2.3
+3      0.477    0.142    0.143    0.237    0.000      | 0.30     0.4121    2.1
+4      0.454    0.198    0.205    0.143    0.000      | 0.10     0.4095    2.4
+5      0.470    0.145    0.149    0.236    0.000      | 0.12     0.4077    2.1
+tilt: 1.95% of (card,seat) cells non-zero, mean |z| over all cells 0.0080, max 0.9000
+
+marked seat 1 = v05               40 deals  dataBias=2.00  carry=0.90  (observer = seat 0)
+seat   ordinary v03like  silent   withholder  feint    | MAP=with theta_eff episodes/game
+1      0.486    0.182    0.190    0.142    0.000      | 0.15     0.4066    2.5
+2      0.576    0.151    0.159    0.115    0.000      | 0.07     0.4049    2.2
+3      0.363    0.211    0.215    0.211    0.000      | 0.25     0.4097    2.0
+4      0.569    0.146    0.150    0.135    0.000      | 0.10     0.4075    2.4
+5      0.494    0.191    0.201    0.114    0.000      | 0.05     0.4022    1.7
+tilt: 1.02% of (card,seat) cells non-zero, mean |z| over all cells 0.0039, max 0.9000
+
+marked seat 1 = feint             40 deals  dataBias=2.00  carry=0.90  (observer = seat 0)
+seat   ordinary v03like  silent   withholder  feint    | MAP=with theta_eff episodes/game
+1      0.401    0.200    0.202    0.197    0.000      | 0.15     0.4180    4.8
+2      0.478    0.169    0.171    0.181    0.000      | 0.10     0.4050    2.3
+3      0.434    0.197    0.195    0.173    0.000      | 0.03     0.4086    2.3
+4      0.542    0.156    0.160    0.142    0.000      | 0.07     0.4084    3.0
+5      0.538    0.163    0.170    0.130    0.000      | 0.05     0.4027    1.4
+tilt: 1.80% of (card,seat) cells non-zero, mean |z| over all cells 0.0074, max 0.9000
+
+=== §5 sanity runs (patched sandbox binary, 25 deals x 2 rotations = 50 games per cell)
+=== UNDERPOWERED: CIs ~ +-13 points, arms not paired.  Reported to show the seeds disagree.
+--- seed 515151
+v05:m7=0           vs withholder:k=6   60%  [46.1814, 72.3916]  n=50
+v05                vs withholder:k=6   72%  [58.3349, 82.5258]  n=50
+v05:m7ask=1.0      vs withholder:k=6   44%  [31.1622, 57.694]  n=50
+v05:m7sil=0        vs withholder:k=6   66%  [52.1538, 77.5631]  n=50
+v05:m7th=0         vs withholder:k=6   56%  [42.306, 68.8378]  n=50
+v05:m7=0           vs v04              38%  [25.8628, 51.8496]  n=50
+v05                vs v04              42%  [29.375, 55.7666]  n=50
+v05:m7ask=1.0      vs v04              30%  [19.1036, 43.7504]  n=50
+v05:m7sil=0        vs v04              32%  [20.7582, 45.8103]  n=50
+v05:m7th=0         vs v04              40%  [27.6084, 53.8186]  n=50
+--- seed 20260901
+v05:m7=0           vs withholder:k=6   54%  [40.3989, 67.0303]  n=50
+v05                vs withholder:k=6   60%  [46.1814, 72.3916]  n=50
+v05:m7ask=1.0      vs withholder:k=6   60%  [46.1814, 72.3916]  n=50
+v05:m7sil=0        vs withholder:k=6   60%  [46.1814, 72.3916]  n=50
+v05:m7th=0         vs withholder:k=6   60%  [46.1814, 72.3916]  n=50
+v05:m7=0           vs v04              32%  [20.7582, 45.8103]  n=50
+v05                vs v04              50%  [36.6445, 63.3555]  n=50
+v05:m7ask=1.0      vs v04              40%  [27.6084, 53.8186]  n=50
+v05:m7sil=0        vs v04              44%  [31.1622, 57.694]  n=50
+v05:m7th=0         vs v04              40%  [27.6084, 53.8186]  n=50
+
+=== divergence guard (patched sandbox binary)
+m7check: 1054 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+m7check: 698 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+m7check: 840 states, max |fitTilted(off) - sinkhornDisj| = 0   PASS
+
+=== off-switch equivalence
+patched   v05:m7=0 vs v04, 20 deals seed 90210:
+  win rate      50%  [35.1995, 64.8005]  n=40
+  ask accuracy  54.4669% / 56.1667%
+unpatched v05      vs v04, 20 deals seed 90210:
+  win rate      50%  [35.1995, 64.8005]  n=40
+  ask accuracy  54.4669% / 56.1667%
+
+# ---------------------------------------------------------------------------
+# Added by the verification pass (2026-08-22).  §1.2's clip census and the
+# extra total-support iteration count were quoted in the design note without a
+# committed run behind them; both are reproduced here from committed harnesses.
+
+=== m7_clip_census  20 4242
+states 1852   (seat,half-suit) cells 62934
+clip binds HIGH (z > +2.6): 1463  (2.32%)
+clip binds LOW  (z < -2.6): 7630  (12.12%)
+
+=== m7_algebra_totalsupport  20 4242 5000
+states with TOTAL SUPPORT   : 1845   residual max 4.651e-05  mean 5.008e-08  (cells 274866)
+states WITHOUT total support: 5   residual max 1.362e-08  mean 3.665e-10  (cells 156)
+mask-legal cells: 212988 live, 29 capacity-infeasible (0.01%)

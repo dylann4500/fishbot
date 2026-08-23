@@ -15,7 +15,8 @@ namespace fish {
 
 struct SeatCfg {
   std::string spec = "v04";
-  bool human = false;
+  std::string name;          // display name; distinct names are what make a
+  bool human = false;        // table of six bots readable at all
 };
 
 inline bool knownPolicy(const std::string& spec) {
@@ -74,7 +75,8 @@ struct Snap {
   uint64_t hand[NPLAY] = {0,0,0,0,0,0};
   uint64_t dealt[NPLAY] = {0,0,0,0,0,0};
   bool reveal = false;
-  std::string label[NPLAY];
+  std::string label[NPLAY];   // engine label, e.g. "FishBot v0.4"
+  std::string name[NPLAY];    // display name, e.g. "Nova"
   std::string spec[NPLAY];
   bool isHuman[NPLAY] = {false,false,false,false,false,false};
   uint64_t seed = 0;
@@ -89,9 +91,20 @@ struct Table {
   Rules rules;
   uint64_t seed = 0;
 
+  static const char* defaultName(int p) {
+    static const char* n[NPLAY] = {"Ari", "Vega", "Nova", "Orion", "Lyra", "Rigel"};
+    return n[p];
+  }
+  // "You" is only ever a default for a seat somebody is actually playing.
+  std::string resolvedName(int p) const {
+    if (!seats[p].name.empty()) return seats[p].name;
+    return seats[p].human ? std::string("You") : std::string(defaultName(p));
+  }
+
   Table() {
-    for (int p = 0; p < NPLAY; p++) seats[p].spec = "v04";
+    for (int p = 0; p < NPLAY; p++) { seats[p].spec = "v04"; seats[p].name = defaultName(p); }
     seats[0].human = true;
+    seats[0].name = "You";
     publishConfig();
   }
 
@@ -103,7 +116,8 @@ struct Table {
     for (int p = 0; p < NPLAY; p++) {
       snap.spec[p] = seats[p].spec;
       snap.isHuman[p] = seats[p].human;
-      snap.label[p] = seats[p].human ? std::string("You") : policyLabel(seats[p].spec);
+      snap.label[p] = seats[p].human ? std::string("Human") : policyLabel(seats[p].spec);
+      snap.name[p] = resolvedName(p);
     }
     io.bump();
   }
@@ -135,7 +149,8 @@ struct Table {
       for (int p = 0; p < NPLAY; p++) {
         snap.spec[p] = seats[p].spec;
         snap.isHuman[p] = seats[p].human;
-        snap.label[p] = seats[p].human ? std::string("You") : policyLabel(seats[p].spec);
+        snap.label[p] = seats[p].human ? std::string("Human") : policyLabel(seats[p].spec);
+        snap.name[p] = resolvedName(p);
         snap.handCount[p] = rules.deckSets;
       }
       snap.hist.clear();
@@ -147,19 +162,23 @@ struct Table {
   }
 
   // ------------------------------------------------------------ game thread
-  void capture(const Game& g) {
-    std::lock_guard<std::mutex> lk(io.mu);
-    // capture() runs inside emit(), and Game::run moves the turn *after* the
-    // event is emitted, so pub.turn still names the previous mover.  Displaying
-    // that would tell the browser the wrong seat is to play, so the snapshot
-    // applies the same transition the driver is about to apply.  This is a
-    // display correction only: agents still observe pub.turn exactly as before.
+
+  // Who acts next.  Game::run moves the turn *after* the event is emitted, so
+  // pub.turn still names the previous mover while an observer is running; this
+  // applies the transition the driver is about to apply.
+  static int nextMover(const Game& g) {
     int t = g.g.pub.turn;
     if (!g.g.pub.history.empty()) {
       const Event& e = g.g.pub.history.back();
       if ((e.kind == Kind::Ask && !e.success) || e.kind == Kind::Pass) t = e.target;
     }
-    snap.turn = t;
+    return (t >= 0 && t < NPLAY) ? t : g.g.pub.turn;
+  }
+
+  void capture(const Game& g) {
+    std::lock_guard<std::mutex> lk(io.mu);
+    // Display correction only: agents still observe pub.turn exactly as before.
+    snap.turn = nextMover(g);
     snap.dealer = g.g.dealer;
     snap.score[0] = g.g.pub.score[0];
     snap.score[1] = g.g.pub.score[1];
@@ -175,7 +194,27 @@ struct Table {
   }
 
   // Paces the bots so a human can follow them, and honours pause / single step.
-  void paceGate() {
+  //
+  // The delay is the time a bot takes to move, so it is charged by *who acts
+  // next*, not by who just moved:
+  //
+  //   * you ask and miss  -> a bot is next, so it replies after the delay;
+  //   * you ask and hit   -> you are next, so you may ask again at once;
+  //   * a bot asks you and misses -> you are next, so you are prompted at once;
+  //   * a bot asks you and hits   -> it keeps the turn, so its next ask is paced.
+  //
+  // Once the turn is yours there is nothing to wait for: you set your own tempo
+  // and can read the board for as long as you like before acting.
+  //
+  // The exception is the forced endgame, where nobody is "to move" in the asking
+  // sense and every event is a declaration worth watching, so the delay stands.
+  //
+  // Pause and single-step still apply to every seat -- pausing means the table
+  // is frozen, whoever moved last.
+  void paceGate(const Game& g) {
+    bool humanNext = false;
+    if (g.g.pub.teamAlive(0) && g.g.pub.teamAlive(1))
+      humanNext = seats[nextMover(g)].human;
     std::unique_lock<std::mutex> lk(io.mu);
     for (;;) {
       if (io.abandon) throw Abandoned{};
@@ -183,10 +222,19 @@ struct Table {
       if (io.stepBudget > 0) { io.stepBudget--; return; }
       io.cv.wait(lk);
     }
-    int ms = io.paceMs;
-    if (ms > 0) {
-      io.cv.wait_for(lk, std::chrono::milliseconds(ms), [&] { return io.abandon || io.paused; });
+    if (humanNext) return;
+    // The delay is measured against paceMs as it stands *now*, re-read on every
+    // wakeup, so dragging the pace slider down from 20s to 1s takes effect at
+    // once instead of after the deadline the old value had already fixed.
+    auto start = std::chrono::steady_clock::now();
+    for (;;) {
       if (io.abandon) throw Abandoned{};
+      if (io.paused) return;                 // pausing supersedes the delay
+      long long ms = io.paceMs;
+      long long el = std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::steady_clock::now() - start).count();
+      if (el >= ms) return;
+      io.cv.wait_for(lk, std::chrono::milliseconds(ms - el));
     }
   }
 
@@ -198,7 +246,7 @@ struct Table {
         if (seats[p].human) {
           auto h = std::make_unique<HumanAgent>();
           h->io = &io;
-          h->label = "You";
+          h->label = resolvedName(p);
           owned[p] = std::move(h);
         } else {
           owned[p] = makeAgent(seats[p].spec);
@@ -206,7 +254,7 @@ struct Table {
         ptr[p] = owned[p].get();
       }
       Game game;
-      game.observer = [this](const Game& g) { capture(g); paceGate(); };
+      game.observer = [this](const Game& g) { capture(g); paceGate(g); };
       // setup() is idempotent for a fixed seed; running it here just gives the
       // browser the opening position before run() blocks on the first decision.
       game.setup(seed, rules, ptr);
@@ -271,6 +319,7 @@ struct Table {
     for (int p = 0; p < NPLAY; p++) {
       if (p) os << ",";
       os << "{\"i\":" << p << ",\"team\":" << teamOf(p)
+         << ",\"name\":" << jesc(snap.name[p])
          << ",\"label\":" << jesc(snap.label[p])
          << ",\"spec\":" << jesc(snap.spec[p])
          << ",\"human\":" << (snap.isHuman[p] ? "true" : "false") << "}";

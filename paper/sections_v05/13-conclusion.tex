@@ -1,0 +1,188 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\vfour{} was published on the strength of a panel of weaker opponents. Played
+against a copy of itself it spends \numDeadAsk\% of its asks on cards it can
+\emph{prove} the target does not hold, repeats \numRepeatAsk\% of its asks
+exactly, and gets \numDeclWrong\% of its declarations wrong. This report
+measures that failure, corrects the account the v0.4 study gave of it, and
+reports the policy that removes it. What follows is what the evidence in
+\S\ref{sec:diagnosis} and \S\ref{sec:results} supports, stated without
+extension.
+
+\paragraph{The deadlock is a fixed point of the ask policy, not a freeze of
+information.} In a game where nothing compels a claim, the natural explanation
+for two patient policies stalling is that they have run out of things to learn.
+That explanation is wrong here twice over. It is wrong about the mechanism: the
+observed stall is a deterministic two-question cycle, present in \numPureCycle{}
+of \numLongGames{} long games at the forensic seed, and across the pooled seed
+banks no half-suit is locked to any team at any point in the cycle in
+\numNoLockPct\% of long games. And it is wrong about
+information: where a half-suit \emph{is} locked, \numCertRate\% of the asks its
+owning team may legally make inside it strictly raise a teammate's exact
+probability of the correct allocation, by a mean of \numCertMean{} and up to
+\numCertMax{}. Ownership monotonicity does not imply informational monotonicity,
+and the two were conflated.
+
+The practical consequence is that the repair is a subtraction, not a forcing
+rule. Declining asks whose success probability is exactly zero --- a hard
+deduction from the actor's own public knowledge, which cannot introduce a
+modelling error --- takes the dead-ask rate from \numFourDeadAsk\% to
+\numFiveDeadAsk\%, the share of games containing a run of six consecutive dead
+asks from \numFourDeadRunGames\% to \numFiveDeadRunGames\%, and the longest such
+run from \numFourDeadRunLongest{} to \numFiveDeadRunLongest{}. It does so with
+the event-count escalation that used to force claims switched \emph{off}:
+declarations made at or after the old horizon fall from
+\numFourPostHorizonDecl{} to \numFivePostHorizonDecl{}, declaration error from
+\numFourDeclWrong\% to \numFiveDeclWrong\%, and no game in either arm reaches
+the action cap. Forcing claims was never the fix; it was the mechanism that
+converted the stall into misdeclaration, at a measured cost of
+\numStageTwoCost{} points against a mirror opponent.
+
+\paragraph{A per-card argmax allocation is infeasible, not merely unlikely.}
+The second defect is of a different kind from a low-probability guess, and the
+difference is worth stating exactly. \vfour{} named its forced-endgame
+allocation by taking, card by card, the teammate with the highest marginal ---
+a procedure with no capacity constraint, which can therefore give a teammate
+more cards than that teammate holds. All \numForcedN{} such declarations over
+\numForcedGames{} distinct mirror games were wrong, and the reason is not that
+the estimate was poor. The named allocation has posterior probability exactly
+zero: it is excluded by the declarer's own arithmetic, not merely disfavoured by
+it. A policy losing a hard inference problem and a policy naming an outcome it
+has itself ruled out are different failures and need different repairs. Searching
+the capacity-feasible set instead takes forced-endgame accuracy from
+\numVfourForcedAcc\% to \numVfiveForcedAcc\% over \numForcedEightGames{} games
+per arm --- against a measured ceiling of \numFeasibleRight\% for the best
+feasible allocation at those states, so the gap is narrowed and not closed. The
+state is also reached \numForcedRateRatio$\times$ less often, but that belongs to
+M1 rather than to M2: what was stripping a team of cards while half-suits stood
+undeclared was the runs of guaranteed misses, not the declaration rule
+(\S\ref{sec:results-forced}).
+
+\paragraph{What the v0.4 study said that is withdrawn.}
+\S\ref{sec:corrections} is the register. The load-bearing entry is C1, the
+information-freeze account of non-termination, which is retracted with the
+measurement that refutes it; the v0.4 \emph{paper} states the correct position
+and is not implicated, while the supporting artifact states the wrong one. The
+remaining entries correct the reported termination property (purchased, and the
+price unreported), the status of the forced-endgame accuracy figure (a
+mechanical certainty, not a hard problem lost), the sign of the value-function
+``known gap,'' the claim that the policy prior is two channels, the usability of
+asks inside a locked half-suit, the willingness ladder, the well-posedness of the
+stopping problem, and the scope of the published worst case. Three of those
+entries also carry corrections to earlier drafts of the present study rather
+than to the v0.4 one, and are recorded in the same place for the same reason.
+
+\paragraph{What \vfive{} costs, and what it does not buy.} It does not buy win
+rate. Over the nine-style panel of \S\ref{sec:results}
+(\numStyleDeals{} deals in six rotations per cell, seed \numStyleSeed{}) the
+means are level --- \numVfiveMean\% for \vfive{} against \numVfourMean\% for
+\vfour{} --- and head to head \vfive{} scores \numPanelVfiveVfour\%
+[\numStyleCIVfour], which is $\numDeltaVfour$ points on \vfour{}'s
+\numPanelVfourVfour\% mirror baseline on an interval that contains even money.
+Across \numHeadSeeds{} further seed banks the same pairing averages \numHeadWin\%
+with a range of \numHeadRange\%. On minimax regret over the style set \vfour{} is
+marginally the better of the two, \numVfourRegret{} against \vfive{}'s
+\numVfiveRegret{}. Per style the differences run in both directions:
+$\numDeltaLockout$ on the lockout opponent, $\numDeltaVfour$ on the mirror and
+$\numDeltaDiversifier$ on the diversifier against $\numDeltaVtwo$ on \vtwo{} and
+$\numDeltaVthree$ on \vthree{}, with the remainder at half a point or less and no
+per-cell interval separating either policy from the other on any style.
+\vfive{}'s worst case over the nine styles is \numVfiveWorst\%, against \vfour{},
+and \vfour{}'s is \numVfourWorst\%, against a copy of itself. In both cases the
+worst cell is the opponent of the policy's own strength, which is the worst case
+for any policy in this family, and which is why the v0.4 study's floor of
+\numVfourVsVthree\% describes a panel rather than a policy. The case for \vfive{} is the pathology table and the
+deception panel below. It is not the win rate, and this report does not offer
+one.
+
+\paragraph{The result that speaks to the incident that started this.} The work
+was prompted by a live report: the project owner held cards of a half-suit he
+had been asked for and then declined to ask back in it, and \vfour{} was visibly
+confused. Modelled as an archetype --- after being asked in half-suit $S$ while
+holding other cards of $S$, avoid asking in $S$ for the next several turns ---
+\vfour{} wins \numDecWithholderFour\% of its games against that archetype and
+\vfive{} wins \numDecWithholderFive\%, a gain of $\numDecWithholderDelta$ points
+replicated at \numDecSeeds{} independent seed banks of \numDecGames{} games
+each. The silent archetype moves the same way, by $\numDecSilentDelta$ points.
+
+The mechanism is worth being precise about, because it is not the one the design
+document proposed. \vfive{} has no opponent model that \vfour{} lacks: M3--M7
+are specified and unbuilt, the policy prior is still fixed and global rather than
+per-seat, and nothing in \vfive{} watches a seat and updates a type. What changed is that
+\vfive{} never spends a turn on an ask it can prove will miss. A misleading
+\emph{absence} of asks works by making a policy's own inferences point at the
+wrong half-suit; a policy whose candidate set is already pruned to asks with
+strictly positive hard-consistent probability gives that misdirection much less
+to move. Robustness here was bought by removing a defect, not by adding a
+model --- which is the more encouraging of the two possibilities, and also the
+one with a lower ceiling.
+
+The same panel records a loss. Against the feint --- which manufactures a
+\emph{false} ask-legality certificate rather than withholding a true one ---
+\vfive{} scores \numDecFeintFive\% against \vfour{}'s \numDecFeintFour\%, a
+difference of $\numDecFeintDelta$ points that replicates at both seeds. It is
+not an accident of tuning noise: the fit raised the weight on ``this player asked here''
+from \numPriorThetaFour{} to \numPriorThetaFive{}, and the diagnosis had already
+established that over-weighting the policy prior is exactly this exposure ---
+while deleting the prior outright is worse still against the deceptive
+archetypes themselves, by \numPriorDeleteCost{} points
+[\numPriorDeleteCI]. Across the full twelve-style set \vfive{}'s worst case is the
+\numDecWorstOpp{} at \numDecWorst\%, marginally below its mirror. No aggregate
+figure in this report should be quoted without that table beside it.
+
+\paragraph{What comes next, in order.} The ranking follows from the exposure
+above rather than from the design document's build order.
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt,parsep=0pt]
+\item \textbf{M7, the online per-seat type posterior.} This is the principled fix
+      for the feint, and \S\ref{sec:limitations} shows why nothing cheaper will
+      do: a sweep of the prior weight over \numThetaSweepN{} values at two seeds
+      does not identify the parameter. Shaped as a data-biased response
+      \cite{johanson-dbr}, a manufactured certificate from a seat whose type
+      posterior has drifted toward deceptive is discounted rather than believed,
+      and the exploitation/robustness dial becomes explicit and reportable
+      \cite{johanson-rnash} instead of being frozen at a fitted constant.
+\item \textbf{M4, M5 and M3, in that order}, because each is the precondition of
+      the next. A per-seat knowledge model is nearly free from a public
+      transcript; it makes the target dimension scoreable, which is currently
+      discarded outright --- the ask score opens by voiding its target argument,
+      throwing away a mean of \numTargetBits{} free bits per ask, with at least
+      two hard-indistinguishable targets on offer at \numTargetTwo\% of
+      decisions and roughly \numTargetBitsGame{} bits per team per game in
+      total; and only
+      then can the net-information term of M3 be priced rather than gated, which
+      \S\ref{sec:diag-information} shows is the only form in which it can ever
+      fire.
+\item \textbf{An exploitability probe.} The v0.4 study ran one; this one
+      did not, and until it does \vfive{} claims no robustness property that a best
+      response could contradict. Such a probe reports an achieved score that is
+      a lower bound within its search class \cite{lisy-lbr}, and it is worth
+      running both with and without M6, since a deterministic argmax sits at
+      the deterministic leakage bound whatever its weights
+      \cite{alvim-leakage}.
+\item \textbf{A value model that is more than one feature.} Held-out $R^2$ is
+      \numValueRSq{} for all sixteen features and \numValueRSqScore{} for a bias
+      term plus the score differential alone, while a tree reaches
+      \numValueRSqTree{}. Either rebuild it on rows collected at declaration
+      points as well as ask points and refit it jointly with the policy vector,
+      or retire it and score declarations directly on allocation probability.
+      The measurement decides; the present state --- sixteen coefficients
+      carrying one feature's worth of signal --- should not survive either way.
+\end{enumerate}
+
+\paragraph{The narrow claim, and the broader one.} The narrow claim of this
+report is that a specific, reproducible failure of a specific agent was
+diagnosed to an arithmetic cause in its ask score, that the cause was removed,
+that the removal cost nothing measurable in aggregate win rate and left \vfour{}
+marginally ahead on minimax regret, and that it helped substantially against one
+class of deceptive opponent while hurting measurably against another.
+The broader observation is
+about evaluation. Every statistic in \S\ref{sec:diagnosis} was available to the
+v0.4 study; none of it was collected, because the panel it was measured against
+contained no opponent of its own strength, and the failure is a strong-opponent
+phenomenon. The mirror belongs in the fitting panel, the pathology counters
+belong in the commit gate, and the per-opponent breakdown with an explicit worst
+case belongs in the abstract --- not because they are more rigorous, but because
+an aggregate win rate against weaker opponents would have reported all of this
+as a success.

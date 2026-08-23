@@ -6,641 +6,935 @@
 <title>FishLab Table</title>
 <style>
 :root{
-  --bg:#0e1116; --panel:#161b23; --panel2:#1d232d; --line:#2a323f;
-  --ink:#e6edf5; --dim:#8b98a9; --accent:#59a5ff; --a:#4ec9a7; --b:#e0864f;
-  --good:#4ec9a7; --bad:#e5636b; --warn:#e3c05c;
+  --bg:#0f1724; --panel:#17202e; --panel2:#202b3c; --line:#2b3648;
+  --ink:#e8eef6; --dim:#93a1b5; --accent:#4c8dff; --A:#43c9a0; --B:#f0955a;
+  --good:#43c9a0; --bad:#ef6b73; --warn:#ecc45f;
+  --felt1:#173a2e; --felt2:#0d2a20;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-  font:14px/1.45 ui-sans-serif,-apple-system,"SF Pro Text",Segoe UI,Roboto,sans-serif}
-h1,h2,h3{margin:0;font-weight:650}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:14px/1.45 ui-sans-serif,-apple-system,"SF Pro Text",Segoe UI,Roboto,sans-serif;overflow:hidden}
+h1,h2,h3,h4{margin:0;font-weight:650}
 button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);
-  border-radius:7px;padding:6px 11px;cursor:pointer}
-button:hover:not(:disabled){border-color:#41506a;background:#232b37}
-button:disabled{opacity:.38;cursor:default}
-button.pri{background:var(--accent);border-color:var(--accent);color:#06121f;font-weight:650}
-button.pri:hover:not(:disabled){background:#7bb8ff;border-color:#7bb8ff}
-select,input{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);
-  border-radius:6px;padding:5px 7px}
-a{color:var(--accent)}
-.wrap{max-width:1320px;margin:0 auto;padding:12px 16px 60px}
-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--line)}
-.brand{font-weight:700;letter-spacing:.2px}
-.brand small{color:var(--dim);font-weight:400;margin-left:8px}
-.spacer{flex:1}
-.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:13px}
-.chip b{font-variant-numeric:tabular-nums}
-.teamA{color:var(--a)} .teamB{color:var(--b)}
-.dotA{background:var(--a)} .dotB{background:var(--b)}
-.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:16px;margin-top:14px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
-.panel h3{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
-.seats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.seat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;position:relative}
-.seat.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-.seat.you{background:#1b2533}
-.seat.out{opacity:.5}
-.seat .nm{font-weight:600;display:flex;align-items:center;gap:6px}
-.seat .sub{color:var(--dim);font-size:12px;margin-top:2px;display:flex;justify-content:space-between}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
-.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);
-  border-radius:4px;padding:0 4px}
-/* cards */
-.card{width:44px;height:62px;background:#f6f7f9;color:#12151a;border:1px solid #c3cad4;border-radius:6px;
-  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;
-  box-shadow:0 1px 2px rgba(0,0,0,.35);user-select:none}
-.card .r{font-size:15px;font-weight:700;line-height:1}
-.card.jk .r{font-size:10px;letter-spacing:.02em}
-.card.jk .s{font-size:22px}
-.card .s{font-size:19px;line-height:1.05}
-.card.red{color:#c2263a}
-.card .corner{position:absolute;top:2px;left:4px;font-size:9px;font-weight:700;line-height:1}
-.card.sm{width:34px;height:48px}
-.card.sm .r{font-size:12px}.card.sm .s{font-size:14px}
-.card.jk{background:#fffbe9}
-.card.ghost{background:#222933;color:#5d6a7c;border-color:#333c4a;border-style:dashed;box-shadow:none}
-.card.pick{cursor:pointer}
-.card.pick:hover{outline:2px solid var(--accent);outline-offset:1px}
-.card.sel{outline:2px solid var(--accent);outline-offset:1px}
-.card.held{opacity:.34}
-.hand{display:flex;flex-wrap:wrap;gap:14px}
-.hs{display:flex;flex-direction:column;gap:5px}
-.hs .lbl{font-size:11px;color:var(--dim)}
-.hs .row{display:flex;gap:4px}
-/* sets tracker */
-.sets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.setchip{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:12px}
-.setchip.won0{border-color:var(--a);color:var(--a)}
-.setchip.won1{border-color:var(--b);color:var(--b)}
-.setchip .st{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em}
-/* log */
-#log{max-height:340px;overflow:auto;font-size:13px}
-.ev{padding:4px 0;border-bottom:1px solid #202834}
-.ev:last-child{border-bottom:0}
-.ev .who{font-weight:600}
-.ev.hit{color:var(--good)} .ev.miss{color:var(--dim)}
-.ev.dec{color:var(--warn)} .ev.bad{color:var(--bad)}
+  border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover:not(:disabled){background:#2a374b;border-color:#3d4c66}
+button:disabled{opacity:.35;cursor:default}
+button.pri{background:var(--accent);border-color:var(--accent);color:#04101f;font-weight:650}
+button.pri:hover:not(:disabled){background:#6ea3ff;border-color:#6ea3ff}
+button.dec{background:#2f8f5b;border-color:#2f8f5b;color:#04140b;font-weight:650}
+button.dec:hover:not(:disabled){background:#3aa96c;border-color:#3aa96c}
+button.dang{background:#a33a41;border-color:#a33a41;color:#fff}
+button.dang:hover:not(:disabled){background:#bd464e;border-color:#bd464e}
+input,select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);
+  border-radius:7px;padding:6px 9px;width:100%}
+label.f{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.screen{position:absolute;inset:0}
+[hidden]{display:none !important}
+
+/* ------------------------------------------------------------------ cards */
+.pc{--cw:70px;position:relative;width:var(--cw);height:calc(var(--cw)*1.42);background:#fff;
+  color:#15181d;border:1px solid #b6c0cd;border-radius:calc(var(--cw)*.085);flex:none;overflow:hidden;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);font-family:ui-serif,Georgia,"Times New Roman",serif}
+.pc.red{color:#c8102e}
+.pc.xs{--cw:34px}.pc.sm{--cw:50px}.pc.lg{--cw:88px}
+.pc .idx{position:absolute;top:3.5%;left:7%;line-height:.92;text-align:center;font-weight:700}
+.pc .idx.br{top:auto;left:auto;bottom:3.5%;right:7%;transform:rotate(180deg)}
+.pc .idx .r{font-size:calc(var(--cw)*.235)}
+.pc .idx .s{font-size:calc(var(--cw)*.2)}
+.pc .body{position:absolute;inset:13% 20%;display:grid;grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(7,1fr);align-items:center;justify-items:center}
+.pc .pip{font-size:calc(var(--cw)*.235);line-height:1}
+.pc .pip.flip{transform:rotate(180deg)}
+.pc .pip.ace{font-size:calc(var(--cw)*.62)}
+.pc .court{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#eceff4;border:1px solid #d4dae2;border-radius:3px}
+.pc .court .ltr{font-size:calc(var(--cw)*.44);font-weight:700;line-height:1}
+.pc .court .cs{font-size:calc(var(--cw)*.26);line-height:1.1}
+.pc.joker .jk{position:absolute;top:5%;left:8%;writing-mode:vertical-rl;letter-spacing:.1em;
+  font-size:calc(var(--cw)*.13);font-weight:700}
+.pc.joker .jk.b{top:auto;left:auto;bottom:5%;right:8%;transform:rotate(180deg)}
+.pc.joker .art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cw)*.52)}
+.pc.back{background:repeating-linear-gradient(45deg,#5766d0 0 5px,#46539f 5px 10px);border-color:#39448a}
+.pc.pick{cursor:pointer;transition:transform .09s}
+.pc.pick:hover{transform:translateY(-7px);box-shadow:0 8px 16px rgba(0,0,0,.5)}
+.pc.dim{opacity:.32}
+
+/* ------------------------------------------------------------------ setup */
+#setup{overflow:auto;padding:26px 20px 60px;background:
+  radial-gradient(1200px 600px at 50% -10%,#1b2a3f 0%,var(--bg) 60%)}
+.sbox{max-width:940px;margin:0 auto}
+.sbox h1{font-size:22px}
+.sub{color:var(--dim);margin:6px 0 20px}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tcol{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tcol h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.tcol.a h4{color:var(--A)} .tcol.b h4{color:var(--B)}
+.srow{display:grid;grid-template-columns:44px 1fr 1fr;gap:9px;align-items:end;margin-bottom:10px}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:15px;color:#08111c;flex:none;border:2px solid rgba(255,255,255,.16)}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.pres{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+
+/* ------------------------------------------------------------------- game */
+#game{display:flex}
+.arena{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px 14px 0}
+#felt{position:relative;flex:1;min-height:280px;width:100%;border-radius:50%/46%;
+  background:radial-gradient(ellipse at 50% 42%,#1d4a3a 0%,var(--felt1) 45%,var(--felt2) 100%);
+  box-shadow:inset 0 0 90px rgba(0,0,0,.55),0 0 0 10px #0b1a14,0 0 0 12px #16242f}
+.seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:3px;width:130px}
+.seat .avwrap{position:relative}
+.seat .av{width:52px;height:52px;font-size:18px}
+.seat.turn .av{box-shadow:0 0 0 3px var(--accent),0 0 18px 3px rgba(76,141,255,.6)}
+.seat.out{opacity:.42}
+.seat .cnt{position:absolute;top:-4px;right:-8px;background:#0d1620;border:1px solid var(--line);
+  border-radius:6px;font-size:11px;padding:0 5px;font-weight:700;font-variant-numeric:tabular-nums}
+.seat .nm{font-size:13px;font-weight:650;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap}
+.seat .eng{font-size:10px;color:#9fb3a8;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.seat .askbtn{background:var(--warn);border-color:var(--warn);color:#191300;font-weight:700;
+  padding:2px 10px;border-radius:6px;font-size:12px}
+.seat .askbtn:hover{background:#f7d573;border-color:#f7d573}
+.bub{position:absolute;bottom:100%;margin-bottom:6px;left:50%;transform:translateX(-50%);
+  padding:3px 9px;border-radius:8px;font-size:12px;font-weight:650;white-space:nowrap;color:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.bub.no{background:#c04049}.bub.yes{background:#2f8f5b}.bub.info{background:#3c4d66}
+.stack{position:absolute;transform:translate(-50%,-50%) }
+#center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
+  pointer-events:none;color:#cfe6dc}
+#center .sc{font-size:26px;font-weight:700;letter-spacing:.02em}
+#center .sc .a{color:var(--A)} #center .sc .b{color:var(--B)}
+#center .to{font-size:12px;color:#8fb3a5;margin-top:2px}
+.handbar{height:164px;display:flex;align-items:center;justify-content:center;gap:0;padding:8px 0 10px}
+.handbar .grp{display:flex;margin-right:14px}
+.handbar .grp .pc{position:relative;transition:transform .1s}
+.handbar .grp .pc{--cw:78px}
+.handbar .grp .pc+.pc{margin-left:-27px}
+.handbar .grp .pc:hover{transform:translateY(-12px);z-index:5}
+.handbar .empty{color:var(--dim)}
+
+/* ---------------------------------------------------------------- sidebar */
+aside{width:390px;flex:none;background:var(--panel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;padding:12px;gap:10px;overflow:hidden}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700}
+.brand small{color:var(--dim);font-weight:400}
+.box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.rost{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rost h4{font-size:11px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:6px}
+.rost .a h4{color:var(--A)}.rost .b h4{color:var(--B)}
+.rost .p{display:flex;align-items:center;gap:7px;padding:3px 5px;border-radius:6px;font-size:13px}
+.rost .p.me{background:#22412f}
+.rost .p .av{width:22px;height:22px;font-size:10px;border-width:1px}
+.rost .p .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rost .p .c{margin-left:auto;color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+.rost .sets{margin-top:6px;font-size:12px;color:var(--dim)}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.btnrow button{flex:1;padding:7px 6px;font-size:13px}
+#banner{border-radius:9px;padding:9px 11px;font-size:13px;line-height:1.35}
+#banner.no{background:#3a1f24;border:1px solid #6a3238;color:#f2b4b9}
+#banner.yes{background:#173a2b;border:1px solid #2d6a4c;color:#9fe3c2}
+#banner.info{background:#20293a;border:1px solid #35435c;color:#c4d3e8}
+#prev{font-size:12px;color:var(--dim)}
+#prev .a{padding:2px 0}
+#log{flex:1;overflow:auto;font-size:12.5px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:10px;padding:9px}
+.ev{padding:3px 0;border-bottom:1px solid #26314300}
+.ev .w{font-weight:650}
+.ev.hit{color:#8fdcbb}.ev.miss{color:#9aa8bb}.ev.dcl{color:#f0d488}.ev.bad{color:#f09aa1}
 .muted{color:var(--dim)}
-.note{background:#2a2016;border:1px solid #5b4726;color:#e8c98d;border-radius:7px;padding:7px 9px;margin-bottom:9px;font-size:13px}
-.err{background:#2c1a1d;border:1px solid #5f2a30;color:#f0a3a9}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.tbl{width:100%;border-collapse:collapse}
-.tbl td,.tbl th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
-.tbl th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
-.alloc{display:flex;flex-direction:column;gap:6px}
-.allocrow{display:flex;align-items:center;gap:8px}
-.allocrow .who{display:flex;gap:5px}
-.seatbtn{padding:4px 9px;font-size:12px;border-radius:6px}
-.seatbtn.sel{background:var(--accent);border-color:var(--accent);color:#06121f;font-weight:650}
-.hint{color:var(--dim);font-size:12px;margin-top:6px}
-#setup{position:fixed;inset:0;background:rgba(6,9,13,.82);display:none;align-items:flex-start;justify-content:center;
-  overflow:auto;padding:36px 16px;z-index:20}
-#setup.show{display:flex}
-#setup .box{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px;max-width:720px;width:100%}
-.deal{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.deal .col .h{font-size:12px;color:var(--dim);margin-bottom:5px}
-.deal .col .row{display:flex;flex-wrap:wrap;gap:3px}
-kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px}
+.tiny{font-size:11px}
+.toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
+.toggle input{width:auto}
+.pacerow{display:flex;align-items:center;gap:9px}
+.pacerow .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);flex:none}
+.pacerow .val{font-size:12px;color:var(--ink);flex:none;min-width:96px;text-align:right;
+  font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;border:0;padding:0;
+  height:18px;flex:1;min-width:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:#33415a}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--accent);margin-top:-5px;border:0}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:#33415a}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--accent);border:0}
+
+/* ----------------------------------------------------------------- modals */
+#modalwrap{position:fixed;inset:0;background:rgba(4,8,14,.72);display:flex;align-items:center;
+  justify-content:center;padding:24px;z-index:50;overflow:auto}
+.modal{background:#f7f9fb;color:#16202c;border-radius:12px;width:100%;max-width:760px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);max-height:calc(100vh - 48px);display:flex;flex-direction:column}
+.modal.wide{max-width:900px}
+.mhead{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #dde3ea}
+.mhead h3{font-size:17px;flex:1}
+.mhead button{background:transparent;border:0;color:#5b6675;font-size:22px;line-height:1;padding:0 4px}
+.mbody{padding:16px 18px;overflow:auto}
+.mfoot{padding:12px 18px;border-top:1px solid #dde3ea;display:flex;justify-content:flex-end;gap:8px}
+.modal .hint{color:#5b6675;font-size:12.5px}
+/* the modal is a light surface, so its controls need their own palette --
+   the dark-theme button colours inherit the wrong ink here */
+.modal button{background:#eef1f5;border:1px solid #ccd4de;color:#16202c}
+.modal button:hover:not(:disabled){background:#e3e9f1;border-color:#b6c1d0}
+.modal button.pri{background:#1f6fe0;border-color:#1f6fe0;color:#fff}
+.modal button.pri:hover:not(:disabled){background:#3b84ea;border-color:#3b84ea}
+.modal .mhead button{background:transparent;border:0;color:#5b6675}
+.modal .mhead button:hover{background:#e8edf4}
+.askgrid .grp{margin-bottom:14px}
+.askgrid .grp h5{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#66717f;margin:0 0 6px}
+.askgrid .row{display:flex;gap:9px;flex-wrap:wrap}
+.setgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.settile{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
+  border:1px solid #ccd4de;border-radius:9px;padding:12px 14px;cursor:pointer;font-weight:650;color:#16202c}
+.settile:hover:not(:disabled){border-color:#4c8dff;background:#f0f6ff}
+.settile .sy{font-size:20px}
+.settile .sy.red{color:#c8102e}
+.settile.none{opacity:.55}
+.settile:disabled{opacity:.3;cursor:default}
+.settile .mine{font-size:11px;color:#66717f;font-weight:500}
+.atbl{width:100%;border-collapse:collapse}
+.atbl th,.atbl td{padding:8px 10px;border-bottom:1px solid #e2e7ee;text-align:left}
+.atbl th{font-size:12px;color:#66717f;font-weight:600}
+.atbl td.c,.atbl th.c{text-align:center}
+.atbl tr.held{background:#eef7f1}
+.atbl input{width:auto}
+.previewrow{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.rules h4{margin:14px 0 5px;font-size:13px}
+.rules ul{margin:0;padding-left:18px}
+.rules li{margin:3px 0;font-size:13px}
+.passrow{display:flex;gap:10px;flex-wrap:wrap}
+.passrow button{background:#1f6fe0;border-color:#1f6fe0;color:#fff;font-weight:650}
+@media (max-width:1100px){
+  #game{flex-direction:column;overflow:auto}
+  aside{width:auto;border-left:0;border-top:1px solid var(--line)}
+  #felt{width:100%;max-height:none}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">FishLab <small>play the engine</small></div>
-    <div class="chip"><span class="dot dotA"></span> Team A <b id="scA">0</b></div>
-    <div class="chip"><span class="dot dotB"></span> Team B <b id="scB">0</b></div>
-    <div class="chip" id="turnChip">—</div>
-    <span id="viewWrap" style="display:none" class="chip">view <select id="viewNow" style="border:0;background:transparent;padding:0"></select></span>
-    <div class="spacer"></div>
-    <div class="row">
-      <button id="pauseBtn">Pause</button>
-      <button id="stepBtn">Step</button>
-      <label class="muted" style="font-size:12px">pace
-        <select id="paceSel">
-          <option value="0">instant</option>
-          <option value="300">fast</option>
-          <option value="800" selected>normal</option>
-          <option value="1600">slow</option>
-        </select></label>
-      <button class="pri" id="newBtn">New game</button>
-    </div>
-  </header>
 
-  <div class="grid">
-    <div>
-      <div class="panel" style="margin-bottom:14px">
-        <h3>Table</h3>
-        <div class="seats" id="seats"></div>
-      </div>
-      <div class="panel" style="margin-bottom:14px">
-        <h3>Your hand <span id="handCount" class="muted"></span></h3>
-        <div class="hand" id="hand"></div>
-      </div>
-      <div class="panel" id="actionPanel">
-        <h3>Action</h3>
-        <div id="action"></div>
-      </div>
-      <div class="panel" id="overPanel" style="margin-top:14px;display:none">
-        <h3>Opening hands, revealed</h3>
-        <div class="deal" id="deal"></div>
-      </div>
+<!-- ============================================================== SETUP -->
+<div id="setup" class="screen">
+  <div class="sbox">
+    <h1>FishLab table</h1>
+    <div class="sub">Six seats, alternating teams. Choose an engine and a name for each seat, then deal.
+      Distinct names matter — a table of six identically-labelled bots is impossible to read.</div>
+    <div class="pres">
+      <button id="p1">You + 2× v0.4 vs 3× v0.4</button>
+      <button id="p2">You + 2× v0.3 vs 3× v0.4</button>
+      <button id="p3">Watch six v0.4s</button>
+      <button id="pn">Shuffle names</button>
     </div>
-
-    <div>
-      <div class="panel" style="margin-bottom:14px">
-        <h3>Half-suits</h3>
-        <div class="sets" id="sets"></div>
-      </div>
-      <div class="panel">
-        <h3>Log
-          <label class="muted" style="float:right;font-size:11px;text-transform:none;letter-spacing:0">
-            <input type="checkbox" id="fullLog" checked> full history
-          </label>
-        </h3>
-        <div id="log"></div>
-      </div>
+    <div class="teams">
+      <div class="tcol a"><h4>Team A — seats 0, 2, 4</h4><div id="rowsA"></div></div>
+      <div class="tcol b"><h4>Team B — seats 1, 3, 5</h4><div id="rowsB"></div></div>
     </div>
+    <div class="opts">
+      <div><label class="f">Seed</label><input id="seedIn" placeholder="random"></div>
+      <div><label class="f">Bot pace</label>
+        <div class="pacerow"><input type="range" id="paceIn" min="0" max="100" step="1" value="32">
+        <span class="val" id="paceInLbl">2.0s per move</span></div></div>
+      <div><label class="f">You are viewing</label><select id="viewSel"></select></div>
+      <div style="display:flex;align-items:end"><button class="pri" id="dealBtn" style="width:100%">Deal</button></div>
+    </div>
+    <div class="sub tiny" style="margin-top:12px">Bots never see your cards. A seat's hand is only ever sent
+      to a browser asking for that seat, so two people on two machines can share a table.</div>
   </div>
 </div>
 
-<div id="setup"><div class="box">
-  <h2 style="margin-bottom:4px">New game</h2>
-  <div class="muted" style="margin-bottom:14px">Seats alternate around the table: 0, 2, 4 are Team A; 1, 3, 5 are Team B.
-    The player to the dealer's left leads, and the dealer is drawn from the seed.</div>
-  <div class="row" style="margin-bottom:12px">
-    <button id="preset1">Me + 2× v0.4 vs 3× v0.4</button>
-    <button id="preset2">Me + 2× v0.3 vs 3× v0.4</button>
-    <button id="preset3">Watch 6 bots</button>
+<!-- =============================================================== GAME -->
+<div id="game" class="screen" hidden>
+  <div class="arena">
+    <div id="felt">
+      <div id="center"></div>
+    </div>
+    <div class="handbar" id="hand"></div>
   </div>
-  <table class="tbl"><thead><tr><th>Seat</th><th>Team</th><th>Played by</th><th>Human</th></tr></thead>
-    <tbody id="setupRows"></tbody></table>
-  <div class="row" style="margin-top:14px">
-    <label class="muted">seed <input id="seedIn" size="12" placeholder="random"></label>
-    <label class="muted">bot pace (ms) <input id="paceIn" size="5" value="800"></label>
-    <label class="muted">view seat <select id="viewSel"></select></label>
-  </div>
-  <div class="row" style="margin-top:16px">
-    <button class="pri" id="startBtn">Deal</button>
-    <button id="cancelBtn">Cancel</button>
-  </div>
-  <div class="hint">Bots never see your cards. You only ever receive your own hand and the public event stream —
-    the same information the engine gives each bot.</div>
+  <aside>
+    <div class="brand">FishLab <small id="seedLbl"></small>
+      <span style="flex:1"></span>
+      <span class="toggle" id="viewWrap" hidden>seat <select id="viewNow" style="width:auto"></select></span>
+    </div>
+    <div class="box"><div class="rost">
+      <div class="a"><h4>Team A</h4><div id="rA"></div><div class="sets" id="setsA"></div></div>
+      <div class="b"><h4>Team B</h4><div id="rB"></div><div class="sets" id="setsB"></div></div>
+    </div></div>
+    <div class="btnrow">
+      <button class="dec" id="declBtn">Declare</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="stepBtn">Step</button>
+      <button id="rulesBtn">Rules</button>
+      <button class="dang" id="newBtn">New game</button>
+    </div>
+    <div class="pacerow"><span class="lbl">Pace</span>
+      <input type="range" id="paceSlider" min="0" max="100" step="1" value="32">
+      <span class="val" id="paceLbl">2.0s per move</span></div>
+    <div id="banner" class="info">—</div>
+    <div id="prev"></div>
+    <div style="display:flex;align-items:center">
+      <span class="tiny muted" style="letter-spacing:.08em;text-transform:uppercase">Log</span>
+      <span style="flex:1"></span>
+      <label class="toggle"><input type="checkbox" id="fullLog" checked> full history (training aid)</label>
+    </div>
+    <div id="log"></div>
+  </aside>
+</div>
+
+<div id="modalwrap" hidden><div class="modal" id="modalbox">
+  <div class="mhead"><h3 id="mtitle"></h3><button id="mclose">×</button></div>
+  <div class="mbody" id="mbody"></div>
+  <div class="mfoot" id="mfoot" hidden></div>
 </div></div>
 
 <script>
-const SUITS=['♠','♥','♦','♣'];
+/* ================================================================= model */
+const SUITS=['♠','♥','♦','♣'], SUITN=['Spades','Hearts','Diamonds','Clubs'];
 const LOWR=['2','3','4','5','6','7'], HIR=['9','10','J','Q','K','A'];
-const SETN=['Low Spades','High Spades','Low Hearts','High Hearts','Low Diamonds','High Diamonds','Low Clubs','High Clubs','Eights & Jokers'];
+const SETN=['Low Spades','High Spades','Low Hearts','High Hearts','Low Diamonds',
+            'High Diamonds','Low Clubs','High Clubs','Eights & Jokers'];
+const SETSUIT=['♠','♠','♥','♥','♦','♦','♣','♣','★'];
+const RANKL={J:'Jack',Q:'Queen',K:'King',A:'Ace'};
 const POLICIES=[['v04','FishBot v0.4'],['v04:belief=block','FishBot v0.4-Block'],['v03','FishBot v0.3'],
   ['v02','FishBot v0.2'],['lockout','Lockout'],['detective','Detective'],['hunter','Hunter'],
   ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']];
+const NAMEPOOL=['Nova','Orion','Lyra','Rigel','Vega','Atlas','Juno','Mira','Draco','Pavo',
+                'Sirius','Altair','Cygnus','Perseus','Tycho','Kepler'];
 
 function cardInfo(c){
   const s=Math.floor(c/6), i=c%6;
   if(s===8){
-    if(i<4){const su=SUITS[i];return{rank:'8',suit:su,red:(i===1||i===2),name:'8'+su,joker:false};}
+    if(i<4) return {set:s,i,rank:'8',suit:SUITS[i],red:i===1||i===2,joker:false,
+                    name:'8'+SUITS[i],long:'8 of '+SUITN[i]};
     const red=(i===4);
-    return {rank:'JKR',suit:red?'★':'★',red,name:red?'Red Joker':'Black Joker',joker:true};
+    return {set:s,i,rank:'JOKER',suit:'★',red,joker:true,
+            name:red?'Red Joker':'Black Joker',long:red?'Red Joker':'Black Joker'};
   }
-  const si=Math.floor(s/2), su=SUITS[si];
-  const rank=(s%2===0)?LOWR[i]:HIR[i];
-  return {rank,suit:su,red:(si===1||si===2),name:rank+su,joker:false};
+  const si=Math.floor(s/2), rank=(s%2===0)?LOWR[i]:HIR[i];
+  return {set:s,i,rank,suit:SUITS[si],red:si===1||si===2,joker:false,
+          name:rank+SUITS[si],long:(RANKL[rank]||rank)+' of '+SUITN[si]};
 }
-function cardName(c){return cardInfo(c).name;}
-function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
-function cardEl(c,opts){
-  opts=opts||{};
+const cardName=c=>cardInfo(c).name;
+const cardLong=c=>cardInfo(c).long;
+const teamOf=p=>p&1;
+const teamName=t=>t?'Team B':'Team A';
+
+const PIPS={2:[[2,1],[2,7]],3:[[2,1],[2,4],[2,7]],4:[[1,1],[3,1],[1,7],[3,7]],
+ 5:[[1,1],[3,1],[2,4],[1,7],[3,7]],6:[[1,1],[3,1],[1,4],[3,4],[1,7],[3,7]],
+ 7:[[1,1],[3,1],[2,2],[1,4],[3,4],[1,7],[3,7]],
+ 8:[[1,1],[3,1],[2,2],[1,4],[3,4],[2,6],[1,7],[3,7]],
+ 9:[[1,1],[3,1],[1,3],[3,3],[2,4],[1,5],[3,5],[1,7],[3,7]],
+ 10:[[1,1],[3,1],[2,2],[1,3],[3,3],[1,5],[3,5],[2,6],[1,7],[3,7]]};
+
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function cardFace(c,cls){
   const ci=cardInfo(c);
-  const d=el('div','card'+(ci.red?' red':'')+(ci.joker?' jk':'')+(opts.sm?' sm':'')+(opts.cls?' '+opts.cls:''));
-  d.appendChild(el('div','corner',ci.joker?(ci.red?'R':'B'):ci.rank));
-  d.appendChild(el('div','r',ci.rank));
-  d.appendChild(el('div','s',ci.suit));
-  d.title=ci.name;
+  const d=el('div','pc'+(ci.red?' red':'')+(cls?' '+cls:''));
+  d.dataset.c=c; d.title=ci.long;
+  if(ci.joker){
+    d.classList.add('joker');
+    d.appendChild(el('div','jk','JOKER'));
+    d.appendChild(el('div','art','★'));
+    d.appendChild(el('div','jk b','JOKER'));
+    return d;
+  }
+  [0,1].forEach(k=>{
+    const ix=el('div','idx'+(k?' br':''));
+    ix.appendChild(el('div','r',ci.rank)); ix.appendChild(el('div','s',ci.suit));
+    d.appendChild(ix);
+  });
+  const body=el('div','body');
+  if(PIPS[ci.rank]){
+    PIPS[ci.rank].forEach(([col,row])=>{
+      const p=el('div','pip'+(row>4?' flip':''),ci.suit);
+      p.style.gridColumn=col; p.style.gridRow=row; body.appendChild(p);
+    });
+  }else if(ci.rank==='A'){
+    const p=el('div','pip ace',ci.suit); p.style.gridColumn='2'; p.style.gridRow='3 / span 3'; body.appendChild(p);
+  }else{
+    const f=el('div','court'); f.appendChild(el('div','ltr',ci.rank)); f.appendChild(el('div','cs',ci.suit));
+    f.style.gridColumn='1 / span 3'; f.style.gridRow='1 / span 7'; body.appendChild(f);
+  }
+  d.appendChild(body);
   return d;
 }
-function teamOf(p){return p&1;}
-function teamName(t){return t?'Team B':'Team A';}
+function avatar(name,team,cls){
+  let h=0; for(const ch of (name||'?')) h=(h*31+ch.charCodeAt(0))|0;
+  const hue=(team?18:150)+((h%40)-20);
+  const a=el('div','av'+(cls?' '+cls:''),(name||'?').trim().slice(0,2).toUpperCase());
+  a.style.background='hsl('+hue+' 62% 62%)';
+  return a;
+}
 
-let st=null, view=-1, lastRev=-1, lastBody='', err='', errAt=0;
-let ask={target:null,card:null};
-let dcl={set:null,owner:[null,null,null,null,null,null]};
-let fcd={owner:[null,null,null,null,null,null]};
-
+/* =================================================================== api */
+let st=null, view=-1, lastBody='', flash='', flashAt=0, forceSetup=false;
 async function post(path,params){
-  const body=new URLSearchParams(params).toString();
-  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams(params).toString()});
   let j={}; try{j=await r.json();}catch(e){}
-  err = r.ok?'':(j.error||('HTTP '+r.status));
-  if(err){errAt=Date.now();setTimeout(()=>{if(Date.now()-errAt>=6000){err='';render();}},6100);}
-  render();
+  if(!r.ok){flash=j.error||('HTTP '+r.status);flashAt=Date.now();
+    setTimeout(()=>{if(Date.now()-flashAt>=6000){flash='';render();}},6100);}
+  await poll();
   return j;
 }
 async function poll(){
   try{
     const r=await fetch('/api/state?seat='+view);
-    const txt=await r.text();
-    const s=JSON.parse(txt);
+    const txt=await r.text(), s=JSON.parse(txt);
     const humans=(s.seats||[]).filter(x=>x.human).map(x=>x.i);
     if(s.everStarted&&humans.length&&humans.indexOf(view)<0){
       const saved=Number(localStorage.getItem('fishlab.view'));
-      view = humans.indexOf(saved)>=0 ? saved : humans[0];
-      lastRev=-1; lastBody=''; return poll();
+      view=humans.indexOf(saved)>=0?saved:humans[0];
+      lastBody=''; return poll();
     }
     const body=txt.replace(/^\{"rev":\d+,/,'{');
-    const changed = (body!==lastBody);
-    lastRev=s.rev; lastBody=body; st=s;
-    if(changed) render();
+    st=s;
+    if(body!==lastBody){lastBody=body;render();}
   }catch(e){}
 }
 
-function seatLabel(i){
-  if(!st) return 'Seat '+i;
-  const s=st.seats[i];
-  return (s.human?(i===view?'You':'Human'):s.label)+' · '+i;
-}
-function myTeamSeats(){const t=teamOf(view);return [0,1,2,3,4,5].filter(p=>teamOf(p)===t);}
-function oppSeats(){const t=teamOf(view);return [0,1,2,3,4,5].filter(p=>teamOf(p)!==t);}
+/* ================================================================ naming */
+const nameOf=p=>st&&st.seats[p]?st.seats[p].name:('Seat '+p);
+// Narration reads in the second person for the seat you are playing, so
+// "It is your turn" rather than the jarring "It is You's turn".
+const nm    =p=>p===view?'You':nameOf(p);
+const nmPoss=p=>p===view?'your':nameOf(p)+"’s";
+const seatLbl=p=>{const n=nameOf(p);return p===view&&n.toLowerCase()!=='you'?n+' (you)':n;};
+const engOf =p=>st&&st.seats[p]?(st.seats[p].human?'human':st.seats[p].label):'';
+const myTeamSeats=()=>[0,1,2,3,4,5].filter(p=>teamOf(p)===teamOf(view));
+const oppSeats  =()=>[0,1,2,3,4,5].filter(p=>teamOf(p)!==teamOf(view));
 
-/* ---------------------------------------------------------------- render */
+/* =============================================================== rendering */
 function render(){
   if(!st) return;
-  document.getElementById('scA').textContent=st.score[0];
-  document.getElementById('scB').textContent=st.score[1];
-  const tc=document.getElementById('turnChip');
-  if(!st.everStarted) tc.textContent='no game';
-  else if(st.finished) tc.textContent = st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A wins':'Team B wins');
-  else tc.textContent='turn: '+seatLabel(st.turn);
-  document.getElementById('pauseBtn').textContent = st.paused?'Resume':'Pause';
+  const showGame = st.everStarted && !forceSetup;
+  document.getElementById('setup').hidden = showGame;
+  document.getElementById('game').hidden  = !showGame;
+  if(!showGame) return;
+  document.getElementById('seedLbl').textContent='seed '+st.seed;
+  document.getElementById('pauseBtn').textContent=st.paused?'Resume':'Pause';
+  // Adopt the server's pace (another browser may have changed it), but not on
+  // top of an edit made here in the last moment -- a poll already in flight when
+  // the slider moved carries the stale value and would snap it back.
+  const ps=document.getElementById('paceSlider');
+  if(document.activeElement!==ps&&Date.now()-paceLocalAt>1500&&st.pace!==paceMs) setPace(st.pace,false);
+  renderFelt(); renderHand(); renderRoster(); renderBanner(); renderLog(); syncModal();
   const humans=st.seats.filter(x=>x.human).map(x=>x.i);
   const vw=document.getElementById('viewWrap'), vn=document.getElementById('viewNow');
-  if(humans.length>1&&st.everStarted){
-    vw.style.display='';
-    if(vn.options.length!==humans.length){
-      vn.innerHTML='';
-      humans.forEach(i=>{const o=el('option',null,'seat '+i);o.value=String(i);vn.appendChild(o);});
+  vw.hidden = humans.length<2;
+  if(humans.length>1&&vn.options.length!==humans.length){
+    vn.innerHTML=''; humans.forEach(i=>{const o=el('option',null,nameOf(i));o.value=String(i);vn.appendChild(o);});
+  }
+  if(humans.length>1) vn.value=String(view);
+  document.getElementById('declBtn').disabled = st.finished||!st.you;
+}
+
+function lastBubbles(){
+  // The most recent ask is public information, so both parties show it.
+  const h=st.history||[];
+  for(let i=h.length-1;i>=0;i--){
+    const e=h[i];
+    if(e.k==='ask') return {asker:e.a,target:e.t,ok:e.ok,card:e.c};
+    if(e.k==='pass') return {pass:e.a,to:e.t};
+  }
+  return null;
+}
+function renderFelt(){
+  const f=document.getElementById('felt');
+  [...f.querySelectorAll('.seat,.stack')].forEach(n=>n.remove());
+  const anchor = view>=0?view:0;
+  const bub=lastBubbles();
+  for(let k=0;k<6;k++){
+    const p=(anchor+k)%6;
+    const th=(90+60*k)*Math.PI/180;
+    const x=50+41*Math.cos(th), y=50+43*Math.sin(th);
+    const s=el('div','seat'+(st.turn===p&&!st.finished?' turn':'')+(st.handCount[p]===0?' out':''));
+    s.style.left=x+'%'; s.style.top=y+'%';
+    const aw=el('div','avwrap');
+    aw.appendChild(avatar(nameOf(p),teamOf(p)));
+    aw.appendChild(el('div','cnt',String(st.handCount[p])));
+    if(bub){
+      let b=null;
+      if(bub.pass!=null&&bub.pass===p) b=el('div','bub info','passed the turn');
+      else if(bub.target===p) b=el('div','bub '+(bub.ok?'yes':'no'), bub.ok?('gave '+cardName(bub.card)):'No');
+      else if(bub.asker===p) b=el('div','bub info','asked '+cardName(bub.card));
+      if(b) aw.appendChild(b);
     }
-    vn.value=String(view);
-  } else vw.style.display='none';
-  const ps=document.getElementById('paceSel');
-  if(document.activeElement!==ps&&[0,300,800,1600].indexOf(st.pace)>=0) ps.value=String(st.pace);
-  renderSeats(); renderSets(); renderHand(); renderAction(); renderLog(); renderDeal();
-}
-
-function renderSeats(){
-  const w=document.getElementById('seats'); w.innerHTML='';
-  for(let p=0;p<6;p++){
-    const s=st.seats[p];
-    const d=el('div','seat'+(st.turn===p&&!st.finished?' turn':'')+(p===view?' you':'')+(st.handCount[p]===0&&st.everStarted?' out':''));
-    const nm=el('div','nm');
-    nm.appendChild(el('span','dot '+(teamOf(p)?'dotB':'dotA')));
-    nm.appendChild(el('span',null,s.human?(p===view?'You':'Human'):s.label));
-    if(p===st.dealer&&st.everStarted) nm.appendChild(el('span','tag','dealer'));
-    d.appendChild(nm);
-    const sub=el('div','sub');
-    sub.appendChild(el('span',null,'seat '+p+' · '+teamName(teamOf(p))));
-    sub.appendChild(el('span',null,st.handCount[p]+' card'+(st.handCount[p]===1?'':'s')));
-    d.appendChild(sub);
-    w.appendChild(d);
+    s.appendChild(aw);
+    s.appendChild(el('div','nm',seatLbl(p)));
+    s.appendChild(el('div','eng',st.seats[p].human?'human':st.seats[p].label));
+    if(st.you&&!st.finished&&st.you.need==='turn'&&teamOf(p)!==teamOf(view)&&st.handCount[p]>0){
+      const b=el('button','askbtn','Ask');
+      b.onclick=()=>openAsk(p);
+      s.appendChild(b);
+    }
+    f.appendChild(s);
+    if(p!==view&&st.handCount[p]>0){
+      const bk=el('div','stack');
+      bk.style.left=(50+22*Math.cos(th))+'%'; bk.style.top=(50+24*Math.sin(th))+'%';
+      bk.appendChild(el('div','pc back sm'));
+      f.appendChild(bk);
+    }
   }
-}
-
-function renderSets(){
-  const w=document.getElementById('sets'); w.innerHTML='';
-  for(let s=0;s<9;s++){
-    const won=st.setWinner[s];
-    const d=el('div','setchip'+(won===0?' won0':won===1?' won1':''));
-    d.appendChild(el('div',null,SETN[s]));
-    d.appendChild(el('div','st', won===2?'in play':(won===0?'Team A':'Team B')));
-    w.appendChild(d);
-  }
+  const c=document.getElementById('center');
+  c.innerHTML='';
+  const sc=el('div','sc');
+  sc.appendChild(el('span','a',String(st.score[0])));
+  sc.appendChild(el('span',null,' — '));
+  sc.appendChild(el('span','b',String(st.score[1])));
+  c.appendChild(sc);
+  c.appendChild(el('div','to', st.finished
+      ? (st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A wins':'Team B wins'))
+      : (st.turn===view?'Your turn':nameOf(st.turn)+' to play')));
 }
 
 function renderHand(){
   const w=document.getElementById('hand'); w.innerHTML='';
-  const cnt=document.getElementById('handCount');
-  const you=st.you;
-  if(!you){cnt.textContent='';
-    w.appendChild(el('div','muted',!st.everStarted?'No game dealt yet.':'You are watching this table — no hand.'));return;}
-  const hand=you.hand||[];
-  cnt.textContent='('+hand.length+')';
-  const bySet={};
-  hand.forEach(c=>{const s=Math.floor(c/6);(bySet[s]=bySet[s]||[]).push(c);});
-  const keys=Object.keys(bySet).map(Number).sort((a,b)=>a-b);
-  if(!keys.length){w.appendChild(el('div','muted','You are out of cards.'));return;}
-  keys.forEach(s=>{
-    const g=el('div','hs');
-    g.appendChild(el('div','lbl',SETN[s]));
-    const r=el('div','row');
-    bySet[s].sort((a,b)=>a-b).forEach(c=>r.appendChild(cardEl(c)));
-    g.appendChild(r); w.appendChild(g);
+  if(!st.you){w.appendChild(el('div','empty','Spectating — no hand.'));return;}
+  const hand=(st.you.hand||[]).slice().sort((a,b)=>a-b);
+  if(!hand.length){w.appendChild(el('div','empty','You are out of cards.'));return;}
+  let grp=null,cur=-1;
+  hand.forEach(c=>{
+    const s=Math.floor(c/6);
+    if(s!==cur){cur=s;grp=el('div','grp');w.appendChild(grp);}
+    grp.appendChild(cardFace(c));
   });
 }
 
-/* ------------------------------------------------------------- allocator */
-function allocEditor(setIdx, store, onChange){
-  const box=el('div','alloc');
-  const mates=myTeamSeats();
-  for(let i=0;i<6;i++){
-    const c=setIdx*6+i;
-    const row=el('div','allocrow');
-    row.appendChild(cardEl(c,{sm:true}));
-    row.appendChild(el('span','muted',cardName(c)));
-    const who=el('div','who');
-    mates.forEach(m=>{
-      const b=el('button','seatbtn'+(store.owner[i]===m?' sel':''), m===view?'You':('Seat '+m));
-      b.onclick=()=>{store.owner[i]=m;onChange();};
-      who.appendChild(b);
+function renderRoster(){
+  [['rA','setsA',0],['rB','setsB',1]].forEach(([rid,sid,t])=>{
+    const w=document.getElementById(rid); w.innerHTML='';
+    [0,1,2,3,4,5].filter(p=>teamOf(p)===t).forEach(p=>{
+      const d=el('div','p'+(p===view?' me':''));
+      d.appendChild(avatar(nameOf(p),t));
+      d.appendChild(el('span','n',seatLbl(p)));
+      d.appendChild(el('span','c',st.handCount[p]+'c'));
+      w.appendChild(d);
     });
-    row.appendChild(who);
-    const held=(st.you&&st.you.hand.indexOf(c)>=0);
-    if(held) row.appendChild(el('span','tag','in your hand'));
-    box.appendChild(row);
-  }
-  return box;
+    const won=[]; for(let s=0;s<9;s++) if(st.setWinner[s]===t) won.push(SETN[s]);
+    document.getElementById(sid).textContent=st.score[t]+' set'+(st.score[t]===1?'':'s')
+      +(won.length?' · '+won.join(', '):'');
+  });
 }
-function prefill(setIdx,store){
-  for(let i=0;i<6;i++){
-    const c=setIdx*6+i;
-    store.owner[i]=(st.you&&st.you.hand.indexOf(c)>=0)?view:null;
-  }
+
+function evText(e){
+  if(e.k==='ask') return e.ok
+    ? nm(e.a)+' got the '+cardLong(e.c)+' from '+nm(e.t)+'. It is '+nmPoss(e.a)+' turn.'
+    : nm(e.t)+' did not have the '+cardLong(e.c)+' for '+nm(e.a)+'. It is '+nmPoss(e.t)+' turn.';
+  if(e.k==='declare'||e.k==='forced') return nm(e.a)+(e.k==='forced'?' was forced to declare ':' declared ')
+    +SETN[e.s]+' — '+(e.ok?'correct.':'misdeclared, the half-suit goes to '+teamName(1-teamOf(e.a))+'.');
+  if(e.k==='pass') return nm(e.a)+' was out of cards and passed the turn to '+nm(e.t)+'.';
+  return '';
 }
-function complete(store){return store.owner.every(o=>o!==null&&o!==undefined);}
-
-/* ---------------------------------------------------------------- action */
-function renderAction(){
-  const w=document.getElementById('action'); w.innerHTML='';
-  if(err&&!st.finished&&Date.now()-errAt<6000) w.appendChild(el('div','note err',err));
-  if(!st.everStarted){w.appendChild(el('div','muted','Press "New game" to deal.'));return;}
-  if(st.finished){
-    const d=el('div');
-    const win = st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A':'Team B');
-    d.appendChild(el('h2',null,(win==='drawn'?'Drawn':win+' wins')+'  '+st.score[0]+'–'+st.score[1]));
-    if(st.you) d.appendChild(el('div','muted','You played seat '+view+' for '+teamName(teamOf(view))+'.'));
-    if(st.hitLimit) d.appendChild(el('div','muted','The ask limit was reached; unclaimed half-suits were adjudicated by who physically held the majority.'));
-    w.appendChild(d);
-    return;
-  }
-  const you=st.you;
-  if(!you){w.appendChild(el('div','muted','Spectating. Bot seats are playing.'));return;}
-  if(you.note) w.appendChild(el('div','note',you.note));
-
-  const need=you.need;
-  if(need==='pass'){ w.appendChild(passPanel(you)); return; }
-  if(need==='forced'||need==='guess'){ w.appendChild(forcedPanel(you,need)); return; }
-
-  if(need==='turn'){
-    w.appendChild(el('h2',null,'Your turn'));
-    w.appendChild(askPanel());
-    w.appendChild(el('div','hint','— or —'));
+function renderBanner(){
+  const b=document.getElementById('banner'), pv=document.getElementById('prev');
+  const h=st.history||[];
+  if(flash&&Date.now()-flashAt<6000){
+    b.className='no'; b.textContent=flash;
+  }else if(!h.length){
+    b.className='info'; b.textContent='Dealt. '+nm(st.turn)+' lead'+(st.turn===view?'':'s')+'.';
   }else{
-    const head=el('div','muted', st.turn===view? 'Waiting…' :
-      'It is '+seatLabel(st.turn)+"'s turn. You may still declare a half-suit at any moment.");
-    w.appendChild(head);
+    const e=h[h.length-1];
+    b.className=e.k==='ask'?(e.ok?'yes':'no'):(e.k==='pass'?'info':(e.ok?'yes':'no'));
+    b.textContent=evText(e);
   }
-  w.appendChild(declarePanel(you,need==='turn'));
+  // The rules let you ask what the previous two asks were, so they are one click away.
+  const asks=h.filter(e=>e.k==='ask');
+  pv.innerHTML='';
+  const older=asks.slice(-3,-1).reverse();
+  if(!older.length) return;
+  const t=el('button',null,(pv.dataset.open==='1'?'▾ ':'▸ ')+'the previous two asks');
+  t.style.cssText='background:none;border:0;padding:2px 0;color:inherit;font-size:12px;cursor:pointer';
+  t.onclick=()=>{pv.dataset.open=pv.dataset.open==='1'?'0':'1';renderBanner();};
+  pv.appendChild(t);
+  if(pv.dataset.open==='1') older.forEach(e=>pv.appendChild(el('div','a',evText(e))));
 }
 
-function legalAskCount(){
-  const hand=st.you.hand;
-  const targets=oppSeats().filter(p=>st.handCount[p]>0);
-  if(!targets.length) return 0;
-  let n=0;
-  [...new Set(hand.map(c=>Math.floor(c/6)))].filter(s=>st.setActive[s]).forEach(s=>{
-    for(let i=0;i<6;i++) if(hand.indexOf(s*6+i)<0) n+=targets.length;
-  });
-  return n;
-}
-function askPanel(){
-  const box=el('div');
-  const hand=st.you.hand;
-  if(legalAskCount()===0){
-    box.appendChild(el('div','note','You hold no card you could legally ask for — every half-suit you hold is complete, or every opponent is out of cards. You must declare a half-suit.'));
-    return box;
-  }
-  // target
-  const tr=el('div','row'); tr.appendChild(el('span','muted','Ask'));
-  oppSeats().forEach(p=>{
-    const b=el('button','seatbtn'+(ask.target===p?' sel':''), st.seats[p].label+' · '+p+' ('+st.handCount[p]+')');
-    b.disabled = st.handCount[p]===0;
-    b.onclick=()=>{ask.target=p;renderAction();};
-    tr.appendChild(b);
-  });
-  box.appendChild(tr);
-  // askable cards
-  const mySets=[...new Set(hand.map(c=>Math.floor(c/6)))].filter(s=>st.setActive[s]).sort((a,b)=>a-b);
-  const grid=el('div','hand'); grid.style.marginTop='10px';
-  mySets.forEach(s=>{
-    const g=el('div','hs'); g.appendChild(el('div','lbl',SETN[s]));
-    const r=el('div','row');
-    for(let i=0;i<6;i++){
-      const c=s*6+i;
-      const held=hand.indexOf(c)>=0;
-      const d=cardEl(c,{sm:true,cls:held?'held':'pick'+(ask.card===c?' sel':'')});
-      if(!held) d.onclick=()=>{ask.card=c;renderAction();};
-      r.appendChild(d);
-    }
-    g.appendChild(r); grid.appendChild(g);
-  });
-  box.appendChild(grid);
-  const go=el('div','row'); go.style.marginTop='10px';
-  const b=el('button','pri', ask.card!=null&&ask.target!=null
-      ? ('Ask '+st.seats[ask.target].label+' for '+cardName(ask.card))
-      : 'Pick an opponent and a card');
-  b.disabled=!(ask.card!=null&&ask.target!=null);
-  b.onclick=async()=>{const t=ask.target,c=ask.card;ask={target:null,card:null};await post('/api/ask',{seat:view,card:c,target:t});};
-  go.appendChild(b);
-  box.appendChild(go);
-  box.appendChild(el('div','hint','You must hold another card of the half-suit, must not hold the card you name, and may only ask an opponent who still has cards.'));
-  return box;
-}
-
-function declarePanel(you,isTurn){
-  const box=el('div'); box.style.marginTop='10px';
-  if(you.queued){
-    const q=el('div','note');
-    q.textContent='Declaration queued: '+SETN[you.queued.set]+' — it is announced at the next opportunity.';
-    const c=el('button',null,'Cancel'); c.style.marginLeft='8px';
-    c.onclick=()=>post('/api/declare/cancel',{seat:view});
-    q.appendChild(c);
-    box.appendChild(q);
-  }
-  box.appendChild(el('h3',null,'Declare a half-suit'));
-  const sel=el('select');
-  const ph=el('option',null,'— choose —'); ph.value=''; sel.appendChild(ph);
-  for(let s=0;s<9;s++) if(st.setActive[s]){
-    const o=el('option',null,SETN[s]); o.value=String(s);
-    if(dcl.set===s) o.selected=true;
-    sel.appendChild(o);
-  }
-  sel.onchange=()=>{const v=sel.value;dcl.set=v===''?null:Number(v);if(dcl.set!=null)prefill(dcl.set,dcl);renderAction();};
-  const r=el('div','row'); r.appendChild(sel); box.appendChild(r);
-  if(dcl.set!=null&&st.setActive[dcl.set]){
-    box.appendChild(el('div','hint','Name the teammate holding each card. Everything must be right or the half-suit goes to the other team.'));
-    const ed=allocEditor(dcl.set,dcl,()=>renderAction());
-    ed.style.marginTop='8px'; box.appendChild(ed);
-    const go=el('div','row'); go.style.marginTop='10px';
-    const b=el('button','pri', isTurn?'Declare instead of asking':'Declare '+SETN[dcl.set]);
-    b.disabled=!complete(dcl);
-    b.onclick=async()=>{
-      const p={seat:view,set:dcl.set,owner:dcl.owner.join(',')};
-      dcl={set:null,owner:[null,null,null,null,null,null]};
-      await post('/api/declare',p);
-    };
-    go.appendChild(b); box.appendChild(go);
-  }
-  return box;
-}
-
-function passPanel(you){
-  const box=el('div');
-  box.appendChild(el('h2',null,'You are out of cards and hold the turn'));
-  box.appendChild(el('div','muted','Choose the teammate who takes over. Only willingness may be exchanged — no card information.'));
-  const r=el('div','row'); r.style.marginTop='10px';
-  (you.cands||[]).forEach(p=>{
-    const b=el('button','pri',seatLabel(p)+' ('+st.handCount[p]+' cards)');
-    b.onclick=()=>post('/api/pass',{seat:view,target:p});
-    r.appendChild(b);
-  });
-  box.appendChild(r);
-  return box;
-}
-
-function forcedPanel(you,need){
-  const s=you.needSet;
-  const box=el('div');
-  box.appendChild(el('h2',null,'Forced endgame'));
-  box.appendChild(el('div','muted', need==='guess'
-    ? 'Nobody stepped forward. You must declare '+SETN[s]+' now.'
-    : 'The other team is out of cards, so your team must declare every remaining half-suit with no more asking. Take '+SETN[s]+', or step aside.'));
-  if(fcd.set!==s){fcd.set=s;prefill(s,fcd);}
-  const ed=allocEditor(s,fcd,()=>renderAction()); ed.style.marginTop='10px';
-  box.appendChild(ed);
-  const r=el('div','row'); r.style.marginTop='10px';
-  const b=el('button','pri','Declare '+SETN[s]);
-  b.disabled=!complete(fcd);
-  b.onclick=async()=>{const p={seat:view,set:s,owner:fcd.owner.join(',')};fcd={set:null,owner:[null,null,null,null,null,null]};await post('/api/forced/declare',p);};
-  r.appendChild(b);
-  if(need==='forced'){
-    const sk=el('button',null,'A teammate takes this one');
-    sk.onclick=()=>{fcd={set:null,owner:[null,null,null,null,null,null]};post('/api/forced',{seat:view,skip:1});};
-    r.appendChild(sk);
-    const df=el('button',null,'Let my teammates finish');
-    df.onclick=()=>{fcd={set:null,owner:[null,null,null,null,null,null]};post('/api/forced',{seat:view,deferall:1});};
-    r.appendChild(df);
-  }
-  box.appendChild(r);
-  return box;
-}
-
-/* ------------------------------------------------------------------- log */
 function allocText(o,set){
-  const by={};
-  for(let i=0;i<6;i++){(by[o[i]]=by[o[i]]||[]).push(cardName(set*6+i));}
-  return Object.keys(by).map(k=>seatLabel(Number(k))+': '+by[k].join(' ')).join(' · ');
+  const by={}; for(let i=0;i<6;i++)(by[o[i]]=by[o[i]]||[]).push(cardName(set*6+i));
+  return Object.keys(by).map(k=>nm(Number(k))+': '+by[k].join(' ')).join('  ·  ');
 }
 function renderLog(){
   const w=document.getElementById('log'); w.innerHTML='';
   const full=document.getElementById('fullLog').checked;
-  let h=st.history||[];
+  let h=(st.history||[]).map((e,i)=>[e,i]);
   if(!full){
-    // What the rules actually let you ask for: the previous two asks, plus the
-    // public record of declarations and turn passes.
     const keep=new Set();
-    for(let i=0;i<h.length;i++) if(h[i].k!=='ask') keep.add(i);
-    let n=0;
-    for(let i=h.length-1;i>=0&&n<2;i--) if(h[i].k==='ask'){keep.add(i);n++;}
-    h=h.filter((e,i)=>keep.has(i));
-    w.appendChild(el('div','muted','Rule view: declarations, passes, and the previous two asks only.'));
+    h.forEach(([e,i])=>{if(e.k!=='ask')keep.add(i);});
+    let n=0; for(let i=h.length-1;i>=0&&n<2;i--) if(h[i][0].k==='ask'){keep.add(i);n++;}
+    h=h.filter(([e,i])=>keep.has(i));
+    w.appendChild(el('div','muted tiny','Rule view: declarations, passes, and the previous two asks.'));
   }
-  h.slice().reverse().forEach(e=>{
-    let d;
-    if(e.k==='ask'){
-      d=el('div','ev '+(e.ok?'hit':'miss'));
-      d.appendChild(el('span','who',seatLabel(e.a)));
-      d.appendChild(el('span',null,' asked '+seatLabel(e.t)+' for '+cardName(e.c)+' — '+(e.ok?'handed over':'no')));
-    }else if(e.k==='declare'||e.k==='forced'){
-      d=el('div','ev '+(e.ok?'dec':'bad'));
-      d.appendChild(el('span','who',seatLabel(e.a)));
-      d.appendChild(el('span',null,(e.k==='forced'?' was forced to declare ':' declared ')+SETN[e.s]+' — '+
-        (e.ok?'correct':'MISDECLARED, half-suit to '+teamName(1-teamOf(e.a)))));
-      d.appendChild(el('div','muted',allocText(e.o,e.s)));
-    }else if(e.k==='pass'){
-      d=el('div','ev muted');
-      d.appendChild(el('span',null,seatLabel(e.a)+' was out of cards and passed the turn to '+seatLabel(e.t)));
-    }else return;
+  h.slice().reverse().forEach(([e])=>{
+    const cls=e.k==='ask'?(e.ok?'hit':'miss'):(e.k==='pass'?'miss':(e.ok?'dcl':'bad'));
+    const d=el('div','ev '+cls);
+    const full=evText(e), pre=nm(e.a)+' ';
+    if(full.indexOf(pre)===0){
+      d.appendChild(el('span','w',pre));
+      d.appendChild(el('span',null,full.slice(pre.length)));
+    } else d.appendChild(el('span',null,full));
+    if(e.k==='declare'||e.k==='forced') d.appendChild(el('div','muted tiny',allocText(e.o,e.s)));
     w.appendChild(d);
   });
   if(!h.length) w.appendChild(el('div','muted','Nothing yet.'));
 }
 
-function renderDeal(){
-  const p=document.getElementById('overPanel'), w=document.getElementById('deal');
-  if(!st.deal){p.style.display='none';return;}
-  p.style.display='';
-  w.innerHTML='';
-  for(let s=0;s<6;s++){
-    const col=el('div','col');
-    col.appendChild(el('div','h',seatLabel(s)));
-    const r=el('div','row');
-    (st.deal[s]||[]).slice().sort((a,b)=>a-b).forEach(c=>r.appendChild(cardEl(c,{sm:true})));
-    col.appendChild(r); w.appendChild(col);
-  }
+/* ================================================================ modals */
+let modal=null, overShown=false;
+function showModal(title,bodyNode,footNode,opts){
+  opts=opts||{};
+  document.getElementById('mtitle').textContent=title;
+  const b=document.getElementById('mbody'); b.innerHTML=''; b.appendChild(bodyNode);
+  const f=document.getElementById('mfoot'); f.innerHTML='';
+  if(footNode){f.hidden=false;f.appendChild(footNode);}else f.hidden=true;
+  document.getElementById('mclose').style.visibility=opts.noClose?'hidden':'visible';
+  document.getElementById('modalbox').className='modal'+(opts.wide?' wide':'');
+  document.getElementById('modalwrap').hidden=false;
+}
+function hideModal(){modal=null;document.getElementById('modalwrap').hidden=true;}
+document.getElementById('mclose').onclick=()=>{if(modal&&modal.noClose)return;hideModal();};
+
+// Keeps the open modal consistent with what the engine is actually waiting for.
+function syncModal(){
+  const need=st.you?st.you.need:'none';
+  if(st.finished&&!overShown&&st.deal){overShown=true;return openOver();}
+  if(need==='pass'&&(!modal||modal.kind!=='pass')) return openPass();
+  if(need==='forced'&&(!modal||modal.kind!=='forced'||modal.set!==st.you.needSet)) return openForced('forced',st.you.needSet);
+  if(need==='guess'&&(!modal||modal.kind!=='guess'||modal.set!==st.you.needSet)) return openForced('guess',st.you.needSet);
+  if(!modal) return;
+  if((modal.kind==='pass'||modal.kind==='forced'||modal.kind==='guess')&&need!==modal.kind) return hideModal();
+  if(modal.kind==='ask'&&need!=='turn') return hideModal();
+  if((modal.kind==='setpick'||modal.kind==='alloc')&&modal.set!=null&&!st.setActive[modal.set]) return hideModal();
+  if(st.finished&&modal.kind!=='rules'&&modal.kind!=='over') return hideModal();
 }
 
-/* ----------------------------------------------------------------- setup */
-let cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
+/* ---- ask ---- */
+function openAsk(target){
+  modal={kind:'ask',target};
+  const hand=st.you.hand;
+  const body=el('div','askgrid');
+  const sets=[...new Set(hand.map(c=>Math.floor(c/6)))].filter(s=>st.setActive[s]).sort((a,b)=>a-b);
+  let any=false;
+  sets.forEach(s=>{
+    const cards=[...Array(6).keys()].map(i=>s*6+i).filter(c=>hand.indexOf(c)<0);
+    if(!cards.length) return;
+    any=true;
+    const g=el('div','grp'); g.appendChild(el('h5',null,SETN[s]));
+    const row=el('div','row');
+    cards.forEach(c=>{
+      const f=cardFace(c,'pick');
+      f.onclick=async()=>{hideModal();await post('/api/ask',{seat:view,card:c,target});};
+      row.appendChild(f);
+    });
+    g.appendChild(row); body.appendChild(g);
+  });
+  if(!any) body.appendChild(el('div','hint','You hold no card you could legally ask for.'));
+  else body.appendChild(el('div','hint',
+    'Only legal asks are shown: half-suits you already hold a card of, minus the cards in your hand.'));
+  showModal('Ask '+nameOf(target)+' for a card',body,null,{wide:true});
+}
+
+/* ---- declare: pick the half-suit ---- */
+function openSetPick(){
+  modal={kind:'setpick'};
+  const hand=st.you?st.you.hand:[];
+  const body=el('div');
+  const g=el('div','setgrid');
+  for(let s=0;s<9;s++){
+    const mine=hand.filter(c=>Math.floor(c/6)===s).length;
+    const b=el('button','settile'+(mine?'':' none'));
+    b.disabled=!st.setActive[s];
+    const left=el('div');
+    left.appendChild(el('div',null,SETN[s]));
+    left.appendChild(el('div','mine', !st.setActive[s]?('won by '+teamName(st.setWinner[s]))
+      : mine?('you hold '+mine):'you hold none'));
+    b.appendChild(left);
+    const sy=el('div','sy'+([2,3,4,5].indexOf(s)>=0?' red':''),SETSUIT[s]);
+    b.appendChild(sy);
+    b.onclick=()=>openAlloc(s);
+    g.appendChild(b);
+  }
+  body.appendChild(g);
+  body.appendChild(el('div','hint',
+    'You may declare a half-suit you hold no cards of — the rules allow it, so nothing here is blocked on that. '
+    +'A declaration is legal at any moment, including during an opponent’s turn.'));
+  showModal('Select a half-suit to declare',body);
+}
+
+/* ---- declare: allocate the six cards ---- */
+function allocBody(set,store,onChange){
+  const mates=myTeamSeats(), hand=st.you?st.you.hand:[];
+  const body=el('div');
+  const prev=el('div','previewrow');
+  for(let i=0;i<6;i++) prev.appendChild(cardFace(set*6+i,'sm'+(hand.indexOf(set*6+i)>=0?'':' dim')));
+  body.appendChild(prev);
+  const t=el('table','atbl');
+  const thead=el('thead'), hr=el('tr');
+  hr.appendChild(el('th',null,'Card'));
+  mates.forEach(m=>hr.appendChild(el('th','c',seatLbl(m))));
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb=el('tbody');
+  for(let i=0;i<6;i++){
+    const c=set*6+i, held=hand.indexOf(c)>=0;
+    const tr=el('tr',held?'held':'');
+    tr.appendChild(el('td',null,cardLong(c)+(held?'  (in your hand)':'')));
+    mates.forEach(m=>{
+      const td=el('td','c');
+      const r=el('input'); r.type='radio'; r.name='alloc'+i; r.checked=(store.owner[i]===m);
+      r.onchange=()=>{store.owner[i]=m;onChange();};
+      td.appendChild(r); tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb); body.appendChild(t);
+  return body;
+}
+function prefill(set,store){
+  const hand=st.you?st.you.hand:[];
+  store.owner=[...Array(6).keys()].map(i=>hand.indexOf(set*6+i)>=0?view:null);
+}
+const complete=s=>s.owner.every(o=>o!==null&&o!==undefined);
+
+function openAlloc(set){
+  const store={owner:[]}; prefill(set,store);
+  modal={kind:'alloc',set,store};
+  drawAlloc();
+}
+function drawAlloc(){
+  const {set,store}=modal;
+  const body=allocBody(set,store,drawAlloc);
+  const foot=el('div');
+  const back=el('button',null,'Back'); back.onclick=openSetPick; foot.appendChild(back);
+  const sub=el('button','pri','Declare '+SETN[set]);
+  sub.disabled=!complete(store);
+  sub.onclick=async()=>{const o=store.owner.join(',');hideModal();
+    await post('/api/declare',{seat:view,set,owner:o});};
+  foot.appendChild(sub);
+  foot.style.cssText='display:flex;gap:8px';
+  showModal('Declare '+SETN[set],body,foot);
+  const b=document.getElementById('mbody');
+  const note=el('div','hint');
+  note.textContent=(st.you&&st.you.need==='turn')
+    ? 'Declaring takes the place of your ask this turn.'
+    : 'Queued and announced at the next opportunity — the same poll the bots get, before every ask.';
+  b.appendChild(note);
+}
+
+/* ---- cardless turn pass ---- */
+function openPass(){
+  modal={kind:'pass',noClose:true};
+  const body=el('div');
+  body.appendChild(el('div','hint','You have no cards but hold the turn. Choose the teammate who takes over. '
+    +'Only willingness may be exchanged — no card information.'));
+  const row=el('div','passrow'); row.style.marginTop='12px';
+  (st.you.cands||[]).forEach(p=>{
+    const b=el('button',null,nameOf(p)+' — '+st.handCount[p]+' cards');
+    b.onclick=async()=>{hideModal();await post('/api/pass',{seat:view,target:p});};
+    row.appendChild(b);
+  });
+  body.appendChild(row);
+  showModal('Pass the turn',body,null,{noClose:true});
+}
+
+/* ---- forced endgame ---- */
+function openForced(kind,set){
+  const store={owner:[]}; prefill(set,store);
+  modal={kind,set,store,noClose:true};
+  drawForced();
+}
+function drawForced(){
+  const {kind,set,store}=modal;
+  const body=el('div');
+  body.appendChild(el('div','hint', kind==='guess'
+    ? 'Nobody stepped forward, so somebody must name an allocation. This one cannot be declined.'
+    : 'The other team is out of cards, so your team must declare every remaining half-suit with no more asking.'));
+  body.appendChild(allocBody(set,store,drawForced));
+  const foot=el('div'); foot.style.cssText='display:flex;gap:8px';
+  if(kind==='forced'){
+    const skip=el('button',null,'A teammate takes this one');
+    skip.onclick=async()=>{hideModal();await post('/api/forced',{seat:view,skip:1});};
+    foot.appendChild(skip);
+    const def=el('button',null,'Let my teammates finish');
+    def.onclick=async()=>{hideModal();await post('/api/forced',{seat:view,deferall:1});};
+    foot.appendChild(def);
+  }
+  const sub=el('button','pri','Declare '+SETN[set]);
+  sub.disabled=!complete(store);
+  sub.onclick=async()=>{const o=store.owner.join(',');hideModal();
+    await post('/api/forced/declare',{seat:view,set,owner:o});};
+  foot.appendChild(sub);
+  showModal('Forced endgame — '+SETN[set],body,foot,{noClose:true});
+}
+
+/* ---- game over: the opening deal, for review ---- */
+function openOver(){
+  modal={kind:'over'};
+  const body=el('div');
+  const win = st.score[0]===st.score[1] ? 'Drawn'
+            : (st.score[0]>st.score[1]?'Team A wins':'Team B wins');
+  const h=el('h2',null,win+' '+st.score[0]+'–'+st.score[1]);
+  h.style.marginBottom='4px'; body.appendChild(h);
+  if(st.you) body.appendChild(el('div','hint','You played seat '+view+' for '+teamName(teamOf(view))+'.'));
+  if(st.hitLimit) body.appendChild(el('div','hint',
+    'The ask limit was reached; unclaimed half-suits were adjudicated by who physically held the majority.'));
+  const sets=el('div','hint'); sets.style.margin='10px 0 4px';
+  sets.textContent=[0,1].map(t=>teamName(t)+': '
+    +([...Array(9).keys()].filter(x=>st.setWinner[x]===t).map(x=>SETN[x]).join(', ')||'none')).join('   ·   ');
+  body.appendChild(sets);
+  body.appendChild(el('h4',null,'Opening hands'));
+  const g=el('div');
+  g.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px';
+  for(let p=0;p<6;p++){
+    const col=el('div');
+    const hd=el('div','hint'); hd.style.marginBottom='4px';
+    hd.textContent=seatLbl(p)+' — '+teamName(teamOf(p));
+    col.appendChild(hd);
+    const row=el('div'); row.style.cssText='display:flex;flex-wrap:wrap;gap:3px';
+    (st.deal[p]||[]).slice().sort((a,b)=>a-b).forEach(c=>row.appendChild(cardFace(c,'xs')));
+    col.appendChild(row); g.appendChild(col);
+  }
+  body.appendChild(g);
+  const foot=el('div');
+  const b=el('button','pri','New game');
+  b.onclick=()=>{hideModal();document.getElementById('newBtn').click();};
+  foot.appendChild(b);
+  showModal('Game over',body,foot,{wide:true});
+}
+
+/* ---- rules ---- */
+function openRules(){
+  modal={kind:'rules'};
+  const b=el('div','rules');
+  b.innerHTML=
+   '<h4>The deck</h4><ul>'
+   +'<li>54 cards in nine half-suits of six: 2–7 of a suit, 9–A of a suit, and the four 8s with the two jokers.</li>'
+   +'<li>Six players, two teams of three, alternating seats. Five half-suits wins.</li></ul>'
+   +'<h4>Asking</h4><ul>'
+   +'<li>Name one specific card, from one opponent who still has cards.</li>'
+   +'<li>You must hold another card of that half-suit, and must not hold the card you name.</li>'
+   +'<li>Hit: you take the card and keep the turn. Miss: the turn passes to the player you asked.</li></ul>'
+   +'<h4>Declaring</h4><ul>'
+   +'<li>Legal at any moment, including during an opponent’s turn, and you need not hold any card of the half-suit.</li>'
+   +'<li>Name which teammate holds each of the six cards. Everything correct wins the half-suit; any error hands it to the other team.</li>'
+   +'<li>The turn returns to whoever held it before the declaration.</li></ul>'
+   +'<h4>Running out</h4><ul>'
+   +'<li>A player with no cards cannot ask or be asked, but may still declare.</li>'
+   +'<li>Holding the turn with no cards, you choose which live teammate takes it.</li>'
+   +'<li>When a whole team is out, the other team must declare every remaining half-suit with no further asking.</li></ul>'
+   +'<h4>Information</h4><ul>'
+   +'<li>You may ask how many cards any player holds — always shown here.</li>'
+   +'<li>You may ask what the previous two asks were — one click under the status banner.</li>'
+   +'<li>The full log is a training aid beyond what the rules allow; the bots have perfect recall of every public event, so it is the setting that puts you on even memory terms with them.</li></ul>';
+  showModal('Rules',b);
+}
+
+/* ================================================================== pace */
+// The interesting range is half a second to about four; twenty seconds is there
+// for studying a position.  A linear track would bury the useful part in its
+// first fifth, so the slider position is squared into milliseconds.
+const PACE_MAX=20000;
+const msFromPos=v=>Math.round(Math.pow(v/100,2)*PACE_MAX/100)*100;
+const posFromMs=ms=>Math.round(Math.sqrt(Math.max(0,Math.min(PACE_MAX,ms))/PACE_MAX)*100);
+const paceText=ms=>ms==0?'instant':(ms/1000).toFixed(1)+'s per move';
+let paceTimer=null, paceMs=2000, paceLocalAt=0;
+function setPace(ms,live){
+  paceMs=Math.max(0,Math.min(PACE_MAX,Number(ms)||0));
+  localStorage.setItem('fishlab.pace',String(paceMs));
+  const pos=String(posFromMs(paceMs));
+  [['paceLbl','paceSlider'],['paceInLbl','paceIn']].forEach(([lid,sid])=>{
+    const l=document.getElementById(lid), sl=document.getElementById(sid);
+    if(l) l.textContent=paceText(paceMs);
+    if(sl&&document.activeElement!==sl) sl.value=pos;
+  });
+  // Debounced: dragging the slider should not fire a request per pixel.
+  if(live){paceLocalAt=Date.now();clearTimeout(paceTimer);
+    paceTimer=setTimeout(()=>post('/api/pace',{ms:paceMs}),180);}
+}
+document.getElementById('paceSlider').oninput=e=>setPace(msFromPos(e.target.value),true);
+document.getElementById('paceIn').oninput=e=>setPace(msFromPos(e.target.value),false);
+
+/* ================================================================= setup */
+let cfg=[];
+function defaultCfg(){
+  return [0,1,2,3,4,5].map(i=>({spec:'v04',name:i===0?'You':NAMEPOOL[i-1],human:i===0}));
+}
 function renderSetup(){
-  const t=document.getElementById('setupRows'); t.innerHTML='';
-  cfg.forEach((c,i)=>{
-    const tr=el('tr');
-    tr.appendChild(el('td',null,String(i)));
-    const td2=el('td'); td2.appendChild(el('span',teamOf(i)?'teamB':'teamA',teamName(teamOf(i)))); tr.appendChild(td2);
-    const td3=el('td'); const s=el('select');
-    POLICIES.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;if(v===c.p)o.selected=true;s.appendChild(o);});
-    s.onchange=()=>{c.p=s.value;};
-    s.disabled=c.h; td3.appendChild(s); tr.appendChild(td3);
-    const td4=el('td'); const cb=el('input'); cb.type='checkbox'; cb.checked=c.h;
-    cb.onchange=()=>{c.h=cb.checked;renderSetup();};
-    td4.appendChild(cb); tr.appendChild(td4);
-    t.appendChild(tr);
+  ['rowsA','rowsB'].forEach((id,t)=>{
+    const w=document.getElementById(id); w.innerHTML='';
+    [0,1,2,3,4,5].filter(p=>(p&1)===t).forEach(p=>{
+      const c=cfg[p];
+      const row=el('div','srow');
+      row.appendChild(avatar(c.name,t));
+      const nb=el('div'); nb.appendChild(el('label','f','Seat '+p+' name'));
+      const ni=el('input'); ni.value=c.name; ni.maxLength=20;
+      ni.oninput=()=>{c.name=ni.value;};
+      ni.onchange=()=>renderSetup();
+      nb.appendChild(ni); row.appendChild(nb);
+      const eb=el('div'); eb.appendChild(el('label','f','Played by'));
+      const s=el('select');
+      const you=el('option',null,'You (play this seat)'); you.value='human'; s.appendChild(you);
+      POLICIES.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;s.appendChild(o);});
+      s.value=c.human?'human':c.spec;
+      s.onchange=()=>{
+        if(s.value==='human'){
+          c.human=true;
+          if(NAMEPOOL.indexOf(c.name)>=0) c.name='You';
+        }else{
+          c.human=false; c.spec=s.value;
+          if(c.name==='You') c.name=NAMEPOOL.find(n=>!cfg.some(o=>o.name===n))||('Seat '+p);
+        }
+        renderSetup();
+      };
+      eb.appendChild(s); row.appendChild(eb);
+      w.appendChild(row);
+    });
   });
   const vs=document.getElementById('viewSel'); vs.innerHTML='';
-  const humans=cfg.map((c,i)=>c.h?i:-1).filter(i=>i>=0);
-  if(!humans.length){const o=el('option',null,'watch only');o.value='-1';vs.appendChild(o);}
-  humans.forEach(i=>{const o=el('option',null,'seat '+i);o.value=String(i);vs.appendChild(o);});
+  const humans=cfg.map((c,i)=>c.human?i:-1).filter(i=>i>=0);
+  if(!humans.length){const o=el('option',null,'Watch only');o.value='-1';vs.appendChild(o);}
+  humans.forEach(i=>{const o=el('option',null,cfg[i].name+' (seat '+i+')');o.value=String(i);vs.appendChild(o);});
 }
-function applyPreset(n){
-  if(n===1) cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
-  if(n===2) cfg=[{p:'v04',h:true},{p:'v04',h:false},{p:'v03',h:false},{p:'v04',h:false},{p:'v03',h:false},{p:'v04',h:false}];
-  if(n===3) cfg=[{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false},{p:'v04',h:false}];
+function preset(n){
+  cfg=defaultCfg();
+  if(n===2){cfg[2].spec='v03';cfg[4].spec='v03';}
+  if(n===3){cfg.forEach((c,i)=>{c.human=false;c.spec='v04';c.name=NAMEPOOL[i];});}
   renderSetup();
 }
-document.getElementById('preset1').onclick=()=>applyPreset(1);
-document.getElementById('preset2').onclick=()=>applyPreset(2);
-document.getElementById('preset3').onclick=()=>applyPreset(3);
-document.getElementById('newBtn').onclick=()=>{renderSetup();document.getElementById('setup').classList.add('show');};
-document.getElementById('cancelBtn').onclick=()=>document.getElementById('setup').classList.remove('show');
-document.getElementById('startBtn').onclick=async()=>{
+function shuffleNames(){
+  const pool=NAMEPOOL.slice();
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  let k=0; cfg.forEach(c=>{c.name=c.human?'You':pool[k++];});
+  renderSetup();
+}
+document.getElementById('p1').onclick=()=>preset(1);
+document.getElementById('p2').onclick=()=>preset(2);
+document.getElementById('p3').onclick=()=>preset(3);
+document.getElementById('pn').onclick=shuffleNames;
+document.getElementById('dealBtn').onclick=async()=>{
   const p={};
-  cfg.forEach((c,i)=>{p['s'+i]=c.p;p['h'+i]=c.h?1:0;});
+  cfg.forEach((c,i)=>{p['s'+i]=c.human?'v04':c.spec;p['h'+i]=c.human?1:0;p['n'+i]=c.name;});
   p.seed=document.getElementById('seedIn').value.trim()||'0';
-  p.pace=document.getElementById('paceIn').value.trim()||'800';
+  p.pace=paceMs;
   view=Number(document.getElementById('viewSel').value);
   localStorage.setItem('fishlab.view',String(view));
-  ask={target:null,card:null}; dcl={set:null,owner:[null,null,null,null,null,null]};
-  fcd={set:null,owner:[null,null,null,null,null,null]}; err='';
-  const j=await post('/api/new',p);
-  if(!j.error){document.getElementById('setup').classList.remove('show');lastRev=-1;lastBody='';poll();}
+  flash=''; hideModal(); lastBody=''; forceSetup=false; overShown=false;
+  await post('/api/new',p);
 };
-document.getElementById('viewNow').onchange=e=>{view=Number(e.target.value);localStorage.setItem('fishlab.view',String(view));lastRev=-1;lastBody='';poll();};
+document.getElementById('newBtn').onclick=async()=>{
+  hideModal(); forceSetup=true;
+  await post('/api/abandon',{});
+  renderSetup();
+};
+document.getElementById('declBtn').onclick=openSetPick;
+document.getElementById('rulesBtn').onclick=openRules;
 document.getElementById('pauseBtn').onclick=()=>post('/api/pause',{paused:st&&st.paused?0:1});
 document.getElementById('stepBtn').onclick=()=>post('/api/step',{n:1});
-document.getElementById('paceSel').onchange=e=>post('/api/pace',{ms:e.target.value});
-document.getElementById('fullLog').onchange=()=>render();
+document.getElementById('fullLog').onchange=renderLog;
+document.getElementById('viewNow').onchange=e=>{
+  view=Number(e.target.value);localStorage.setItem('fishlab.view',String(view));lastBody='';poll();};
 
+cfg=defaultCfg();
+setPace(localStorage.getItem('fishlab.pace')||2000,false);
 renderSetup();
 poll();
-setInterval(poll,280);
+setInterval(poll,300);
 </script>
 </body>
 </html>

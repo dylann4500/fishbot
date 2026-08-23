@@ -1,0 +1,704 @@
+\section{Results}
+\label{sec:results}
+
+% Nine floats in a few pages.  LaTeX's default float fractions reserve so much
+% of each page for text that the tables would be pushed several pages past the
+% prose that discusses them; the values below let a page carry more table and
+% fewer orphaned strips of text.  They are restored at the end of the section.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.80}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\setlength{\textfloatsep}{12pt plus 2pt minus 4pt}
+\setlength{\floatsep}{10pt plus 2pt minus 3pt}
+\setlength{\intextsep}{12pt plus 2pt minus 3pt}
+
+The result of this work is the removal of the failure mode of
+\S\ref{sec:diag-baseline}, and it is not a strength jump. Over the
+\numVfiveStyleN{} opponents of Table~\ref{tab:perstyle} the two policies' mean
+win rates are \numVfiveMean\% and \numVfourMean\%, their worst cases are
+\numVfiveWorst\% and \numVfourWorst\%, and \vfour{} is marginally the better of
+the two on minimax regret over that style set. The evidence for \vfive{} is
+Table~\ref{tab:pathology}, the forced-endgame measurement of
+\S\ref{sec:results-forced}, and the gain of $\numDecWithholderDelta$ points
+against the deception archetype that motivated the work, replicated at both of
+the banks in Table~\ref{tab:deception}. The same table records a smaller and
+equally replicated \emph{loss} of $\numDecFeintDelta$ points against a different
+deceptive archetype, and the evidence against a strength claim is that loss
+together with every row of Table~\ref{tab:h2h} and of Table~\ref{tab:perstyle}.
+All of it is reported below at the same weight.
+
+\subsection{The pathology, on the same instrument}
+\label{sec:results-pathology}
+
+\begin{table}[t]
+\centering
+\caption{\texttt{fish pathology} run on the \vfour{} mirror, the \vfive{} mirror
+and the cross match. Population: \numPathologyDeals{} deals per column at both
+team orientations; seed \numPathologySeed{} for the two mirrors and
+\numPathologyCrossSeed{} for the cross match, full rules dialect, both policies
+frozen. The cross match is \numCrossGames{} distinct games. The two mirror
+columns are \numFourGames{}: in a mirror the two orientations run identical
+policies and play byte-identical games, so the instrument's raw counts are each
+game counted twice, and every count in those two columns is reported here per
+distinct game --- the same halving C3 in \S\ref{sec:corrections} applies to the
+forced-endgame figure. Re-running each bank at one orientation returns exactly
+half of every count and every rate to the printed digit, so no rate in this
+table is affected. The instrument also pools \emph{both} teams, which is why the
+cross-match column is a property of the pair and not of either policy: the dead
+asks it counts are \vfour{}'s, and \S\ref{sec:results-forced} returns to the
+consequence of that pooling for the forced-endgame row. No intervals; these are
+counts and rates over one bank per column. Source:
+\texttt{research/v05/results/E2-pathology.txt}.}
+\label{tab:pathology}
+\footnotesize
+\begin{tabular}{lrrr}
+\toprule
+& \textbf{\vfour{} mirror} & \textbf{\vfive{} mirror} & \textbf{cross} \\
+\midrule
+events per game                        & \numFourEventsMean{}  & \numFiveEventsMean{}  & \numCrossEventsMean{} \\
+\quad median / p90 / p99               & \numFourEventsMedian{}\,/\,\numFourEventsPninety{}\,/\,\numFourEventsPninetynine{}
+                                       & \numFiveEventsMedian{}\,/\,\numFiveEventsPninety{}\,/\,\numFiveEventsPninetynine{}
+                                       & \numCrossEventsMedian{}\,/\,\numCrossEventsPninety{}\,/\,\numCrossEventsPninetynine{} \\
+asks per game                          & \numFourAsks{}        & \numFiveAsks{}        & \numCrossAsks{} \\
+ask hit rate                           & \numFourHit\%         & \numFiveHit\%         & \numCrossHit\% \\
+\midrule
+provably dead asks                     & \numFourDeadAsk\%     & \numFiveDeadAsk\%     & \numCrossDeadAsk\% \\
+dead runs                              & \numFourDeadRuns{}    & \numFiveDeadRuns{}    & \numCrossDeadRuns{} \\
+\quad longest                          & \numFourDeadRunLongest{} & \numFiveDeadRunLongest{} & \numCrossDeadRunLongest{} \\
+games with a dead run $\geq 6$         & \numFourDeadRunGames\% & \numFiveDeadRunGames\% & \numCrossDeadRunGames\% \\
+starved turns                          & \numFourStarved\%     & \numFiveStarved\%     & \numCrossStarved\% \\
+exact repeat (actor, card, target)     & \numFourRepeatAsk\%   & \numFiveRepeatAsk\%   & \numCrossRepeatAsk\% \\
+asks inside a half-suit the team owns & \numFourOwnLocked\%   & \numFiveOwnLocked\%   & \numCrossOwnLocked\% \\
+\midrule
+declarations                           & \numFourDeclN{}       & \numFiveDeclN{}       & \numCrossDeclN{} \\
+\quad wrong                            & \numFourDeclWrong\%   & \numFiveDeclWrong\%   & \numCrossDeclWrong\% \\
+at or after the forcing horizon        & \numFourPostHorizonDecl{} & \numFivePostHorizonDecl{} & \numCrossPostHorizonDecl{} \\
+\quad of those, wrong                  & \numFourPostHorizonWrong\% & --- & --- \\
+forced-endgame declarations (pooled)   & \numFourForced{}      & \numFiveForced{}      & \numCrossForced{} \\
+\quad of those, wrong                  & \numFourForcedWrong\% & \numFiveForcedWrong\% & \numCrossForcedWrong\% \\
+\midrule
+games reaching the action cap          & \numFourCapRate\%     & \numFiveCapRate\%     & \numCrossCapRate\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:pathology} is the paper's result. The three statistics promoted to
+commit gates in \S\ref{sec:mech-built} --- longest dead run, share of games
+containing a dead run of six, and declarations made at or after the forcing
+horizon --- read \numFiveDeadRunLongest{}, \numFiveDeadRunGames\% and
+\numFivePostHorizonDecl{} on the \vfive{} mirror bank, against
+\numFourDeadRunLongest{}, \numFourDeadRunGames\% and \numFourPostHorizonDecl{}
+for \vfour{} on the identical bank. The provably-dead ask rate falls from
+\numFourDeadAsk\% to \numFiveDeadAsk\%, which is a property of the gate rather
+than a measurement: the predicate of Definition~\ref{def:dead} is the same
+deduction the filter runs, so a gated policy can record a dead ask only through
+the starved-turn fallback, and on this bank the fallback never fired at all
+(\numFiveStarved\% of asks).
+
+What is a measurement, and what the gate did not guarantee, is the rest of the
+table. Ask hit rate rises from \numFourHit\% to \numFiveHit\%, and ask volume
+falls from \numFourAsks{} to \numFiveAsks{} per game: removing a class of moves
+that could not succeed did not merely shorten the games, it changed what the
+surviving asks are spent on. The event distribution moves at the tail and not
+only at the mean, which is the property the swept holding cost of
+\S\ref{sec:mech-rejected} failed to obtain --- the 99th percentile falls from
+\numFourEventsPninetynine{} events to \numFiveEventsPninetynine{}, and the median
+from \numFourEventsMedian{} to \numFiveEventsMedian{}. Declaration error falls
+from \numFourDeclWrong\% to \numFiveDeclWrong\%, and the \numFourPostHorizonDecl{}
+post-horizon declarations that were \numFourPostHorizonWrong\% wrong have no
+counterpart because no game reaches the horizon.
+
+Three rows are worth reading against the natural expectation rather than for it.
+Exact repeats fall to \numFiveRepeatAsk\% but not to zero, and should not: cards
+move, so re-asking a (card, target) pair can be the best move on the board once a
+public transfer has put the card where it was not before. That is the same
+observation that sank the repetition guard (\S\ref{sec:results-ablations}). Asks
+inside a half-suit the actor's own team already owns fall from \numFourOwnLocked\%
+to \numFiveOwnLocked\%, and again not to zero: those asks are legal, are not
+provably dead when the actor cannot establish the ownership, and emit ask-legality
+certificates. \vfive{} does not choose them for that reason --- the net-information
+term M3 is unbuilt --- so the remaining rate is incidental, exactly as
+\S\ref{sec:limitations} says of the \vfour{} rate. Finally, the cross-match column
+records \numCrossDeadAsk\% dead asks with every dead run of length
+\numCrossDeadRunLongest{}: the instrument pools both teams, these asks are
+\vfour{}'s, and the run lengths are one because the seat that would have continued
+the cycle is now gated.
+
+\subsection{Engine and information-safety verification}
+\label{sec:results-verify}
+
+\texttt{fish verify} plays the ordered cross-product of the engine's
+\numVerifyPool{}-policy pool --- \numVerifyPairs{} ordered pairs over a budget of
+\numVerifyGames{} games --- with the knowledge audit active, and records
+\numVerifyViolations{} violations in \numVerifyChecks{} soundness checks: no
+derived knowledge state, capacity or certificate was ever contradicted by the
+actual deal. Card conservation holds in every game, with \numVerifySetFail{}
+set-conservation failures; \numVerifyLimitGames{} games reach the action limit;
+and bit-identical replay is \numVerifyDeterminism{}.
+
+The scope of that sweep needs stating, because it is narrower than it looks. The
+pool it plays is \vfour{}, \vthree{}, \vtwo{} and the six scripted styles, and it
+does \emph{not} contain \vfive{}; the determinism check is run on a
+\vfour{}-against-\vthree{} bank. What E1 establishes is that the rules driver, the
+public deduction state and the certificate machinery are sound --- which is the
+machinery M1's gate is a pure function of, so a sound deduction state is exactly
+the precondition the gate needs --- and not that \vfive{}'s own play was audited.
+For \vfive{} the corresponding evidence is the action-limit rate, which is
+\numFiveCapRate\% for the \vfive{} mirror and \numFourCapRate\% for \vfour{} on
+the bank of Table~\ref{tab:pathology}, and is non-zero on \numLimitNonzero{} of
+the \numLimitRows{} match rows behind the tables in this section: no result here
+is an artefact of the cap ending a game. Sources:
+\texttt{research/v05/results/E1-verify.txt}, \texttt{engine/src/main.cpp}.
+
+\subsection{The forced endgame, at volume}
+\label{sec:results-forced}
+
+\begin{table}[t]
+\centering
+\caption{Forced-endgame declarations, per declaring team (E8). Population:
+\numForcedEightDeals{} deals in six seat rotations, \numForcedEightGames{} games
+per arm, seed \numForcedEightSeed{}, \vfive{} against \vfour{}, both frozen. The
+two arms are the two sides of the same matches, scored separately; ``rate'' is
+forced declarations per game by that team and ``correct'' is the share of them
+that named the true allocation. Declaration totals are all declarations by that
+team, forced and voluntary. No intervals: a forced declaration is a rare event
+and these are pooled counts. Source:
+\texttt{research/v05/results/E8-forced-endgame.txt}.}
+\label{tab:forced}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{\textbf{forced declarations}} & \multicolumn{2}{c}{\textbf{all declarations}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+& \textbf{rate/game} & \textbf{correct} & \textbf{rate/game} & \textbf{correct} \\
+\midrule
+\vfour{} & \numVfourForcedRate{} & \numVfourForcedAcc\% & \numVfourDeclRateEight{} & \numVfourDeclAccEight\% \\
+\vfive{} & \numVfiveForcedRate{} & \numVfiveForcedAcc\% & \numVfiveDeclRateEight{} & \numVfiveDeclAccEight\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The forced endgame is too rare for the pathology bank of
+Table~\ref{tab:pathology} to resolve. Its \vfive{} mirror column counts
+\numFiveForced{} of these declarations in \numFiveGames{} games, which is a
+denominator that supports no rate. E8 therefore plays
+\numForcedEightGames{} games per arm and scores each team separately.
+Table~\ref{tab:forced} gives the result. \vfive{} enters the forced endgame
+\numForcedRateRatio$\times$ less often --- \numVfiveForcedRate{} declarations per
+game against \numVfourForcedRate{} --- and when it does, it names a
+capacity-feasible allocation that is correct \numVfiveForcedAcc\% of the time
+(\numVfiveForcedRightN{} of \numVfiveForcedN{} forced declarations), against
+\numVfourForcedAcc\% for \vfour{} (\numVfourForcedRightN{} of
+\numVfourForcedN{}). The denominators are worth carrying: the \vfive{} rate rests
+on \numVfiveForcedN{} events, which is enough to separate it from \vfour{}'s and
+not enough to place it to the nearest point. E8 does not decompose the two
+effects by mechanism, so the attribution that follows is the design's and not
+this experiment's: M1 is what removes the extended runs of guaranteed misses
+during which a team is stripped of cards while half-suits remain undeclared,
+which is how the cardless endgame was being reached, and M2 is what stops the
+declarer, once there, naming an allocation that gives a teammate more cards than
+that teammate can hold.
+
+\numVfiveForcedAcc\% is not the ceiling. \S\ref{sec:diag-forced} measures the best
+capacity-feasible allocation to be correct \numFeasibleRight\% of the time under
+the reference posterior. That ceiling was measured on \vfour{}'s mirror
+forced-endgame states, not on the states \vfive{} reaches here, so it bounds this
+number only to the extent that the two populations resemble each other; read as
+an indication rather than a bound, roughly two-fifths of the available accuracy
+remains unclaimed. The gap is a live target rather than a residual: M2 ranks
+feasible assignments by an estimate computed on the deployed approximate belief,
+and it does not attempt the per-seat knowledge model (M4) that would sharpen the
+ranking.
+
+\paragraph{Why this is reported per declaring team.} \texttt{fish pathology}
+pools both teams' forced declarations into a single count. In the cross match of
+Table~\ref{tab:pathology} that pooled figure is \numCrossForced{} declarations,
+\numCrossForcedWrong\% wrong, and it is a property of neither policy:
+Table~\ref{tab:forced} scores the same kind of event separately by declaring team,
+on a far larger bank, and finds \numVfiveForcedAcc\% correct for
+\vfive{} against \numVfourForcedAcc\% for \vfour{}, so the pooled cross-match
+figure is dominated by \vfour{}'s side of those games. This is the same class of
+error corrected at C3 in \S\ref{sec:corrections}, where a mirror run's six seat
+rotations were read as six independent samples although they are three deal
+shifts times two team orientations and both orientations play byte-identical
+games. Forced-endgame accuracy is attributable only when it is reported per
+declaring team, which is why Table~\ref{tab:forced}, and not the pathology row,
+is the measurement of record.
+
+\subsection{Head-to-head against \vfour{}, on deals never fitted against}
+\label{sec:results-h2h}
+
+\begin{table}[t]
+\centering
+\caption{\vfive{} against \vfour{}, five independent evaluation banks (E3).
+Population: \numHeadBankDeals{} deals in six seat rotations per bank,
+\numHeadBankGames{} games per row and \numHeadGames{} in total, full rules dialect,
+both policies frozen. Intervals are deal-clustered percentile bootstrap. The
+deals are held out from the fit of \S\ref{sec:fitting}; \vfour{} itself was a
+member of the fitting panel, so the opponent identity is not. Source:
+\texttt{research/v05/results/E3-headtohead.jsonl}.}
+\label{tab:h2h}
+\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Bank seed} & \textbf{\vfive{} win rate} & \textbf{95\% CI} \\
+\midrule
+\numHeadSeedOne{}   & \numHeadWinOne\%   & \numHeadCIOne\% \\
+\numHeadSeedTwo{}   & \numHeadWinTwo\%   & \numHeadCITwo\% \\
+\numHeadSeedThree{} & \numHeadWinThree\% & \numHeadCIThree\% \\
+\numHeadSeedFour{}  & \numHeadWinFour\%  & \numHeadCIFour\% \\
+\numHeadSeedFive{}  & \numHeadWinFive\%  & \numHeadCIFive\% \\
+\midrule
+mean of the five    & \numHeadWin\%      & range \numHeadRange\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Across the five banks of Table~\ref{tab:h2h}, \vfive{} wins \numHeadWin\% of
+\numHeadGames{} games against \vfour{}, with individual banks spanning
+\numHeadRange\% and every interval containing $50\%$. The mean margin is about a
+point, which is smaller than the spread between banks, and no claim of a strength
+advantage is made from it.
+
+These are not the only banks in this report on which the frozen configuration
+meets \vfour{}. Counting the per-style cell of Table~\ref{tab:perstyle}
+(\numPanelVfiveVfour\%, the figure the abstract and \S\ref{sec:intro} quote
+because it is the cell the worst case of that table is read from), the shipped
+row of the ablation bank (\numAblFull\%) and the default dialect of
+Table~\ref{tab:dialects-v05} (\numDialectDefault\%), \numHeadBanks{} independent
+banks measure the same pairing and they span \numHeadBankSpan\%. That span, and
+not any one of its members, is what this report knows about the head-to-head:
+it straddles even money, its width exceeds every margin inside it, and its
+lowest member, \numHeadBankLow\%, puts \vfive{} below \vfour{}.
+
+\paragraph{The fitting regression, stated plainly.} The generation the fit of
+\S\ref{sec:fitting} selected from scores \numFitWorst\% against \vfour{}
+in-panel, on the banks it was being optimised on. Held out, after freezing, the
+same configuration scores \numHeadWin\%. In-panel \numFitWorst\% versus held-out
+\numHeadWin\% is the regression, and the held-out figure is the one reported
+here and everywhere else in this paper. Nothing about the in-panel number should
+be quoted as a result.
+
+The composition of the margin is worth recording because it is not the
+composition one would predict from the pathology table. \vfive{} takes
+\numHeadSetsFive{} half-suits per game against \numHeadSetsFour{}, and declares
+slightly more often --- \numHeadDeclRateFive{} declarations per game against
+\numHeadDeclRateFour{} --- at a slightly \emph{lower} accuracy,
+\numHeadDeclAccFive\% against \numHeadDeclAccFour\%. \vfour{} gets
+\numHeadDeclErrFour\% of its declarations wrong in these games, against
+\numFourDeclWrong\% in its own mirror, because against a \vfive{} opponent the
+games end at \numHeadEvents{} events and \vfour{} never reaches the horizon that
+forces its bad declarations.
+The failure mode of \S\ref{sec:diag-baseline} is a property of the interaction,
+not of one seat's rule in isolation, and repairing one side of the match removes
+most of it from both.
+
+\subsection{The per-style profile, and the worst case}
+\label{sec:results-style}
+
+\begin{table}[t]
+\centering
+\caption{Per-opponent win rate for both policies against the same
+\numVfiveStyleN{}-member style set (E4). Population: \numStyleDeals{} deals in six
+seat rotations, \numStyleGames{} games per cell, seed \numStyleSeed{}, full rules
+dialect, both policies frozen. $\Delta$ is \vfive{} minus \vfour{} in percentage
+points. The \vfour{}-against-\vfour{} cell is $50\%$ by construction, not by
+measurement. Minimax regret is computed against the better of the two
+\emph{measured} arms on each style, not against a per-style optimum, which was
+not computed (\S\ref{sec:limitations}). Source:
+\texttt{research/v05/results/E4-perstyle.jsonl}.}
+\label{tab:perstyle}
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Opponent} & \textbf{\vfive{}} & \textbf{\vfour{}} & \textbf{$\Delta$} \\
+\midrule
+\vfour{}      & \numPanelVfiveVfour\%       & \numPanelVfourVfour\%       & $\numDeltaVfour$ \\
+\vthree{}     & \numPanelVfiveVthree\%      & \numPanelVfourVthree\%      & $\numDeltaVthree$ \\
+\vtwo{}       & \numPanelVfiveVtwo\%        & \numPanelVfourVtwo\%        & $\numDeltaVtwo$ \\
+lockout       & \numPanelVfiveLockout\%     & \numPanelVfourLockout\%     & $\numDeltaLockout$ \\
+detective     & \numPanelVfiveDetective\%   & \numPanelVfourDetective\%   & $\numDeltaDetective$ \\
+diversifier   & \numPanelVfiveDiversifier\% & \numPanelVfourDiversifier\% & $\numDeltaDiversifier$ \\
+hunter        & \numPanelVfiveHunter\%      & \numPanelVfourHunter\%      & $\numDeltaHunter$ \\
+bluffer       & \numPanelVfiveBluffer\%     & \numPanelVfourBluffer\%     & $\numDeltaBluffer$ \\
+random        & \numPanelVfiveRandom\%      & \numPanelVfourRandom\%      & $\numDeltaRandom$ \\
+\midrule
+\textbf{worst case}          & \textbf{\numVfiveWorst\%} & \textbf{\numVfourWorst\%} & \\
+\quad attained on            & \numVfiveWorstOpp{}       & \numVfourWorstOpp{}       & \\
+mean over the style set      & \numVfiveMean\%           & \numVfourMean\%           & \\
+minimax regret               & \numVfiveRegret{}         & \numVfourRegret{}         & \\
+\quad attained on            & \numVfiveRegretOpp{}      & \numVfourRegretOpp{}      & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:perstyle} is the table this project's standing evaluation
+preference asks for, and it says that on win rate the two policies are level.
+\vfive{} is ahead on four styles, behind on four, and identical on one; the
+largest gain is $\numDeltaLockout$ against the turn-starvation lockout and the
+largest loss $\numDeltaVtwo$ against \vtwo{}. The two means differ by
+\numStyleMeanGap{} points, computed from the unrounded cells. On minimax regret \vfour{} is marginally the
+better policy, \numVfourRegret{} against \numVfiveRegret{}, its regret attained on
+\numVfourRegretOpp{} and \vfive{}'s on \numVfiveRegretOpp{}. Neither figure
+supports an ordering.
+
+\paragraph{The worst case, and what \vfour{}'s published one excluded.} The v0.4
+study reported that \vfour{}'s lowest win rate against any panel member was
+\numVfourVsVthree\%. That panel contained no opponent of \vfour{}'s own strength.
+Once one is included, the worst case for both policies falls to about $50\%$:
+\numVfiveWorst\% for \vfive{} and \numVfourWorst\% for \vfour{}, both attained on
+\numVfiveWorstOpp{}. This is not a defect that a better policy in this family
+would repair. A policy's mirror match is a two-team game between identical
+strategies, so \vfour{}'s own cell is exactly $50\%$ by construction, and any
+policy strong enough that no member of a fixed panel beats it will have its worst
+case set by a copy of itself. A worst-case figure quoted over a panel that
+excludes the mirror is therefore a statement about the panel. C9 in
+\S\ref{sec:corrections} records the scope correction; the operational consequence
+is M10's, and it is that the mirror belongs in the panel that the worst case is
+computed over as well as in the panel that is fitted against.
+
+\subsection{The deception panel}
+\label{sec:results-deception}
+
+\begin{table}[t]
+\centering
+\caption{\vfive{} and \vfour{} against three deceptive archetypes (E10), at two
+independent seed banks. Population: \numDecDeals{} deals in six seat rotations,
+\numDecGames{} games per cell, seeds \numDecSeedA{} and \numDecSeedB{}, full
+rules dialect, both policies frozen. All three are commitment deceivers: they
+follow a fixed deceptive rule for the whole game. \emph{Silent} never asks in the
+half-suit it holds most cards of until forced --- the uncapped variant, not the
+hit-probability-capped one whose figure \S\ref{sec:diag-prior} quotes;
+\emph{feint} preferentially asks in a half-suit it holds exactly one card of,
+manufacturing a misleading ask-legality certificate when the material cost is
+small; \emph{withholder} is the project owner's own manoeuvre, declining to ask in
+a half-suit for several turns after being asked in it while holding other cards of
+it. $\Delta$ is the mean over both banks of \vfive{} minus \vfour{}. Source:
+\texttt{research/v05/results/E10-deception.md}.}
+\label{tab:deception}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+& \multicolumn{2}{c}{\textbf{seed \numDecSeedA{}}} & \multicolumn{2}{c}{\textbf{seed \numDecSeedB{}}} & \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Opponent} & \textbf{\vfive{}} & \textbf{\vfour{}} & \textbf{\vfive{}} & \textbf{\vfour{}} & \textbf{$\Delta$} \\
+\midrule
+silent      & \numDecSilentFiveA\%      & \numDecSilentFourA\%      & \numDecSilentFiveB\%      & \numDecSilentFourB\%      & $\numDecSilentDelta$ \\
+feint       & \numDecFeintFiveA\%       & \numDecFeintFourA\%       & \numDecFeintFiveB\%       & \numDecFeintFourB\%       & $\numDecFeintDelta$ \\
+withholder  & \numDecWithholderFiveA\%  & \numDecWithholderFourA\%  & \numDecWithholderFiveB\%  & \numDecWithholderFourB\%  & $\numDecWithholderDelta$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The withholder is a direct model of the manoeuvre reported from live play that
+started this work: hold cards of a half-suit you have been asked for, then
+decline to ask back in it. Against that archetype \vfive{} gains
+$\numDecWithholderDelta$ points, and the two banks agree closely on the size of
+it --- $\numDecWithholderDeltaA$ and $\numDecWithholderDeltaB$ --- which is the
+strongest replication anywhere in this report. It also gains
+$\numDecSilentDelta$ against the silent archetype, but there only the sign
+replicates: the banks read $\numDecSilentDeltaA$ and $\numDecSilentDeltaB$, and
+the first of those is a fraction of the width of a bank, so the silent result
+should be read as a direction and not as a magnitude. The mechanism is not a better
+opponent model --- M3 through M7 are unbuilt and the two policy-prior scalars are
+the same construct in both arms. It is that \vfive{} no longer spends turns on
+asks it can prove will miss, so a misleading \emph{absence} of asks has much less
+leverage over the position. The manoeuvre works by making the deceiver's holdings
+appear to lie elsewhere, and a policy already spending \numFourDeadAsk\% of its
+asks on cards it could prove were unavailable was donating turns for that
+misdirection to work in.
+
+\paragraph{The loss, and its cause.} Against the feint \vfive{} is
+$\numDecFeintDelta$ points worse, and that replicates at both banks too
+($\numDecFeintDeltaA$ and $\numDecFeintDeltaB$). The
+feint manufactures a false-positive ask-legality certificate rather than
+withholding a true one, and the fit raised \texttt{priorTheta} --- the weight on
+``this player asked in this half-suit'' --- from \numPriorThetaFour{} to
+\numPriorThetaFive{}. \vfive{} therefore weights a manufactured certificate more
+heavily than \vfour{} did. This is the exposure the diagnosis predicted:
+\S\ref{sec:diag-prior} establishes that the vulnerability is over-weighting the
+policy prior, not weighting it at all, and the corresponding removal is worse
+still --- deleting both prior scalars costs \numPriorDeleteCost{} points
+[\numPriorDeleteCI] on a panel containing no honest opponent, against the
+\numAgnosticCost{} points \S\ref{sec:mech-rejected} records on the mixed panel.
+
+\paragraph{The parameter is not identified, and was not tuned.} A sweep of
+\texttt{priorTheta} over \numThetaSweepN{} values, $\{\numThetaSweep\}$, at
+\numDecSeeds{} seeds does not identify it: the ordering of the settings is not
+stable between the two banks and every pairwise difference sits inside the
+cluster-bootstrap interval. The fitted value was therefore retained rather than
+adjusted, because adjusting it on this evidence would be selection on noise. The
+principled repair is M7 --- a per-seat online type posterior with data-biased
+shrinkage, so that a certificate from a seat whose type posterior has drifted
+toward ``deceptive'' is discounted --- and M7 is specified and not built
+(\S\ref{sec:mech-designed}).
+
+\paragraph{Consequence for the worst case.} Across the full
+\numTwelveStyles{}-style set --- the \numVfiveStyleN{} of
+Table~\ref{tab:perstyle} plus these three --- the lowest cell \vfive{} records
+anywhere is \numDecWorst\% against the \numDecWorstOpp{}, on the weaker of the
+two deception banks, marginally below its mirror cell of \numVfiveWorst\%.
+Which of the two is \emph{the} worst case is not resolved by these banks:
+averaged over both deception banks the \numDecWorstOpp{} reads
+\numDecFeintFive\%, which is above the mirror rather than below it, and the two
+candidates sit within half a point of each other either way. The honest
+statement is that \vfive{}'s floor over the twelve styles is about
+\numVfiveWorst\%, attained on the mirror or on the \numDecWorstOpp{} depending on
+the bank. \vfour{}'s worst case remains its own mirror at \numVfourWorst\%.
+Neither policy falls below a coin flip against anything in the set, and no
+aggregate over it should be quoted without this table and
+Table~\ref{tab:perstyle} beside it.
+
+\subsection{Mechanism ablations}
+\label{sec:results-ablations}
+
+\begin{table}[t]
+\centering
+\caption{Frozen-parameter mechanism ablations (E5). Population:
+\numAblFiveDeals{} deals in six seat rotations, \numAblFiveGames{} games per row,
+seed \numAblFiveSeed{}, every row played against frozen \vfour{}, full rules
+dialect. Every row runs \vfive{}'s fitted parameter vector; only the mechanism
+switches change, so the control is \emph{not} \vfour{} --- it is the \vfive{}
+vector with the mechanisms disabled, which is why it differs from the
+\vfour{}-parameter control of Table~\ref{tab:mechanisms}. The last two rows
+\emph{add} a mechanism to the shipped configuration rather than removing one.
+``Decl.\ acc.'' is the ablated arm's own declaration accuracy and ``opp.'' is
+\vfour{}'s in the same games. Intervals are deal-clustered percentile bootstrap.
+Source: \texttt{research/v05/results/E5-ablations.jsonl}.}
+\label{tab:ablations-v05}
+\footnotesize
+\begin{tabular}{llrrrrr}
+\toprule
+\textbf{Switches} & \textbf{Mechanisms} & \textbf{win rate} & \textbf{95\% CI}
+  & \textbf{events} & \textbf{decl.\ acc.} & \textbf{opp.} \\
+\midrule
+\texttt{m1=0,m2=0,stage2=1} & control          & \numAblControl\%    & \numAblControlCI\%    & \numAblControlEvents{}    & \numAblControlDeclAcc\%    & \numAblControlOppDeclAcc\% \\
+\texttt{m1=1}               & M1               & \numAblMone\%       & \numAblMoneCI\%       & \numAblMoneEvents{}       & \numAblMoneDeclAcc\%       & \numAblMoneOppDeclAcc\% \\
+\texttt{m2=1}               & M2               & \numAblMtwo\%       & \numAblMtwoCI\%       & \numAblMtwoEvents{}       & \numAblMtwoDeclAcc\%       & \numAblMtwoOppDeclAcc\% \\
+\texttt{stage2=0}           & M8               & \numAblMeight\%     & \numAblMeightCI\%     & \numAblMeightEvents{}     & \numAblMeightDeclAcc\%     & \numAblMeightOppDeclAcc\% \\
+\texttt{m1=1,m2=1}          & M1 + M2          & \numAblMoneMtwo\%   & \numAblMoneMtwoCI\%   & \numAblMoneMtwoEvents{}   & \numAblMoneMtwoDeclAcc\%   & \numAblMoneMtwoOppDeclAcc\% \\
+\texttt{m1=1,stage2=0}      & M1 + M8          & \numAblMoneMeight\% & \numAblMoneMeightCI\% & \numAblMoneMeightEvents{} & \numAblMoneMeightDeclAcc\% & \numAblMoneMeightOppDeclAcc\% \\
+\texttt{m2=1,stage2=0}      & M2 + M8          & \numAblMtwoMeight\% & \numAblMtwoMeightCI\% & \numAblMtwoMeightEvents{} & \numAblMtwoMeightDeclAcc\% & \numAblMtwoMeightOppDeclAcc\% \\
+shipped \vfive{}            & M1 + M2 + M8     & \numAblFull\%       & \numAblFullCI\%       & \numAblFullEvents{}       & \numAblFullDeclAcc\%       & \numAblFullOppDeclAcc\% \\
+\midrule
+\texttt{+m1p=1}             & \quad + ownership scaled by $p$ & \numAblOwnershipP\%  & \numAblOwnershipPCI\%  & \numAblOwnershipPEvents{}  & \numAblOwnershipPDeclAcc\%  & \numAblOwnershipPOppDeclAcc\% \\
+\texttt{+norepeat=1}        & \quad + repetition guard        & \numAblRepeatGuard\% & \numAblRepeatGuardCI\% & \numAblRepeatGuardEvents{} & \numAblRepeatGuardDeclAcc\% & \numAblRepeatGuardOppDeclAcc\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every row of Table~\ref{tab:ablations-v05} is a frozen-parameter ablation: the
+fitted vector is \vfive{}'s in all of them, and no row was refitted around the
+mechanism it removes. A cheap removal may still be doing work a refitted policy
+would find another way to do, and an expensive removal may be expensive only
+because the surrounding weights were fitted to rely on it. That qualification
+applies to every row and is not repeated per row; a matched-budget refit is one of
+the experiments \S\ref{sec:limitations} names as not run.
+
+\paragraph{Stage 2 is dead code once M1 is on.} The \texttt{m1=1} and
+\texttt{m1=1,stage2=0} rows are identical to the digit in win rate, events,
+declaration accuracy and their opponent's declaration accuracy, and so are the
+\texttt{m1=1,m2=1} and shipped rows. This is not a coincidence of the bootstrap:
+with the live-ask gate on, games end at about \numAblFullEvents{} events and the
+event-count escalation's second stage is never reached, so switching it off
+changes nothing that happens. The measured cost of \numStageTwoCost{} points that
+\S\ref{sec:diag-dilemma} attributes to that rule is a cost it can only levy on a
+policy that deadlocks.
+
+\paragraph{The rows with the best win rates are the rows that still deadlock.}
+M8 alone is the largest number in the table, \numAblMeight\%, and M2 + M8 the
+second largest, \numAblMtwoMeight\%; both play games of about
+\numAblMeightEvents{} events against the control's \numAblControlEvents{}, so both
+retain the failure mode in full. They win by declining to cash a declaration the
+policy itself scores near zero: their own declaration accuracy rises from the
+control's \numAblControlDeclAcc\% to \numAblMeightDeclAcc\%, while \vfour{}'s in
+the same games falls from \numAblControlOppDeclAcc\% to
+\numAblMeightOppDeclAcc\% --- an asymmetry this experiment records without
+explaining, since the two arms play games of nearly the same length. This is the
+forcing dilemma of
+\S\ref{sec:diag-dilemma} measured again inside \vfive{}'s switch set: patience
+without termination buys points and keeps the pathology, and the configurations
+that terminate (\numAblFullEvents{} events, \numAblFullDeclAcc\% own declaration
+accuracy, \numAblFullOppDeclAcc\% for the opponent) are the ones that give the
+points back. The mechanism package is bought with win rate, not for it.
+
+\paragraph{Two designed mechanisms were rejected on measurement.} Both are
+retained as switches, both ship off, and both are recorded here so they are not
+rebuilt. Scaling the four ownership features of
+\S\ref{sec:mech-built} by hit probability on top of the gate --- \texttt{m1p},
+which is a switch and not part of the shipped configuration --- costs $\numAblOwnershipPDelta$ points relative to the
+shipped configuration, and was measured at $-\numMonePReject$ points on top of
+M1, M2 and M8 at design time, which is why the switch ships off. Its own
+diagnostic points at the reason: it \emph{raises} the hit rate, from
+\numAblFullHit\% to \numAblOwnershipPHit\%, while losing games. Once the gate has
+removed the $p = 0$ case there is no dead ask left for the scaling to suppress,
+so all it does is rescale live candidates against one another, and it buys
+immediate hits at the expense of the ownership progress the rest of the linear
+score was fitted to trade against.
+
+The repetition guard --- \texttt{norepeat}, forbidding a seat from asking the same
+(card, target) pair twice --- costs $\numAblRepeatGuardDelta$ points, and was
+measured at $-\numGuardReject$ points on top of M1, M2 and M8 at design time. It
+also ships off, and it has an explanation worth stating, because the guard looks
+like a structural backstop that could not hurt. The reason it does is that cards
+move: forbidding a (card, target) repeat forbids asking for a card the actor has
+just watched transfer to that opponent in a public event, which is frequently the
+best ask on the board. The cost shows in the hit rate, which falls from
+\numAblFullHit\% to \numAblRepeatGuardHit\%, and not in the event count, which is
+unchanged at \numAblRepeatGuardEvents{} against \numAblFullEvents{}: the guard is
+not preventing a deadlock --- there is none left to prevent --- it is deleting
+asks the policy would otherwise land. And the
+case it was designed to catch is already covered: a repeat of an ask that missed
+is provably dead in the sense of Definition~\ref{def:dead}, so M1 removes it
+without a separate rule, which is why the guard measured as exactly neutral when
+tested alone in Table~\ref{tab:mechanisms} and negative once M1 was present.
+
+\subsection{Calibration}
+\label{sec:results-calib}
+
+\begin{table}[t]
+\centering
+\caption{Aggregate forecast reliability for \vfive{} (E6). Population: the
+calibration bank of \numCalibFiveDeals{} deals, seed \numCalibFiveSeed{},
+\vfive{} against \vfour{}, weights frozen; the unit is one forecast and $n$
+counts forecasts of that type. Voluntary and forced declarations are pooled.
+All entries are point estimates: no clustered uncertainty is computed for Brier
+score, log loss or expected calibration error, so small differences between them
+are not resolved by these numbers. Source:
+\texttt{research/v05/results/E6-calibration-v05.txt}.}
+\label{tab:calib-v05}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Forecast} & \textbf{$n$} & \textbf{Brier} & \textbf{log loss}
+  & \textbf{ECE} & \textbf{mean pred.} & \textbf{mean obs.} \\
+\midrule
+ask succeeds        & \numCalibAskN{}  & \numCalibAskBrier{}  & \numCalibAskLogloss{}  & \numCalibAskECE{}  & \numCalibAskPred\%  & \numCalibAskObs\% \\
+declaration correct & \numCalibDeclN{} & \numCalibDeclBrier{} & \numCalibDeclLogloss{} & \numCalibDeclECE{} & \numCalibDeclPred\% & \numCalibDeclObs\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Neither aggregate in Table~\ref{tab:calib-v05} characterises the estimator it
+scores, for the reason the v0.4 study gave: both are dominated by one bin. Of
+\numCalibDeclN{} declaration forecasts, \numCalibDeclTopShare\% fall in the top
+decile at \numCalibDeclTopPred\% predicted against \numCalibDeclTopObs\%
+realised, which is most of what the expected calibration error of
+\numCalibDeclECE{} measures. The decision-relevant bins run the other way: in
+$[0.7, 0.8)$ the declaration forecast is \emph{under}confident,
+\numCalibDeclMidPred\% predicted against \numCalibDeclMidObs\% realised on
+\numCalibDeclMidN{} forecasts: the estimate the stopping rule thresholds is
+conservative in exactly the range where the threshold binds.
+
+The ask forecast is the one this report has a reason to look at, because M1
+gates on a hard deduction while the ask score prices everything above it. Its
+aggregate is close to unbiased --- \numCalibAskPred\% mean predicted against
+\numCalibAskObs\% realised over \numCalibAskN{} forecasts --- and it is
+overconfident precisely at the bottom, where the lowest decile predicts
+\numCalibAskLowPred\% against \numCalibAskLowObs\% realised on
+\numCalibAskLowN{} forecasts, and underconfident in the middle, where $[0.4, 0.5)$
+predicts \numCalibAskMidPred\% against \numCalibAskMidObs\% on
+\numCalibAskMidN{}. The gate itself is unaffected, since it is a deduction and
+not a forecast; what the bottom-decile bias means is that among the asks that
+survive the gate, the near-dead ones are still priced somewhat too high, which is
+a reason to expect the M3 net-information term to have something to price rather
+than a defect this report repairs.
+
+\subsection{Rule dialects}
+\label{sec:results-dialects}
+
+\begin{table}[t]
+\centering
+\caption{\vfive{} against \vfour{} under four rules dialects (E7). Population:
+\numDialectDeals{} deals in six seat rotations, \numDialectGames{} games per row,
+seed \numDialectSeed{}, both policies frozen. ``Forced rate'' is \vfive{}'s
+forced declarations per game and the two accuracy columns are the share of each
+team's forced declarations that were correct. The \vthree{} legacy dialect
+implies declaration on turn only, so its rows track the no-out-of-turn dialect. In
+the default and no-cardless dialects a forced declaration occurs a handful of
+times per row, so those two accuracy cells rest on single-digit denominators and
+should not be read as rates. Intervals are deal-clustered percentile bootstrap.
+Source:
+\texttt{research/v05/results/E7-rules.jsonl}.}
+\label{tab:dialects-v05}
+\footnotesize
+\begin{tabular}{lrrrrr}
+\toprule
+& & & \textbf{forced} & \multicolumn{2}{c}{\textbf{forced correct}} \\
+\cmidrule(lr){5-6}
+\textbf{Dialect} & \textbf{\vfive{} win} & \textbf{95\% CI}
+  & \textbf{per game} & \textbf{\vfive{}} & \textbf{\vfour{}} \\
+\midrule
+default (\S\ref{sec:rules}) & \numDialectDefault\%    & \numDialectDefaultCI\%    & \numDialectDefaultForcedRate{}    & \numDialectDefaultForcedFive\%    & \numDialectDefaultForcedFour\% \\
+no out-of-turn declaration & \numDialectNoOOT\%      & \numDialectNoOOTCI\%      & \numDialectNoOOTForcedRate{}      & \numDialectNoOOTForcedFive\%      & \numDialectNoOOTForcedFour\% \\
+no cardless declaration & \numDialectNoCardless\% & \numDialectNoCardlessCI\% & \numDialectNoCardlessForcedRate{} & \numDialectNoCardlessForcedFive\% & \numDialectNoCardlessForcedFour\% \\
+\vthree{} legacy & \numDialectLegacy\%     & \numDialectLegacyCI\%     & \numDialectLegacyForcedRate{}     & \numDialectLegacyForcedFive\%     & \numDialectLegacyForcedFour\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The head-to-head margin is insensitive to the dialect: the four rows of
+Table~\ref{tab:dialects-v05} span \numDialectDefault\% to \numDialectNoOOT\%,
+a range narrower than the width of any one of their intervals, and every interval
+overlaps every other. None of them separates from $50\%$; the closest is the
+no-out-of-turn row, whose interval reaches down to exactly
+$50\%$. The v0.4 study's dialect experiment moved by
+several points, but it measured a different pairing on a different bank, so the
+two are not comparable; all that is claimed here is that the \vfive{}-against-
+\vfour{} margin does not depend on which of these four dialects is played.
+
+What the dialect does change is the population of states the mechanisms act on. Disabling out-of-turn declarations raises the
+forced-endgame rate by a factor of about \numDialectForcedRatio{}, from
+\numDialectDefaultForcedRate{} declarations per game to
+\numDialectNoOOTForcedRate{}, because a team that may only declare on its own
+turn arrives at the cardless endgame far more often. On that population
+\vfive{}'s forced declarations are correct \numDialectNoOOTForcedFive\% of the
+time against \vfour{}'s \numDialectNoOOTForcedFour\%, and \vfour{}'s overall
+declaration accuracy falls to \numDialectNoOOTDeclFour\% against \vfive{}'s
+\numDialectNoOOTDeclFive\%. The absolute accuracies are much higher than the
+\numVfiveForcedAcc\% of Table~\ref{tab:forced} because the states are not the
+same states --- a forced endgame reached because declaration was illegal until
+now is far more determined than one reached after a full game of asking --- so
+the two measurements are not comparable in level. Nor are they comparable in the
+size of the gap between the two policies: the gap here, \numDialectNoOOTForcedFive\%
+against \numDialectNoOOTForcedFour\%, is less than half the one
+Table~\ref{tab:forced} records between \numVfiveForcedAcc\% and
+\numVfourForcedAcc\%. What transfers across them is only the sign of that gap,
+which is what M2 predicts, and that sign is the only claim made from this row. Ask hit rate also falls sharply under
+these dialects, to \numDialectNoOOTHit\% from \numDialectDefaultHit\%, which is a
+property of the dialect and not of either policy.
+
+\subsection{Throughput}
+\label{sec:results-throughput}
+
+\vfive{} plays \numThroughputFive{} self-play games per second over a timing run
+of \numThroughputGamesFive{} games, a wall-clock rate for one run with no
+interval. The more useful comparison is the matched one the ablation bank
+supplies, because it holds the opponent, the deals and the machine fixed: on that
+bank the mechanism-disabled control of Table~\ref{tab:ablations-v05} runs at
+\numThroughputPatho{} games per second and the shipped configuration at
+\numThroughputFixed{}, a factor of \numThroughputRatioFive$\times$. (The two
+figures differ from the self-play number above because they are played against
+\vfour{} rather than a mirror.) The failure mode of \S\ref{sec:diag-baseline} is
+therefore a compute cost as well as a play defect: the deadlock is played out move
+by move and every event in it runs a belief update. The factor exceeds the event
+ratio --- \numAblControlEvents{} events per game against \numAblFullEvents{} ---
+which is consistent with the certificate accumulation \S\ref{sec:limitations}
+notes, but this timing is not instrumented finely enough to isolate that. Every
+evaluation in this section completes in minutes at these rates; the fit of
+\S\ref{sec:fitting} does not, and its cost is not reported here.
+
+\renewcommand{\topfraction}{0.7}
+\renewcommand{\bottomfraction}{0.3}
+\renewcommand{\textfraction}{0.2}
+\renewcommand{\floatpagefraction}{0.5}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{1}
+\setcounter{totalnumber}{3}
+\setlength{\textfloatsep}{20pt plus 2pt minus 4pt}
+\setlength{\floatsep}{12pt plus 2pt minus 2pt}
+\setlength{\intextsep}{12pt plus 2pt minus 2pt}
