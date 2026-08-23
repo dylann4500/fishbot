@@ -1,0 +1,10 @@
+### A: search ONLY inside the tie group, 12 determinizations
+  win rate      54.1667%  [50.5147, 57.7744]  n=720
+  mean sets     4.5875 - 4.4125
+### B: the same, ONE determinization (near-random tie choice)
+  win rate      49.5833%  [45.9432, 53.2279]  n=720
+  mean sets     4.50972 - 4.49028
+### C: 32 determinizations, tie group only
+### D: the FREE version -- uniform random choice inside the tie group, seeded from the public event stream, no rollouts
+  win rate      50%  [47.1756, 52.8244]  n=1200
+  mean sets     4.5 - 4.5

@@ -1,0 +1,67 @@
+### v0.6 mirror
+v06 vs v06
+games              600
+events/game        94.59   median 94  p90 110  p99 120  max 131
+asks/game          85.25   hit rate 53.2903%
+DEAD asks          6  (0.0117302% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.0117302% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1136  (2.22092%)
+repeat (a,suit,t)  24050  (47.0186%)
+asks in own-locked 5980  (11.6911% of asks)   -- guaranteed miss, but emits a certificate
+declarations       5400   wrong 128 (2.37037%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+
+### v0.5 mirror
+v05 vs v05
+games              600
+events/game        96.7233   median 96  p90 112  p99 124  max 131
+asks/game          87.3867   hit rate 55.6263%
+DEAD asks          6  (0.0114434% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.0114434% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1370  (2.61291%)
+repeat (a,suit,t)  26364  (50.2823%)
+asks in own-locked 5112  (9.74977% of asks)   -- guaranteed miss, but emits a certificate
+declarations       5400   wrong 112 (2.07407%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 6 (100%)
+action-limit games 0 (0%)
+
+### v0.4 mirror
+v04 vs v04
+games              600
+events/game        143.597   median 106  p90 312  p99 321  max 323
+asks/game          134.253   hit rate 34.2462%
+DEAD asks          31444  (39.0357% of asks)   -- actor could PROVE the target lacks the card
+dead runs          2610  mean length 12.0475  longest 286
+games w/ run>=6    206  (34.3333%)
+starved turns      164  (0.203595% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     32246  (40.0313%)
+repeat (a,suit,t)  56276  (69.8629%)
+asks in own-locked 13262  (16.4639% of asks)   -- guaranteed miss, but emits a certificate
+declarations       5400   wrong 564 (10.4444%)
+  at/after ev>=220 768   wrong 450 (58.5938%)
+  forced endgame   28   wrong 28 (100%)
+action-limit games 0 (0%)
+
+### v0.6 vs v0.5
+v06 vs v05
+games              600
+events/game        95.6883   median 96  p90 110  p99 122  max 127
+asks/game          86.345   hit rate 55.5948%
+DEAD asks          10  (0.0193024% of asks)   -- actor could PROVE the target lacks the card
+dead runs          10  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      10  (0.0193024% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1362  (2.62899%)
+repeat (a,suit,t)  25175  (48.5938%)
+asks in own-locked 4666  (9.0065% of asks)   -- guaranteed miss, but emits a certificate
+declarations       5400   wrong 110 (2.03704%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   10   wrong 8 (80%)
+action-limit games 0 (0%)

@@ -1,0 +1,206 @@
+\section{Test-time search, and the statistic that decides whether it helps}
+\label{sec:search}
+
+Every prior FishBot chooses its ask by maximising a fitted score over the legal set. The obvious
+next step, and the one the project owner asked for, is to reason forward: to evaluate a candidate by
+what happens after it rather than by a static function of the position it is played from. This
+section builds that and measures it. It is the one mechanism in this study that beats a static
+rule --- and getting there required correcting a statistic whose cost, \vsixCurseGap{} points, is
+the most transferable result in the paper.
+
+\subsection{Why determinization here is not double-dummy search}
+\label{sec:search-notpimc}
+
+The v0.4 study eliminated perfect-information Monte Carlo on structural grounds and this study
+re-confirms them: under perfect information the team on turn takes every half-suit not dealt outright
+to its opponents, so a double-dummy evaluator scores every legal action alike and the average over
+determinizations cannot discriminate. Fish is a game about who knows what; a clairvoyant evaluator
+prices none of it.
+
+The search built here determinizes the \emph{deal} --- which is the entire hidden state because every card movement in this game is public --- but does not make anybody clairvoyant. Each of the six players in the
+continuation is reconstructed \emph{at its own information set}: the public deduction state, which
+is common knowledge and is therefore one object rather than six, refined by the hand that
+determinization gives that seat. They miss asks, emit certificates and misdeclare in the proportions
+the real game does. This is the cooperative single-agent search of Lerer et al.\
+\cite{lerer2020sparta}, with the belief taken from an exactly enumerable posterior rather than a learnt
+one.
+
+The reconstruction is checked against ground truth rather than argued. Over \vsixReconStates{} states and \vsixReconChecks{} card checks, the reconstructed
+information set differs from the seat's real one on \vsixReconMaskPct\% of cards and is \emph{wider}
+in \vsixReconWider{} of \vsixReconWider{} cases (narrower in \vsixReconNarrower{}), replicated at
+\vsixReconBanks{} seed banks: it is a strict under-approximation of
+what the seat knows, so no simulated player is ever credited with knowledge it does not have.
+
+\subsection{The search}
+\label{sec:search-alg}
+
+At an ask decision the actor
+(i) builds the exact capacity dynamic program on its own deduction state and draws $D$ deals from
+it, rejecting draws that violate an ask-legality certificate, so accepted draws are exact samples of
+the policy-agnostic posterior, and re-weighting them by the policy prior as an importance weight so
+that the sampler stays exact and the prior stays auditable;
+(ii) takes the $K$ leading candidates under the blueprint score, extended through every candidate
+that ties the $K$-th, because a plain top-$K$ would cut an exact tie arbitrarily and so reproduce the
+very defect the search is being asked about;
+(iii) seats six blueprint agents at their reconstructed information sets, applies the candidate, and
+plays the continuation out;
+(iv) and repeats every candidate on the \emph{same} determinizations, so the comparison is paired.
+
+Two design choices are forced by measurement rather than taste. The blueprint used inside the
+rollout is the deployed policy with its two-ply refinement disabled and its Sinkhorn iteration count
+reduced; Table~\ref{tab:rollout} gives the cost/fidelity frontier, which the corpus had not swept.
+The cheapest blueprint available is $62\times$ cheaper per event than the deployed policy and
+$38$ points weaker, and a search whose continuation model is $38$ points weak is searching a
+different game.
+
+\begin{table}[t]\centering
+\caption{Rollout-blueprint fidelity. Win rate against \vfive{} and single-thread throughput.
+Reducing the Sinkhorn iteration count, which the corpus had not tried, is the cheap axis: it buys
+most of the speed of the independent-marginal blueprint at a small fraction of its strength cost.}
+\label{tab:rollout}
+\input{tables_v06/rollout}
+\end{table}
+
+\subsection{The result: the optimizer's curse is worth \vsixCurseGap{} points}
+\label{sec:search-curse}
+
+The first working build of the search chose the candidate with the highest mean rollout return and
+scored \vsixSearchUnguarded\% against \vfive{}. The control that isolates the cause is the same
+code, the same rollout blueprint, the same budget, the same seed bank and the same sample size, with
+the blueprint's preference made to dominate: it scores \vsixSearchControl\%. The machinery is
+correct and the \emph{statistic} was wrong, and the gap between those two rows ---
+\vsixCurseGap{} points --- is the price of the argmax.
+
+One caveat about that control, because it is the row the whole comparison rests on. The blueprint's
+preference dominates only where the blueprint \emph{has} one: inside its own tie group the added
+term is identically zero and the deviation penalty is waived, so the control still lets the search
+choose among tied candidates. It scores at parity, which is a second, independent confirmation of
+\S\ref{sec:diag-irreducible}: searching inside an exchangeable tie group changes nothing.
+
+One determinization's return is the final half-suit differential, whose standard deviation is about
+two and a half half-suits, while genuine differences between the leading candidates are an order of
+magnitude smaller. An argmax over $D$ such means therefore selects on residual noise and lands on a
+candidate the blueprint had ranked below the top. Replacing the argmax with a paired
+lower-confidence-bound rule --- deviate from the blueprint's own choice only when the improvement
+over it, on the same determinizations, clears $\kappa$ standard errors of the paired difference ---
+recovers the whole deficit monotonically in $\kappa$ (Table~\ref{tab:search}).
+
+\begin{table}[t]\centering
+\caption{The deviation-threshold ladder, six rotations, held-out bank. The first row is the control
+that forces the blueprint to decide. The range across the ladder is \vsixSearchSpread{} points.}
+\label{tab:search}
+\input{tables_v06/search}
+\end{table}
+
+This is a property of determinized evaluation in this game rather than of this implementation, and
+it is stated as the section's main contribution. Any search over a high-variance terminal return
+that selects by an unguarded argmax will pay it, and the price here --- \vsixSearchSpread{} points
+across the ladder --- is larger than every mechanism the three prior studies fitted, combined.
+
+\subsection{Where the advantage lives}
+\label{sec:search-falsifier}
+
+Guarded, the search stops losing and starts winning: at $\kappa = 2.5$ it takes
+\vsixSearchPooled\% against \vfive{} pooled over \vsixSearchPooledBanks{} banks and
+\vsixSearchPooledN{} games. The remaining
+question is whether that win is the kind a working search produces, and the deviation rate answers
+it --- but only once the rate is decomposed. The falsifier the literature supplies is explicit: a healthy test-time search differs from its
+blueprint on a small percentage of decisions, and one that differs on tens of percent is mis-scaled
+rather than smart. At $\kappa = 2.5$ the search moves the action on \vsixSearchDevTwoFive\% of the decisions it
+searches (Table~\ref{tab:searchdev}), and that rate does not fall below about $31\%$ however far
+$\kappa$ is raised. Read naively this is an order of magnitude above the band the literature
+associates with a search that refines a good policy, and it was so read in an earlier draft. It is
+the wrong reading, and the reason is \S\ref{sec:diag-irreducible}.
+
+The deviation penalty is waived inside the blueprint's own tie group, because there the blueprint
+expresses no preference. That group is more than half of all decisions, so the search always
+re-chooses inside it, and those re-choices are neutral by construction --- the candidates are
+exchangeable. The floor of $31\%$ is that churn, not signal. Applying the same penalty inside the
+tie group collapses the rate to \vsixSearchDevGuardedTwoFive\% at $\kappa = 2.5$ and
+\vsixSearchDevGuardedFour\% at $\kappa = 4$.
+
+That decomposition also bears on where the win sits. Applying the penalty inside the tie group --- so that the search deviates only on the
+\vsixSearchDevGuardedTwoFive\% of decisions where it has evidence against the blueprint's stated
+preference --- takes the win rate to \vsixSearchTieGuardedWin\%
+[\vsixSearchTieGuardedLo, \vsixSearchTieGuardedHi]: the advantage disappears. Forbidding deviation
+\emph{outside} the tie group instead, so the search only ever re-chooses among candidates the
+blueprint cannot separate, takes it to \vsixSearchTieOnlyTwelve\%
+[\vsixSearchTieOnlyTwelveLo, \vsixSearchTieOnlyTwelveHi] --- better than the unrestricted search.
+
+\textbf{What is established, and what is not.} The pooled effect is established twice over. On
+\vfive{}'s parameter vector the guarded search takes \vsixSearchPooled\% against \vfive{} over
+\vsixSearchPooledN{} games and \vsixSearchPooledBanks{} banks, none below
+\vsixSearchPooledMin\%. On \vsix{}'s own vector --- so that the search is being asked to improve
+the best static policy this project has, not the previous one --- it takes \vsixSearchLift\%
+against \vsix{} over \vsixSearchLiftN{} games, with \vsixSearchLiftAbove{} of
+\vsixSearchLiftCells{} cells above parity and the worst at \vsixSearchLiftMin\%. That second
+result is what makes \vsixsearch{} a configuration worth naming. So are the two negative
+controls of \S\ref{sec:diag-irreducible}: randomising the tie group is worth exactly zero and one
+sampled deal is worth nothing, so what the ensemble is reading is joint information and not the
+mere fact of varying a deterministic choice.
+
+What is \emph{not} established is where inside the search the effect sits. Guarding the tie group
+gives \vsixSearchTieGuardedWin\%; restricting the search to the tie group gives
+\vsixTieSearchBankList\% across \vsixTieSearchBanks{} banks; the unrestricted search gives
+\vsixSearchPooled\%. At 720 games a cell those intervals overlap each other and the unrestricted
+figure, and an earlier draft of this section read a single favourable bank as an attribution. It is
+not one. Resolving it needs roughly an order of magnitude more games at a configuration that costs
+\vsixSearchGps{} games per second on one thread, against \vsixThroughputSix{} for the deployed
+policy across all threads --- which is the reason it is not resolved here.
+
+\begin{table}[t]\centering
+\caption{Search deviation rate against the deviation threshold. A healthy search moves a small
+percentage of decisions; this one either moves a third of them or none.}
+\label{tab:searchdev}
+\input{tables_v06/searchdev}
+\end{table}
+
+
+
+\subsection{The one move class that exists only under search}
+\label{sec:search-deadask}
+
+M1 restricts the candidate set to asks the actor cannot prove will miss. That fixed v0.4's
+two-question cycle, and it deleted the move class every multi-step human tactic is built out of:
+blackballing, choosing which opponent receives the turn, and paying for a signal with a safe ask are
+all a guaranteed miss at a \emph{chosen} seat. Such an ask exists at $79.2\%$ of \vfive{}'s
+decisions and at two or more distinct chosen opponents at $50.1\%$.
+
+Unbanning it wholesale is measured and rejected. With dead asks re-admitted and the ownership
+features gated by hit probability so that the $p=0$ incentive behind v0.4's cycle cannot fire, the
+configuration scores \vsixDeadWin\% [\vsixDeadWinLo, \vsixDeadWinHi] against \vfive{} --- higher ---
+and fails the commit gate outright: \vsixDeadPathDead\% of its asks are provably dead, its longest
+dead run is \vsixDeadPathLongest{}, and \vsixDeadPathLimit\% of its games are killed by the action
+limit. This is the trap \S\ref{sec:protocol} exists to prevent, and it is the same trap the v0.5
+ablation table contains.
+
+Rationing it does not help either, and the reason is instructive: \emph{the linear score cannot
+price a deliberate miss}. With the four ownership features zeroed on a dead candidate, the admission
+margin was swept at four settings and the output was bit-identical at every one, because the hit
+probability term is zero on such an ask by definition and every remaining term of the score is a
+penalty. Its value is the value of the position the donated turn produces, which no static feature
+of the ask computes.
+
+The search can price it, and this is the clearest case in the study of a move class that exists only
+under search: the deliberate miss is offered to the rollouts as a candidate, one per distinct target,
+under an anti-repeat guard that is provably free. A dead $(c,t)$ pair stays dead unless the card
+publicly moves to $t$, and that movement is observable, so forbidding the unmoved repeat forbids
+nothing that could have become live. This is exactly the distinction the blanket repetition guard of
+the v0.5 study missed, and why that guard cost six points: it also forbade \emph{live} repeats, which
+are frequently the best ask on the board once a card has moved.
+
+With the deliberate miss in the candidate set the endgame-restricted search scores
+\vsixSearchDead\%. It is the best search configuration measured and it is still not separated from
+the blueprint.
+
+\subsection{What ships}
+\label{sec:search-ships}
+
+The search ships \textbf{off}, and the reason is cost and unresolved scope rather than a null
+result. On the ladder's best setting it is ahead of \vfive{} with an interval that excludes parity,
+but it is three orders of magnitude slower than the deployed policy and it moves a third of all
+decisions --- so what it is is not a refinement of the
+shipped policy but a distinct, far more expensive one whose evaluation this study could not complete
+at the resolution \S\ref{sec:protocol} demands of everything else. It is retained, switchable and
+fully instrumented. \S\ref{sec:limitations} states what would have to be measured before it could
+ship on.

@@ -1,0 +1,340 @@
+\section{Reproducibility and artifact manifest}
+\label{app:repro}
+
+Every number in this report must be reachable from a command in this appendix.
+That is the standard the v0.4 report set and this one matches it, with one
+addition the earlier studies did not have: the numbers pipeline is arranged so
+that a figure which has \emph{not} been regenerated is visibly wrong on the page
+rather than plausibly stale (\S\ref{app:repro-build}).
+
+\subsection{Source layout}
+\label{app:repro-source}
+
+The engine is a single C++20 translation unit assembled from headers in
+\filepath{engine/src/}. The rules, the card and half-suit types and the action
+encoding are in \filepath{engine/src/fish.hpp}. Constraint tracking (C1--C5) and
+the approximate posterior are in \filepath{engine/src/belief.hpp}; the exact
+count law of \S\ref{sec:belief-count} --- its partition function, its marginals,
+its allocation query and the table-aliasing guard of
+\S\ref{sec:engine-repairs} --- is in \filepath{engine/src/blockdp.hpp}; the
+brute-force enumerator that audits it is in \filepath{engine/src/oracle.hpp}.
+
+The policies are layered. \filepath{engine/src/v04.hpp} and
+\filepath{engine/src/v05.hpp} hold the two preceding generations, and
+\filepath{engine/src/v06.hpp} holds \texttt{V06Agent}, which derives from
+\texttt{V05Agent} and defers to it when no v0.6 mechanism is enabled; the
+determinized search's rollout machinery is in
+\filepath{engine/src/v06_rollout.hpp}. The scripted opponent population is in
+\filepath{engine/src/baselines.hpp}. The game driver, which owns turn order,
+declaration rounds and the information-safety audit, is in
+\filepath{engine/src/game.hpp}; the match runner and both bootstrap procedures
+are in \filepath{engine/src/arena.hpp}; the optimiser of \S\ref{sec:fitting} is
+in \filepath{engine/src/tuner.hpp}. The v0.6 diagnostics are in
+\filepath{engine/src/probe_v06.hpp} and the aliasing probe in
+\filepath{engine/src/probe_forcedendgame.hpp}. The specification parser is in
+\filepath{engine/src/factory.hpp} and the entry point in
+\filepath{engine/src/main.cpp}.
+
+Build with \verb|make| in \filepath{engine/}. The build produces a single binary,
+\filepath{engine/fish}.
+
+\subsection{Commands}
+\label{app:repro-commands}
+
+The battery is \filepath{engine/experiments_v06.sh}, which runs sixteen blocks
+labelled \texttt{E0}--\texttt{E15} and writes one artifact per block into
+\filepath{research/v06/results/}. It is presented below in the order the script
+executes them, which is not numerical order: the two gates run first by
+construction. \texttt{-{}-games} counts \emph{deals}, not games, so every game
+count in this report is the product of the deal count and the rotation count.
+
+\begin{verbatim}
+# ---- build -----------------------------------------------------------
+cd engine && make
+
+# ---- E0  GATE: identity controls -------------------------------------
+#      md5 of the whole pathology block, v06 with every switch off
+#      against v05; then the BlockDP aliasing probe on both policies.
+#      Nothing downstream is collected if this fails.
+./fish pathology --a=v06:legacy=1 --b=v06:legacy=1 --games=60 --seed=31
+./fish pathology --a=v05         --b=v05          --games=60 --seed=31
+./fish blockalias --a=v04 --games=25 --seed=31
+./fish blockalias --a=v05 --games=25 --seed=31
+
+# ---- E1  rules, information safety and belief soundness --------------
+./fish verify --games=600
+
+# ---- E2  GATE: the pathology KPIs ------------------------------------
+./fish pathology --a=v06 --b=v06 --games=300 --rotations=2 --seed=31
+./fish pathology --a=v05 --b=v05 --games=300 --rotations=2 --seed=31
+./fish pathology --a=v04 --b=v04 --games=300 --rotations=2 --seed=31
+./fish pathology --a=v06 --b=v05 --games=300 --rotations=2 --seed=90210
+
+# ---- E3  head-to-head, five held-out banks ---------------------------
+for S in 90210 31337 515151 777001 424242; do
+  for OPP in v05 v04; do
+    ./fish match --a=v06 --b=$OPP --games=300 --rotations=6 \
+                 --seed=$S --json
+  done
+done
+
+# ---- E4  per-opponent profile; the headline is the MINIMUM -----------
+for OPP in v05 v04 v03 v02 lockout detective diversifier hunter \
+           bluffer random silent feint withholder; do
+  for A in v06 v05 v04; do
+    ./fish match --a=$A --b=$OPP --games=300 --rotations=6 \
+                 --seed=515253 --json
+  done
+done
+
+# ---- E5  paired mechanism ablations ----------------------------------
+./fish ablate --ref=v06 --panel=v05,v04,v03,lockout,detective,withholder \
+    --games=400 --rotations=2 --seed=606060 \
+    --variants="v05;v06:legacy=1;v06:xf=0;v06:s1=1,det=16,cand=6,kappa=2.0,maxq=26"
+
+# ---- E6  calibration --------------------------------------------------
+./fish calibrate --a=v06 --b=v05 --games=400 --seed=717171
+
+# ---- E7  rule dialects ------------------------------------------------
+for FLAG in "" --no-out-of-turn --no-cardless-declare --legacy; do
+  ./fish match --a=v06 --b=v05 --games=250 --rotations=6 \
+               --seed=828282 $FLAG --json
+done
+
+# ---- E8  exchangeable ties, and belief as a predictor -----------------
+./fish v6probe --mode=ties --a=v06 --b=v06 --games=150 --seed=31
+./fish v6probe --mode=ties --a=v05 --b=v05 --games=150 --seed=31
+./fish v6probe --mode=ties --a=v05 --b=v03 --games=150 --seed=90210
+./fish v6probe --mode=belief --a=v05 --b=v05 --games=120 --seed=31
+
+# ---- E12 the search ladder: the curse, and what a guard recovers ------
+#      row 1 is the control: the same code with the blueprint forced.
+for CFG in s1=1,det=8,cand=6,blend=1000000 \
+           s1=1,det=8,cand=6,kappa=0 \
+           s1=1,det=12,cand=4,kappa=0 \
+           s1=1,det=12,cand=4,kappa=1 \
+           s1=1,det=12,cand=4,kappa=2.5 \
+           s1=1,det=12,cand=4,kappa=4 \
+           s1=1,det=16,cand=6,kappa=2,maxq=26 \
+           s1=1,det=16,cand=6,kappa=2,maxq=26,deadsearch=2; do
+  ./fish match --a="v06:legacy=1,$CFG" --b=v05 --games=120 \
+               --rotations=6 --seed=90210 --json
+done
+
+# ---- E15 the deliberate miss: the gate's negative control -------------
+./fish pathology --a=v05:m1=0,m1p=1 --b=v05:m1=0,m1p=1 \
+                 --games=200 --rotations=2 --seed=31
+./fish match --a=v05:m1=0,m1p=1 --b=v05 --games=200 --rotations=6 \
+             --seed=90210
+
+# ---- E14 search deviation rate ----------------------------------------
+for K in 0 1 2.5 4 6; do
+  ./fish v6probe --mode=search --a="v06:legacy=1,s1=1,det=12,cand=4,kappa=$K" \
+                 --b=v05 --games=20 --seed=90210
+done
+
+# ---- E13 rollout-blueprint fidelity -----------------------------------
+for R in "v05:belief=indep,topk=0" "v05:topk=0,souter=1,sinner=1" \
+         "v05:topk=0,souter=1,sinner=3" "v05:topk=0,souter=2,sinner=4" \
+         "v05:topk=0"; do
+  ./fish match --a="$R" --b=v05 --games=200 --rotations=6 \
+               --seed=90210 --json
+  ./fish bench --a="$R" --b="$R" --games=100 --threads=1
+done
+
+# ---- E11 partner regimes ----------------------------------------------
+for P in "" v03 detective withholder; do
+  for A in v06 v05; do
+    ./fish match --a=$A --b=v05 --partners="$P" --games=400 \
+                 --rotations=2 --seed=313131 --json
+  done
+done
+
+# ---- E9  throughput ----------------------------------------------------
+for S in v04 v05 v06 "v05:topk=0" "v05:belief=indep,topk=0"; do
+  ./fish bench --a="$S" --b="$S" --games=200
+done
+
+# ---- E10 declaration pre-gate audit ------------------------------------
+#      dead code for v0.5 until this study; see sec:engine-repairs.
+./fish gateaudit --a=v06:gateaudit=1 --games=400 --rotations=6 --seed=90210
+
+# ---- the whole battery -------------------------------------------------
+./experiments_v06.sh
+
+# ---- exploitability: fit an exploiter, re-measure it on a fresh bank ----
+#      v0.4 is probed first as a POSITIVE CONTROL, because its published
+#      figure is known and the probe must reproduce it before any new
+#      number from the same machinery is believed.
+BASE=v05 TARGETS="v04 v05" ./exploitability_v06.sh
+
+# ---- fitting: the two runs of record ------------------------------------
+./fish tune --base=v05 --panel=v05,v03,lockout,withholder --full --paired \
+            --obj=minimaxregret --sigmarel=0.05 --pop=20 --elite=5 \
+            --games=150 --gens=30 --seed=20260823 \
+            --out=../research/v06/runs/fitA.jsonl
+./fish tune --base=v06 --panel=v05,v03,withholder,feint --full --paired \
+            --obj=minimaxregret --sigmarel=0.04 --pop=14 --elite=4 \
+            --games=200 --gens=14 --seed=20260824 \
+            --out=../research/v06/runs/fitC.jsonl
+
+# ---- harness acceptance test: recovery from a handicapped base ----------
+#      NOT part of experiments_v06.sh.  The exact panel and seed of the
+#      run reported in sec:fit-schedule are not recorded; see
+#      app:repro-gaps.
+./fish match --a=v05:w0=0 --b=v05 --games=300 --rotations=6 --seed=<bank>
+./fish tune  --base=v05:w0=0 --full --paired --obj=minimaxregret \
+             --sigmarel=0.05 --gens=10 --seed=<recorded in the trace> \
+             --out=<trace>
+./fish match --a="v05:allparams=$w" --b=v05 --games=300 --rotations=6 \
+             --seed=<bank> --json
+./fish match --a="v05:allparams=$w" --b=v03 --games=300 --rotations=6 \
+             --seed=<bank> --json
+
+# ---- freeze a fitted vector into the compiled defaults -------------------
+python3 freeze_config_v06.py ../research/v06/runs/fitC.jsonl --dry
+python3 freeze_config_v06.py ../research/v06/runs/fitC.jsonl
+\end{verbatim}
+
+The battery ran in \vsixWallClock{} hours on \vsixCores{} cores. Throughput
+figures were measured under that load and are lower bounds for that reason
+(\S\ref{sec:protocol-paired}).
+
+\subsection{The build and the numbers pipeline}
+\label{app:repro-build}
+
+No number appears as a literal anywhere in \filepath{paper/sections_v06/}. Every
+figure is a macro, and the macros come from a deliberately two-file scheme
+introduced by the v0.5 study and kept here.
+
+\filepath{paper/numbers_v06.tex} is the placeholder file. It declares every macro
+the manuscript uses, with \verb|\providecommand| so that partial regeneration
+cannot clash, and it splits them into two classes that are handled differently.
+A macro naming a quantity the v0.6 battery produces carries a deliberately
+impossible literal --- \texttt{XX.XX}, \texttt{X,XXX} --- so that a forgotten
+regeneration is loud on the page rather than silently plausible. A macro naming a
+quantity \emph{transcribed} from an artifact that already exists on disk, such as
+a figure carried forward from the v0.4 or v0.5 record, carries its real value
+under a comment naming the file it was read from, because leaving it as
+\texttt{XX.XX} would make the sentence quoting it unreadable rather than visibly
+unfinished.
+
+\filepath{engine/build_tables_v06.py} reads
+\filepath{research/v06/results/} and writes
+\filepath{paper/numbers_v06_generated.tex}, which the manuscript inputs
+\emph{after} the placeholder file, so a generated value always wins. Three
+disciplines are enforced in the generator rather than by convention: every macro
+carries a comment naming the artifact and the field it came from; a macro whose
+artifact is missing is not emitted at all, so the placeholder survives and the
+omission is visible; and the emission is \verb|\providecommand| followed by
+\verb|\renewcommand|, so input order cannot change the result. The same script
+writes the row bodies of the tables in \filepath{paper/tables_v06/}, and a table
+whose artifact is absent is guarded at the \verb|\input| site so the manuscript
+still compiles.
+
+Two checkers back this up. \filepath{paper/check_provenance.py} verifies that
+every transcribed macro sits under a comment naming an artifact and that the
+artifact exists on disk, and reports the transcribed/generated split that
+\S\ref{app:repro-manifest} quotes. \filepath{paper/check.py} enforces the
+no-literal rule and a manuscript-specific list of banned phrasings; a v0.6
+profile still has to be added to its profile table, and until it is, the
+no-literal rule for this manuscript is enforced by reading rather than by
+tooling. That is a gap and is listed as one.
+
+The phrases banned for this manuscript are:
+
+\begin{itemize}
+  \item any wording that calls the deployed approximate posterior \emph{exact}.
+        It is exact in its bookkeeping of (C1)--(C4) and approximate in its
+        treatment of (C5), and \S\ref{app:inf-sinkhorn} says exactly where.
+  \item any wording that treats the \emph{substitution} result --- swapping the
+        exact posterior into a policy fitted for the approximate one --- as a
+        verdict on exact inference. The verdict in this report rests on the
+        predictive comparison of \S\ref{app:inf-prior}, which carries no fitted
+        weights on either side; the substitution result is confounded and is
+        reported as confounded.
+  \item any claim of a first.
+  \item any headline aggregate over the opponent panel. The headline is the worst
+        case and the minimax regret (\S\ref{sec:protocol-metrics}).
+\end{itemize}
+
+The manuscript is built by \verb|npm run paper:v06|, which flattens the
+\verb|\input| tree into \filepath{paper/fishbot_v06_standalone.tex} for
+submission and then compiles \filepath{paper/fishbot_v06.tex} with
+\texttt{tectonic} into \filepath{output/pdf/}.
+
+\subsection{Artifact manifest}
+\label{app:repro-manifest}
+
+Table~\ref{tab:manifest} is generated by \filepath{engine/build_tables_v06.py} from
+the artifact files themselves: the script walks
+\filepath{research/v06/results/}, records each file's size and SHA-256, and pairs
+it with the command that produced it. It is not maintained by hand.
+
+\phantomsection\label{tab:manifest}\paragraph{Artifact manifest.} Artifact manifest for the experiments reported here. ``ID'' is the
+experiment identifier used throughout the text, ``Artifact'' the file under
+\texttt{research/v06/results/}, ``Design'' the population and experimental unit
+recorded by the generator, and the last column the leading hex digits of the
+file's SHA-256. The full digests, byte counts and exact command lines are in
+\texttt{research/v06/results/MANIFEST.json}.
+
+\input{tables_v06/manifest}
+
+
+
+\filepath{research/v06/results/MANIFEST.json} additionally records the commit the
+manifest was generated at, whether the working tree was clean at that moment, the
+shipped policy specification, the belief mode, the fitted-parameter count, the
+ask-feature count, the fitting seeds and every evaluation bank of
+\S\ref{sec:protocol-seeds}. Fitting traces are in
+\filepath{research/v06/runs/}, and the authoritative record of which
+configuration was frozen is the provenance string of
+\S\ref{app:params-bounds}, which names the run file and its digest inside the
+compiled header itself.
+
+The manifest holds \vsixManifestFiles{} artifacts. Of the figures quoted in this
+manuscript, \vsixProvGenerated{} are generated straight from an artifact and
+\vsixProvTranscribed{} are transcribed from a report that already existed;
+\S\ref{sec:limitations} states what that split means for how much of this report
+is machine-checked.
+
+\subsection{Known reproducibility gaps}
+\label{app:repro-gaps}
+
+Recorded rather than repaired, because repairing any of them would change a
+configuration this report measured.
+
+\begin{enumerate}
+  \item \textbf{The harness acceptance run is not scripted.} The recovery test of
+        \S\ref{sec:fit-schedule} --- a fit from the handicapped base
+        \texttt{v05:w0=0} --- is not one of the blocks of
+        \filepath{engine/experiments_v06.sh}, its panel and seed are not recorded
+        in any committed script, and \filepath{engine/build_tables_v06.py} does
+        not emit its figures. Those figures are therefore transcribed, not
+        generated, and the run can be repeated but not reproduced exactly.
+  \item \textbf{The value-function coefficients are outside the freeze.} The
+        sixteen coefficients of \S\ref{app:params-value} are compiled defaults
+        carried forward from the v0.4 study, are not part of the fitted vector,
+        and are not written by \filepath{engine/freeze_config_v06.py}. The v0.4
+        study's own gap --- that its compiled coefficients are not the ones its
+        recorded ridge fit produced --- is inherited here unchanged.
+  \item \textbf{The exactness audit was not re-run.} The brute-force oracle
+        comparison of \S\ref{app:inf-audit} is carried forward from the v0.4
+        study. Its coverage was a subsample of small reachable states then and no
+        larger now, and the v0.6 battery adds no block that re-runs it.
+  \item \textbf{Replay identity is tested at one thread count.} The random
+        streams are keyed so that thread count cannot affect a game's outcome,
+        but \texttt{fish verify} checks replay identity only at a fixed thread
+        count and does not test that claim directly
+        (\S\ref{sec:engine-verify}).
+  \item \textbf{The no-literal rule is not yet tooled for this manuscript.}
+        \filepath{paper/check.py} has profiles for the v0.4 and v0.5 manuscripts
+        and not for this one, so the rule of \S\ref{app:repro-build} is currently
+        enforced by review.
+  \item \textbf{A raw shared-pool read still differs across an unrelated build.}
+        The aliasing guard of \S\ref{sec:engine-repairs} makes every public query
+        correct and leaves the underlying buffer pool shared, so
+        \vsixAliasRawMismatch{} raw field reads in the probe still differ. Code
+        that reaches into a \texttt{BlockDP}'s fields rather than calling its
+        queries is unsupported, and nothing in the engine does.
+\end{enumerate}

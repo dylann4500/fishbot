@@ -1,0 +1,14 @@
+### information-set reconstruction vs ground truth (research/v06/probes/reconcheck.cpp)
+### v0.5 mirror, 40 games, seed 31
+states 3216  card checks 103644
+owner mismatches   220 (0.2123%)
+mask  mismatches   346 (0.3338%)   reconstruction WIDER 346  NARROWER 0
+disj size differs  200 states (6.22%)
+capacity differs   200 states (6.22%)
+
+### v0.5 mirror, 40 games, seed 777001
+states 3216  card checks 99792
+owner mismatches   219 (0.2195%)
+mask  mismatches   279 (0.2796%)   reconstruction WIDER 279  NARROWER 0
+disj size differs  210 states (6.53%)
+capacity differs   210 states (6.53%)

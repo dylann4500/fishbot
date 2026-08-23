@@ -1,0 +1,49 @@
+FishBot v0.5 removed a failure mode and gained nothing in win rate, and said so. This report asks
+where the remaining value in six-player Canadian Fish actually is. The answer turns out to sit in
+one place, and it is a place three studies had written off.
+
+At \vsixTieShareFive\% of \vfive{}'s ask decisions two or more candidates score \emph{bit-for-bit
+identically} and the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of
+those ties are two cards of one half-suit at one target, and the \emph{exact} posterior --- not
+merely the approximation the policy deploys --- assigns them identical probability in
+\vsixTieExactSepPctFive\% of cases. Every rule that ranks them by that probability therefore
+realises the same hit rate to three significant figures, and so does enumeration order. The obvious
+conclusion, which an earlier draft of this work drew, is that the ties are irreducible.
+
+They are not. Resolving the tie group uniformly at random, seeded from the public event stream, is
+worth \emph{exactly} nothing: \vsixSearchTieRandom\% [\vsixSearchTieRandomLo,
+\vsixSearchTieRandomHi], mean half-suits $4.500$ to $4.500$. Resolving it with one sampled deal is
+worth nothing either: \vsixSearchTieOnlyOne\%. Resolving it with an ensemble of twelve sampled
+deals --- each a full determinization of the hidden state, played forward by six players
+reconstructed at their own information sets rather than made clairvoyant --- is worth
+\textbf{\vsixSearchPooled\%} against \vfive{} over \vsixSearchPooledN{} games and
+\vsixSearchPooledBanks{} banks, none below \vsixSearchPooledMin\%. The separating information is
+real and it lives in the \emph{joint} posterior, which every marginal integrates away.
+
+Two negative controls make that a claim about \emph{information} rather than about a deterministic
+policy being readable, and they are the reason the result is worth stating. Where the gain sits
+within the search --- inside the tie group, outside it, or both --- is \emph{not} resolved at this
+budget: the restricted variants land between \vsixSearchTieGuardedWin\% and
+\vsixTieSearchMean\% and their intervals all overlap the unrestricted search's.
+
+Getting there required correcting the statistic first. An unguarded argmax over the same rollout
+ensemble is \textbf{\vsixCurseGap{} points worse} than the blueprint it searches from
+(\vsixSearchUnguarded\% against a \vsixSearchControl\% control at identical budget, seed and sample
+size), because one determinization's return is the final half-suit differential and genuine
+differences between candidates are an order of magnitude smaller than its spread. A paired
+lower-confidence-bound deviation rule recovers all of it.
+
+Two further results. The exact observer-conditioned posterior is a \emph{worse} predictor of card
+location than the approximation the policy deploys --- \vsixBeliefExactHit\% argmax hit rate at
+\vsixBeliefExactNLL{} nats against \vsixBeliefShippedHit\% at \vsixBeliefShippedNLL{} --- so the
+matched-budget refit under exact inference that three studies listed as outstanding is not worth
+running. And \vfive{}'s forty-generation refit is indistinguishable from sampling noise, so its
+shipped vector is v0.4's; five mechanisms in this study cleared a 95\% paired interval at the
+per-cell budget this project has always used and returned exactly zero at three times it.
+
+What ships is two configurations. \vsix{} is the deployed policy: the same mechanisms as \vfive{}
+with a vector found by a repaired optimiser, \vsixThroughputSix{} games per second, better than
+\vfive{} on the paired panel at all three banks measured and \emph{not} separated from it head to
+head (\vsixHeadPooled\% over \vsixHeadPooledN{} games, pooling every cell rather than the five that
+agreed). \vsixsearch{} adds the tie-resolving search and is the strongest configuration measured,
+at a cost of three orders of magnitude in throughput.

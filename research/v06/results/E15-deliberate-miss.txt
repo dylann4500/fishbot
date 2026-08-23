@@ -1,0 +1,47 @@
+### unbanned dead asks with the ownership incentive gated (v05:m1=0,m1p=1) -- PATHOLOGY
+v05:m1=0,m1p=1 vs v05:m1=0,m1p=1
+games              400
+events/game        134.115   median 97  p90 401  p99 406  max 406
+asks/game          125.35   hit rate 36.8488%
+DEAD asks          17974  (35.8476% of asks)   -- actor could PROVE the target lacks the card
+dead runs          1044  mean length 17.2165  longest 365
+games w/ run>=6    76  (19%)
+starved turns      0  (0% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     18388  (36.6733%)
+repeat (a,suit,t)  33998  (67.8061%)
+asks in own-locked 7290  (14.5393% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3380   wrong 112 (3.31361%)
+  at/after ev>=220 84   wrong 24 (28.5714%)
+  forced endgame   14   wrong 10 (71.4286%)
+action-limit games 40 (10%)
+
+### the same configuration's win rate against v0.5 -- HIGHER, and rejected on the KPIs
+v05:m1=0,m1p=1 vs v05
+  win rate      51.1667%  [48.3393, 53.9866]  n=1200
+  mean sets     4.49 - 4.51
+  ask accuracy  55.4291% / 55.3938%
+  declarations  4.49333/game at 97.7003%   opp 4.48333/game at 97.9926%
+  forced decls  0.0116667/game at 21.4286%
+  out-of-turn   3.25417 / 3.305 per game
+  lock hold     5.2472 / 5.13877 events before cashing
+  events/game   98.7742   limit hits 0.0833333%
+  elapsed       4.40802s  (272.231 games/s)
+  cluster boot  51.1667% [48.4167, 53.9167]
+
+
+### v0.5 mirror, for reference
+v05 vs v05
+games              400
+events/game        96   median 95  p90 112  p99 124  max 131
+asks/game          86.67   hit rate 55.4171%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+starved turns      0  (0% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     906  (2.61336%)
+repeat (a,suit,t)  17386  (50.15%)
+asks in own-locked 3522  (10.1592% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 76 (2.11111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   2   wrong 2 (100%)
+action-limit games 0 (0%)

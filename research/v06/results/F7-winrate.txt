@@ -1,0 +1,3 @@
+### the same search with the deviation penalty applied INSIDE the tie group too
+### v06:legacy=1,s1=1,det=12,cand=4,kappa=2.5,kappatie=2.5 vs v05, 120 deals x 6 rotations, seed 90210
+  win rate      49.8611%  [46.2194, 53.5043]  n=720

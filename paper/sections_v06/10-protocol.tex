@@ -1,0 +1,221 @@
+\section{Evaluation protocol}
+\label{sec:protocol}
+
+Fish has a single chance node --- the deal --- followed by a public transcript,
+and that structure permits an unusually strong variance-reduction design. This
+section fixes the experimental unit, the interval construction, the
+fitting/evaluation separation, and the metrics of \S\ref{sec:results}.
+
+It also fixes something the two preceding studies did not, and the omission cost
+this one five mechanisms. A protocol section is normally read as bookkeeping. In
+this study it is a result: \S\ref{sec:protocol-resolution} shows that the
+budget most of the corpus's published ablation rows were run at cannot separate
+an effect of the size those rows report from a seed draw, and that five separate
+mechanisms cleared a nominal \vsixBootAlpha{}\% paired interval at that budget and returned
+exactly zero when re-run larger on two disjoint banks. Every claim in this report
+is paired and re-run on a second bank for that reason.
+
+A reader should be able to tell, for every number in \S\ref{sec:results}, whether
+it is paired or unpaired, which bank it came from, and whether that bank was used
+in fitting. The earlier reports could not support that reading, which is why
+several of their comparisons are corrected in \S\ref{sec:corrections}.
+
+\subsection{Six-rotation duplicate blocks}
+\label{sec:protocol-blocks}
+
+Seats alternate between the two teams, so the cyclic group of six seat rotations
+of a fixed deal forms a balanced block: three seat shifts by two team
+orientations. The odd rotations exchange which team holds which hand-triple; the
+even rotations permute hands within a team. Playing all \vsixRotations{}
+rotations of every deal therefore has each policy hold every hand-triple of that
+deal exactly once, so the intrinsic advantage of the deal cancels from the
+comparison rather than merely being averaged down. A matchup reported over $D$
+deals is $6D$ games organised into $D$ blocks of six. This is the duplicate-block
+convention of competitive play \cite{acpc}, strengthened: the competition design
+balances the team label, and the six-seat rotation additionally balances the
+assignment of individual hands within a team.
+
+One guarantee of that convention does not survive, and it is stated here rather
+than in a footnote because it silently halves several denominators. In a
+\emph{mirror} match --- both teams running the same policy specification --- the
+two team orientations of a deal produce byte-identical games, so each game is
+played twice and the effective sample is \vsixMirrorDuplication{}\% of the
+nominal one. Rates are unaffected; denominators are not. Every table in
+\S\ref{sec:results} states which convention its $n$ uses, and a mirror
+\texttt{match} at two rotations returns exactly $50\%$ for that reason and not
+because the policies are balanced.
+
+\subsection{Deal-clustered bootstrap}
+\label{sec:protocol-ci}
+
+The six rotations of one deal are one correlated cluster: they share the same
+card distribution and differ only in seat assignment. Resampling \emph{games}
+would treat those six observations as independent and understate the variance.
+Every interval in this report therefore resamples \emph{deals} --- a cluster
+bootstrap of the per-deal win count for a single arm, and a paired bootstrap of
+the per-deal difference for a comparison between two configurations played on the
+same deals --- taking the $2.5\%$ and $97.5\%$ quantiles of \vsixBootReps{}
+resamples, for \vsixBootAlpha{}\% intervals. Both are implemented in
+\filepath{engine/src/arena.hpp}.
+
+These are \emph{percentile} bootstrap intervals with the deal as the resampling
+cluster, and they inherit the known coverage error of that construction. We keep
+it for two reasons. Clustering by deal is the correction that matters most in
+this design, because the within-deal correlation across the six rotations is
+large and ignoring it understates the variance by a substantial factor, whereas
+the percentile-versus-BCa distinction is second-order at these sample sizes. And
+we have not implemented the bias-corrected and accelerated or bootstrap-$t$
+corrections, so no claim of nominal coverage is made: intervals should be read as
+approximate, and a difference whose interval sits close to zero should not be
+treated as resolved. \S\ref{sec:protocol-resolution} is what that caution looks
+like when it is applied rather than merely stated.
+
+\subsection{Paired estimators}
+\label{sec:protocol-paired}
+
+The headline comparison is a paired difference on common random numbers, and
+every ablation is paired against its own control. The pairing is what makes the
+design competitive with the estimator-side variance reduction developed for
+poker \cite{zinkevich-divat,burch-aivat} without needing an auxiliary value
+function: in this game the deal is the whole chance node, so replaying it cancels
+the dominant variance component directly. \S\ref{sec:fit-paired} gives the
+measured justification, and the same estimator is used in fitting and in
+evaluation so that a candidate is scored during the search by the quantity it
+will be judged on afterwards.
+
+One quantity in this report is not available paired. Throughput
+(\S\ref{sec:results-throughput}) is a property of one binary on one machine
+rather than of a matchup, so there is no common deal to pair on; it is reported
+as a single-arm figure measured under load and is a lower bound for that reason.
+
+\subsection{The resolution requirement}
+\label{sec:protocol-resolution}
+
+Five mechanisms in this study cleared a nominal \vsixBootAlpha{}\% paired
+interval at \numResSmallBudgetLo{}--\numResSmallBudgetHi{} games per cell and
+returned exactly zero at
+\numResLargeBudget{} games per cell on two disjoint banks.
+Table~\ref{tab:resolution} is the record.
+
+\begin{table}[ht]
+\centering
+\caption{Five mechanisms that resolved at a small budget and did not replicate.
+Sign convention is the corpus's: $\delta = \text{reference} - \text{variant}$, so
+a \emph{negative} $\delta$ means the variant is better. Every entry is a paired
+per-deal margin with a deal-clustered percentile interval. The large-budget
+column gives two independent seed banks. Source:
+\texttt{research/v06/notes/R12-mechanism-trials.md}, \S6.1.}
+\label{tab:resolution}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.235\linewidth}>{\raggedright\arraybackslash}p{0.265\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}@{}}
+\toprule
+Mechanism & Small-budget paired $\delta$ & Large-budget paired $\delta$, two banks \\
+\midrule
+\texttt{wVoid} at $1.5$
+  & \numResVoidSmall{} [\numResVoidSmallCI{}], $n{=}\numResVoidSmallN{}$
+  & \numResVoidLargeA{} [\numResVoidLargeACI{}] and
+    \numResVoidLargeB{} [\numResVoidLargeBCI{}], $n{=}\numResVoidLargeN{}$ \\
+\addlinespace
+\texttt{wVoid} at $3$
+  & \numResVoidThreeSmall{} [\numResVoidThreeSmallCI{}], $n{=}\numResVoidThreeSmallN{}$
+  & as above \\
+\addlinespace
+delete the perseveration bonus
+  & \numResPerseverSmall{} [\numResPerseverSmallCI{}], $n{=}\numResPerseverSmallN{}$
+  & \numResPerseverLargeA{} [\numResPerseverLargeACI{}] and
+    \numResPerseverLargeB{} [\numResPerseverLargeBCI{}], $n{=}\numResPerseverLargeN{}$ \\
+\addlinespace
+\texttt{declareMargin} more negative
+  & \numResDeclSmall{}~pp unpaired, $n{=}\numResDeclSmallN{}$
+  & \numResDeclLarge{} [\numResDeclLargeCI{}] --- the reference is better \\
+\addlinespace
+delete the negative value-of-information term
+  & \numResVoiSmall{} [\numResVoiSmallCI{}], $n{=}\numResVoiSmallN{}$
+  & not separated \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The planning rule that follows from this is arithmetic, not a convention. For an
+unpaired win-rate comparison near even the half-width of a nominal $95\%$
+interval is
+\begin{equation}
+  1.96\sqrt{\frac{p(1-p)}{N}} \;\approx\; \frac{0.98}{\sqrt{N}}
+  \quad\text{at } p \approx \tfrac12 ,
+  \label{eq:halfwidth}
+\end{equation}
+that is, about $98/\sqrt{N}$ percentage points at $N$ games. At $N = \numResSmallBudgetLo{}$ that is a
+half-width of nearly five points; at $N = \numResVoidLargeN{}$ it is about
+three. An effect
+of one to two points --- the size every mechanism in Table~\ref{tab:resolution}
+appeared to have --- is therefore indistinguishable from a seed draw at the
+budget most of this corpus's published ablation rows were run at. Pairing buys
+back a large factor, but it buys it back from the deal variance and not from the
+requirement to check that the result is not the bank.
+
+Two rules follow and both are enforced in this report. Every claim is
+\emph{paired}: the variant and its control are played on the same deals and the
+interval is on the per-deal difference. And every claim is \emph{re-run on a
+second, disjoint bank}, and reported as replicated only if it holds in sign and
+size on both. Where a result resolves on one bank and not the other, that is
+said, and the per-cell rows are given so a reader can see which half of the
+comparison carries it.
+
+The general lesson is uncomfortable and is stated plainly in
+\S\ref{sec:limitations}: at the budget this project used before v0.6, a
+mechanism that does nothing has a substantial chance of being published as a
+mechanism that does something, and several were.
+
+\subsection{Seed separation and what was held out}
+\label{sec:protocol-seeds}
+
+Fitting used base seeds \vsixFitASeed{} (run~A) and \vsixFitCSeed{} (run~C).
+Every seed bank used from \S\ref{sec:results} onwards is disjoint from both by
+construction, and the disjointness is enforced by a registry of the
+\vsixReservedSeeds{} reserved seeds that the battery checks, rather than by
+discipline. The evaluation banks are \texttt{90210}, \texttt{31337},
+\texttt{515151}, \texttt{777001} and \texttt{424242} for the head-to-head;
+\texttt{515253} for the per-style panel; \texttt{606060} for the frozen-policy
+ablations; \texttt{717171} for calibration; \texttt{828282} for the rule
+dialects; \texttt{313131} for the partner regimes; \texttt{90210} again for the
+search ladder, the deviation-rate probe and the pre-gate audit; \texttt{31} for
+the pathology KPIs and the tie and belief probes; and \texttt{515253} with
+\texttt{6543210} for the exploitability probe's fitting and evaluation halves
+respectively. \vsixHeldOutBanks{} of them are held out and \vsixFitBanks{} are
+fitting banks. Banks carried forward from the v0.5 study are named in
+\S\ref{app:repro-commands} so that the corresponding rows are directly
+comparable.
+
+The separation is narrower than ``held out'' usually implies, and the report
+scopes its claims accordingly. Deals are held out: no deal used in any reported
+experiment appears in any fitting bank. Opponent \emph{identities} largely are
+not --- the fitting panels of \S\ref{sec:fit-schedule} include \vfive{},
+\vthree{} and two scripted archetypes that also appear in the evaluation panel
+--- so the head-to-head and per-style results measure generalisation to new deals
+rather than to new strategic populations. The exceptions, which are held out in
+both senses, are named in \S\ref{sec:results-panel}.
+
+\subsection{Metrics}
+\label{sec:protocol-metrics}
+
+The primary metric is win rate, reported with its paired margin over the control.
+Sets differential --- mean half-suits won out of nine --- accompanies it, because
+a policy can win while converting a smaller fraction of its asks and this report
+contains a matchup in which that happens. Ask hit rate and declaration accuracy
+are diagnostic rather than primary: they describe the decision quality of one
+component and a policy can trade either against the other.
+
+The pathology KPIs of \S\ref{sec:fit-gates} are gates, not metrics. They do not
+enter any comparison and no configuration is ranked on them; they decide only
+whether a configuration is eligible to be measured at all.
+
+One standing rule governs how the opponent panel is reported: \emph{never
+headline an aggregate over it}. The headline is the worst case and the minimax
+regret, with the full per-opponent profile printed alongside. A mean over a
+scripted panel is a weighted average whose weights are the panel's composition,
+and the panel's composition is a choice this study made. For the same reason
+rating systems are deliberately not used as a headline here
+\cite{coulom-whr,herbrich-trueskill,nelo,balduzzi-reeval}: a single scalar over a
+fixed scripted panel is exactly the aggregate the rule forbids, and the
+transitivity it assumes is not established for this population. That is stated
+rather than the systems being omitted silently.

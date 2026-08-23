@@ -1,0 +1,113 @@
+\section{The game and the rules dialect studied}
+\label{sec:rules}
+
+Canadian Fish, also called Literature, is played by six players in two teams of
+three, seated so that the teams alternate. The 54-card deck is partitioned into
+nine \emph{half-suits} of six cards, each player is dealt nine, and the team
+that takes at least five half-suits wins. On their turn a player asks one
+opponent for one named card; the ask is legal only if the named card lies in a
+live half-suit, the asker holds at least one other card of that half-suit and
+not the named card, and the target is an opponent who still holds cards. A hit
+transfers the card and retains the turn, a miss passes the turn to the target,
+and every ask, answer, transfer and card count is public. A half-suit is claimed
+by a \emph{declaration}: an exact allocation naming, for each of the six cards,
+which member of the declarer's own team holds it, awarded to the declaring team
+if every assignment is correct and to the opposing team otherwise.
+
+That is the whole game, and it is the same game the two preceding reports
+studied. The dialect is unchanged from \vfour{} and \vfive{}, so this section
+states the selection and points at the treatment rather than repeating it:
+\S\ref{app:dialect} gives the clause table and the clauses this study's
+mechanisms depend on, and the v0.4 report's Appendix A gives the dialect at the
+length required to re-implement it \cite{fishbot04}.
+
+\subsection{The dialect studied}
+\label{sec:rules-dialect}
+
+Published descriptions of the game document mutually incompatible variants
+\cite{pagat}, so the dialect below is one explicit selection among them and not
+a canonical rule set. It matches the strategy corpus this line of work draws on
+\cite{develin} and the rules of record supplied by the project owner, and every
+contested choice is an engine switch, so its effect is measurable rather than
+assumed. The consequential choices are: a 54-card deck in nine half-suits, nine
+cards per player; declaration legal at any moment, in or out of turn, by a seat
+holding cards or not; a misdeclaration awarding the half-suit to the opposing
+team; lowest seat index first among simultaneous declarers; an eight-level
+willingness ladder in the forced endgame that arises when one whole team is
+cardless; and a 400-ask action cap whose residue is adjudicated neutrally by
+physical majority. No prearranged signalling conventions are available to any
+policy, and team communication is limited to that willingness bit and to the
+successor chosen by a cardless turn-holder. Table~\ref{tab:dialect} in
+\S\ref{app:dialect} lists each choice against the switch that changes it.
+\S\ref{sec:results-dialects} reports the primary result under
+\vsixDialectN{} dialect perturbations; unless a result says otherwise, every
+number in this report was produced under the settings above, and the action cap
+was reached in \vsixLimitRate{}\% of games.
+
+Two of those choices are places where the engine is \emph{more restrictive} than
+the rules of record allow, and both are coordination channels a policy could in
+principle use. The v0.5 study measured both, and this report inherits its
+conclusions rather than re-opening them.
+
+\paragraph{Turn transfer.} When the turn reaches a cardless seat whose teammates
+both still hold cards, the rules of record permit the team to negotiate openly
+over who receives it, sharing nothing but willingness. The engine instead has
+the cardless seat choose unilaterally from its own belief, and solicits no
+willingness bit. The channel is empty: a genuine multi-candidate transfer
+decision arises \numTransferEvents{} times per game, and replacing the
+unilateral rule with a \emph{ground-truth} chooser on one team, paired on common
+deals, is worth $\numTransferDelta \pm \numTransferCI$ sets per game over
+\numTransferGames{} paired games, with the two arms diverging at all in
+\numTransferDiverged{}\% of games
+(\filepath{research/v05/results/P8-coordination.md}, \S1.4). A legal mechanism
+cannot beat the clairvoyant one, so that interval bounds the whole channel, and
+no version of this policy has ever been built to exploit it.
+
+\paragraph{Declaration arbitration.} The rules do not say who acts first when
+two seats offer a declaration at the same instant, so the order is a modelling
+choice. The engine scans by lowest seat index, deliberately declining to rank
+candidates by stated confidence, because a confidence comparison moves a
+statistic of one seat's hand to five others. The cost of that refusal is
+\numArbCost{}~pp of win rate pooled over \numArbGames{} games, range
+\numArbRange{}~pp across five seeds --- and a clairvoyant arbitrator, which
+picks a proposer whose named allocation is actually correct, is worth
+\numArbOracle{}~pp on the same design
+(\filepath{research/v05/results/P6-verify-arbitration-cost.md}, \S\S3--4). The
+information-safe rule therefore forgoes a third of a percentage point, and no
+rule of any kind, safe or unsafe, informed or omniscient, recovers appreciably
+more.
+
+\subsection{What is unchanged from the v0.4 and v0.5 studies}
+\label{sec:rules-unchanged}
+
+Nothing in the dialect, the engine's rule implementation or the deal generator
+changed between \vfive{} and \vsix{}. A reader who follows the citation to the
+v0.4 report's rules treatment will find it accurate on every clause except two,
+which no report has yet retracted and which \S\ref{sec:corr-dialect} corrects
+here:
+
+\begin{enumerate}
+  \item \textbf{An undeclared half-suit does not score nothing.} The v0.4 report
+        justifies the unconditional second stage of its forcing rule on the
+        premise that an unclaimed half-suit is worthless. Under the dialect
+        actually evaluated --- by both studies --- residue at the action cap is
+        awarded by physical majority, and on a wrong post-horizon declaration
+        the declaring team holds a mean \numResidueHeld{} of the six cards. The
+        stage converts a probable award into a certain concession. The v0.4
+        paper states the dialect correctly in its rules section and contradicts
+        it two sections later.
+  \item \textbf{Restarting the forced-endgame ladder sharpens nothing.} The v0.4
+        report argues that restarting the willingness ladder after each
+        declaration lets early, safer declarations resolve cards and so sharpen
+        the allocations available for later ones. The argument is sound and
+        inoperative: on every occasion a team went cardless with live half-suits
+        --- \numLadderOccasions{} of them at seed \numLadderSeed{} --- exactly
+        \numLadderLiveSets{} half-suit was live, so there is no ordering to
+        exploit.
+\end{enumerate}
+
+Both are restated correctly in \S\ref{app:dialect-corrections} for a reader who
+reaches the appendix first, and both bear on this study: the first is a premise
+the declaration mechanism of \S\ref{sec:mech-declare} must not inherit, and the
+second describes a structure that a more patient declaration policy would begin
+to produce.

@@ -1,0 +1,209 @@
+\section{Fitting}
+\label{sec:fitting}
+
+The v0.5 study ran \numFitTraceGensVfive{} generations of a cross-entropy search over
+\numVfiveParams{} coordinates and reported that the refit was worth nothing
+measurable. \S\ref{sec:diag-fitnoise} shows that this was the correct reading of
+the trace and the wrong conclusion to draw from it: the search made no progress
+because the search was broken, in four separate and independently diagnosable
+ways. This section presents the four defects, the repair for each, and --- for
+each --- the measurement that shows the repair did what it was supposed to do
+rather than the intention that it should.
+
+The four defects are stated together first, because three of them compound.
+
+\begin{enumerate}
+  \item \textbf{One scalar step size for every coordinate.} A single
+        $\sigma_0 = \numSigmaScalar{}$ was applied to all \numVfiveParams{}
+        coordinates, whose admissible ranges span \numSigmaRangeMin{} to
+        \numSigmaRangeMax{}. At generation zero this put
+        \numClipDeclMargin{}\% of \texttt{declareMargin} proposals on a clamp
+        bound while \texttt{valueWeight} moved \numValueWeightStep{}\% of its
+        range: the optimiser was simultaneously bang-bang on the bounded
+        probability knobs and frozen on the unbounded weight knobs. The
+        command-line flag that would have fixed this, \texttt{--sigmaparams}, was
+        parsed into a string that the rest of the program never referenced.
+  \item \textbf{An unpaired objective.} Candidates were compared on absolute win
+        rate against a common seed bank. Common random numbers pair the
+        \emph{deal}; they do not pair the comparison, and the deal-level variance
+        stayed in every candidate's score.
+  \item \textbf{An objective documented as a soft minimum that is a weighted
+        mean.} Differentiating the soft minimum shows its gradient is a convex
+        combination of the panel's win rates with softmax weights, so at the
+        compiled temperature it ranks candidates by mean win rate minus a small
+        multiple of the spread. On \vfour{}'s shipped profile the
+        maximum-to-minimum gradient weight ratio is \numSoftMinRatioFour{}
+        against the $1$ a true mean would give and the $\infty$ a true minimum
+        would give, and the ``minimum'' sits \numSoftMinBelowMin{} points away
+        from the actual minimum. Two different temperatures were in use in one
+        pipeline, and neither was recorded in any trace; the correction that owes
+        to the earlier record is in \S\ref{sec:corr-self}.
+  \item \textbf{The rotation defect.} The tuner computed each candidate's win
+        rate as wins over \verb|games * 2|, hard-coding its own two rotations
+        into the denominator (\S\ref{sec:engine-repairs}). Fitting at six
+        rotations, which the duplicate-block design of \S\ref{sec:protocol}
+        otherwise recommends, would have reported a third of the true win rate
+        for every candidate, silently.
+\end{enumerate}
+
+Defects (i) and (ii) together explain the flat trace directly: an optimiser that
+cannot move most of its coordinates, scoring what it can move through an
+estimator that leaves the deal variance in, will produce a sequence of
+generations whose best candidate is an order statistic of noise. Defect (iii)
+means that what little signal there was pointed at the wrong objective. Defect
+(iv) never fired, because the tuner never ran at six rotations, and is included
+because it is a trap rather than a loss.
+
+\subsection{Per-coordinate step sizes}
+\label{sec:fit-sigma}
+
+The repair is to derive each coordinate's step size from its own admissible
+range. The optimiser now takes a relative step $\sigma_d = \sigma_{\mathrm{rel}}
+\cdot (\mathrm{hi}_d - \mathrm{lo}_d)$, with an explicit per-coordinate vector
+overriding it when one is supplied --- which is what \texttt{--sigmaparams} was
+advertising and is now wired to. A coordinate's step is therefore a fixed
+fraction of what that coordinate can be, rather than a fixed number of units of
+whatever the coordinate happens to be measured in.
+
+The check is not that the code changed. Every generation record in the run trace
+now carries the per-coordinate clip fraction --- the fraction of that
+generation's population whose proposal for that coordinate landed on a clamp
+bound --- so the pathology the previous harness had can be read off the artifact
+while a fit is running. At generation zero the worst coordinate of run~A clips at
+\vsixFitAClipGenZero{}\%, against the \numClipDeclMargin{}\% the v0.5 trace
+records for the same quantity. Run~C, which fits the wider v0.6 vector at a
+smaller relative step, clips at \vsixFitCClipGenZero{}\%; that is reported as
+measured rather than as passed, and \S\ref{app:params-bounds} prints the clip
+column per coordinate so a reader can see which coordinates it is.
+
+\subsection{Paired scoring on common random numbers}
+\label{sec:fit-paired}
+
+The incumbent is candidate zero of every generation and is played on exactly the
+same deals as every other candidate. The paired per-deal margin over it is
+therefore already available and costs nothing to compute, and the repair is
+simply to score each candidate by that margin rather than by its absolute win
+rate. The pairing now happens inside the objective rather than in
+post-processing, so the selection, the elite set and the recorded score are all
+the paired quantity.
+
+The invariant that catches a mis-wired estimator is a policy scored against
+itself. Under a correct paired estimator, the per-deal margin of a configuration
+against its own incumbent is exactly \vsixPairedSelfDelta{} on every deal, so the
+margin is exactly zero and the bootstrap interval has zero width --- not a small
+number, and not an interval containing zero. This is asserted at startup. It is
+worth stating why so weak-looking a test is the right one: every plausible wiring
+error --- pairing against the wrong candidate, pairing across generations,
+dividing by the wrong rotation count, resampling games instead of deals --- turns
+that exact zero into something else, and none of them can be seen in a fit's
+output otherwise.
+
+\subsection{A minimax-regret objective}
+\label{sec:fit-objective}
+
+The soft minimum is retained as one option and is no longer the only one. The
+optimiser now dispatches explicitly over $\{\texttt{softmin}, \texttt{min},
+\texttt{mean}, \texttt{regret}, \texttt{minimaxregret}\}$, the chosen objective
+is written into the run record rather than inferred from a compiled default, and
+the fits of record use \texttt{minimaxregret}: for each opponent on the panel the
+regret of a candidate is the best win rate any candidate in that generation
+achieved against that opponent minus this candidate's, and the objective is the
+negative of the worst such regret.
+
+The reason for preferring regret to the minimum itself is that the panel cells
+are not equally hard, so a minimum over raw win rates is dominated by whichever
+opponent is hardest and carries almost no gradient from the rest. The reason for
+preferring it to the soft minimum is that the soft minimum was never the object
+it was named after. Two temperatures in one pipeline --- one compiled into the
+tuner, one defaulted in the selection script, neither recorded --- is itself a
+correction owed to the earlier record, and \S\ref{sec:corr-self} makes it.
+
+\subsection{Commit-gate KPIs}
+\label{sec:fit-gates}
+
+No configuration in this study was committed on a win rate. The pathology
+instrument runs as a gate with a non-zero exit status, as step one of
+\filepath{engine/experiments_v06.sh} rather than as a report at the end, and the
+identity controls of \S\ref{sec:engine-repairs} run in the same step. The
+thresholds are \vsixGateN{} in number and the shipped configuration's measured
+value on each is: dead asks \vsixGateDeadAsk{}\%, longest dead run
+\vsixGateDeadRun{}, repeated asks \vsixGateRepeatAsk{}\%, wrong declarations
+\vsixGateDeclWrong{}\%, asks inside a half-suit the actor's own team already owns
+outright \vsixGateOwnLocked{}\%, and starved turns \vsixGateStarved{}\%.
+
+A gate that has never failed has never been tested, so the battery runs a
+negative control: a configuration that the gate must reject. Unbanning the
+deliberate miss --- allowing asks the actor can prove will fail, with the
+ownership features gated so that the zero-probability incentive cannot fire ---
+scores \vsixDeadWin{}\% against \vfive{}, interval [\vsixDeadWinLo{},
+\vsixDeadWinHi{}], which is higher than the shipped configuration and would be
+selected by any procedure ordered on win rate. The same configuration plays
+\vsixDeadPathDead{}\% of its asks dead, runs \vsixDeadPathLongest{} dead asks
+without interruption at its worst, and reaches the action cap in
+\vsixDeadPathLimit{}\% of games. The gate rejects it.
+\S\ref{sec:search-deadask} treats what that configuration is actually doing;
+the point here is narrower and is about ordering. A battery that collects
+strength first and pathology afterwards selects this build, and the v0.5 study's
+own ablation table contains two configurations of the same character.
+
+\subsection{Schedule, selection, and the winner's curse}
+\label{sec:fit-schedule}
+
+Two fits of record were run. Run~A starts from \vfive{}'s vector and fits the
+\numVfiveParams{} v0.5 coordinates over the panel \vsixFitAPanel{}, at population
+\vsixFitAPop{}, \vsixFitADeals{} deals by rotations per cell, relative step
+\vsixFitASigmaRel{}, for \vsixFitAGens{} generations from fitting seed
+\vsixFitASeed{}. Run~C starts from the v0.6 base and fits the wider
+\numVsixParams{}-coordinate vector over the panel \vsixFitCPanel{}, at population
+\vsixFitCPop{}, \vsixFitCDeals{}, relative step \vsixFitCSigmaRel{}, for
+\vsixFitCGens{} generations from fitting seed \vsixFitCSeed{}. Both are paired,
+both use \texttt{minimaxregret}, and both write a header record as the first line
+of the trace carrying the base specification, the objective, the temperature, the
+pairing flag, the population and elite sizes, the generation count, the deals and
+rotations per cell, the seed, the relative step and the full per-coordinate step
+vector. That header is why \S\ref{app:params} can name the run behind the shipped
+vector: the v0.5 study had to recover its own fitting temperature by regular
+expression over a source file and a markdown document, because nothing in the
+trace recorded it.
+
+\paragraph{The winner's curse.} The per-generation best is a maximum over a
+population evaluated on shared seeds and is biased upwards; on the v0.5 trace the
+gap between the best and the incumbent was \vsixFitBestGap{}, against
+\vsixFitOrderStat{} predicted by the order statistic of \vsixFitPop{} draws of
+the observed noise alone. The optimiser therefore re-scores both the
+distribution mean and the running best on a common guard bank and returns the
+higher. The guard is retained and it is honestly weak: the guard bank is derived
+from the same root seed as every generation bank, so it is disjoint from them but
+not independent of the fitting process. Selection is guarded, not held out. The
+held-out check is the evaluation protocol of \S\ref{sec:protocol}, and every
+number in \S\ref{sec:results} comes from a bank the fit never touched.
+
+\paragraph{Two acceptance tests.} The first is the self-comparison of
+\S\ref{sec:fit-paired}: a policy scored against itself returns a paired margin of
+exactly \vsixPairedSelfDelta{} with a zero-width interval. It is an invariant and
+it passes by construction, which is the point --- it fails loudly the moment the
+estimator is rewired.
+
+The second is a recovery test on a known gap, and it is the one the previous
+harness could not pass. A deliberately handicapped base was constructed by
+zeroing the leading ask weight, the hit-probability coefficient, which is the
+single most important coordinate in the vector; that configuration scores
+\numFitSanityBase{}\% against \vfive{}. A \numFitSanityGens{}-generation fit from
+that base with the repaired optimiser recovers to \numFitSanityAfter{}\% against
+\vfive{} and to \numFitSanityVthree{}\% against \vthree{}. The v0.5 harness's own
+\numFitTraceGensVfive{}-generation trace on the same objective moved its
+incumbent at \vsixFitSlope{} per generation with $t = \vsixFitSlopeT{}$, which is
+no movement at all; a recovery of this size in \numFitSanityGens{} generations is outside
+anything that harness produced in \numFitTraceGensVfive{}. This test is not part of
+\filepath{engine/experiments_v06.sh} and its command is given in
+\S\ref{app:repro-commands} so that it can be re-run.
+
+\paragraph{What the repaired optimiser was worth.} It is the only thing in this
+study that produced a replicated effect. The mechanism trials of
+\S\ref{sec:mechanisms} are null: single-coordinate and single-feature
+perturbations of the v0.5 policy class are worth zero at the budget
+\S\ref{sec:protocol} shows is required to see them. The joint refit is not, and
+\S\ref{sec:results-h2h} reports it against the panel on two disjoint banks. The
+plateau this line of work has been sitting on is in the mechanisms, not in the
+parameters --- but the parameters were never actually searched, because the
+searcher could not move.

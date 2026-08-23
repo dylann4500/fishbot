@@ -1,0 +1,7 @@
+checks                    293524
+block build failures      0
+block vs card DP (no C5)  max abs diff 3.414e-15
+block vs exact sampling   max abs diff 4.066e-02
+sinkhorn vs block  max 0.4982  mean 0.01705
+SELFTEST PASS
+note: allocation probabilities are validated by `fish oracle`, not here

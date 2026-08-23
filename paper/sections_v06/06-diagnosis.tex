@@ -1,0 +1,194 @@
+\section{Diagnosis: what \vfive{} does wrong, and what it does not}
+\label{sec:diagnosis}
+
+The v0.5 study closed with an unusually candid non-claim: removing a failure mode was worth almost
+nothing in win rate, and that was the result. This section asks the obvious follow-up question ---
+where, then, is the remaining value --- and answers it with four measurements, two of which are
+negative and are reported as findings rather than as caveats. The negative pair is load-bearing:
+between them they close off the two largest items on the design register this study inherited, and
+they are the reason \vsix{} spends its effort on the measurement apparatus rather than on the
+policy's feature set.
+
+\subsection{The instrument}
+\label{sec:diag-instrument}
+
+Every claim below is produced by \texttt{fish v6probe}, a diagnostics subcommand added for this
+study, and is reproducible from a clean build by the commands in Appendix~\ref{app:repro}. Three
+definitions fix what is being counted.
+
+\begin{definition}[Live candidate]
+An ask $(c,t)$ is \emph{live} for an actor if it is legal and the actor cannot prove from its own
+hand and the public record that $t$ does not hold $c$. This is the M1 predicate \vfive{} already
+gates on; it involves no posterior and no policy prior, so a candidate set restricted to it cannot
+have been narrowed by a modelling error.
+\end{definition}
+
+\begin{definition}[Exact tie at the top]
+A decision has an \emph{exact tie at the top} when two or more live candidates receive scores that
+are equal to within $10^{-9}$ under the policy's own pre-search score, that is
+$\lambda\, w^{\!\top}\! f + \nu\, Q$ where $Q$ is the one-ply expectimax over the value function.
+The gap and the spread are reported alongside so that a tie can be distinguished from a flat
+objective.
+\end{definition}
+
+\begin{definition}[Belief-symmetric tie]
+A tie is \emph{belief-symmetric} when the tied candidates additionally receive equal probability
+under the \emph{exact} posterior of \S\ref{sec:belief}, not merely under the Sinkhorn fit the
+deployed policy runs. A belief-symmetric tie is a statement about the information set, not about
+the approximation.
+\end{definition}
+
+\subsection{More than half of all ask decisions end in a tie}
+\label{sec:diag-ties}
+
+Over \vsixTieNFive{} tied decisions in \vfive{} mirror play, \vsixTieShareFive\% of contested
+decisions --- decisions with at least two live candidates, which is \vsixPathFiveContested\% of all
+of them --- carry an exact tie at the top. The objective is not flat: the mean spread across the
+candidate set is \vsixTieSpreadFive{} while the mean gap between the leaders is
+\vsixTieGapFive{}. The dimension is blind, not the surface.
+
+The tie is structural, and it is structural in a specific place. \vsixTieSameSuitFive\% of ties are
+two \emph{cards of one half-suit at one target}; only \vsixTieSameCardFive\% are one card offered to
+two different targets. Three causes stack. Eighteen of the twenty ask features are computed per
+(half-suit, target) and the three per-card features are all functions of the same marginal; the
+Sinkhorn filter makes exchangeable cards numerically identical by construction; and
+\texttt{askExpectedValue} discards its \texttt{target} argument outright, so the expectimax half of
+the score is constant across targets. The last of these was the defect the v0.5 design register
+headlined. It is aimed at \vsixTieSameCardFive\% of the tie mass.
+
+\subsection{Negative result: the ties are exchangeable, and therefore irreducible}
+\label{sec:diag-irreducible}
+
+The natural reading of \S\ref{sec:diag-ties} is that a subroutine \vfive{} already runs is throwing
+away a large amount of value, and the register this study inherited priced that value at over three
+half-suits per game using a hindsight oracle. That reading is wrong, and the measurement that
+refutes it is simple: re-score the tied candidates under the exact count law of
+\S\ref{sec:belief-exactworse} and ask how many ties it separates.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+tie-break rule & realised hit rate \\
+\midrule
+enumeration order (whichever candidate was emitted first) & \vsixTieHitArrayFive\% \\
+argmax of the deployed Sinkhorn marginal, within the tie & \vsixTieHitFastFive\% \\
+the shipped policy's actual pick (its chain/threat pass) & \vsixTieHitShipFive\% \\
+argmax of the \emph{exact} posterior, within the tie & \vsixTieHitExactFive\% \\
+\midrule
+hindsight best within the tie & \vsixTieHitBestFive\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The exact posterior separates \vsixTieExactSepPctFive\% of the ties, and every rule realises the
+same hit rate to three significant figures. Two cards of one half-suit at one target, tied under the
+policy's score, are tied under the exact posterior as well. The \vsixTieHitBestFive\% column prices
+clairvoyance, not headroom.
+
+\paragraph{The scope of that result, and the experiment that fixes it.} What the table measures is
+equality of the \emph{marginal} probability that the target holds the card. It follows that no rule
+ranking the tied candidates by that marginal --- the deployed one, the exact one, or any other ---
+can beat enumeration order, and none does. An earlier draft of this section concluded from that
+that the ties are irreducible. They are not, and the four rows below are the correction. Each plays
+the same policy against \vfive{}, changing only how the tie group is resolved.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+how the tie group is resolved & win rate against \vfive{} \\
+\midrule
+enumeration order (the shipped rule) & $50.00$ by construction \\
+uniformly at random, seeded from the public event stream & \vsixSearchTieRandom\% [\vsixSearchTieRandomLo, \vsixSearchTieRandomHi] \\
+by a one-deal rollout & \vsixSearchTieOnlyOne\% [\vsixSearchTieOnlyOneLo, \vsixSearchTieOnlyOneHi] \\
+\textbf{by a twelve-deal rollout ensemble} & \textbf{\vsixSearchTieOnlyTwelve\%} [\vsixSearchTieOnlyTwelveLo, \vsixSearchTieOnlyTwelveHi] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Randomising the choice is worth \emph{exactly} nothing --- $50.00\%$, mean half-suits $4.500$ to
+$4.500$ --- so this is not a story about a deterministic policy being predictable. One sampled deal
+is worth nothing either. Twelve are worth several points at the bank in the table, and pooled over
+every bank the configuration was measured on, \vsixSearchPooled\% over \vsixSearchPooledN{} games
+with no bank below \vsixSearchPooledMin\%.
+
+The separating information is therefore real, and it is not the mere fact of varying a
+deterministic choice --- the random row rules that out exactly. It is in the \emph{joint}
+posterior. Two cards can be equally likely to sit with the target while being differently correlated
+with the rest of the deal --- differently placed in the allocations that survive the certificates,
+differently useful to the half-suits the opponents are collecting --- and every marginal, exact or
+not, integrates that structure away. An ensemble of whole sampled deals does not.
+
+\paragraph{What is not resolved.} Whether the search's advantage is \emph{confined} to the tie
+group is a separate question and this study does not answer it. Restricting the search to the tie
+group gives \vsixTieSearchBankList\% over \vsixTieSearchBanks{} banks (mean
+\vsixTieSearchMean\%); guarding the tie group
+instead gives \vsixSearchTieGuardedWin\%; the unrestricted search gives \vsixSearchPooled\%. At
+720 games a cell those intervals all overlap. What is established is the pair of negative controls
+and the pooled effect, not the attribution. \S\ref{sec:search} says so again where it matters.
+
+Two corrections to the record follow, and are carried into \S\ref{sec:corrections}.
+
+\begin{enumerate}
+\item \textbf{Enumeration order does not decide half of all asks.} \vfive{}'s top-$K$ chain and
+  threat pass re-scores the leaders and moves the pick at \vsixTieShipMovedFive\% of ties, so array
+  order settles roughly a fifth of contested decisions rather than more than half --- and, per the
+  table, settles them exactly as well as any alternative.
+\item \textbf{The channel is the card dimension, not the target dimension.} The emphasis the v0.5
+  register placed on \texttt{(void)target;} is aimed at a twentieth of the tie mass.
+\end{enumerate}
+
+The design consequence is stated here and used twice later. Because the tie is a property of the
+information set, a rollout ensemble drawn from that information set is symmetric over it too: the
+determinizations carry no signal about which of two exchangeable cards to name, only variance. The
+tie-break question is therefore not a search question, and \S\ref{sec:search} does not treat it as
+one.
+
+\subsection{Negative result: the \vfive{} fit was sampling noise}
+\label{sec:diag-fitnoise}
+
+The second negative result concerns the interpretation of \vfive{}'s refit rather than its shipped
+configuration. Read from the fit trace, the incumbent objective moves over forty generations by
+less than one generation's standard deviation, with an ordinary-least-squares slope whose $t$
+statistic is below two, and the gap between the best candidate and the incumbent tracks the expected
+maximum of a population of independent draws of exactly that noise.
+
+The cause is visible in the sampler rather than in the objective. One scalar step size was applied
+to every coordinate of a vector whose coordinates have ranges spanning two and a half orders of
+magnitude, so the search was bang-bang on the bounded probability knobs --- the worst of them
+clipped at \vsixFitAClipGenZero\% of generation-zero draws under the old setting --- and effectively
+frozen on the unbounded weights. The per-coordinate step-size flag the interface advertised was
+parsed and discarded. \S\ref{sec:fitting} is the repair, and \S\ref{sec:results} is what a working
+optimiser then finds.
+
+Taken with the independent observation that running the v0.5 \emph{mechanisms} on v0.4's frozen
+parameter vector reproduces essentially the whole v0.5 result, the conclusion is that the
+v0.4$\rightarrow$v0.5 transition was mechanical and that its parametric machinery never moved. That
+is not a small correction: it means the shipped vector this study starts from is v0.4's, and v0.4's
+was produced by a search carrying a separate aliasing defect of its own.
+
+\subsection{What is actually still leaking}
+\label{sec:diag-channels}
+
+With the tie channel removed from the register and the parametric channel re-opened, the residual
+loss channels are smaller than the inherited register suggested, and they are ranked here with the
+paired figure each was measured at.
+
+\begin{itemize}
+\item \textbf{Asks into a half-suit the actor's own team already owns outright.}
+  \vsixPathFiveOwnlocked\% of all asks --- guaranteed misses that donate the turn. M1 cannot see
+  them: the enumerator only offers opponents as targets, and no single seat can \emph{prove} a
+  teammate holds a card. Pricing the posterior mass the team already carries is the graded
+  substitute, and \S\ref{sec:mechanisms} reports that it is worth nothing at the resolution
+  \S\ref{sec:protocol} establishes as necessary.
+\item \textbf{Declaration errors}, \vsixPathFiveDeclwrong\% of declarations in mirror play. The
+  pre-gates that produce them are, as \S\ref{sec:engine} reports, exact: \vsixGateFalseNeg{} false
+  negatives in \vsixGateRejected{} rejections. The error is in the allocation, not in the gate.
+\item \textbf{The move class M1 deletes.} A provably-dead ask at a chosen opponent is how a human
+  blackballs, donates the turn deliberately, or pays for a signal. \S\ref{sec:search} shows that
+  \vfive{}'s score cannot price it even when it is offered, and that unbanning it wholesale trades
+  a higher win rate for a policy that kills \vsixDeadPathLimit\% of its games at the action limit.
+\end{itemize}
+
+None of these is large. That is the diagnosis: \vfive{} sits on a plateau of its own policy class,
+and the leverage available to \vsix{} is in the apparatus that measures and fits it, not in another
+feature.

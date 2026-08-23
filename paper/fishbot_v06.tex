@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.9in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+% hyperref is loaded BEFORE tikz on purpose.  hyperref pulls in url, which
+% defines \path; tikz defines \path too, and whichever loads last wins.  TikZ
+% needs its own (\draw and \node are built on it), so we capture url's verbatim
+% behaviour as \filepath first and then let tikz take \path back.
+\usepackage{hyperref}
+\DeclareUrlCommand\filepath{\urlstyle{tt}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+
+\definecolor{fishgreen}{HTML}{0B5D46}
+\definecolor{fishlight}{HTML}{EAF4EF}
+\definecolor{fishgray}{HTML}{4B5954}
+\hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{1.2em}
+\setlength{\tabcolsep}{4.5pt}
+\setlength{\parskip}{0pt plus 1pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small FishBot v0.6}
+\rhead{\small Tie-breaking, a repaired optimiser, and guarded determinized search}
+\cfoot{\thepage}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+
+% Consistent names for the policies compared.  v0.6 is the policy of this
+% report; v0.5, v0.4, v0.3 and v0.2 are the prior generations it is measured
+% against.  v0.4-Fast is the policy the v0.4 study shipped and evaluated, and
+% v0.4-Block is the same fitted policy with the exact reference belief
+% substituted -- the pair the belief-substitution result of \S\ref{sec:belief}
+% re-measures.
+% These names appear inside captions and section titles, which are moving
+% arguments, so the commands must be robust; and they end up in PDF bookmarks,
+% so \texorpdfstring supplies a plain spelling for the bookmark text.
+\DeclareRobustCommand{\vsixsearch}{\texorpdfstring{\mbox{FishBot v0.6-Search}}{FishBot v0.6-Search}}
+\DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{FishBot v0.6}}{FishBot v0.6}}
+\DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{FishBot v0.5}}{FishBot v0.5}}
+\DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{FishBot v0.4}}{FishBot v0.4}}
+\DeclareRobustCommand{\vthree}{\texorpdfstring{\mbox{FishBot v0.3}}{FishBot v0.3}}
+\DeclareRobustCommand{\vtwo}{\texorpdfstring{\mbox{FishBot v0.2}}{FishBot v0.2}}
+\DeclareRobustCommand{\vfast}{\texorpdfstring{\mbox{v0.4-Fast}}{v0.4-Fast}}
+\DeclareRobustCommand{\vblock}{\texorpdfstring{\mbox{v0.4-Block}}{v0.4-Block}}
+
+% SCAFFOLD ONLY.  \todonote marks a heading whose body has not been written and
+% whose brief is the \verb|% TODO(v0.6):| comment above it in the section
+% source.  It also gives the typesetter breakable material between otherwise
+% adjacent headings, which a heading-only document does not have.  Deleting the
+% definition is the last step of drafting: once every \todonote is gone the
+% command is unused, and if one survives to a release build it is loud on the
+% page rather than silent.  Do not use it to stand in for a number -- numbers
+% come from numbers_v06.tex.
+\newcommand{\todonote}{%
+  \par\noindent
+  {\small\color{fishgray}\textit{[Scaffold: to be written. The brief for this
+   heading is the \texttt{TODO(v0.6)} note in the section source.]}}\par
+  \medskip}
+
+\title{\textbf{FishBot v0.6: Breaking the Exact Tie, Repairing the Optimiser,\\
+and Guarding a Determinized Search}\\[5pt]
+\large Why the exact posterior loses to a policy-aware approximation,\\
+what an unguarded search argmax costs, and a measurement protocol\\
+that can tell the difference}
+\author{Dylan Nguyen\\\small FishLab Research Project}
+\date{%
+  \small Technical report --- \today\\[2pt]
+  \small Repository: \filepath{https://github.com/dylann29/fish-optimization}\\[1pt]
+  % TODO(v0.6): replace \commitplaceholder with the short SHA the v0.6
+  % experiment battery actually ran at, stated per experiment group if the
+  % groups differ (the v0.4 title block states two groups; see
+  % research/v06/notes/R5-state-of-knowledge.md e.1).  Add the pointer to
+  % research/v06/results/MANIFEST.json once engine/build_manifest.py v06 has
+  % been run.
+  \small Experiments \texttt{E0--E15}, the follow-ups \texttt{F0--F10} and the
+  exploitability probe \texttt{X1} were produced from the \vsix{} working tree
+  whose baseline is commit \texttt{bd812fe} (``v0.5''); the \vsix{} sources
+  themselves were uncommitted when the battery ran, so the artifacts rather than
+  a commit are the record. Digests of all of them are in
+  \filepath{research/v06/results/MANIFEST.json}.%
+}
+
+\input{numbers_v06}
+% Generated from the experiment artifacts by engine/build_tables_v06.py, on the
+% two-file scheme v0.5 introduced: the generator \renewcommand's every macro the
+% artifacts settle, so the placeholder values in numbers_v06.tex act only as a
+% compile-before-the-battery-runs fallback and can never silently reach the PDF
+% once the battery has been run.  The file does not exist yet; \InputIfFileExists
+% keeps the manuscript compiling until it does.
+\InputIfFileExists{numbers_v06_generated}{}{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\input{sections_v06/abstract}
+\end{abstract}
+
+\input{sections_v06/01-introduction}
+\input{sections_v06/02-rules}
+\input{sections_v06/03-related}
+\input{sections_v06/04-engine}
+\input{sections_v06/05-belief}
+\input{sections_v06/06-diagnosis}
+\input{sections_v06/07-mechanisms}
+\input{sections_v06/08-search}
+\input{sections_v06/09-fitting}
+\input{sections_v06/10-protocol}
+\input{sections_v06/11-results}
+\input{sections_v06/12-corrections}
+\input{sections_v06/13-limitations}
+\input{sections_v06/14-conclusion}
+
+\input{sections_v06/bibliography}
+
+\appendix
+\input{sections_v06/A-dialect}
+\input{sections_v06/B-inference}
+\input{sections_v06/C-parameters}
+\input{sections_v06/D-ablations}
+\input{sections_v06/E-search-detail}
+\input{sections_v06/F-calibration}
+\input{sections_v06/G-reproducibility}
+\input{sections_v06/H-human-play}
+\input{sections_v06/I-related-extended}
+
+\end{document}

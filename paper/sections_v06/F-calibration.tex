@@ -1,0 +1,36 @@
+\section{Calibration}
+\label{app:calibration}
+
+\subsection{What is forecast}
+\label{app:calib-ask}
+
+Two probabilities are emitted and can be scored against outcomes. The ask forecast is the
+posterior probability that the named target holds the named card, recorded at every ask by the
+measured team. The declaration forecast is the policy's own probability that the allocation it is
+about to name is correct, recorded at every voluntary declaration.
+
+\subsection{Reliability}
+\label{app:calib-decl}
+
+See \filepath{research/v06/results/E6-calibration.txt} for the raw ten-bin reliability diagrams and
+the Brier, log-loss and expected-calibration-error summaries for both forecasts.
+
+\subsection{The calibration/resolution distinction}
+\label{app:calib-versions}
+
+\S\ref{sec:belief-exactworse} turns on a distinction that a single calibration number hides. A
+forecaster can be well calibrated and poorly resolved: if it says $0.46$ and is right $46\%$ of the
+time, it is calibrated, however uninformative $0.46$ is. The exact posterior and the deployed
+approximation are \emph{both} well calibrated in this game --- the mean forecast of each tracks its
+realised frequency closely --- and they differ in resolution, in the approximation's favour, because
+the approximation carries a soft model of how opponents choose their asks and the exact object does
+not. Any comparison of inference paths that reports only calibration will therefore report that they
+are equally good, and be wrong.
+
+\subsection{Caveats}
+\label{app:calib-caveats}
+
+Forecasts are collected from one team only, so the sample is not independent across seats within a
+game; the intervals in the reliability table are indicative rather than inferential. The declaration
+forecast is a probability under the policy's own posterior, not under the exact one, and
+\S\ref{sec:belief} gives the size of the gap between them.

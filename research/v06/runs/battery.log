@@ -1,0 +1,23 @@
+== E0 identity controls (must pass) ==
+
+### BlockDP table aliasing (v0.6 E2): QUERY mismatches must be 0
+same BlockDP object, same query, before/after a second build() elsewhere
+  checks 180   QUERY mismatches 0   worst |delta| 0   (raw shared-pool field reads that differ: 175)
+same BlockDP object, same query, before/after a second build() elsewhere
+  checks 121   QUERY mismatches 0   worst |delta| 0   (raw shared-pool field reads that differ: 117)
+== E1 verify: rules, information safety, belief soundness ==
+== E2 pathology: the KPIs that gate a v0.6 commit ==
+== E3 head-to-head against v0.5 and v0.4, five held-out banks ==
+== E4 per-opponent profile and worst case (the headline is the MINIMUM) ==
+== E5 paired mechanism ablations against a common panel ==
+== E6 calibration ==
+== E7 rule dialects ==
+== E8 the two structural results: exchangeable ties, and belief as a predictor ==
+== E12 the search ladder: the optimizer's curse, and what a guard recovers ==
+== E15 the deliberate miss: what M1 deletes, and why unbanning it fails ==
+== E14 search deviation rate: the falsifier a healthy search must pass ==
+== E13 rollout-blueprint fidelity: the cost/fidelity dial the corpus had not swept ==
+== E11 partner regimes (owner decision D2): never headline the self-play row ==
+== E9 throughput ==
+== E10 declaration pre-gate audit (dead for v0.5 until this study) ==
+done. artifacts in ../research/v06/results

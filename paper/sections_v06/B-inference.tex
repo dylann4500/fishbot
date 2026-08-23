@@ -1,0 +1,393 @@
+\section{Inference: derivations and implementation notes}
+\label{app:inference}
+
+This appendix supplies the derivations \S\ref{sec:belief} states without proof
+and the implementation detail a reimplementer needs. It also carries the
+exactness audit in full, because the headline result of \S\ref{sec:belief} is a
+comparison against an object claimed to be exact, and a claim of that kind is
+worth exactly what its audit is worth.
+
+The source files are \filepath{engine/src/belief.hpp} (constraint bookkeeping and
+the approximate path), \filepath{engine/src/blockdp.hpp} (the exact count law),
+and \filepath{engine/src/oracle.hpp} (the brute-force enumerator). Notation is
+that of \S\ref{sec:belief-state}.
+
+\subsection{The constraint system}
+\label{app:inf-constraints}
+
+The observer's state is a \texttt{Knowledge} object: a resolved-owner array, a
+per-card surviving-support bitmask $M_c$, the public hand counts, per-seat and
+per-half-suit ask and miss tallies, and a vector of live ask-legality
+certificates. (C1)--(C3) are maintained incrementally as bit operations on the
+support masks, and a support that collapses to a single seat resolves the card,
+which in turn removes any certificate the resolution satisfies.
+
+(C4) is derived rather than stored. Capacities are recomputed from the public
+hand counts by \eqref{eq:capacity} after every event, and a seat with no spare
+capacity is removed from the support of every unresolved card, which can cascade.
+This is the only place the two constraint families interact, and it is why a
+declaration --- correct or incorrect --- needs no special handling anywhere in
+the system. A declaration removes six cards from play and changes the public
+counts of the seats that held them; the six cards leave $U$ with their holders
+known, the half-suit leaves $\mathcal{H}$, and each $h_p$ in
+\eqref{eq:capacity} drops by the number of those cards that seat held. The same
+identity that absorbs a successful ask absorbs a declaration. An incorrect
+declaration is not a special case either: it reveals the true holders of all six
+cards, which is strictly more information than a correct one gives the opposing
+team, and it arrives through the same channel.
+
+(C5) is stored as a list. Each certificate is a pair --- the asking seat and the
+bitmask $D$ of \eqref{eq:disj} --- and a certificate whose card set collapses to
+a single card resolves that card immediately rather than being stored. Two
+properties of the store matter downstream. First, every certificate is confined
+to one half-suit, which is what \S\ref{app:inf-blocks} exploits. Second, the
+store admits duplicates: a repeated ask in the same half-suit under the same
+support produces an identical certificate, and \texttt{onEvent} appended it
+without checking. The de-duplication repair of \S\ref{sec:engine-repairs} is
+opt-in for a reason that belongs in this appendix rather than in the main text:
+the approximate conditioning step of \S\ref{app:inf-sinkhorn} applies each stored
+certificate once, so two copies of one certificate condition twice and the
+duplicate is not inert. De-duplicating is therefore a change of posterior, not a
+change of representation, and it is off by default so that the \vfour{} and
+\vfive{} numbers this report compares against are unchanged.
+
+\subsection{The capacity-vector count law}
+\label{app:inf-count}
+
+\paragraph{The layer identity.} Order the unresolved cards $c_1,\dots,c_{|U|}$
+and let $q$ be the capacity vector. A partial assignment of the first $j$ cards
+leaves a vector $n$ of unused capacities, and because every one of those cards
+consumes exactly one unit of capacity from exactly one seat,
+\[
+  \sum_p n_p \;=\; \sum_p q_p - j \;=\; |U| - j ,
+\]
+so $j$ is recoverable from $n$ and the layer index need not be stored. That is
+what collapses the natural $|U|$-layer table into two single arrays. Each is laid
+out as one array of size $\prod_p (q_p+1)$, addressed by the mixed-radix offset
+$\mathrm{off}(n) = \sum_p n_p s_p$ with strides $s_p = \prod_{r<p}(q_r+1)$, and a
+companion index sorts the reachable states by $\sum_p n_p$ so that a sweep visits
+one layer at a time. Count vectors are packed one byte per seat into a single
+\verb|uint64_t|, which makes the dominance test $n \ge t$ that guards a block
+transition one branch-free word operation.
+
+\paragraph{The bound.} The observer's own cards are resolved by (C1), so $q_i =
+0$ and the table is a product over the five other seats. Also $|U| \le 45$: at
+the deal the 54 cards lie in nine live half-suits, the observer holds nine and
+those are resolved, and thereafter a card leaves $U$ when its holder is revealed
+or its half-suit is declared and never re-enters. Subject to $\sum_{p\ne i} q_p =
+|U|$, the product $\prod_{p \ne i}(q_p+1)$ is maximised at equal capacities, by
+the arithmetic--geometric mean inequality, so
+\begin{equation}
+  \prod_{p\ne i}(q_p+1) \;\le\; \Bigl(\frac{\sum_{p \ne i}(q_p+1)}{5}\Bigr)^{5}
+  \;=\; \Bigl(\frac{|U|}{5}+1\Bigr)^{5} \;\le\; 10^{5}.
+  \label{eq:bound}
+\end{equation}
+Each state has at most six outgoing transitions, so a full forward--backward pass
+costs at most $6 \times 10^5$ multiply--adds regardless of the position and the
+two arrays together occupy under two megabytes. The implementation refuses to
+build above a fixed state cap and reports the failure to the caller rather than
+degrading silently.
+
+\paragraph{The per-card marginal.} The marginal is the contraction of the two
+tables at card $j$,
+\begin{equation}
+  \mu_{c_j, p}
+    \;=\; \frac{\mathbf{1}[\,p \in M_{c_j}\,]}{Z}
+      \sum_{\substack{n \,:\, |n| = |U| - j + 1 \\ n_p \ge 1}}
+        F_{j-1}(n)\; B_j(n - e_p),
+  \label{eq:marg}
+\end{equation}
+which is exact: every consistent assignment is counted once, by splitting it at
+card $j$ into a prefix counted by $F_{j-1}$ and a suffix counted by $B_j$. Both
+tables hold integer-valued counts in double precision, so the arithmetic is exact
+while the counts stay below $2^{53}$, which \eqref{eq:bound} guarantees on every
+reachable state.
+
+\paragraph{The direct sampler.} The backward table doubles as a sampler. Having
+placed $c_1,\dots,c_{j-1}$ and arrived at remaining capacities $n$, card $c_j$
+goes to seat $p$ with probability proportional to $B_j(n - e_p)$, restricted to
+$p \in M_{c_j}$ with $n_p \ge 1$. A seat receives positive weight only when the
+suffix can still be completed, so every prefix is extendable and no draw is
+discarded: the procedure is rejection-free for (C1)--(C4) and uniform over the
+assignments satisfying them, because the weights are path counts. When a live
+(C5) certificate is present the sampler is unchanged and the completed assignment
+is tested against the literal disjunction \eqref{eq:disj}, drawing again on
+failure, so the combined procedure is exact but not rejection-free. The sampler
+is off the deployed decision path and is used as ground truth in the
+cross-checks of \S\ref{app:inf-audit}.
+
+\subsection{Half-suit block enumeration}
+\label{app:inf-blocks}
+
+$U$ is partitioned by half-suit and each group is classified.
+
+\begin{description}[style=nextline]
+  \item[Card group.] No live certificate in that half-suit. The group's cards are
+        expanded one at a time by \eqref{eq:fwd}--\eqref{eq:bwd}, branching factor
+        $|M_c| \le 5$.
+  \item[Block group.] At least one live certificate. The group's assignments are
+        enumerated exhaustively by depth-first search over the supports --- at
+        most $5^6 = 15{,}625$ candidates for a six-card half-suit --- each tested
+        against every certificate of that half-suit, and the survivors aggregated
+        by count vector into $g_H(t)$ of \eqref{eq:blocktable}. Alongside
+        $g_H(t)$ the engine accumulates the per-card breakdown
+        $g_H^{(c\to p)}(t)$ that \eqref{eq:q1} needs, so one enumeration serves
+        all three queries.
+\end{description}
+
+A group of either kind consumes a known number of cards, so the layer identity
+survives and the outer recursion runs over groups: $F_b(n) = \sum_t g_b(t)
+F_{b-1}(n+t)$, with $g_b$ the indicator of a single card placement in the
+card-group case. Nothing in this treatment is approximate: the enumeration is
+exhaustive, the certificate test is the literal disjunction, and the outer
+recursion is a counting argument. Inclusion--exclusion over $k$ certificates
+would instead cost $2^k$ passes over the whole of $U$, which is the cost the
+half-suit locality of (C5) avoids.
+
+\begin{corollary}[Equal probability within a count vector]
+\label{cor:equalprob}
+Under the uniform posterior of \S\ref{sec:belief-state}, any two allocations of
+the same half-suit that satisfy (C1)--(C5) and share a count vector have equal
+probability.
+\end{corollary}
+
+\begin{proof}
+By \eqref{eq:q2} the probability of a surviving allocation $A$ depends on $A$ only
+through $t(A)$, since $S_t$ is a function of the count vector and of the tables
+outside the block.
+\end{proof}
+
+The maximum-probability allocation is therefore decided by the count vector
+alone, and the choice among survivors within a count vector is arbitrary. The
+caveat is the operative half: an allocation that violates a certificate has
+probability zero \emph{even when its count vector is shared by survivors}, so
+survival must be checked explicitly and cannot be inferred from the count vector.
+The count-vector table records only survivors, which makes the corollary usable
+and makes the caveat necessary at the same time. \S\ref{app:inf-latent} records
+which of the two consumers of this table actually performs the check.
+
+\subsection{The approximate conditioning step}
+\label{app:inf-sinkhorn}
+
+The approximate path maintains a matrix $p_{c,p}$ over unresolved cards and
+seats, initialised to the prior weights \eqref{eq:prior} on the support $M_c$ and
+zero off it. One Sinkhorn iteration normalises each row to sum to one, then
+scales each column $p$ by $q_p / \sum_c p_{c,p}$, enforcing \eqref{eq:capacity}
+in expectation. The deployed setting is four outer sweeps of eight such
+iterations, with a conditioning step for the certificates applied between
+consecutive sweeps and a final row normalisation.
+
+The conditioning step derives as follows. Fix a certificate with asking seat $a$
+and card set $D$, and let $E$ be the event $\bigvee_{d\in D}[\sigma(d)=a]$.
+Treating $\{p_{d,a}\}_{d \in D}$ as independent Bernoulli indicators,
+\[
+  \Pr[\neg E] \;=\; \prod_{e \in D} (1 - p_{e,a}),
+  \qquad
+  \Pr[E] \;=\; 1 - \prod_{e \in D} (1 - p_{e,a}) .
+\]
+For $d \in D$ the event $\sigma(d) = a$ implies $E$, so $\Pr[\sigma(d) = a \mid
+E] = p_{d,a}/\Pr[E]$. For a seat $p \ne a$, the event $\sigma(d) = p$ is
+compatible with $E$ only if some other card of $D$ goes to $a$, whose independent
+probability is $1 - \prod_{e \in D\setminus\{d\}}(1 - p_{e,a})$. Together,
+\begin{equation}
+  \Pr[\sigma(d) = a \mid E] = \frac{p_{d,a}}{1 - \prod_{e \in D}(1 - p_{e,a})},
+  \qquad
+  \Pr[\sigma(d) = p \mid E] = p_{d,p}\,
+    \frac{1 - \prod_{e \in D \setminus \{d\}}(1 - p_{e,a})}{1 - \prod_{e \in D}(1 - p_{e,a})} .
+  \label{eq:cond}
+\end{equation}
+Rows are renormalised afterwards and the next sweep restores the capacity
+constraints the reweighting disturbed. Two degenerate cases are guarded: when
+$\Pr[E]$ underflows the mass is forced onto the certificate rather than dividing
+by a near-zero denominator, and when $\Pr[\neg E]$ underflows the certificate is
+already implied and the step is skipped.
+
+The independence assumption in \eqref{eq:cond} is false, because the capacity
+constraints couple the cards of $D$, so interleaving it with capacity fitting does
+not converge to the exact marginals of \eqref{eq:q1}. That is the sense in which
+the deployed path is approximate, and it is the only sense: the bookkeeping of
+(C1)--(C4) it runs on is exact.
+
+\paragraph{The deployed declaration estimator.} The declaration query
+\eqref{eq:q2} asks for a joint probability and the approximate path has only
+marginals, so it evaluates the joint by sequential conditioning. For a candidate
+allocation assigning cards $c_1,\dots,c_6$ to seats $p_1,\dots,p_6$,
+\[
+  \hat\alpha(A) \;=\; \prod_{j=1}^{6} \hat\mu^{(j)}_{c_j, p_j},
+\]
+where $\hat\mu^{(j)}$ is recomputed on the state in which $c_1,\dots,c_{j-1}$
+have already been resolved to $p_1,\dots,p_{j-1}$. Each step fixes one card,
+decrements that seat's capacity, propagates the support reductions and refits. A
+card already resolved contributes one if it matches and zero otherwise, a card
+whose support excludes its assigned seat returns zero immediately, and the
+product short-circuits once it falls below a floor, since candidates that weak
+are rejected regardless. The chain rule is exact --- the joint is the product of
+successive conditionals in any fixed order --- so the estimator is exact in
+structure and approximate only through the marginal solver. A product of
+\emph{unconditioned} marginals would not be: it ignores the capacity coupling
+that makes \eqref{eq:q2} necessary in the first place.
+
+\subsection{The policy prior, derived}
+\label{app:inf-prior}
+
+Equation \eqref{eq:prior} is a likelihood correction expressed as prior weights.
+The full Bayesian posterior over deals weights each deal $x$ by $L(\mathcal{I}
+\mid x) = \prod_t \pi_{p_t}(a_t \mid \mathcal{I}_{<t}, x)$, the probability that
+the observed actions would have been chosen given $x$. That object is not
+available: it requires a model of every opponent's policy and a product over the
+whole history. What \eqref{eq:prior} does instead is retain the one sufficient
+statistic of the history that any plausible policy makes informative --- how many
+of a seat's public asks fell in a given half-suit, against how many fell
+elsewhere --- and expose its two coefficients to the same optimiser that fits the
+policy. $\theta$ rewards a seat's asks in the card's own half-suit and $\phi$
+penalises its asks elsewhere.
+
+The weights enter as the initialisation of the Sinkhorn fit rather than as a
+post-hoc multiplication, which is what keeps the capacity constraints exact:
+$\theta = \phi = 0$ recovers the uniform initialisation and hence the
+policy-agnostic posterior. It also means the prior has no route into the exact
+path. \texttt{BlockDP::build} takes the \texttt{Knowledge} object alone; there is
+no argument through which a coefficient could reach it, and the exact path never
+calls the weight function at all. Any belief-mode ablation in this corpus is
+therefore confounded with a prior ablation, and that confound is not a defect of
+the experiment but a property of the architecture.
+
+\paragraph{The exact/approximate predictive comparison in full.} The comparison
+of \S\ref{sec:belief-exactworse} is run by \texttt{fish v6probe --mode=belief}
+and its design is as follows. At every ask decision of the measured team, on the
+acting seat's own \texttt{Knowledge} object, each candidate posterior is computed
+on the \emph{same} state: the exact count law of \S\ref{sec:belief-count}, and
+the approximate path at a list of $(\theta,\phi)$ settings that includes $\theta =
+\phi = 0$ and the shipped values. Two quantities are then accumulated per
+posterior.
+
+\begin{enumerate}
+  \item \textbf{Predictive log loss.} For every unresolved card of the state, the
+        true holder is read from the ground-truth deal and $-\log \mu_{c,
+        \text{truth}}$ is accumulated, floored to avoid an infinite contribution
+        from a posterior that assigns exact zero. The reported figure is the mean
+        over cards. The unit is one card, not one decision, so a state with a
+        large unresolved pool contributes proportionally more --- which is the
+        right weighting, because those are the states inference is for.
+  \item \textbf{Argmax hit rate.} The legal asks are enumerated at that state and
+        the candidates the acting seat's own knowledge already proves dead are
+        discarded. Among the remainder the posterior's own maximiser of
+        $\mu_{c,t}$ is selected, and the accumulator records whether the target
+        really holds the card. The unit is one decision, and each posterior
+        chooses its own ask, so the measure is the quality of the posterior's own
+        recommendation rather than of a shared one.
+\end{enumerate}
+
+Two properties of this design carry the argument. It is played on identical
+states, so no posterior is scored on a trajectory it induced. And it involves no
+fitted ask weights on either side --- the argmax is over the posterior itself,
+not over the linear utility of \S\ref{sec:mechanisms} --- so nothing in the
+comparison depends on which posterior the policy was tuned against. That is what
+makes it a verdict on the posteriors rather than a substitution result, and it is
+why \S\ref{sec:belief-exactworse} can close a question that the v0.4 study's
+belief-substitution ablation could not.
+
+The result is Table~\ref{tab:belief}. The exact count law under a uniform deal
+prior scores \vsixBeliefExactNLL{} nats per card and \vsixBeliefExactHit{}\%
+argmax hit rate; the approximate path with the prior deleted scores
+\vsixBeliefNoPriorNLL{} and \vsixBeliefNoPriorHit{}\%; the shipped prior scores
+\vsixBeliefShippedNLL{} and \vsixBeliefShippedHit{}\%. The exact object is last
+of the three on both measures. The approximate path beats the exact one even at
+$\theta = \phi = 0$, where the two encode the same rules-only information; the
+remaining gap to the shipped row is the prior alone, worth
+\numThetaPriorHitGain{} points of hit rate and \numThetaPriorNatGain{} nats.
+
+The interpretation is the one \S\ref{sec:belief-exactworse} gives and is repeated
+here because the appendix is where a sceptical reader arrives: exactness is
+relative to a prior, the uniform deal prior is a modelling assumption and not a
+rule, and on this evidence it is a worse assumption than a crude count of who has
+asked where.
+
+\subsection{The exactness audit and its coverage}
+\label{app:inf-audit}
+
+Agreement between the count law and the block construction is weak evidence,
+because they share a derivation. The audit of record is therefore a brute-force
+enumerator that factorises nothing: for one observer's constraint state the
+unresolved cards are searched by depth-first assignment to seats, candidates are
+pruned against the surviving support (carrying (C1)--(C3)) and against the
+capacity (carrying (C4)), and (C5) is tested at each complete leaf against the
+literal disjunction. Surviving leaves are counted into $Z$, tallied into per-card
+ownership counts, and tallied into a per-half-suit table keyed by the packed
+assignment. Nothing is factorised, so the count behind every named allocation is
+an explicit count of leaves.
+
+That audit was run and reported by the v0.4 study, and this report does not
+re-run it \cite{fishbot04}. Its two properties matter here and are restated
+rather than re-measured. The deterministic comparisons agree \emph{exactly} ---
+not to a tolerance --- because both sides compute integer counts over the same
+finite set of assignments and hold them in double precision below $2^{53}$, form
+the same ratio from identical operands, and obtain identical doubles. And its
+coverage is a subsample: the search is exponential in $|U|$, so a state is
+attempted only when the capacity dynamic program reports a small enough number of
+consistent deals, and a state that exceeds the budget is counted as skipped and
+reported rather than dropped. Skipping is correlated with exactly the property
+that makes a state hard --- a large unresolved pool --- so the audit is evidence
+about small reachable states and is silent about the high-entropy early game
+where inference matters most. A pass is exact on a subsample, and that is all it
+is.
+
+Two v0.6 facts attach to this. The first is that the audit's premise did not hold
+when it was run. \S\ref{sec:engine-repairs} shows that a \texttt{BlockDP}
+instance's tables could be repointed by an unrelated build on the same thread;
+the oracle comparison was unaffected because its driver builds one instance and
+queries it before anything else can rebuild, which is a property of the driver
+rather than of the engine. After the repair it is a property of the engine. The
+second is that the exactness audit answers a narrower question than the phrase
+suggests: it establishes that the block construction computes the posterior of
+(C1)--(C5) correctly, and \S\ref{app:inf-prior} establishes that this posterior
+is not the best available one.
+
+The v0.6-era checks that were run are the reachability measurements of
+\S\ref{app:inf-latent}.
+
+\subsection{Latent approximations inside functions documented as exact}
+\label{app:inf-latent}
+
+Three routines in the inference stack are documented as exact and are not, in
+regimes no current caller reaches. Each is recorded here with its reachability
+argument, because unreachable-today is a property of the call sites and not of
+the code, and every one of these is a trap for the next study rather than an
+error in this one. The source is
+\filepath{research/v06/notes/R2-inference-stack.md}, \S8.
+
+\paragraph{A greedy branch in the count routine.} The masked counting routine in
+\filepath{engine/src/belief.hpp} has a fast path for masks that are all equal and
+one for singletons. For masks that are neither --- heterogeneous and
+non-singleton --- it falls through to a greedy sequential assignment that picks
+the seat with the most remaining capacity, which is an approximation inside a
+function whose comment says exact. No current caller reaches it: over
+\numCountUniformQueries{} uniform and \numCountGeneralQueries{} general queries
+the routine agreed with the exact posterior to
+$\numCountAgree{}$. A future caller asking a heterogeneous per-card question ---
+``is each of these cards on my team?'' is the natural one --- would get a silent
+approximation.
+
+\paragraph{The allocation search does not re-check survival.} The block table's
+maximum-probability allocation search materialises an assignment from a count
+vector and returns it without re-testing it against the certificates of
+\eqref{eq:disj}, whereas the allocation-probability query on the same table does
+re-test and says why. The search is on the deployed decision path. It was
+measured at \numAllocSurvivalFailures{} failures in \numAllocSurvivalChecks{}
+checks, \numAllocSurvivalCert{} of them on states carrying a live certificate,
+over \numAllocSurvivalDeals{} deals at seed \numAllocSurvivalSeed{}. That is
+unfalsified and it is not proved. Corollary~\ref{cor:equalprob} does not supply
+the missing step: it says survivors sharing a count vector are equiprobable, and
+says nothing about whether the assignment the search materialises is one of them.
+
+\paragraph{Silent truncation of a group table.} The group enumeration returns a
+failure flag when the number of distinct count vectors exceeds
+\numMaxEnt{}, but the caller that populates the table ignores the flag and
+returns, leaving a \emph{partial} table which the team-ownership query then
+normalises as if it were complete. The regime is currently unreachable by
+arithmetic: the number of count vectors for six cards over six seats is
+$\binom{11}{5} = \numMaxCountVectors{} < \numMaxEnt{}$, and no truncation was
+observed in \numAllocSurvivalChecks{} checks. It becomes reachable the moment the
+half-suit size or the table capacity moves. Two further caps have the same shape
+and the same status: a \numCertCap{}-certificate limit per group, and
+\numNodeGuard{}-node guards on the two depth-first searches.

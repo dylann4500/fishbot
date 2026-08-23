@@ -1,0 +1,203 @@
+\section{The simulator: implementation, information safety, verification, and the v0.6 repairs}
+\label{sec:engine}
+
+The simulator is the instrument every number in this report is read from, so its
+properties are stated before its results. Three of them matter: it cannot leak a
+hidden field to a policy, it checks its own deductions against the truth while it
+runs, and a configuration in which every v0.6 mechanism is switched off is
+\vfive{} bit for bit. The last of those is not a courtesy. It is what makes the
+ablation table of \S\ref{sec:results-ablations} exact rather than approximate,
+and it is the first thing \filepath{engine/experiments_v06.sh} runs.
+
+This section also records four repairs to the engine itself. They are reported
+here rather than folded silently into a diff because three of them are the
+reason a measurement in this report was possible at all, and because one of them
+--- a dead command-line option --- means a published pass in the v0.4 record was
+vacuous (\S\ref{sec:corr-vfour}).
+
+\subsection{Implementation}
+\label{sec:engine-impl}
+
+The engine is unchanged in structure from the v0.4 report, which describes it in
+full \cite{fishbot04}: a single-header C++20 core in \filepath{engine/src/}, a
+hand as one \verb|uint64_t| over the 54 card indices $c = 6h + i$, and
+counter-based random streams keyed by \emph{(seed, seat, purpose)} so that a deal
+and its entire play reproduce from the seed alone. The duplicate-block protocol
+of \S\ref{sec:protocol} depends on that last property and on nothing else.
+
+What moved in v0.6 is the policy layer. \texttt{V06Agent} derives from
+\texttt{V05Agent} and defers to it whenever no v0.6 mechanism is enabled, so the
+v0.5 decision path is not reimplemented but inherited; the determinized search of
+\S\ref{sec:search} and the rollout blueprint it calls live in two new headers,
+\filepath{engine/src/v06.hpp} and \filepath{engine/src/v06_rollout.hpp}. The
+diagnostics this report leans on are a new subcommand rather than scratch
+probes: \texttt{fish v6probe --mode=ties} censuses ask decisions and every
+tie-break rule including hindsight, \texttt{--mode=belief} scores several
+posteriors as predictors on identical states, and \texttt{--mode=search} reports
+how often a guarded search actually deviates from its blueprint. All three are in
+\filepath{engine/src/probe_v06.hpp} and all three are run by the battery, so the
+figures they produce are regenerated rather than transcribed.
+
+Throughput on the shipped configuration is \vsixThroughputSix{} games/s against
+\vsixThroughputFive{} for \vfive{} and \vsixThroughputFour{} for \vfour{}, all on
+the same machine at \vsixCores{} threads. Every compute figure in this report is
+single-machine and was measured under load, so all of them are lower bounds.
+
+\subsection{Information safety}
+\label{sec:engine-safety}
+
+The acting policy never receives the game state. It receives its own
+\texttt{Knowledge} object --- the constraint bookkeeping of \S\ref{sec:belief}
+--- and the public record, in which each event carries only the actor, the
+target, the named card, the outcome, any declared allocation, and the resulting
+public hand counts. There is no interface through which a policy can read
+another player's cards, so the class of leak the \vthree{} audit reported in its
+predecessor \cite{fishbot03} is excluded structurally rather than by inspection.
+The property and the argument for it are unchanged from the v0.4 report
+\cite{fishbot04}.
+
+Soundness is the stronger claim, and it is checked rather than argued. After
+every public event the engine's audit mode verifies, for every player and against
+the true deal, that every card the constraint state records as resolved is held
+by the seat it is resolved to; that the true holder of every unresolved card lies
+in that card's surviving support; that the derived capacities equal the true
+counts of unresolved cards per player; and that every live ask-legality
+certificate is satisfied by the true deal. A single violation would mean the
+belief engine had excluded the truth.
+
+\subsection{Verification suite}
+\label{sec:engine-verify}
+
+\texttt{fish verify} plays the ordered cross-product of a \numVerifyPool{}-policy
+pool --- \numVerifyPairs{} ordered pairs, so both orderings of every pair and
+every self-play pairing are exercised --- with the audit above enabled
+throughout, and additionally checks deck integrity and card conservation, that
+exactly nine half-suits are resolved in every completed game, that a declaration
+only ever assigns cards to the declarer's own teammates, that ask legality is
+enforced independently on the move generator and on the applier, and that
+replaying a seed at a fixed thread count reproduces the game bit-identically. It
+returns a non-zero exit status on failure, which is what lets the battery use it
+as a gate rather than as a report.
+
+Over \vsixVerifyGames{} deals the suite recorded \vsixAuditViolations{}
+violations in \vsixAuditChecks{} checks, with an overall verdict of
+\vsixVerify{}. The random streams are keyed so that thread count cannot affect a
+game's outcome, but the suite tests replay identity only at a fixed thread count
+and does not test that claim directly; this is carried forward from the v0.4
+study as an unclosed gap and is listed as one in \S\ref{app:repro-gaps}.
+
+\subsection{The v0.6 engine repairs}
+\label{sec:engine-repairs}
+
+Each repair below is stated as a defect, the measurement that shows the defect is
+real, what the defect blocked, and the measurement that shows it is fixed. Three
+of the four are correctness-neutral for \vfive{}: they change nothing a \vfive{}
+game does, which is why they survived a release. The fourth changes the Fast
+posterior and is therefore a flag that defaults off.
+
+\paragraph{BlockDP tables aliased across instances.}
+\filepath{engine/src/blockdp.hpp} parked every instance's Unit, Group, forward
+and backward tables in one \verb|thread_local| buffer pool, and
+\texttt{BlockDP::build} took its storage from that pool without owning it. Two
+\texttt{BlockDP} objects alive on one thread therefore shared storage, and a
+second instance's \texttt{build} silently repointed the first instance's tables
+at its own data. The driver makes this routine rather than exotic: agents own one
+\texttt{block} member each and rebuild only when dirty, while
+\texttt{Game::forcedEndgame} and \texttt{Game::declarationRound} poll several
+agents back to back between public events.
+
+The defect is real and was measured directly. Reading one instance's own group
+table twice with an unrelated \texttt{build} in between gave
+\numAliasMismatch{} mismatches in \numAliasChecks{} checks: one observer's
+posterior tables had been replaced by another observer's
+(\filepath{research/v05/results/P2-forced-endgame.md}, \S6). An earlier form of
+the same check that issued a real query after the clobber died with
+\texttt{SIGBUS}, because the stale forward and backward pointers index a table
+sized for a different capacity vector.
+
+What it blocked is the whole of \S\ref{sec:belief}. The deployed approximate
+belief never builds a \texttt{BlockDP}, so nothing in the v0.4 or v0.5 release
+path could observe the defect; anything exact hits it on the first
+multi-agent poll. That asymmetry is exactly how a fatal defect survives into a
+release, and it is why the exact posterior could not be evaluated as a predictor
+before this study.
+
+The repair is a per-thread generation stamp plus a stored copy of the source
+\texttt{Knowledge}. Every \texttt{build} increments the counter and records its
+value; every public query calls \texttt{ensureCurrent}, which re-derives the
+instance lazily from its stored \texttt{Knowledge} when it finds its own stamp
+stale. The check cannot be forgotten at a call site because it lives inside the
+queries, and it costs $O(1)$ memory. The probe in
+\filepath{engine/src/probe_forcedendgame.hpp} was extended to separate the two
+things the original check conflated: \texttt{QUERY} mismatches, where the same
+query issued on the same instance before and after an unrelated build returns
+different answers, and raw shared-pool field reads, where the instance's own
+pointers still address the pool and the fields behind them have changed. The
+first must be zero and is \vsixAliasQueryMismatch{}. The second is
+\vsixAliasRawMismatch{} and is \emph{not} fixed: the pool is still shared, the
+raw fields still change, and the guard's contract is that no public query ever
+reads them stale. Reporting only the first would overstate the repair.
+
+\paragraph{\texttt{gateaudit} was dead code for v0.5.}
+The declaration pre-gate audit is instrumentation that counts how many
+declaration opportunities a cheap pre-gate rejects and how many of those
+rejections were false negatives --- candidates the expensive test would have
+accepted. The switch that enables it was parsed only in the \vfour{} branch of
+\filepath{engine/src/factory.hpp}. A v0.5 specification therefore parsed
+\texttt{gateaudit=1}, ignored it, and reported a pass over zero opportunities:
+\texttt{fish gateaudit --a=v05:gateaudit=1} could not fail, because it never
+looked at anything. \S\ref{sec:corr-vfour} records what that means for the v0.4
+record's corresponding claim.
+
+The option is now parsed in the v0.5 and v0.6 branches as well. The audit over
+\vsixGateOpportunities{} declaration opportunities rejected \vsixGateRejected{}
+at the cheap gate with \vsixGateFalseNeg{} false negatives, verdict
+\vsixGateVerdict{}. The instrument is only as good as its opportunity count, so
+that count is reported first and the verdict second.
+
+\paragraph{Two defects in the tuner.}
+\filepath{engine/src/tuner.hpp} chose between the two parameter-passing spellings
+with \verb|w.size() > 18| where the ask-feature count \verb|NFEAT| ---
+\numAskFeats{} --- belongs. The expression is correct today by coincidence, and
+it is the same class of defect, in the same place, that cost the v0.4 study a
+fitting round when the ask-feature count grew. It now reads \verb|NFEAT|. The
+second defect is worse because it is silent and quantitative: the win rate was
+computed as \verb|st.winsA / (st.games * 2)|, hard-coding the tuner's two
+rotations into the denominator. Fitting at six rotations --- which the
+duplicate-block design of \S\ref{sec:protocol} makes the natural choice --- would
+have reported a third of the true win rate for every candidate, with no error and
+no warning. It now reads \verb|st.games * mc.rotations|.
+
+\paragraph{Certificate de-duplication, opt-in.}
+\texttt{Knowledge::onEvent} in \filepath{engine/src/belief.hpp} appended a fresh
+ask-legality certificate on every repeated ask without checking whether an
+identical one, or one strictly stronger, was already stored. The store therefore
+grows carrying no information, and every consumer that iterates it pays for the
+duplicates. The obvious repair --- skip a certificate that duplicates a stored
+one, or whose card set is a superset of a stored one for the same player --- is
+implemented, and it is a flag that defaults off. The reason is that the
+duplicates are not inert. The approximate conditioning step of
+\S\ref{sec:belief} applies a certificate once per stored copy, so removing
+copies \emph{changes} the Fast posterior and therefore changes play. Making
+de-duplication the default would have silently altered every \vfour{} and
+\vfive{} number this report compares against. With the flag off, both stay bit
+for bit what they were.
+
+\paragraph{The identity control, and why it is a result.}
+\texttt{v06:legacy=1} restores \vfive{}'s parameter vector and zeroes the three
+v0.6 ask terms, and with every mechanism switch off \texttt{V06Agent} defers to
+its base class. The battery checks that this is an identity and not a close
+agreement, by comparing the md5 digest of the entire \texttt{fish pathology}
+output --- every pathology counter, not a win rate --- between
+\texttt{v06:legacy=1} and \texttt{v05} on the same deals and seed. The verdict is
+\vsixIdentity{}.
+
+This matters more than a build-hygiene check. Every ablation in
+\S\ref{sec:results-ablations} and \S\ref{app:ablations} is a paired comparison
+between the v0.6 binary carrying mechanism $X$ and the v0.6 binary carrying
+nothing. If the all-switches-off configuration merely resembled \vfive{}, each
+row would confound the mechanism with whatever else differed, and the table would
+be an approximation whose error had no bound. Because the configuration is
+\vfive{} bit for bit, the difference each row reports is the mechanism and
+nothing else. The control is cheap, it is run before any strength number is
+collected, and it is the reason the ablation table can be read as exact.

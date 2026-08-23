@@ -161,6 +161,38 @@ class Profile:
         return os.path.exists(self.master) and os.path.isdir(self.sections)
 
 
+
+# ---------------------------------------------------------------- v0.6 -------
+# Claims this study measured and refuted, or measured and had to scope.  Each
+# entry is a sentence a careless draft of the v0.6 manuscript actually wrote
+# before the evidence came in.
+BANNED_V06 = list(BANNED_V05) + [
+    (r'(?:beats?|wins?).{0,40}every (?:one of the )?(?:five |held-out )?(?:seed )?banks?',
+     'FALSE: pooled over every head-to-head cell in the battery v0.6 is 50.53%, 5 of 7 above parity'),
+    (r'head to head.{0,40}\b(?:wins?|ahead|stronger|better)\b',
+     'v0.6 and v0.5 are NOT separated head to head; say so'),
+    (r'(?:ties?|tied candidates?)[^\\]{0,60}irreducible',
+     'FALSE: a twelve-deal ensemble separates them (F8-tiesearch.txt); only MARGINAL rules cannot'),
+    (r'exchangeable given the information',
+     'the measurement establishes equal MARGINALS, not joint exchangeability'),
+    (r'policy prior is the (?:only|entire)',
+     'FALSE: the approximation still beats the exact law with the prior deleted (F2-belief-noprior.txt)'),
+    (r'search[^\\]{0,50}(?:converges to the blueprint|has nothing to add|does not pay)',
+     'FALSE: the guarded search takes 52.08% against v0.6 itself over 2,880 games'),
+    (r'27 points',
+     'the comparable controlled pair is 49.31% against 13.61% = 35.70 points (E12-search.jsonl)'),
+    (r'four points\b',
+     'the pooled search effect is 2.6 points, not the single best bank'),
+    (r'chain.{0,30}(?:pass|re-scoring).{0,40}(?:4\.11|four points|costs? four)',
+     'FALSE at two banks: 45.89% and 51.78%, and -0.75 [-2.44, +0.92] paired'),
+    (r'uniformly more robust',
+     'the minimax-regret gain is carried by the withholder column'),
+]
+SELF_PERCENT_V06 = set(SELF_PERCENT_V05)
+NEGATION_V06_EXTRA = (
+    r'|FALSE|refuted|not separated|does not replicate|earlier draft|correction'
+)
+
 PROFILES = {
     'v04': Profile('v0.4', 'fishbot_v04.tex', 'sections', 'numbers.tex',
                    BANNED_V04, SELF_PERCENT_V04, NEGATION_BASE,
@@ -169,6 +201,10 @@ PROFILES = {
                    BANNED_V05, SELF_PERCENT_V05,
                    NEGATION_BASE + NEGATION_V05_EXTRA,
                    ['tables_v05', 'figures_v05']),
+    'v06': Profile('v0.6', 'fishbot_v06.tex', 'sections_v06', 'numbers_v06.tex',
+                   BANNED_V06, SELF_PERCENT_V06,
+                   NEGATION_BASE + NEGATION_V05_EXTRA + NEGATION_V06_EXTRA,
+                   ['tables_v06']),
 }
 
 
@@ -348,7 +384,7 @@ def run(profile):
 def main(argv):
     wanted = [k for k in ('v04', 'v05') if '--' + k in argv]
     if not wanted:
-        wanted = [k for k in ('v04', 'v05') if PROFILES[k].present()]
+        wanted = [k for k in ('v04', 'v05', 'v06') if PROFILES[k].present()]
     if not wanted:
         print('no manuscript found next to check.py')
         return 1

@@ -46,6 +46,13 @@ inline void wilson(int k, int n, double& lo, double& hi) {
 
 struct MatchConfig {
   std::string specA, specB;
+  // v0.6 E5.  runMatch built ONE policy for all three seats of a team, so
+  // "FishBot with two bot partners" and "FishBot with two human-model partners"
+  // -- the two regimes the project owner asked to be reported separately -- could
+  // not be expressed at all.  `partnersA` names the policy for the two seats of
+  // team A that are not the seat under study; empty means "same as specA", which
+  // reproduces the old behaviour exactly.
+  std::string partnersA;
   int games = 1000;              // deals
   int rotations = 2;             // 2 = team swap; 6 = full duplicate block
   uint64_t seed = 20260821;
@@ -65,7 +72,10 @@ inline MatchStats runMatch(const MatchConfig& mc) {
   for (int t = 0; t < nThreads; t++) {
     pool.emplace_back([&, t]() {
       std::unique_ptr<Agent> A[3], B[3];
-      for (int i = 0; i < 3; i++) { A[i] = makeAgent(mc.specA); B[i] = makeAgent(mc.specB); }
+      for (int i = 0; i < 3; i++) {
+        A[i] = makeAgent((i == 0 || mc.partnersA.empty()) ? mc.specA : mc.partnersA);
+        B[i] = makeAgent(mc.specB);
+      }
       MatchStats& st = local[t];
       auto& pr = pairedLocal[t];
       Game game;

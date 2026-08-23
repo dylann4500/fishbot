@@ -96,6 +96,31 @@ struct BlockDP {
   };
   static Buffers& buffers() { static thread_local Buffers b; return b; }
 
+  // ---- table-aliasing guard (v0.6 E2) --------------------------------------
+  // `buffers()` is one thread_local pool, and `build()` parks this instance's
+  // Unit/Group/F/B tables in it.  A second BlockDP that builds on the same
+  // thread therefore silently repoints the first instance's pointers, so a
+  // query issued afterwards reads the other instance's tables.  Measured at
+  // 285 mismatches in 294 checks (research/v05/results/P2-forced-endgame.md
+  // section 6).  Harmless under the deployed Fast belief, which never queries a
+  // BlockDP; fatal for anything exact, which is precisely how it survived.
+  //
+  // Fix: stamp every build with a per-thread generation counter and re-build
+  // lazily from a stored copy of the source Knowledge whenever a query finds
+  // the stamp stale.  O(1) memory, and it cannot be forgotten at a call site
+  // because the check lives inside the queries.
+  static long long& generation() { static thread_local long long g = 0; return g; }
+  long long stamp = -1;
+  Knowledge srcK;
+  bool haveSrc = false;
+  bool current() const { return ok && haveSrc && stamp == generation(); }
+  bool ensureCurrent() {
+    if (stamp == generation()) return ok;
+    if (!haveSrc) return false;
+    Knowledge tmp = srcK;
+    return build(tmp);
+  }
+
   static inline uint64_t packCnt(const int* v) {
     uint64_t r = 0;
     for (int p = 0; p < NPLAY; p++) r |= uint64_t(uint8_t(v[p])) << (8 * p);
@@ -156,6 +181,8 @@ struct BlockDP {
 
   bool build(const Knowledge& k) {
     ok = false;
+    if (&k != &srcK) { srcK = k; haveSrc = true; }
+    stamp = ++generation();
     k.capacities(cap);
     Q = __builtin_popcountll(k.unresolved);
     int sum = 0; for (int p = 0; p < NPLAY; p++) sum += cap[p];
@@ -314,6 +341,7 @@ struct BlockDP {
   }
 
   void marginals(double out[NCARD][NPLAY]) {
+    if (!ensureCurrent()) return;
     for (int b = 0; b < nUnits; b++) {
       const Unit& u = units[b];
       if (u.isBlock) continue;
@@ -407,6 +435,7 @@ struct BlockDP {
   }
 
   double teamOwnsProbability(int s, int teamMask) {
+    if (!ensureCurrent()) return 0.0;
     Group* gr = groupForSet(s);
     if (!gr) return 1.0;
     ensureGroupTable(*gr);
@@ -424,6 +453,7 @@ struct BlockDP {
   // Best allocation of a half-suit to one team, with its exact probability.
   double bestTeamAllocation(int s, int teamMask, int* outCards, int* outSeats, int& n) {
     n = 0;
+    if (!ensureCurrent()) return 0.0;
     Group* gr = groupForSet(s);
     if (!gr) return 1.0;
     ensureGroupTable(*gr);
@@ -454,6 +484,7 @@ struct BlockDP {
   // explicitly here rather than inferred from the count vector.  Used by the
   // brute-force oracle (`fish oracle`); not on any decision path.
   double allocationProbability(const Knowledge& k, int s, const int* seats) {
+    if (!ensureCurrent()) return 0.0;
     Group* gr = groupForSet(s);
     if (!gr) return 1.0;
     ensureGroupTable(*gr);

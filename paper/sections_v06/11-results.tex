@@ -1,0 +1,218 @@
+\section{Results}
+\label{sec:results}
+
+Every number in this section comes from \texttt{engine/experiments\_v06.sh}, whose artifacts are
+listed in Appendix~\ref{app:repro}. The battery is ordered so that the commit gate runs before any
+strength measurement: a configuration that scores higher while failing the pathology KPIs is
+rejected, and \S\ref{sec:protocol} explains why that ordering is not a formality.
+
+\subsection{Controls}
+\label{sec:results-verify}
+
+The identity control passes: \vsix{} carrying v0.5's parameter vector with every mechanism switched
+off produces a diagnostic transcript identical to \vfive{}'s under md5 (\vsixIdentity{}). The
+verification suite passes with \vsixAuditViolations{} soundness violations in \vsixAuditChecks{}
+checks (\vsixVerify{}); no agent's deduced knowledge ever excludes the truth, and the deal-sampling,
+card-counting and block engines agree.
+
+The block dynamic program's table-aliasing defect (\S\ref{sec:engine-repairs}) is repaired at the
+query level: \vsixAliasQueryMismatch{} query mismatches, against \numAliasMismatch{} in
+\numAliasChecks{} before the fix. Raw reads of the shared pool still differ
+(\vsixAliasRawMismatch{}) and are documented rather than fixed, because the pool is what keeps the
+memory footprint of six concurrent observers bounded.
+
+The declaration pre-gate audit, which was dead code for \vfive{} because the option was parsed only
+in the v0.4 branch, now runs: over \vsixGateOpportunities{} declaration opportunities and
+\vsixGateRejected{} gate rejections it reports \vsixGateFalseNeg{} false negatives
+(\vsixGateVerdict{}). \vfive{}'s pre-gates are exact, where v0.4's were not.
+
+\subsection{The commit gate}
+\label{sec:results-panel}
+
+\begin{table}[t]\centering
+\caption{Pathology KPIs in mirror play, 600 games per arm at seed 31. These gate every commit. The
+v0.4 column is the failure mode v0.5 removed; the \vsix{} column must not reintroduce any of it.}
+\label{tab:pathology}
+\begin{tabular}{lrrr}
+\toprule
+KPI & \vfour{} & \vfive{} & \vsix{} \\
+\midrule
+provably dead asks (\% of asks)      & \vsixPathFourDead    & \vsixPathFiveDead    & \vsixPathSixDead \\
+longest dead run                     & \vsixPathFourLongest & \vsixPathFiveLongest & \vsixPathSixLongest \\
+games with a dead run $\ge 6$ (\%)   & \vsixPathFourRunSix    & \vsixPathFiveRunSix    & \vsixPathSixRunSix \\
+exact repeat asks (\%)               & \vsixPathFourRepeatACT & \vsixPathFiveRepeatACT & \vsixPathSixRepeatACT \\
+declarations wrong (\%)              & \vsixPathFourDeclwrong & \vsixPathFiveDeclwrong & \vsixPathSixDeclwrong \\
+ask hit rate (\%)                    & \vsixPathFourHit     & \vsixPathFiveHit     & \vsixPathSixHit \\
+events/game                          & \vsixPathFourEvents  & \vsixPathFiveEvents  & \vsixPathSixEvents \\
+games killed by the action limit (\%)& \vsixPathFourLimit   & \vsixPathFiveLimit   & \vsixPathSixLimit \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Head to head}
+\label{sec:results-h2h}
+
+Over the \vsixHeadFiveBanks{} dedicated held-out banks of E3, six rotations each and
+\vsixHeadFiveN{} games in total, \vsix{} wins \vsixHeadFiveMean\% against \vfive{} with a
+per-bank range of \vsixHeadFiveMin\% to \vsixHeadFiveMax\%, and \vsixHeadFourMean\% against
+\vfour{} (\vsixHeadFourMin\% to \vsixHeadFourMax\%).
+
+\textbf{Those five banks are not the whole evidence, and quoting them alone would be selection on
+the experiment that agreed.} The battery contains two further \vsix{}-versus-\vfive{} cells at
+default rules on further disjoint banks --- the default-dialect row of the rules experiment and the
+\vfive{} column of the paired ablation panel --- and \vsix{} loses both. Pooling every such cell in
+the battery gives \textbf{\vsixHeadPooled\% over \vsixHeadPooledN{} games,
+\vsixHeadCellsAbove{} of \vsixHeadCells{} cells above parity, naive $z = \vsixHeadZ{}$} --- and
+that $z$ treats the six rotations of a deal as independent, so it overstates the significance rather
+than understating it.
+
+\textbf{Head to head, \vsix{} and \vfive{} are not separated.} What is separated is the paired
+comparison over the whole panel (\S\ref{sec:results-ablations}) and the worst case across
+playstyles (\S\ref{sec:results-lbr}).
+
+\begin{table}[t]\centering
+\caption{Held-out head-to-head against \vfive{}, one row per seed bank, six rotations.}
+\label{tab:h2h}
+\input{tables_v06/h2h_v05}
+\end{table}
+
+This is reported before anything else so that no reader has to hunt for it. What \vsix{} changes is
+not here.
+
+\subsection{Exploitability}
+\label{sec:results-exploit}
+
+The v0.5 study named the absence of any exploitability measurement as the single largest hole in its
+own evaluation. It is measured here. A responder is fitted from the same policy family, with the
+repaired optimiser and the frozen target as its entire opponent panel, and is then re-measured on a
+fresh seed bank because the win rate it reached during fitting is a maximum over a population on
+shared seeds and is upward biased.
+
+\begin{table}[t]\centering
+\caption{Local best-response probe. The response win rate is what a fitted exploiter achieved, so
+\emph{lower is better} for the frozen policy. The \vfour{} row is the positive control: the v0.4
+study published $51.19\%$ $[49.67, 52.72]$ for the same experiment.}
+\label{tab:lbr}
+\input{tables_v06/lbr}
+\end{table}
+
+The control reproduces: against \vfour{} the response reaches \vsixLbrFour\%
+[\vsixLbrFourLo, \vsixLbrFourHi] over \vsixLbrFourN{} games, whose interval overlaps the published
+figure. Against \vfive{} it reaches \vsixLbrFive\% [\vsixLbrFiveLo, \vsixLbrFiveHi]. Against
+\vsix{} it reaches \textbf{\vsixLbrSix\%} [\vsixLbrSixLo, \vsixLbrSixHi] --- an interval that
+excludes parity. The same optimiser, the same budget, the same policy family and the same fresh
+evaluation bank fail to reach parity against \vsix{} and succeed against both of its predecessors.
+
+The reading has to be careful, and the v0.4 findings document got it wrong in exactly this place
+(\S\ref{sec:corr-vfour}). The number is a \emph{lower bound within the searched class}: a response
+that fails to reach parity does not prove the target is hard to exploit, only that this search did
+not find the exploit. What the three rows support is the \emph{comparison} --- identical class,
+identical budget, identical protocol --- and on that comparison \vsix{} is the least exploitable of
+the three. It is also the first exploitability number this project has for \vfive{}, whose own
+study named its absence as the largest hole in its evaluation.
+
+\subsection{The per-style profile and the worst case}
+\label{sec:results-lbr}
+
+\begin{table}[t]\centering
+\caption{Per-opponent win rate over the full style set, pooled over \vsixPoolBanks{} disjoint seed
+banks (515253, 90210, 424242), six rotations per cell. The headline is the \emph{minimum}, not the
+mean. Minimax regret is measured against the best of the three arms on each opponent and is
+therefore relative; \S\ref{sec:limitations} states what it is carried by.}
+\label{tab:perstyle}
+\input{tables_v06/perstyle_pooled}
+\end{table}
+
+Pooled over \vsixPoolBanks{} banks, \vsix{}'s worst cell is \vsixPoolWorstSix\% (against
+\vsixPoolWorstOppSix{}) and \vfive{}'s is \vsixPoolWorstFive\% (its own mirror, which is
+$50\%$ by construction), while minimax regret over the style set is \vsixPoolRegretSix{} against
+\vsixPoolRegretFive{} and \vsixPoolRegretFour{}. \vsix{} is ahead of \vfive{} on \vsixPoolAhead{} of the thirteen styles, behind on
+\vsixPoolBehind{} and equal on \vsixPoolTied{}, with a largest single-style loss of
+\vsixPoolWorstLoss{} points.
+
+The single large cell is the deception archetype the project owner brought here from live play: the
+\textbf{withholder}, which holds cards of a half-suit it was asked for and then declines to ask
+back in it. \vsix{} takes \vsixPoolWithholderSix\% against \vfive{}'s
+\vsixPoolWithholderFive\%, a gain of \vsixPoolWithholderGain{} points over
+\vsixPoolWithholderN{} games, and it replicates at all \vsixPoolBanks{} banks. It was in the
+fitting panel, and \S\ref{sec:limitations} says what that means for how the number should be read.
+
+\subsection{Belief as a predictor}
+\label{sec:results-belief}
+
+\begin{table}[t]\centering
+\caption{Each posterior scored as a predictor on identical states: mean predictive log loss over the
+unresolved cards, and the realised hit rate of that posterior's own argmax ask. The exact posterior
+is the worst row.}
+\label{tab:belief-results}
+\input{tables_v06/belief}
+\end{table}
+
+\subsection{The paired panel comparison}
+\label{sec:results-paired}
+
+The comparison the rest of this section rests on. Every variant plays the same deals against the
+same panel; the statistic is the per-deal margin, bootstrapped resampling deals as clusters.
+
+\begin{table}[t]\centering
+\caption{\vsix{} against \vfive{} over a seven-opponent panel, 800--1{,}000 games per cell, on
+\vsixPairedBanks{} disjoint seed banks. A positive margin means \vsix{} is ahead.}
+\label{tab:pairedpanel}
+\input{tables_v06/pairedpanel}
+\end{table}
+
+All \vsixPairedBanks{} banks are positive, \vsixPairedExcl{} of them with an interval excluding
+zero, mean \vsixPairedMean{} points and smallest \vsixPairedMin{}. This is the separated result;
+the head-to-head of \S\ref{sec:results-h2h} is not.
+
+\subsection{Paired ablations}
+\label{sec:results-ablations}
+
+\begin{table}[t]\centering
+\caption{Paired mechanism ablations against \vsix{}: every variant plays the same deals against the
+same panel, and the per-deal margin is bootstrapped resampling deals as clusters. A positive delta
+means \vsix{} beats the variant.}
+\label{tab:ablations}
+\input{tables_v06/ablations}
+\end{table}
+
+\subsection{The search ladder}
+\label{sec:results-search}
+
+Tables~\ref{tab:search} and \ref{tab:searchdev} in \S\ref{sec:search}. The result is that the
+statistic, not the machinery, decides whether a determinized search helps, and that once the
+statistic is corrected the search has nothing left to add.
+
+\subsection{Partner regimes}
+\label{sec:results-calib}
+
+\begin{table}[t]\centering
+\caption{Win rate against three \vfive{} opponents with the two remaining seats of the acting team
+played by the named policy, 800 games per cell at seed 313131. The self-play row is not the
+headline, and the three rows below it are why.}
+\label{tab:partners}
+\input{tables_v06/partners}
+\end{table}
+
+\vsix{}'s advantage over \vfive{} is $2.25$ points when its partners are copies of itself and
+between $-0.8$ and $+1.4$ when they are not, with no mixed row separated from zero at this sample
+size. A refit whose objective is scored in self-play buys a policy that coordinates with copies of
+itself, and that coordination is exactly what a human partner does not supply. This is the project
+owner's standing decision measured rather than asserted, and \S\ref{sec:limitations} carries it
+forward as the sharpest limitation on everything in this section.
+
+\subsection{Rule dialects}
+\label{sec:results-dialects}
+
+The result is reported in Appendix~\ref{app:dialect}: the ordering of \vsix{} and \vfive{} does not
+change under the legacy dialect, with out-of-turn declaration disabled, or with cardless declaration
+disabled.
+
+\subsection{Throughput}
+\label{sec:results-throughput}
+
+\begin{table}[t]\centering
+\caption{Games per second, self-play, all threads.}
+\label{tab:throughput}
+\input{tables_v06/throughput}
+\end{table}

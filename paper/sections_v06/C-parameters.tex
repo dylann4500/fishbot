@@ -1,0 +1,301 @@
+\section{Configuration and fitted parameters}
+\label{app:params}
+
+This appendix records the frozen configuration in enough detail to reconstruct it
+exactly. It is a reproducibility artifact and not a description of strategy: the
+ask features are mutually correlated and normalised to different effective
+ranges, so the sign and magnitude of a single coefficient do not identify the
+contribution of the corresponding feature, and \S\ref{sec:fitting} explains why
+the point applies with more force to a vector fitted by a repaired optimiser than
+to one fitted by a broken one.
+
+The appendix is arranged so that the freeze/parse round trip of
+\S\ref{sec:fit-schedule} is checkable by a reader: the layout of the flat vector,
+the printed values, the specification string that reproduces them, the bounds
+applied on parse, and the provenance string that names the run the values came
+from.
+
+\subsection{The ask features}
+\label{app:params-features}
+
+The ask utility is a fitted linear score over \numAskFeats{} features, unchanged
+in definition from the v0.4 and v0.5 policies. Table~\ref{tab:features} defines
+them. All are normalised to roughly $[0,1]$ so the fitted weights are comparable
+in scale; $H$ denotes the named card's half-suit and $p = \hat\mu_{c,t}$ the
+approximate posterior that the target holds the named card, so every feature is
+computed from the deployed inference path of \S\ref{sec:belief-count} rather than
+from the exact one.
+
+\begin{table}[ht]
+\centering
+\caption{The \numAskFeats{} ask features $\varphi_k$. Probabilities written
+$\Pr[\cdot]$ are approximate per-card marginals. Features $3$, $5$, $7$ and $15$
+are the ownership terms, and in \vfive{} and \vsix{} each is multiplied by an
+ownership gate that is zero when the ask cannot succeed; that gate is the
+mechanism the v0.5 study introduced to stop the ownership terms paying for an ask
+of probability zero, and \S\ref{sec:mechanisms} measures what it costs.}
+\label{tab:features}
+\small
+\begin{tabular}{rlp{0.58\linewidth}}
+\toprule
+$k$ & Name & Definition \\
+\midrule
+0  & hit probability     & $p = \hat\mu_{c,t}$, the posterior that the target holds the named card \\
+1  & squared hit         & $p^2$; lets the fit curve the trade-off between certainty and value \\
+2  & certain hit         & the indicator that $p$ exceeds the near-one threshold \\
+3  & own progress        & cards of $H$ in hand, over six, gated \\
+4  & team control        & expected fraction of $H$ held by our team \\
+5  & lock completion     & $\prod_{d \in H \setminus \{c\}} \Pr[d \text{ is ours}]$: the probability this ask alone completes team ownership of $H$, gated \\
+6  & continuation        & best posterior on any other missing card of $H$ \\
+7  & completion bonus    & a step at four or more cards of $H$ in hand and a smaller one at three, gated \\
+8  & reply threat        & $(1-p)\cdot$ the best ask the target could make against us if handed the turn \\
+9  & information leak    & the indicator that our team has never publicly revealed an interest in $H$ \\
+10 & target hand size    & target's public card count over nine \\
+11 & empties the target  & $p$ if the target holds exactly one card, else zero \\
+12 & repeats our half-suit & the indicator that this repeats our own previous half-suit \\
+13 & known team cards    & publicly located cards of $H$ on our team, over six \\
+14 & location entropy    & the binary entropy of $p$ \\
+15 & team owns $H$       & $\prod_{d \in H}\Pr[d \text{ is ours}]$ before the ask, gated; an independence proxy, not the exact query \eqref{eq:q3} \\
+16 & exposure on a miss  & $(1-p)\cdot$ our cards visible in half-suits the target has asked in \\
+17 & trailing pressure   & $p$ when behind by two or more half-suits \\
+18 & runway              & expected length of the run this ask begins, from the best remaining per-card posteriors \\
+19 & leak magnitude      & feature 9 scaled by how much of $H$ we hold \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vsix{} adds \numVsixAskTerms{} further ask terms. They are the mechanism of
+\S\ref{sec:mech-tiebreak} and not a rescaling of the existing score:
+\texttt{wVoid} rewards an ask whose hit takes the target's last card of
+the half-suit, \texttt{wTeamHas} penalises an ask for a card the actor's own team
+already holds, and \texttt{wLastLive} separates the case where the target is the
+last live opponent. They enter the same linear term and are fitted as three
+further coordinates rather than set by hand, and what each is worth is
+reported in \S\ref{sec:results-ablations}.
+
+\subsection{The frozen parameter vector}
+\label{app:params-vector}
+
+The v0.6 flat vector has \numVsixParams{} coordinates in one fixed order:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Coordinates & Contents \\
+\midrule
+$0 \ldots \numAskFeats{}-1$ & the ask weights $w_0,\dots,w_{19}$ of Table~\ref{tab:features} \\
+next \numVfiveKnobs{} & the v0.5 decision knobs, in the order of Table~\ref{tab:bounds} \\
+last \numVsixAskTerms{} & \texttt{wVoid}, \texttt{wTeamHas}, \texttt{wLastLive} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The offset at which each block begins is derived from the ask-feature
+count and the v0.5 knob count in both the parser and the freeze step; it is not
+hard-coded anywhere. That is not a stylistic preference. A hard-coded offset in
+exactly this place aliased two ask weights onto the leading two knobs in the v0.4
+study when the ask-feature count grew, and a hard-coded \texttt{18} survived in
+the optimiser until \S\ref{sec:engine-repairs} removed it.
+
+\begin{table}[ht]
+\centering
+\caption{The frozen \vsix{} configuration: \numVsixParams{} coordinates in the
+order above. Generated by \texttt{engine/build\_tables\_v06.py} from the run
+named in the provenance string of \S\ref{app:params-bounds}. This table is a
+reproducibility record, not a description of strategy.}
+\label{tab:params}
+\footnotesize
+\input{tables_v06/params}
+\end{table}
+
+The same vector can be supplied to any build of the engine as a single
+\texttt{allparams=} string of \numVsixParams{} pipe-separated coordinates in that
+order, which is the reconstruction key: a specification
+\texttt{v06:allparams=\ldots} rebuilds the configuration from the numbers alone.
+A shorter vector is accepted and the missing coordinates take their compiled
+defaults, which is how a v0.5-length vector of \numVfiveParams{} coordinates
+parses into a v0.6 build with the three new terms at zero --- and that, together
+with \texttt{legacy=1}, is what makes the identity control of
+\S\ref{sec:engine-repairs} expressible.
+
+\subsection{Bounds and per-coordinate step sizes}
+\label{app:params-bounds}
+
+Bounds are applied when a sampled vector is turned into a configuration, by the
+engine's parameter application in \filepath{engine/src/v06.hpp} and by the freeze
+step in \filepath{engine/freeze_config_v06.py}, so a coordinate outside its bound
+is clamped rather than rejected and the vector scored during fitting is the
+vector compiled into the binary. The two integer coordinates are rounded to the
+nearest integer after clamping.
+
+\begin{table}[ht]
+\centering
+\caption{Bounds applied to each coordinate of the \numVsixParams{}-coordinate
+vector on parse. The ask weights and the three v0.6 ask terms are unbounded; the
+\numVfiveKnobs{} knobs are listed in the vector's own order. The per-coordinate
+step size used in fitting is $\sigma_{\mathrm{rel}}$ times the width of the bound
+(\S\ref{sec:fit-sigma}), so an unbounded coordinate takes the step of its
+nominal search range rather than an unbounded one.}
+\label{tab:bounds}
+\small
+\begin{tabular}{rll}
+\toprule
+Coordinate & Quantity & Bound \\
+\midrule
+ask weights & $w_0,\dots,w_{19}$ & unbounded \\
+\midrule
+1 & declaration threshold & $[0.5,\,0.9999]$ \\
+2 & locked-half-suit threshold & $[0.5,\,0.99999]$ \\
+3 & ask floor & $[0,\,0.9]$ \\
+4 & patience pool & $[0,\,45]$, rounded to an integer \\
+5 & opponent-card floor & $[0,\,20]$ \\
+6 & value weight $\lambda_{\mathrm{val}}$ & $[0,\,\infty)$ \\
+7 & linear weight $\lambda_{\mathrm{lin}}$ & $[0,\,\infty)$ \\
+8 & minimum team probability & $[0.05,\,0.99]$ \\
+9 & declaration margin & unbounded \\
+10 & prior $\theta$ & $[0,\,2]$ \\
+11 & prior $\phi$ & $[0,\,1]$ \\
+12 & lookahead width $K$ & $[0,\,24]$, rounded to an integer \\
+13 & chain weight $\lambda_{\mathrm{chain}}$ & $[0,\,\infty)$ \\
+14 & threat weight $\lambda_{\mathrm{threat}}$ & $[0,\,\infty)$ \\
+\midrule
+v0.6 terms & \texttt{wVoid}, \texttt{wTeamHas}, \texttt{wLastLive} & unbounded \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The clip column is the evidence for \S\ref{sec:fit-sigma} and belongs in this
+appendix per coordinate rather than as a single summary, because the defect it
+diagnoses is a \emph{distribution} over coordinates and not a maximum: the
+previous optimiser was bang-bang on the bounded knobs and frozen on the unbounded
+ones at the same time, and a single worst-case figure hides the second half of
+that. Every generation record of a fit trace carries the full per-coordinate clip
+vector, so the table below is read directly out of the run file rather than
+recomputed. At generation zero the worst coordinate of run~A clips at
+\vsixFitAClipGenZero{}\% and of run~C at \vsixFitCClipGenZero{}\%.
+
+\paragraph{Provenance.} \filepath{engine/freeze_config_v06.py} writes the
+\emph{whole} flat vector into the compiled defaults and, next to it, a provenance
+string recording the run file it came from, whether the values are that run's
+final weights record or a generation's distribution mean, the first sixteen hex
+digits of the run file's SHA-256, the generation count, the objective, the
+pairing flag, the opponent panel, the fitting seed, the deals and rotations per
+cell, and the relative step size. The field is never empty: an unfrozen build
+carries a string that says so. This is the general form of a defect the v0.4
+study shipped --- a configuration whose coefficients were not the ones any
+recorded fit produced, because the freeze step wrote only part of the vector ---
+and the provenance string closes it for everything the freeze step writes. What
+it does not cover is named in \S\ref{app:params-value}.
+
+\subsection{Value-function coefficients}
+\label{app:params-value}
+
+The value function that supplies the one-ply lookahead term and the stopping rule
+is a linear score over sixteen state features: a bias and the score differential;
+three control terms built from the expected fraction of each half-suit our team
+holds, together with a sharpened version and the contested mass; the signed count
+of half-suits already owned each way; counts of what is left to play for, from
+the card differential and the size of the unresolved pool to the near-complete
+half-suits leaning each way; and side to move with its interactions with control
+and with the unresolved pool. Features are collected from all six seats at every
+decision point rather than from the mover alone, because under mover-only
+collection the side-to-move feature is constant and its coefficient would be
+unidentified.
+
+These sixteen coefficients are \emph{not} part of the \numVsixParams{}-coordinate
+vector, are not searched by the optimiser, and are not written by the freeze
+step. They are compiled defaults carried forward unchanged from the v0.4 study,
+and the v0.4 study's own provenance gap --- that the compiled coefficients differ
+numerically from the ones in its recorded ridge fit, so its reported
+goodness-of-fit describes an artifact rather than the deployed vector ---
+therefore stands in this report as well. It is recorded in
+\S\ref{app:repro-gaps} rather than repaired, because repairing it would change
+the configuration that produced every number here and would break the identity
+control of \S\ref{sec:engine-repairs}.
+
+\subsection{The policy-specification grammar}
+\label{app:params-grammar}
+
+Every agent in the engine is named by a specification string, parsed by
+\texttt{makeAgent} in \filepath{engine/src/factory.hpp}. The grammar is
+
+\begin{center}
+\texttt{name} \quad or \quad \texttt{name:key=value,key=value,\dots}
+\end{center}
+
+\noindent where \texttt{name} selects the policy family and each
+\texttt{key=value} pair overrides one field of that family's configuration. Keys
+are order-independent, there is no whitespace, and \textbf{unrecognised keys are
+ignored}. The last property is worth stating rather than tolerating: a misspelt
+key fails silently and the default is used, so a specification always parses and
+a typo is indistinguishable from an intentional default. This is how a v0.5
+specification could carry \texttt{gateaudit=1} for an entire study while the
+option was parsed only in the v0.4 branch (\S\ref{sec:engine-repairs}), and it is
+why the run scripts of \S\ref{app:repro-commands} write every key explicitly even
+when it equals the compiled default.
+
+The keys used in this report fall into four groups. The inference keys are
+\texttt{belief}, which selects the posterior path and accepts \texttt{fast} (the
+deployed default), \texttt{block} (the exact count law of
+\S\ref{sec:belief-count}), \texttt{exact}, \texttt{exactdisj}, \texttt{sinkhorn},
+\texttt{indep} and \texttt{hybrid}, together with \texttt{souter},
+\texttt{sinner} and \texttt{particles} for the solver. A caution attaches to
+these: only \texttt{fast} calls the policy prior of \S\ref{sec:belief-prior} at
+all, so every belief-mode row is confounded with a prior ablation, as
+\S\ref{app:inf-prior} explains. The policy keys --- \texttt{decl},
+\texttt{lockthr}, \texttt{minteam}, \texttt{askfloor}, \texttt{pool},
+\texttt{oppfloor}, \texttt{vweight}, \texttt{lweight}, \texttt{vmargin},
+\texttt{ptheta}, \texttt{pphi}, \texttt{topk}, \texttt{chain},
+\texttt{threat} --- set the corresponding coordinates of
+Table~\ref{tab:bounds}, and individual coefficients are addressable as
+\texttt{w0}--\texttt{w19}, or in bulk as \texttt{weights=},
+\texttt{vweights=} and \texttt{allparams=}. The instrumentation keys are
+\texttt{gate} and \texttt{mgate} for the declaration pre-gates and
+\texttt{gateaudit} for the audit of \S\ref{sec:engine-repairs}. The v0.6 keys are
+listed in \S\ref{app:params-switches}.
+
+\subsection{Mechanism switches and their shipped states}
+\label{app:params-switches}
+
+Table~\ref{tab:switches} lists one row per v0.6 mechanism: the switch that
+enables it, its state in the shipped configuration, and the section that reports
+the measurement which decided that state. A mechanism that is off is off because
+a measurement said so, and the measurement is named; nothing here is off because
+it was not tried.
+
+\begin{table}[ht]
+\centering
+\caption{The v0.6 mechanism switches. ``Shipped'' is the state in the frozen
+configuration of \S\ref{app:params-vector}. ``Fitted'' distinguishes a mechanism
+whose parameters were coordinates of the fit from one run at a hand-set value.
+Every row's evidence is a paired comparison at the budget
+\S\ref{sec:protocol-resolution} requires.}
+\label{tab:switches}
+\small
+\begin{tabular}{llll}
+\toprule
+Switch & Mechanism & Shipped & Evidence \\
+\midrule
+\texttt{legacy} & restore the v0.5 vector exactly & off & \S\ref{sec:engine-repairs} \\
+\texttt{xf} & the \numVsixAskTerms{} v0.6 ask terms & on, fitted & \S\ref{sec:mech-tiebreak} \\
+\texttt{wvoid} & void creation & fitted & \S\ref{sec:results-ablations} \\
+\texttt{wteam} & team-ownership discount & fitted & \S\ref{sec:results-ablations} \\
+\texttt{wlast} & last-live-opponent split & fitted & \S\ref{sec:results-ablations} \\
+\texttt{extie} & exact-posterior tie resolution & off & \S\ref{sec:diag-irreducible} \\
+\texttt{exactp} & exact posterior as the ask marginal & off & \S\ref{sec:belief-exactworse} \\
+\texttt{s1} & determinized information-set search & off & \S\ref{sec:search-curse} \\
+\texttt{kappa} & the paired deviation threshold & --- & \S\ref{sec:search-falsifier} \\
+\texttt{maxq} & endgame-restricted search & --- & \S\ref{sec:search-falsifier} \\
+\texttt{dead} & the deliberate miss, rationed & off & \S\ref{sec:search-deadask} \\
+\texttt{deadsearch} & the deliberate miss as a search candidate & off & \S\ref{sec:search-deadask} \\
+\texttt{gateaudit} & declaration pre-gate instrumentation & off & \S\ref{sec:engine-repairs} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two conventions in that table are deliberate. A switch shown as \texttt{---} is a
+parameter of a mechanism that is itself off, so it has no shipped state; its row
+exists because the sweep over it is a result even though the mechanism is not
+deployed. And the certificate de-duplication flag of
+\S\ref{sec:engine-repairs} is not in the table, because it is not a mechanism: it
+is an engine repair whose default is off precisely so that it changes nothing.

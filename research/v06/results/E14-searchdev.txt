@@ -1,0 +1,60 @@
+### kappa=0
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=0 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 845
+  decisions searched                833  (98.5799%)
+  searches that MOVED the action    547  (65.6663% of searches, 64.7337% of decisions)
+  exact DP unavailable              1
+  determinizations rejected on C5   81672
+deliberate misses offered/played    0 / 0
+rollouts                            49797   events 2869171   mean depth 57.6173
+wall clock                          115.385 s over 20 games (0.173332 games/s, 1 thread)
+
+### kappa=1
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=1 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 873
+  decisions searched                860  (98.5109%)
+  searches that MOVED the action    357  (41.5116% of searches, 40.8935% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   76660
+deliberate misses offered/played    0 / 0
+rollouts                            51564   events 2981026   mean depth 57.8122
+wall clock                          120.936 s over 20 games (0.165377 games/s, 1 thread)
+
+### kappa=2.5
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=2.5 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 873
+  decisions searched                860  (98.5109%)
+  searches that MOVED the action    288  (33.4884% of searches, 32.9897% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   90069
+deliberate misses offered/played    0 / 0
+rollouts                            53632   events 3206950   mean depth 59.7955
+wall clock                          138.768 s over 20 games (0.144125 games/s, 1 thread)
+
+### kappa=4
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=4 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 894
+  decisions searched                879  (98.3221%)
+  searches that MOVED the action    276  (31.3993% of searches, 30.8725% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   91136
+deliberate misses offered/played    0 / 0
+rollouts                            54196   events 3208730   mean depth 59.206
+wall clock                          139.33 s over 20 games (0.143544 games/s, 1 thread)
+
+### kappa=6
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=6 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 895
+  decisions searched                880  (98.324%)
+  searches that MOVED the action    278  (31.5909% of searches, 31.0615% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   90938
+deliberate misses offered/played    0 / 0
+rollouts                            54532   events 3217668   mean depth 59.0051
+wall clock                          138.73 s over 20 games (0.144165 games/s, 1 thread)
+

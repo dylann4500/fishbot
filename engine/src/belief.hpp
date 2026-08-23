@@ -57,6 +57,14 @@ struct Knowledge {
   uint64_t publicKnown = 0;   // cards whose location every player has seen
   std::vector<Disjunction> disj;
   int nSets = NSET;
+  // v0.6 E3: `onEvent` appends a fresh certificate on every repeated ask without
+  // checking for an identical one, so the store grows carrying no information
+  // and every consumer that iterates it (sinkhornDisj, BlockDP group
+  // enumeration, Belief::satisfies) pays for the duplicates.  Duplicates are not
+  // inert: sinkhornDisj applies the conditioning once per stored copy, so
+  // de-duplicating CHANGES the Fast posterior.  It is therefore opt-in, off by
+  // default, so v0.4 and v0.5 stay bit-identical.
+  bool dedupDisj = false;
 
   void init(int seat, uint64_t hand, int deckSets) {
     me = seat; myHand = hand; nSets = deckSets;
@@ -167,7 +175,17 @@ struct Knowledge {
       exclude(e.card, e.actor);                          // (C3) asker lacks the card
       if (!vacuous && D) {
         if (__builtin_popcountll(D) == 1) setOwner(__builtin_ctzll(D), e.actor);
-        else disj.push_back(Disjunction{uint8_t(e.actor), D});
+        else if (!dedupDisj) disj.push_back(Disjunction{uint8_t(e.actor), D});
+        else {
+          bool dup = false;
+          for (const auto& q : disj) if (q.player == e.actor && q.cards == D) { dup = true; break; }
+          // A certificate implied by one already stored adds nothing either: if
+          // an existing certificate for the same player covers a SUBSET of these
+          // cards it is strictly stronger, so the new one is redundant.
+          if (!dup) for (const auto& q : disj)
+            if (q.player == e.actor && (q.cards & ~D) == 0) { dup = true; break; }
+          if (!dup) disj.push_back(Disjunction{uint8_t(e.actor), D});
+        }
       }
       if (e.success) {
         // Reveal the PRE-transfer holder first: an unresolved card has never

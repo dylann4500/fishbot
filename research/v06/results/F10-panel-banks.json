@@ -1,0 +1,8 @@
+{"bank":515253}
+{"reference":"v06","winRate":0.66757,"perOpponent":[0.50300,0.51000,0.75600,0.77500,0.77000,0.79800,0.56100],"panel":["v05","v04","v03","lockout","detective","withholder","feint"],"variants":[
+  {"spec":"v05","winRate":0.64086,"deltaFromRef":0.02671,"ci":[0.01243,0.04114],"perOpponent":[0.50000,0.51800,0.73300,0.75400,0.75100,0.68800,0.54200]}
+]}
+{"bank":90210}
+{"reference":"v06","winRate":0.65914,"perOpponent":[0.51800,0.50100,0.76300,0.79000,0.75700,0.79300,0.49200],"panel":["v05","v04","v03","lockout","detective","withholder","feint"],"variants":[
+  {"spec":"v05","winRate":0.64786,"deltaFromRef":0.01129,"ci":[-0.00314,0.02557],"perOpponent":[0.50000,0.51000,0.75000,0.78900,0.76600,0.69800,0.52200]}
+]}

@@ -1,0 +1,9 @@
+### tieonly search, det=12, on the v0.5 vector, vs v0.5
+bank 90210    win rate      51.9444%  [48.2944, 55.5739]  n=720
+bank 31337    win rate      50.6944%  [47.0486, 54.3329]  n=720
+bank 515151    win rate      50%  [46.3575, 53.6425]  n=720
+### tieonly search on the v0.6 vector with a v0.6 rollout, vs v0.6
+bank 90210    win rate      51.5278%  [47.8789, 55.1605]  n=720
+bank 31337    win rate      48.4722%  [44.8395, 52.1211]  n=720
+### throughput of the tie-only search
+3.03973 games/s over 60 games

@@ -1,0 +1,13 @@
+games replayed             120  (v04 vs v03)
+states enumerated          12167  (with a live C5 certificate: 11696)
+states skipped (too large) 60605
+block build failures       0
+consistent deals counted   26253267
+partition function Z       max rel diff 0.000e+00
+per-card marginals         max abs diff 0.000e+00 over 517410 checks
+team-ownership prob        max abs diff 0.000e+00 over 21341 checks
+named allocation prob      max abs diff 0.000e+00 over 2476081 checks
+equal-prob corollary       max within-class spread 0.000e+00
+bestTeamAllocation         12270 checks, 0 inconsistent, 0 not argmax, max diff 0.000e+00
+sampler vs exact marginals max abs diff 0.0532 over 36278864 draws
+ORACLE PASS

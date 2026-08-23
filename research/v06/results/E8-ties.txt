@@ -1,0 +1,83 @@
+### tie structure and every tie-break rule, v0.6 mirror
+v6probe ties: A=v06 B=v06 games=150 seed=31
+
+ask decisions              6789
+contested (>=2 live asks)  6715  (98.91%)
+EXACT TIES at the top      3613  (53.8049% of contested)
+  same card, diff target   157  (4.34542%)
+  same half-suit, diff card3365  (93.1359%)
+  other                    91  (2.51868%)
+mean top1-top2 gap         1.46268   mean spread 12.1948
+exact DP built             6715 (failed 0), mean build 410.915 us
+EXACT posterior SEPARATES the tied candidates  0  (0% of ties)
+the shipped chain/threat pass MOVES the pick  26  (0.719624% of ties; 13 of them to a candidate outside the tie group)
+
+realised hit rate of each tie-break rule (n=3613):
+  array order (enumeration first)   42.181%
+  Fast-posterior argmax in the tie   42.181%
+  the SHIPPED policy's actual pick   42.2364%
+  EXACT-posterior argmax in the tie  42.181%
+  hindsight best in the tie          70.7722%
+
+full live candidate set at the same decisions (n=6715):
+  mean |exact - fast| marginal       0.0294909
+  fast/exact argmax disagreement     23.1869%
+  hit rate, Fast argmax              51.2584%
+  hit rate, EXACT argmax             48.1013%
+  hit rate, hindsight best           98.9427%
+
+### tie structure, v0.5 mirror (reference)
+v6probe ties: A=v05 B=v05 games=150 seed=31
+
+ask decisions              6978
+contested (>=2 live asks)  6892  (98.7676%)
+EXACT TIES at the top      3773  (54.7446% of contested)
+  same card, diff target   173  (4.58521%)
+  same half-suit, diff card3538  (93.7715%)
+  other                    62  (1.64325%)
+mean top1-top2 gap         1.53715   mean spread 7.53559
+exact DP built             6892 (failed 0), mean build 428.647 us
+EXACT posterior SEPARATES the tied candidates  0  (0% of ties)
+the shipped chain/threat pass MOVES the pick  2499  (66.2338% of ties; 221 of them to a candidate outside the tie group)
+
+realised hit rate of each tie-break rule (n=3773):
+  array order (enumeration first)   43.8113%
+  Fast-posterior argmax in the tie   43.8113%
+  the SHIPPED policy's actual pick   43.7583%
+  EXACT-posterior argmax in the tie  43.8113%
+  hindsight best in the tie          70.2359%
+
+full live candidate set at the same decisions (n=6892):
+  mean |exact - fast| marginal       0.02972
+  fast/exact argmax disagreement     22.9106%
+  hit rate, Fast argmax              51.9588%
+  hit rate, EXACT argmax             48.3604%
+  hit rate, hindsight best           98.9843%
+
+### tie structure against a NON-mirror opponent
+v6probe ties: A=v05 B=v03 games=150 seed=90210
+
+ask decisions              7467
+contested (>=2 live asks)  7398  (99.0759%)
+EXACT TIES at the top      4081  (55.1636% of contested)
+  same card, diff target   164  (4.01862%)
+  same half-suit, diff card3831  (93.8741%)
+  other                    86  (2.10733%)
+mean top1-top2 gap         1.54355   mean spread 7.76683
+exact DP built             7398 (failed 0), mean build 396.698 us
+EXACT posterior SEPARATES the tied candidates  0  (0% of ties)
+the shipped chain/threat pass MOVES the pick  2722  (66.6993% of ties; 283 of them to a candidate outside the tie group)
+
+realised hit rate of each tie-break rule (n=4081):
+  array order (enumeration first)   44.842%
+  Fast-posterior argmax in the tie   44.842%
+  the SHIPPED policy's actual pick   43.9108%
+  EXACT-posterior argmax in the tie  44.842%
+  hindsight best in the tie          71.11%
+
+full live candidate set at the same decisions (n=7398):
+  mean |exact - fast| marginal       0.0350103
+  fast/exact argmax disagreement     25.4934%
+  hit rate, Fast argmax              55.2311%
+  hit rate, EXACT argmax             50.757%
+  hit rate, hindsight best           98.7835%

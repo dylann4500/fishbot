@@ -25,7 +25,8 @@
     "engine:match": "cd engine && ./fish match --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210",
     "engine:experiments": "cd engine && ./experiments.sh",
     "paper:v04": "cd paper && python3 inline.py && tectonic -X compile fishbot_v04.tex --outdir ../output/pdf",
-    "paper:v05": "cd paper && python3 inline.py fishbot_v05.tex fishbot_v05_standalone.tex && tectonic -X compile fishbot_v05.tex --outdir ../output/pdf"
+    "paper:v05": "cd paper && python3 inline.py fishbot_v05.tex fishbot_v05_standalone.tex && tectonic -X compile fishbot_v05.tex --outdir ../output/pdf",
+    "paper:v06": "cd paper && python3 inline.py fishbot_v06.tex fishbot_v06_standalone.tex && tectonic -X compile fishbot_v06.tex --outdir ../output/pdf"
   },
   "dependencies": {
     "react": "19.2.6",

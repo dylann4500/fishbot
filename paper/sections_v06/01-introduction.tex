@@ -1,0 +1,60 @@
+\section{Introduction}
+\label{sec:intro}
+
+Six-player Canadian Fish is a team game of pure public information flow. Fifty-four cards are dealt
+nine each into two alternating teams of three; a player asks a named opponent for a named card,
+must already hold another card of that card's six-card half-suit, must not hold the card itself, and
+keeps the turn on a hit and loses it on a miss; a team scores a half-suit by naming, correctly and
+in full, which of its members holds each of the six cards. Every ask, every hit, every miss and
+every declaration is seen by all six players. That single property makes the entire hidden state the
+\emph{initial deal}, and it makes the posterior over that deal exactly computable --- which is why
+this project has been able to treat inference as a solved problem and spend three studies on policy.
+
+The three prior FishBots are, in order: v0.3, a fitted linear policy in a TypeScript simulator;
+v0.4, a rules-exact C++ engine with an exact reference posterior, a fast deployed approximation, a
+twenty-feature ask score and a value-based declaration rule; and v0.5, which diagnosed and removed a
+failure mode in v0.4 --- a two-question deadlock in mirror play that ended in misdeclaration --- and
+reported, in terms, that removing it was worth almost nothing in win rate.
+
+That report is the starting point here. A project whose last two releases produced no measurable
+strength gain is either at the ceiling of its policy class or is measuring badly, and the two
+possibilities call for opposite responses. This study answers the question by building the
+mechanisms the accumulated design register ranked highest, measuring each at a resolution the
+project had not previously used, and then measuring the measurement.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item \textbf{Exchangeable ties are irreducible} (\S\ref{sec:diag-irreducible}). More than half of
+  v0.5's ask decisions end in a bit-for-bit tie; the tied candidates are two cards of one half-suit
+  at one target; the \emph{exact} posterior separates \vsixTieExactSepPctFive\% of them; and every
+  tie-break rule realises the same hit rate. The largest item on the inherited register is a
+  property of the information set, not a defect.
+\item \textbf{Exactness is not the same as informativeness} (\S\ref{sec:belief-exactworse}). The
+  exact posterior is a worse predictor of card location than the deployed approximation, because
+  the approximation carries a soft policy prior and the exact object is exact under a uniform prior
+  over deals. This closes an experiment three studies have listed as outstanding.
+\item \textbf{The optimizer's curse in determinized search} (\S\ref{sec:search-curse}). A search
+  that determinizes the deal but reconstructs all six continuation players at their own information
+  sets --- not a double-dummy rollout --- is \vsixCurseGap{} points worse than its own blueprint
+  when the action is chosen by an unguarded argmax, and a paired deviation rule recovers all of it.
+  Guarded, it is the one mechanism in this study that beats a static rule: \vsixSearchLift\% against
+  \vsix{} itself over \vsixSearchLiftN{} games with every cell above parity.
+\item \textbf{A fitting harness that moves the policy} (\S\ref{sec:fitting}). Four measured defects
+  in the previous optimiser, a repair, and a recovery test the previous one provably fails. The
+  repaired optimiser finds a vector that trades nothing head to head for a large, replicated gain
+  against the deception archetype.
+\item \textbf{An evidence standard} (\S\ref{sec:protocol-paired}). Five mechanisms in this study
+  cleared a $95\%$ paired interval at the per-cell budget this project has used since v0.3 and
+  returned exactly zero at three times it, on two disjoint banks.
+\item \textbf{Engine corrections} (\S\ref{sec:engine-repairs}, \S\ref{sec:corrections}), including
+  an exact-inference object that returned another observer's tables whenever two observers held one,
+  and a declaration pre-gate audit that had been dead code since v0.5.
+\end{enumerate}
+
+\paragraph{What this paper does not claim.} \vsix{} is \emph{not} separated from \vfive{} head to
+head. Pooling every head-to-head cell in the battery --- not only the five that agree --- it is
+\vsixHeadPooled\% over \vsixHeadPooledN{} games with \vsixHeadCellsAbove{} of \vsixHeadCells{}
+cells above parity and a naive $z$ of \vsixHeadZ{}, and that $z$ ignores the correlation between
+the six rotations of a deal, so it overstates rather than understates. What is separated is the
+paired comparison over the opponent panel and the profile's worst case. The substantive claims are
+robustness across playstyles, correctness, and a substantially narrowed design space.

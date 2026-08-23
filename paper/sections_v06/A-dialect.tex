@@ -1,0 +1,175 @@
+\section{The rules dialect in full}
+\label{app:dialect}
+
+The dialect is unchanged from the v0.4 and v0.5 studies, so this appendix is a
+summary and a delta rather than a re-derivation. Table~\ref{tab:dialect} is the
+index: it lists every consequential choice against the engine switch that
+changes it. The v0.4 report's Appendix A states each choice at the length
+required to re-implement it, including the ask-legality predicate, the deal and
+shuffle, declaration resolution, the arbitration orders and the scoring rule
+\cite{fishbot04}; that treatment is accurate except on the two clauses of
+\S\ref{app:dialect-corrections}. The two files that carry the definitions are
+\filepath{engine/src/fish.hpp} (deck, indexing, the \texttt{Rules} record, the
+legality predicate) and \filepath{engine/src/game.hpp} (the driver: declaration
+rounds, turn handling, the forced endgame, the action cap).
+
+\begin{table}[ht]
+\centering
+\caption{The rules dialect used for every experiment in this report unless
+stated otherwise, and the engine switch that changes each choice. The switches
+are command-line flags of the \texttt{fish} driver; the underlying fields are
+members of \texttt{Rules} in \texttt{engine/src/fish.hpp}. Rows marked
+``modelling choice'' are not fixed by any published statement of the rules.
+Unchanged from the v0.4 and v0.5 studies.}
+\label{tab:dialect}
+\small
+\begin{tabular}{@{}p{0.29\linewidth}p{0.46\linewidth}p{0.19\linewidth}@{}}
+\toprule
+Choice & Value used & Switch \\
+\midrule
+Deck composition & 54 cards in nine half-suits (low and high band of each suit,
+plus the four eights and two jokers); nine cards per player &
+\texttt{-{}-sets=8} gives the 48-card, eight-half-suit form \\
+Ask legality & Live half-suit; asker holds another card of it and not the named
+card; target is an opponent and still holds cards & --- \\
+Turn transfer & A successful ask retains the turn; a miss passes it to the
+target & --- \\
+Out-of-turn declarations & Permitted at any moment, including during an
+opponent's turn & \texttt{outOfTurnDeclare} (\texttt{-{}-no-out-of-turn}) \\
+Cardless players may declare & Permitted &
+\texttt{cardlessMayDeclare} (\texttt{-{}-no-cardless-declare}) \\
+Incorrect declaration & Awards the half-suit to the opposing team & --- \\
+Declaration aftermath & The six cards leave play and the turn returns to the
+player who held it & --- \\
+Cardless turn-holder & Chooses which live teammate receives the turn, from its
+own belief (a modelling choice, and more restrictive than the rules of record;
+\S\ref{sec:rules-dialect}) & --- \\
+Forced endgame (whole team cardless) & The live team declares every remaining
+half-suit, sharing only willingness, over an eight-level ladder
+$\{0.995, 0.98, 0.95, 0.90, 0.80, 0.65, 0.50, \text{best guess}\}$ &
+\texttt{-{}-legacy} gives the two-level ladder $\{0.38, \text{best guess}\}$ \\
+Simultaneous declarations & Lowest seat index declares first (a modelling
+choice; cost measured in \S\ref{sec:rules-dialect}) &
+\texttt{declArbitration} (\texttt{-{}-arb=low\textbar high\textbar turn}) \\
+Action cap & 400 asks (360 under the v0.3 dialect), any residue adjudicated
+neutrally by majority physical holding, ties to the holder of the lowest card &
+\texttt{-{}-maxasks} \\
+Conventions & No prearranged signalling conventions; team communication is
+limited to the willingness bit described above & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Clause table and what changed}
+\label{app:dialect-table}
+
+Nothing in Table~\ref{tab:dialect} changed between \vfour{}, \vfive{} and
+\vsix{}. The engine repairs of \S\ref{sec:engine-repairs} are inference and
+bookkeeping defects, not rule changes, and none of them alters a game's outcome
+given the same actions. Two entries in the table are worth reading against the
+v0.4 appendix rather than in place of it. The cardless-turn-holder row is
+narrower than the rules of record permit, and the row for simultaneous
+declarations is a choice the rules do not make at all; both are quantified in
+\S\ref{sec:rules-dialect}, and both measure at approximately zero, which is why
+neither is a \vsix{} mechanism.
+
+Dialect robustness is reported rather than assumed: \S\ref{sec:results-dialects}
+replays the primary head-to-head result under \vsixDialectN{} perturbations of
+this table over \vsixDialectDeals{} deals at seed \vsixDialectSeed{}, spanning
+\vsixDialectSpan{}\%.
+
+\subsection{Clauses the \vsix{} mechanisms depend on}
+\label{app:dialect-depends}
+
+Four clauses carry weight in this report, in the sense that a mechanism of
+\S\ref{sec:mechanisms} or a measurement of \S\ref{sec:belief} would be different
+under a different choice. They are stated here in full so that the dependence is
+auditable.
+
+\paragraph{Residue is adjudicated by physical majority.} The driver counts asks
+and stops the game at \texttt{maxAsks}, 400 under the dialect studied. Awarding
+the unresolved residue to either side would bias the outcome towards whichever
+policy stalls more readily, so each remaining half-suit is instead awarded to
+the team physically holding the majority of its six cards, ties going to the
+team holding the lowest-indexed card of that half-suit. Two consequences matter.
+An unclaimed half-suit is worth its majority holding rather than nothing, which
+is the premise \S\ref{app:dialect-corrections} corrects; and the cap is a
+backstop against unbounded play rather than part of the rules, so termination is
+an empirical property of the fitted policies and is reported as one, at
+\vsixLimitRate{}\% incidence.
+
+\paragraph{The cardless-player rule.} A seat with no cards leaves the asking
+cycle: it cannot ask, and it is an illegal target, because ask legality requires
+the target to hold cards. It remains in the game in two ways. It can be named in
+a teammate's declaration as the holder of a card --- impossible while it is
+genuinely empty, so its emptiness constrains the allocations a teammate may
+name, which is a hard constraint the exact count law of
+\S\ref{sec:belief-count} consumes. And, with \texttt{cardlessMayDeclare}
+enabled, it may itself declare. The turn can reach a cardless seat only
+immediately after a declaration removed its last cards, and that seat then
+chooses which live teammate receives it.
+
+\paragraph{An opponent void is permanent.} Cards move in exactly one direction:
+from a target to an asker, and only on a successful ask. Asking in half-suit $h$
+requires the asker to hold another card of $h$. A seat holding no card of $h$
+therefore can neither ask in $h$ nor receive a card of $h$, and no sequence of
+legal actions restores it. Voids are monotone, they are public, and a void
+created against an opponent removes that opponent's right to ask in the
+half-suit for the rest of the game. This is a rules-level fact rather than a
+tactical one, and it is what the offensive-void term of \S\ref{sec:mech-cheap}
+prices.
+
+\paragraph{The forced endgame.} When one team holds no cards at all, no legal
+ask remains for either side and the live team must declare every remaining
+half-suit. Teammates may negotiate openly but may exchange nothing except
+willingness to declare, so the driver implements the selection as a threshold
+sweep over the eight-level ladder of Table~\ref{tab:dialect} rather than as a
+comparison of confidences: for each threshold in descending order the driver
+scans the live team's seats over the remaining half-suits and asks each whether
+it is willing to declare at confidence at least that threshold; the first seat
+that says yes declares, the ladder restarts, and the sweep repeats until every
+half-suit is resolved. Declarations here resolve exactly as elsewhere, including
+the possibility of misdeclaring and handing a half-suit to the cardless team,
+and are recorded separately in the event history. If every seat refuses at every
+level, the remainder is awarded by physical majority as above.
+
+\subsection{Two clauses corrected}
+\label{app:dialect-corrections}
+
+The v0.4 appendix is accurate on every clause but two. Both errors are stated in
+that report and repeated in the source; neither was retracted by the v0.5 paper,
+which measured them and did not print the result. They are restated correctly
+here so that a reader who reaches this appendix first is not misled, and
+\S\ref{sec:corr-dialect} gives them as corrections with the file and line of the
+text being corrected.
+
+\paragraph{An undeclared half-suit does not score nothing.} The v0.4 report's
+declaration section justifies the unconditional second stage of its forcing rule
+--- declare the best candidate whatever its estimated probability, past a second
+horizon --- on the ground that an undeclared half-suit scores nothing. Inside
+this harness it does not. The action cap calls the residue adjudicator described
+above, which awards each unresolved half-suit by physical majority, and on a
+wrong post-horizon declaration the declaring team holds a mean
+\numResidueHeld{} of the six cards, which is the majority, which is what
+adjudication would have given it. The stage does not convert nothing into a coin
+flip; it converts a probable award into a certain concession. The premise is
+true only of a dialect that awards nothing at the cap, and the v0.4 study
+changed the harness away from that dialect after its parameter vector was
+frozen, without updating the justification. The v0.4 rules section states the
+dialect correctly, so that report contradicts itself within two sections.
+
+\paragraph{Restarting the ladder sharpens nothing in observed play.} The v0.4
+appendix states that a consequence of restarting the willingness ladder is that
+early, safer declarations resolve cards and thereby sharpen the allocations
+available for the later ones. The reasoning is correct and the situation does
+not arise. Over every occasion on which a team went cardless with live
+half-suits remaining --- \numLadderOccasions{} of them at seed
+\numLadderSeed{} --- the number of live half-suits at that moment was
+\numLadderLiveSets{} in every case, so there is nothing to order and every
+ordering counterfactual is identical to the non-ordering one by construction.
+The structure is not impossible: a cardless team requires only that the other
+team hold a multiple of six cards. It does not occur because these policies cash
+locked half-suits promptly. A policy made more patient about declaring would
+begin to produce multi-half-suit forced endgames, at which point the restart
+would start doing the work the v0.4 appendix credits it with, and the machinery
+should be built alongside the patience change rather than after it.

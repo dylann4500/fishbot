@@ -19,6 +19,7 @@
 #include "probe_polreview.hpp"      // appended: adversarial verify (P4 policy review)
 #include "probe_vpolicy.hpp"        // appended: adversarial verify (P4/D1 forcing horizon)
 #include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
+#include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -115,6 +116,7 @@ int main(int argc, char** argv) {
     MatchConfig mc;
     mc.specA = argVal(argc, argv, "a", "v04");
     mc.specB = argVal(argc, argv, "b", "v03");
+    mc.partnersA = argVal(argc, argv, "partners", "");
     mc.games = atoi(argVal(argc, argv, "games", "1000").c_str());
     mc.seed = strtoull(argVal(argc, argv, "seed", "20260821").c_str(), nullptr, 10);
     mc.rules = rulesFrom(argc, argv);
@@ -196,6 +198,15 @@ int main(int argc, char** argv) {
     sp.generations = atoi(argVal(argc, argv, "gens", "40").c_str());
     sp.beta = atof(argVal(argc, argv, "beta", "10").c_str());
     sp.sigma0 = atof(argVal(argc, argv, "sigma", "0.6").c_str());
+    sp.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    sp.sigmaRel = atof(argVal(argc, argv, "sigmarel", "0").c_str());
+    sp.paired = argFlag(argc, argv, "paired");
+    { std::string ob = argVal(argc, argv, "obj", "softmin");
+      sp.objective = ob == "min"           ? TuneObjective::Min
+                   : ob == "mean"          ? TuneObjective::Mean
+                   : ob == "regret"        ? TuneObjective::Regret
+                   : ob == "minimaxregret" ? TuneObjective::MinimaxRegret
+                                           : TuneObjective::SoftMin; }
     sp.seed = strtoull(argVal(argc, argv, "seed", "424242").c_str(), nullptr, 10);
     sp.rules = rulesFrom(argc, argv);
     sp.threads = threads;
@@ -203,8 +214,25 @@ int main(int argc, char** argv) {
     std::vector<double> mu;
     std::string init = argVal(argc, argv, "init", "");
     if (!init.empty()) { std::stringstream ss(init); std::string t; while (std::getline(ss, t, '|')) mu.push_back(atof(t.c_str())); }
+    else if (sp.baseSpec.rfind("v05", 0) == 0 || sp.baseSpec.rfind("v06", 0) == 0) {
+      V05Config d; for (int i = 0; i < NFEAT; i++) mu.push_back(d.w[i]);
+    }
     else { V04Config d; for (int i = 0; i < NFEAT; i++) mu.push_back(d.w[i]); }
-    if (argFlag(argc, argv, "full") && mu.size() == NFEAT) {
+    if (argFlag(argc, argv, "full") && mu.size() == NFEAT
+        && (sp.baseSpec.rfind("v05", 0) == 0 || sp.baseSpec.rfind("v06", 0) == 0)) {
+      V05Config d;
+      mu.push_back(d.declThreshold); mu.push_back(d.lockedAllocThresh);
+      mu.push_back(d.askFloor); mu.push_back(double(d.patiencePool));
+      mu.push_back(d.oppCardFloor); mu.push_back(d.valueWeight);
+      mu.push_back(d.linearWeight); mu.push_back(d.minTeamProb);
+      mu.push_back(d.declareMargin);
+      mu.push_back(d.priorTheta); mu.push_back(d.priorPhi);
+      mu.push_back(double(d.searchTopK)); mu.push_back(d.chainWeight); mu.push_back(d.threatWeight);
+      if (sp.baseSpec.rfind("v06", 0) == 0) {   // the three v0.6 ask terms
+        mu.push_back(0.0); mu.push_back(0.0); mu.push_back(0.0);
+      }
+    }
+    else if (argFlag(argc, argv, "full") && mu.size() == NFEAT) {
       V04Config d;
       mu.push_back(d.declThreshold); mu.push_back(d.lockedAllocThresh);
       mu.push_back(d.askFloor); mu.push_back(double(d.patiencePool));
@@ -220,8 +248,18 @@ int main(int argc, char** argv) {
       const double plo[14] = {0.55, 0.55, 0.0,  0.0, 0.0,  0.0, 0.0,  0.05, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0};
       const double phi[14] = {0.999, 0.99999, 0.6, 20.0, 12.0, 40.0, 3.0, 0.95, 0.05, 1.5, 0.6, 14.0, 12.0, 12.0};
       for (int i = 0; i < 14 && NFEAT + i < (int)mu.size(); i++) { sp.lo[NFEAT + i] = plo[i]; sp.hi[NFEAT + i] = phi[i]; }
+      // v0.6's three extra ask terms: wVoid >= 0 (creating a void is an asset),
+      // wTeamHas <= 0 (asking for a card our own team probably holds is waste),
+      // wLastLive free (the forced endgame it walks into can cut either way).
+      const double q6lo[3] = { 0.0, -12.0, -12.0 };
+      const double q6hi[3] = { 12.0,   0.0,  12.0 };
+      for (int i = 0; i < 3 && NFEAT + 14 + i < (int)mu.size(); i++) {
+        sp.lo[NFEAT + 14 + i] = q6lo[i]; sp.hi[NFEAT + 14 + i] = q6hi[i];
+      }
     }
-    std::string sigPer = argVal(argc, argv, "sigmaparams", "");
+    { std::string sigPer = argVal(argc, argv, "sigmaparams", "");
+      if (!sigPer.empty()) { std::stringstream ss(sigPer); std::string t;
+        while (std::getline(ss, t, '|')) sp.sigmaVec.push_back(atof(t.c_str())); } }
     std::string outPath = argVal(argc, argv, "out", "");
     FILE* out = outPath.empty() ? stdout : fopen(outPath.c_str(), "w");
     std::vector<double> w = tune(sp, mu, out);
@@ -565,6 +603,37 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  if (cmd == "v6probe") {
+    V6ProbeConfig pc;
+    pc.specA = argVal(argc, argv, "a", "v05");
+    pc.specB = argVal(argc, argv, "b", "v05");
+    pc.games = atoi(argVal(argc, argv, "games", "120").c_str());
+    pc.seed  = strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10);
+    pc.rules = rulesFrom(argc, argv);
+    pc.threads = threads;
+    std::string mode = argVal(argc, argv, "mode", "ties");
+    std::cout << "v6probe " << mode << ": A=" << pc.specA << " B=" << pc.specB
+              << " games=" << pc.games << " seed=" << pc.seed << "\n\n";
+    if (mode == "ties") { V6TieStats st = runV6Ties(pc); printV6Ties(st, std::cout); return 0; }
+    if (mode == "belief") {
+      std::vector<std::pair<double,double>> tp;
+      std::string grid = argVal(argc, argv, "theta", "0,0.2,0.3,0.44458,0.6,0.8,1.1,1.5,2.0");
+      double phi = atof(argVal(argc, argv, "phi", "0.12198").c_str());
+      std::stringstream ss(grid); std::string t;
+      while (std::getline(ss, t, ',')) tp.push_back({atof(t.c_str()), phi});
+      auto rows = runV6Belief(pc, tp);
+      printV6Belief(rows, std::cout);
+      return 0;
+    }
+    if (mode == "search") {
+      V6SearchStats st = runV6Search(pc);
+      printV6Search(st, pc.games, std::cout);
+      return 0;
+    }
+    fprintf(stderr, "fish v6probe: unknown --mode=%s (ties|belief|search)\n", mode.c_str());
+    return 2;
+  }
+
   if (cmd == "pathology") {
     PathologyConfig pc;
     pc.specA = argVal(argc, argv, "a", "v04");
@@ -586,8 +655,10 @@ int main(int argc, char** argv) {
                                      atoi(argVal(argc, argv, "games", "20").c_str()),
                                      strtoull(argVal(argc, argv, "seed", "31").c_str(), nullptr, 10), r);
     std::cout << "same BlockDP object, same query, before/after a second build() elsewhere\n";
-    std::cout << "  checks " << rp.checks << "   mismatches " << rp.mismatches
-              << "   worst |delta| " << rp.worst << "\n";
+    std::cout << "  checks " << rp.checks
+              << "   QUERY mismatches " << rp.mismatches
+              << "   worst |delta| " << rp.worst
+              << "   (raw shared-pool field reads that differ: " << rp.rawMismatches << ")\n";
     return 0;
   }
 

@@ -1,0 +1,9 @@
+opponents                  8
+declaration opportunities  5472906
+(opportunity, half-suit)   31321233
+rejected by a cheap gate   14449770  (46.134% of pairs)
+false negatives            0  (0.00000% of rejections)
+declarations, gated        192442
+declarations, ungated      192442
+opportunities where the chosen action differs  0
+GATEAUDIT PASS (no false negative observed)

@@ -398,7 +398,7 @@ struct FEProbe {
 // `dirty` (v04.hpp:163), and Game::forcedEndgame / Game::declarationRound poll
 // several agents back to back between events -- so the second agent's build
 // silently repoints the first agent's tables.  This probes for that directly.
-struct AliasReport { long long checks = 0, mismatches = 0; double worst = 0; };
+struct AliasReport { long long checks = 0, mismatches = 0, rawMismatches = 0; double worst = 0; };
 
 inline AliasReport blockAliasCheck(const std::string& spec, int games, uint64_t seed, const Rules& rules) {
   AliasReport rep;
@@ -424,8 +424,20 @@ inline AliasReport blockAliasCheck(const std::string& spec, int games, uint64_t 
     uint8_t gm2 = b0.groups[0].cmask[0];
     rep.checks++;
     if (gs != gs2 || gn != gn2 || gm != gm2) {
-      rep.mismatches++; rep.worst = std::max(rep.worst, std::fabs(x - y));
+      rep.rawMismatches++;
     }
+    // The check that matters for behaviour: issue the SAME QUERY on b0 before
+    // and after the unrelated build.  v0.6's E2 guard re-derives b0's tables
+    // lazily when it finds its generation stamp stale, so the answers must
+    // agree exactly even though the raw pointers still address the shared pool.
+    BlockDP b2;
+    if (!b2.build(G.agents[0]->k)) return;
+    double q0 = b2.teamOwnsProbability(s, 0x15);
+    BlockDP b3;
+    if (!b3.build(G.agents[2]->k)) return;
+    double q1 = b2.teamOwnsProbability(s, 0x15);
+    if (q0 != q1) { rep.mismatches++; rep.worst = std::max(rep.worst, std::fabs(q0 - q1)); }
+    (void)x; (void)y;
   };
   for (int i = 0; i < games; i++) game.run(mixSeed(seed, uint64_t(i) + 5), rules, ag);
   return rep;

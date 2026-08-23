@@ -1,0 +1,309 @@
+\section{Related work}
+\label{sec:related}
+
+This section covers the work the rest of the report builds on, and one class of
+work it deliberately declines. The background the main argument does not depend
+on is collected in \S\ref{app:related}, the evaluation-methodology literature is
+taken up in \S\ref{sec:protocol}, and \S\ref{app:rel-declined} states, for each
+declined method, why it is declined. Absence is a design decision in this study,
+not an omission, and it is recorded as one.
+
+Three of this report's results sit against specific literatures and are placed
+here rather than left implicit. The optimiser's-curse result of
+\S\ref{sec:search-curse} belongs to the determinization line, where an unguarded
+argmax over sampled worlds is a known-in-principle failure that is rarely
+quantified. The belief result of \S\ref{sec:belief-exactworse} --- a
+policy-aware approximation beating the exact posterior --- belongs to the
+trick-taking inference line, which is the only literature that has measured the
+same trade-off. And the shared common-knowledge object of
+\S\ref{sec:mech-knowledge} is the common-information reduction, restricted to
+the one case in which it is cheap.
+
+\subsection{Fish and Literature}
+\label{sec:related-fish}
+
+The published material on this game is human and informal, and neither of its
+two substantial sources is quantitative or describes a program. McLeod's Pagat
+entry \cite{pagat} is the canonical rules source and records several points on
+which dialects differ; ours is specified in \S\ref{sec:rules} and listed in full
+in \S\ref{app:dialect}. Develin's chapter \cite{develin} is the most detailed
+strategy writing we located, describes the same dialect, and supplies two
+observations this design uses: an ask teaches the opponents as much as it
+teaches a teammate, and a player may not declare a half-suit they hold entirely.
+Secondary strategy pages \cite{dorsa,strategy-site,wikiliterature} restate
+blackballing, asking the asker, and an endgame delegation heuristic; they are
+evidence about how the game is played and talked about, not sources of
+quantitative claims. \S\ref{app:rel-informal} records where the two substantial
+sources disagree.
+
+Computational prior art remains close to absent. The v0.4 study's searches found
+no academic work on this game, no public repository containing search, planning
+or a working learner for it, and no coverage in RLCard \cite{rlcard}; the v0.6
+literature refresh re-ran that question against 2025--2026 work and found
+nothing that changes it. The one agent located, Somani's \texttt{literature}
+\cite{somani,somani-server}, plays the four-player, 48-card variant, which does
+not raise the six-player allocation problem, and publishes no strength numbers;
+a closed-source Android application advertises bots with no stated methodology
+\cite{playstore}. Every novelty statement in this report therefore takes the
+form ``we found no prior published work that \dots'' and should be read against
+that scope. One 2026 item is worth naming because it may become the external
+calibration this line of work lacks: Valet packages twenty-one traditional
+imperfect-information card games in a common description language with measured
+branching factors and durations \cite{goadrich2026valet}, though whether any of
+the twenty-one is a team game is not stated on its abstract page and we did not
+fetch the full text, so nothing here is compared against it. The three prior
+FishBot reports \cite{fishbot03,fishbot04,fishbot05} are the record this study
+extends and, in \S\ref{sec:corrections}, corrects.
+
+\subsection{Determinization, and why double-dummy analysis fails here}
+\label{sec:related-determinization}
+
+Determinization, or perfect-information Monte Carlo --- sample hidden cards
+consistently with the public history, solve the resulting perfect-information
+game, and play the move with the best average value --- is the standard recipe
+for hidden-hand card games \cite{levy,ginsberg-gib}, and is unsound however many
+worlds are drawn. Frank and Basin named the two mechanisms: \emph{strategy
+fusion}, in which the searcher plays a different strategy in each sampled world
+although a real player must commit to one strategy per information set, and
+\emph{non-locality}, in which a node's value depends on parts of the tree
+outside its own subtree \cite{frank-basin-ai,frank-basin-aaai}. Long, Sturtevant,
+Buro and Furtak characterise when the method nevertheless performs well, through
+leaf correlation, bias and a disambiguation factor \cite{long-pimc}; Information
+Set Monte Carlo Tree Search replaces independent trees with a single tree over
+information sets \cite{cowling-ismcts,goodman-ris}; the $\alpha\mu$ family backs
+up Pareto fronts of world-vectors instead of scalar averages, repairing both
+mechanisms, and reports Bridge 3NT declarer play at 60.2\% to 63.0\% with twenty
+worlds \cite{cazenave2019alphamu}; and knowledge-based paranoia search reasons
+about the worst case over deduced-consistent worlds rather than the average,
+reporting over 1,000 points on the extended Seeger scale in Skat
+\cite{edelkamp2021paranoia}. Its runtime is not stated on the abstract page, so
+no compute cost is attributed to it anywhere in this report.
+
+Fish breaks the method for a reason none of that literature addresses. Its
+perfect-information game is not merely fused, it is degenerate: a clairvoyant
+player names only cards the target actually holds, so never fails an ask, never
+loses the turn, and declares each half-suit correctly as soon as their team
+holds all of it. Almost every reachable position carries the same
+perfect-information value, and averaging that value over deals sampled from the
+public history collapses to choosing the ask most likely to hit --- a one-ply
+heuristic blind to the information an ask leaks, the information a refusal
+supplies, and the option value of postponing a declaration.
+$\alpha\mu$ repairs unsoundness, not degeneracy, so it does not rescue the
+construction here. \S\ref{app:rel-determinization} gives the collapse in full.
+
+What \S\ref{sec:search} adds is that the binding problem in this game is not the
+abstract failure but the statistic. One determinization's value is the final
+half-suit differential, with standard deviation \vsixLeafSd{} --- an order of
+magnitude larger than the differences between the leading candidates --- so an
+argmax over $D$ sampled means selects on residual noise, and does so more
+confidently the more candidates it is offered. That is the optimiser's curse
+rather than strategy fusion, and it is measured here at \vsixCurseGap{} points
+by a control that forces the same code to return the blueprint's own pick
+(\S\ref{sec:search-curse}). This report therefore uses determinization only as a
+research probe, behind the paired deviation guard of \S\ref{sec:search-falsifier},
+and reports the result including the configurations that land at zero
+(\S\ref{sec:search-deadask}). The transferable claim is the guard, not the
+search.
+
+\subsection{Search in imperfect-information and cooperative games}
+\label{sec:related-search}
+
+States in an imperfect-information game do not have well-defined values, so
+depth-limited search needs something at the leaf that represents the opponent's
+ability to choose. Brown, Sandholm and Amos supply it: let the opponent select
+among $k$ continuation strategies at the depth limit, each yielding its own
+leaf-value vector, and require the searcher to be good against that choice ---
+demonstrated at master level in heads-up no-limit hold'em on a four-core CPU and
+16\,GB \cite{brown2018depthlimited}. That construction is the one piece of this
+literature this study uses as method rather than context: it is the multi-valued
+leaf of \S\ref{sec:mech-leaves} and the prerequisite for
+\S\ref{sec:search}. The soundness argument is stated for two-player zero-sum
+games, and Fish's team-level game presents three uncorrelated opponent seats at
+the leaf, so nothing is inherited. It is adopted here as a robustification
+heuristic with a measurable consequence, and audited rather than assumed
+(\S\ref{sec:mech-exploit}).
+
+Two lines address the other half of the problem, which is what a search may
+prune. Zhang and Sandholm solve subgames over low-order knowledge rather than
+the full common-knowledge closure, which is the published answer to a closure
+too large to enumerate --- and they prove that the naive form can \emph{increase}
+exploitability \cite{zhang2021subgamesolvingwithoutck}. That warning applies
+directly to the live-ask gate this policy already ships, which is a
+knowledge-limited pruning rule that has never been audited, and it is why
+\S\ref{sec:mech-exploit} was built before any search work rather than after it.
+Subgame solving in adversarial team games builds a gadget over the team belief
+DAG and runs in polynomial time given a best-response oracle \emph{when the
+blueprint is sparse} \cite{zhang2022teamsubgame}; a Fish blueprint is not
+sparse, so that escape hatch does not open here, and \S\ref{app:rel-declined}
+records this as a verified non-transfer rather than an unexamined gap.
+
+In cooperative games the constraint is different and it transfers verbatim.
+SPARTA improves a blueprint purely at test time, 24.08 to 24.61 in Hanabi, and
+distinguishes single-agent search --- which assumes every other agent strictly
+follows the blueprint --- from multi-agent search, in which all agents run the
+\emph{same} common-knowledge procedure \cite{lerer2020sparta}. The moment a
+second teammate also searches, the first teammate's belief over its partner is
+computed under a policy that partner is no longer playing, and the improvement
+guarantee is void. This is the Dec-POMDP common-knowledge caveat, and it is the
+constraint most easily violated in silence. Fish satisfies it cheaply: all card
+movement is public, so any \emph{deterministic} procedure that reads only public
+state and its own hand is automatically common knowledge among the three
+teammates, with no shared seed and no communication. The qualifier is
+load-bearing --- a randomised tie-break loses the property unless its
+randomisation is seeded from the public history, which is a one-integer decision
+with a real correctness consequence (\S\ref{sec:mech-tiebreak}).
+
+The remainder of this literature is cited as context. The full-solver line
+\cite{moravcik2017deepstack,brown2020rebel,schmid2023sog} established that
+test-time re-solving over public belief states is principled rather than a hack,
+and ReBeL's safety result is the licence under which any test-time search here
+operates; the algorithms are declined, because each requires iterating or
+learning over a closure whose cardinality at deal time is
+$45!/(9!)^5 \approx 1.9 \times 10^{28}$ deals from one seat. Update equivalence
+recasts search as replicating a last-iterate-convergent update locally, needing
+no public-information enumeration at all, and reports matching or exceeding
+public-belief-state search in Hanabi at two orders of magnitude less search time
+\cite{sokota2024updateequivalence}; its improvement guarantee is for
+common-payoff games, which Fish is not, so it informs the shape of the mechanism
+set without licensing it. Learned Belief Search buys 55--91\% of exact search's
+benefit at 4.6--42$\times$ less compute \cite{hu2021lbs} and is simply redundant
+here, because this game's exact belief is already computed and oracle-validated
+(\S\ref{sec:belief-count}). Online planning by policy fine-tuning
+\cite{fickinger2021rlfinetuning} requires gradient updates at decision time and
+does not transfer to a CPU-only engine with no network. The depth-limited
+counter-strategy line \cite{milec2021cdr,milec2025abd} carries one warning this
+study honours --- robust-response methods do not compose with limited-look-ahead
+solving off the shelf --- and the learned-model and gadget-refinement work
+\cite{kubicek2025lamir,kubicek2026refinements} is recorded for its meta-lesson
+rather than its machinery: when a search subproblem has many near-equivalent
+optima, which one is selected is not a tie-break, and refinement is reported at
+more than 50\% of exploitability. That is the same observation
+\S\ref{sec:diag-ties} makes about an argmax resolved by array order.
+
+Finally, every method above is published with a caveat that it can increase
+exploitability, so none of them can be evaluated by win rate alone. Local best
+response gives a cheap lower bound: a small greedy search, at most two actions
+deep, showed every entrant in a 2016 poker competition to be more than
+3,180\,mBB/h exploitable \cite{lisy2017lbr}. Its two documented pitfalls are
+carried into \S\ref{sec:results-lbr} --- restricting where the response may
+begin deviating understates exploitability, and a negative score proves nothing
+--- and the figure this report publishes is a lower bound within its response
+class, not an exploitability number.
+
+\subsection{Policy-aware inference}
+\label{sec:related-inference}
+
+Skat engines enumerate the deals consistent with the public record and reweight
+them by a model of what each player would have done --- a supervised per-card
+location model \cite{solinas-supervised}, or reach probabilities taken from a
+policy \cite{rebstock-inference} --- and a dedicated inference module was
+reported worth $+217$ tournament points per 36 games to the engine Kermit on its
+own \cite{buro-kermit}. The policy prior of \S\ref{sec:belief-prior} is the same
+idea in a much simpler form: a fitted soft reweighting of the rules posterior,
+with two parameters and no learned opponent model.
+
+This literature is where the central result of \S\ref{sec:belief} belongs, and
+it is the only literature that has measured the same trade-off. What is new here
+is the margin and its direction. In this game the exact conditional posterior is
+computable in closed form and cheap (\S\ref{sec:belief-count}), so the usual
+excuse for approximating --- that exactness is unaffordable --- does not apply;
+and yet substituting the exact posterior into an otherwise identical policy
+\emph{loses}, at two independent seed banks. The exact path resolves more
+distinctions and predicts hits worse, and the reason is structural rather than
+numerical: the block construction consumes the deduction state alone and has no
+parameter through which behaviour could enter, while the approximate path is
+policy-aware by construction. Exactness and behaviour-awareness are not
+available in the same object here, and \S\ref{sec:mech-tiebreak} is built on
+that split. The report is careful about what this does and does not show: the
+weights were fitted for the approximate belief, so it is a substitution result
+rather than a verdict on exact inference (\S\ref{sec:limitations}).
+
+Two adjacent lines are named and not used. Belief modelling in cooperative games
+--- the Bayesian Action Decoder's public-belief formulation
+\cite{foerster2019bad}, its factorised-prescription successor
+\cite{sokota2021capi}, and the learned belief models above --- is aimed at games
+whose exact belief is intractable, which is the opposite of the situation here.
+And the exact-counting machinery this study does not need to approximate ---
+Ryser's inclusion--exclusion formula \cite{ryser}, Glynn's sign-vector formula
+\cite{glynn}, the Jerrum--Sinclair--Vigoda chain \cite{jsv}, matrix scaling
+\cite{lsw} and sequential importance sampling \cite{chen-sis} --- is recorded in
+\S\ref{app:rel-counting}, along with why the block structure of this game
+sidesteps all of it. History filtering is FNP-complete in general
+\cite{solinas-history}; Fish escapes because its public record determines every
+card movement, so the only object to reconstruct is the initial deal. No learned
+belief model appears anywhere in this study, and that is a stated non-goal
+rather than an oversight.
+
+\subsection{Team games and common information}
+\label{sec:related-team}
+
+Three teammates share a payoff, hold different information and cannot
+communicate. The formal statement of that situation is the common-information
+approach: reformulate the decentralised problem from the point of view of a
+coordinator who knows the common information and chooses \emph{prescriptions},
+maps from each controller's private information to its action
+\cite{nayyar2013common}. In Fish the common information is the entire public
+history, so the coordinator's information state is exactly the belief object the
+engine already maintains --- which is the formal content of the mechanism in
+\S\ref{sec:mech-knowledge} that replaces six per-seat deduction states with one
+shared object plus per-seat refinement. It is also the reason the SPARTA
+constraint above exists: if one seat searches and its teammates do not, they are
+no longer executing the prescription the first seat's belief update assumes, and
+the reduction silently fails. Solving the coordinator's problem is out of reach
+--- a prescription maps every possible nine-card hand to an ask --- so this is a
+correctness lens, not an algorithm.
+
+The team-game equilibrium literature is cited to delimit scope. The target
+concept for a Fish team is a team-maxmin equilibrium with correlation
+\cite{celli-gatti}, connected to extensive-form correlation by Farina and
+coauthors \cite{farina-collusion} and made computable through the team belief
+DAG and the two-player conversion \cite{zhang-tbdag,carminati-tpi}, at a
+representation cost exponential in how much private information distinguishes
+teammates inside a public state. Three unrestricted nine-card hands is exactly
+the case that cost forbids. Hidden-role machinery \cite{carminati2024hiddenrole}
+does not apply at all, because Fish teams are public from the deal. Nothing in
+this report is an equilibrium result of any kind.
+
+Conventions are the other half of team play, and the coordination literature
+supplies both the vocabulary and the warning. Hanabi is the reference benchmark
+for coordination through observable actions \cite{bard-hanabi}; Other-Play
+demonstrated how much of a self-play score is convention rather than skill
+\cite{hu-otherplay}, the Simplified Action Decoder showed what conventions need
+in order to survive exploratory training \cite{hu-sad}, and Off-Belief Learning
+supplies an explicit dial on convention depth together with grounded play at
+level one \cite{hu2021obl}. Grounded play is unusually strong in this game
+because ask legality is itself a hard certificate: an ask proves its asker holds
+another card of the named half-suit, so reading a teammate's ask grounded is
+exact rather than approximate. Self-explaining deviations formalise the opposite
+move --- deviate so that a teammate's theory of mind concludes circumstances are
+abnormal --- and produced the first algorithmic finesse plays in Hanabi
+\cite{hu2022sed}; in Fish the same channel is supplied by the rules rather than
+learned, which is a structural advantage and, in cross-play, a structural risk.
+Joint policy search is the bridge-bidding analogue, scoring simultaneous changes
+at several information sets, at $+0.63$ IMPs per board against a strong
+commercial program \cite{tian2020jps}; the Hanabi construction that most clearly
+fails to port is the hat-guessing code, which works because each receiver sees
+every other receiver's hand \cite{cox-hanabi}, and in Fish no player sees any
+hand.
+
+Human-regularised search is where that risk is priced. piKL anchors a search
+result to a reference policy with a bounded divergence \cite{jacob2022pikl}, and
+the same construction was extended to coordination with real human partners
+\cite{hu2022humanregularized} and used as the planning core of a Diplomacy agent
+whose game family --- adversarial teams acting through public actions --- is the
+one Fish belongs to \cite{fair2022cicero}. The evidence that a small human
+corpus is not the way in is also published: in the ad-hoc human-AI coordination
+challenge, an agent trained with no human data at all outperformed a
+best-response-to-behavioural-cloning baseline \cite{dizdarevic2025ah2ac2}. This
+study uses none of these as method. It takes from them the requirement that the
+partner regime be a stated parameter of the policy rather than an assumption,
+which is \S\ref{sec:mech-partner}, and that a convention-bearing mechanism be
+reported with its cross-play cell and not only its self-play cell.
+
+The last entry is a counterweight to the rest of this section. A 2026
+gold-standard study of lightweight game-playing agents concludes that the
+binding constraint on strength is information rather than model capacity, and
+that disciplined evaluation against a held-out expert beats deeper search
+\cite{kelidari2026goldstandard}. That is this study's own thesis stated by
+someone else, and it is the reason two of this report's four principal results
+are negative and are reported as such.

@@ -1,0 +1,12 @@
+{"dialect":"default"}
+{"a":"v06","b":"v05","deals":250,"games":1500,"winRateA":0.484,"ci":[0.458667,0.51],"wilsonCI":[0.458783,0.509299],"meanSetsA":4.48133,"meanSetsB":4.51867,"askAccA":0.547438,"askAccB":0.551606,"declAccA":0.983171,"declAccB":0.975821,"declPerGameA":4.43667,"declPerGameB":4.54933,"forcedAccA":0.25,"forcedAccB":0.235294,"forcedPerGameA":0.00266667,"outOfTurnA":3.27467,"outOfTurnB":3.35733,"lockHoldA":4.68658,"lockHoldB":4.87438,"eventsPerGame":95.5053,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":6.60072}
+
+{"dialect":"--no-out-of-turn"}
+{"a":"v06","b":"v05","deals":250,"games":1500,"winRateA":0.486667,"ci":[0.463333,0.51],"wilsonCI":[0.461439,0.511962],"meanSetsA":4.47,"meanSetsB":4.53,"askAccA":0.513507,"askAccB":0.517476,"declAccA":0.989637,"declAccB":0.983587,"declPerGameA":4.31,"declPerGameB":4.38667,"forcedAccA":0.974619,"forcedAccB":0.972868,"forcedPerGameA":0.131333,"outOfTurnA":0,"outOfTurnB":0,"lockHoldA":8.38149,"lockHoldB":8.67306,"eventsPerGame":101.468,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":1.76218}
+
+{"dialect":"--no-cardless-declare"}
+{"a":"v06","b":"v05","deals":250,"games":1500,"winRateA":0.482,"ci":[0.456,0.508],"wilsonCI":[0.456792,0.5073],"meanSetsA":4.47733,"meanSetsB":4.52267,"askAccA":0.547438,"askAccB":0.551606,"declAccA":0.984523,"declAccB":0.978019,"declPerGameA":4.43667,"declPerGameB":4.54933,"forcedAccA":0.25,"forcedAccB":0.235294,"forcedPerGameA":0.00266667,"outOfTurnA":3.02067,"outOfTurnB":3.13333,"lockHoldA":4.6803,"lockHoldB":4.86343,"eventsPerGame":95.5053,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":6.99818}
+
+{"dialect":"--legacy"}
+{"a":"v06","b":"v05","deals":250,"games":1500,"winRateA":0.486667,"ci":[0.463333,0.51],"wilsonCI":[0.461439,0.511962],"meanSetsA":4.47667,"meanSetsB":4.52333,"askAccA":0.513507,"askAccB":0.517476,"declAccA":0.989783,"declAccB":0.983714,"declPerGameA":4.30667,"declPerGameB":4.38,"forcedAccA":0.935644,"forcedAccB":0.906716,"forcedPerGameA":0.134667,"outOfTurnA":0,"outOfTurnB":0,"lockHoldA":8.39237,"lockHoldB":8.63436,"eventsPerGame":101.469,"limitHitRate":0,"auditViolations":0,"auditChecks":0,"seconds":1.73074}
+

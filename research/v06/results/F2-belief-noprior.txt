@@ -1,0 +1,15 @@
+### phi = 0 sweep (the theta=0,phi=0 row is the policy-agnostic approximation)
+v6probe belief: A=v05 B=v05 games=120 seed=31
+
+posterior                         cards     mean NLL     argmax p   argmax HIT
+exact (uniform prior)            140661      1.42246       0.4660       47.94%
+sinkhorn th=0.000 ph=0.000       140661      1.39339       0.4884       49.14%
+sinkhorn th=0.445 ph=0.000       140661      1.38425       0.4981       51.11%
+
+### phi = 0.12198 sweep, for comparison
+v6probe belief: A=v05 B=v05 games=120 seed=31
+
+posterior                         cards     mean NLL     argmax p   argmax HIT
+exact (uniform prior)            140661      1.42246       0.4660       47.94%
+sinkhorn th=0.000 ph=0.122       140661      1.39083       0.4896       49.99%
+sinkhorn th=0.445 ph=0.122       140661      1.38218       0.5035       51.49%

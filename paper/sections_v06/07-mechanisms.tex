@@ -1,0 +1,113 @@
+\section{\vsix{}: the mechanism set}
+\label{sec:mechanisms}
+
+\vsix{} is implemented as a policy that \emph{derives} from \vfive{} rather than forking it, and
+this is not a packaging decision. With every \vsix{} switch off and the v0.5 parameter vector
+restored, each override defers to the base class and the two policies are identical --- checked, not
+asserted, by comparing the md5 of the complete diagnostic output of a $60$-deal mirror run
+(\vsixIdentity{}). Every ablation in \S\ref{sec:results} is therefore exact: there is no
+``\vsix{} without mechanism $X$ differs from \vfive{} for unrelated reasons'' confound of the kind
+that has cost this project two studies.
+
+The mechanisms are grouped by what they change. Each carries the defect it was keyed to, its
+measured verdict, and --- where the verdict is negative --- what that verdict rules out for the next
+study. Four of the seven are reported as null, and they are reported here rather than buried in an
+appendix, because the register they close is the register a reader of the v0.5 study would otherwise
+work from.
+
+\subsection{Shipped: the apparatus}
+\label{sec:mech-cheap}
+
+Three changes ship unconditionally because they are corrections, not strategies, and they make no
+strength claim of their own.
+
+\begin{itemize}
+\item \textbf{The exact posterior's table aliasing} (\S\ref{sec:engine-repairs}), which made every
+  exact-belief mechanism unsound in multi-agent play and which no strength measurement could ever
+  have caught, because the deployed policy never queried the affected object.
+\item \textbf{The repaired optimiser} (\S\ref{sec:fitting}): per-coordinate step sizes, a paired
+  per-deal objective, an explicit minimax-regret dispatch, and a recovery test the previous harness
+  provably fails.
+\item \textbf{The commit gate} (\S\ref{sec:protocol}): the pathology KPIs are evaluated before any
+  strength number is collected, because two of the highest-scoring rows of the v0.5 ablation table
+  are configurations that kill $14\%$ of their games at the action limit.
+\end{itemize}
+
+\subsection{Measured and null: the tie-break}
+\label{sec:mech-tiebreak}
+
+The mechanism the inherited register ranked first was to resolve the exact ties of
+\S\ref{sec:diag-ties} with a signal the Sinkhorn filter cannot represent --- specifically, the exact
+count law, which costs about \vsixExactBuildUsFive{}~\textmu s to build and is affordable at a
+decision. It was built, and \S\ref{sec:diag-irreducible} is its verdict: the exact posterior
+separates \vsixTieExactSepPctFive\% of the ties, and every tie-break rule realises the same hit
+rate. The mechanism is retained as an \emph{instrument} and not as a strategy, and the distinction is
+literal: the exact-posterior switch is not read by the ask rule and the shipped policy never builds
+the exact posterior. What survives is the diagnostic that measured the null.
+
+What this rules out for the next study is broader than the mechanism. Any tie-break candidate must
+first be shown to separate the tied set \emph{under the exact posterior}. Signals that cannot ---
+per-card ask history, rank priors, teammate-derived terms --- are re-descriptions of the same
+symmetric information and cannot beat enumeration order.
+
+\subsection{Measured and null: three ask terms}
+\label{sec:mech-knowledge}
+
+Three terms were added to the ask score, each fitted rather than hand-set, and each keyed to a
+measured channel.
+
+\begin{itemize}
+\item \textbf{Void creation}: the probability that a hit takes the target's \emph{last} card of the
+  half-suit. Ask legality requires the actor to hold a card of the half-suit, so voiding an opponent
+  permanently removes their right to ask in it --- a one-way asset that $41.65\%$ of \vfive{}'s
+  successful asks create by accident while nothing in its score rewards creating one on purpose.
+\item \textbf{Team-ownership discount}: the posterior mass the actor's own team already carries on
+  the asked card, which is the graded substitute for the proof M1 cannot have and is aimed at the
+  \vsixPathFiveOwnlocked\% of asks that are guaranteed misses into a half-suit the team already owns.
+\item \textbf{The last-live-opponent split}, separating ``empty one of three opponents'' from
+  ``empty the last one and trigger the forced endgame''.
+\end{itemize}
+
+All three are null as \emph{mechanisms}. One consequence has to be stated because it makes the
+obvious ablation confounded: a non-zero extra weight is what selects the v0.6 scoring path, and the
+v0.6 scoring path is the one that does not run v0.5's chain and threat re-scoring. Switching the
+extra terms off therefore switches that pass back on. \S\ref{sec:results-ablations} reports the
+four-way ablation that separates them. The void term cleared a $95\%$ paired interval at four
+hundred games per cell on one bank and returned zero at a thousand on two; the last-live term fires
+too rarely to change any output. The fit gives all three small coefficients and the ablation that
+removes them outright is in Table~\ref{tab:ablations}. \S\ref{sec:protocol} is where that pattern
+--- significant at the corpus's budget, zero at this one --- is turned into a protocol rather than
+an anecdote.
+
+\subsection{Measured and rejected: the deliberate miss}
+\label{sec:mech-declare}
+
+M1 deleted the move class every multi-step human tactic is built from. Re-admitting it raises the
+win rate and destroys the policy (\S\ref{sec:search-deadask}); rationing it against the linear score
+is inert, because the linear score provably cannot price it. It is offered to the search instead,
+which is the only evaluator in the system that can, and it is the best-performing search
+configuration measured. \S\ref{sec:search} reports what the search as a whole is worth.
+
+\subsection{Shipped off: test-time search}
+\label{sec:mech-leaves}
+
+\S\ref{sec:search} in full. Off, instrumented, and reported with the conditions under which its
+verdict would change.
+
+\subsection{Shipped: the fitted vector}
+\label{sec:mech-partner}
+
+What is left, once four mechanisms have been measured null and one rejected, is the parameter vector
+--- and \S\ref{sec:diag-fitnoise} is the reason that is not an anticlimax. \vfive{}'s vector is
+v0.4's, because v0.5's forty-generation refit moved nothing, and v0.4's was produced by a search
+carrying an aliasing defect of its own. Nobody has ever fitted this policy class with an optimiser
+that works. \S\ref{sec:fitting} builds one and \S\ref{sec:results} reports what it finds.
+
+\subsection{Reported separately: the partner regimes}
+\label{sec:mech-exploit}
+
+The evaluation harness built one policy object for all three seats of a team, so ``\vsix{} with two
+bot partners'' and ``\vsix{} with two human-model partners'' --- the two regimes the project owner
+asked to see reported separately --- could not be expressed at all. Per-seat specification is added
+and both regimes appear as separate columns in \S\ref{sec:results-panel}. The self-play row is never
+the headline.

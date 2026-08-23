@@ -1,0 +1,96 @@
+\section{Corrections to the record}
+\label{sec:corrections}
+
+This project's convention is that corrections are stated as corrections, in their own section, and
+not silently patched into the artifacts they correct. The v0.5 study opened a twelve-entry register
+against the v0.4 record; four of its entries never reached print, and this study adds five of its
+own. All are listed here with the measurement that forces them.
+
+\subsection{Entries carried forward from the v0.5 register that were never published}
+\label{sec:corr-vfour}
+\label{sec:corr-dialect}
+
+\begin{description}
+
+\item[C7 --- ``an undeclared half-suit scores nothing''.] The v0.4 paper justifies its second
+  forcing horizon on the ground that an unclaimed half-suit is worth zero. It is not, in this
+  harness: residue at the action cap is adjudicated by physical majority, and on a wrong
+  post-horizon declaration the declaring team holds a mean \numResidueHeld{} of the six cards. The
+  v0.4 paper contradicts itself on this point --- its own rules section states the dialect
+  correctly. Neither paper printed the correction. It is printed here, and it matters beyond
+  bookkeeping: the argument it supports is the one v0.5 removed as mechanism M8, so the mechanism
+  was right for a reason its own justification got wrong.
+
+\item[C9 --- restarting the willingness ladder.] The v0.4 paper argues that restarting the
+  forced-endgame ladder lets early, safer declarations resolve cards and sharpen the later ones.
+  The premise is never satisfied: essentially every forced endgame in this dialect contains exactly
+  \numLadderLiveSets{} live half-suit (\numLadderOccasions{} occasions at seed \numLadderSeed{}), so
+  there are no later declarations to sharpen.
+
+\item[The fitted adversary that ``fails to reach 50\%''.] The v0.4 findings document reports that a
+  policy fitted specifically against v0.4 fails to reach parity with it. The same study's own local
+  best-response table records the response achieving $51.19\%$ with a confidence interval of
+  $[49.67, 52.72]$, and the paper states the null result correctly. The findings document turns a
+  null result into a win. This is the single most consequential unretracted claim in the corpus,
+  because it is the only place anything resembling an exploitability number has ever been reported.
+
+\item[``Modelling declaration timing as optimal stopping is worth measurable win rate''.] The same
+  document. The same study's own ablation puts the value-based stopping rule at $+0.12$ points with
+  an interval of $[-1.23, +1.47]$ against a fixed threshold, and the v0.4 specification says in
+  terms that the ablation does not resolve a benefit.
+
+\end{description}
+
+\subsection{Corrections this study adds}
+\label{sec:corr-self}
+
+\begin{description}
+
+\item[The tie channel is not a defect, and it is not where it was said to be.] The v0.5 design
+  register, and the recon that opened this study, priced the exact-tie channel as the largest
+  available loss and located it in the target dimension. Both halves are wrong.
+  \vsixTieSameSuitFive\% of ties are two \emph{cards} of one half-suit at one target, not one card
+  at two targets; and the exact posterior separates \vsixTieExactSepPctFive\% of them, so no
+  tie-break rule can beat enumeration order --- measured, all four rules realise the same hit rate
+  to three significant figures. The associated ``+3.16 half-suits per game of headroom'' is a
+  hindsight bound and prices clairvoyance. See \S\ref{sec:diag-irreducible}.
+
+\item[Enumeration order decides a fifth of contested decisions, not more than half.] \vfive{}'s
+  top-$K$ chain and threat pass re-scores the leaders and moves the pick at
+  \vsixTieShipMovedFive\% of ties. The frequently-quoted figure conflates the tie rate with the
+  rate at which array order is the deciding rule.
+
+\item[``Exact inference costs six points'' is a statement about the prior, not about exactness.]
+  Scored as predictors on identical states, the exact posterior under a uniform-deal prior is the
+  \emph{worst} of the three inference paths measured, at \vsixBeliefExactNLL{} nats and
+  \vsixBeliefExactHit\% argmax hit rate against the deployed approximation's
+  \vsixBeliefShippedNLL{} and \vsixBeliefShippedHit\%. The policy prior is the entire difference.
+  The matched-budget refit under the exact belief that three studies have listed as the outstanding
+  experiment is therefore not worth running: the object it would fit is a less informative
+  posterior. See \S\ref{sec:belief-exactworse}.
+
+\item[The v0.5 fit resolved nothing, and the shipped vector is v0.4's.] \S\ref{sec:diag-fitnoise}.
+  The consequence for the reader of the v0.5 paper is that its fitting section describes a procedure
+  that did not, at the budget and step size used, move the policy; and the consequence for this
+  study is that a working optimiser had to be built before any mechanism could be evaluated.
+
+\item[The exact reference engine was unsound in multi-agent play.] The block dynamic program parked
+  every instance's tables in a shared per-thread pool, so any second construction on the same thread
+  silently repointed the first instance's tables: \numAliasMismatch{} mismatches in
+  \numAliasChecks{} checks. Every previously published number computed with the exact belief in a
+  configuration where more than one seat holds such an object is affected. The deployed
+  approximate-belief numbers are not, because that path never queries the object --- which is
+  exactly why the defect survived three studies. See \S\ref{sec:engine-repairs}.
+
+\end{description}
+
+\subsection{A note on comparability}
+\label{sec:corr-comparability}
+
+Two of the corrections above change how earlier numbers should be read rather than what they are,
+and one changes the numbers themselves. Readers comparing across versions should note that this
+study's evidence standard is not the corpus's: every claim here is paired, and every claim that
+survived is re-run on a second, disjoint seed bank at a per-cell budget three to seven times larger
+than the published ablation rows of the v0.3, v0.4 and v0.5 studies. \S\ref{sec:protocol-paired}
+gives the measurements that forced that change, including five mechanisms in this study that cleared
+a $95\%$ interval at the corpus's budget and returned zero at this one.

@@ -1,0 +1,324 @@
+\section{The observer-conditioned deal posterior}
+\label{sec:belief}
+
+This section builds the object the rest of the report measures, and then reports
+the first of the study's two principal negative results: the exact posterior is a
+worse predictor than the approximation the engine actually deploys.
+
+The order matters, because the result is easy to misread in either direction.
+Two facts about the exact posterior are both true. It resolves distinctions the
+approximation cannot --- it is the exact conditional count under the rules, with
+no independence assumption anywhere in it --- and it predicts where cards are
+worse than the approximation does. Resolution and calibration are different
+properties, and this section keeps them apart throughout. The reason the exact
+object is the worse predictor is not that the approximation is secretly better at
+counting. It is that the exact object is exact \emph{with respect to a uniform
+prior over deals}, and that prior is wrong.
+
+\subsection{The hidden state is the initial deal}
+\label{sec:belief-state}
+
+In the dialect of \S\ref{sec:rules} a card changes hands in exactly one way, a
+successful ask, which every player observes; declarations remove cards from play,
+and that too is public. The v0.4 report proves the consequence
+\cite{fishbot04}: a card whose location has never been publicly revealed is still
+held by the player to whom it was dealt, the joint hidden state at any time is
+exactly the initial deal, and the current holder of every card is a
+deterministic function of the initial deal and the public history. The argument
+is one line --- every change of holder is an announced event, so a card with no
+such event has not moved --- and it is cited here rather than reproved.
+
+What that buys is the elimination of the filtering recursion that dominates
+inference in most imperfect-information card games. There is no belief that
+decays and no dynamics to approximate, only a fixed hidden object and an
+accumulating set of logical constraints on it. Every player computes the
+posterior from the same public history but conditions additionally on their own
+private hand, so the six posteriors differ and no single distribution is shared.
+
+The constraints are accumulating rather than merely present, and the rate at
+which they accumulate governs whether an exact endgame treatment is worth
+building. A game reaches a decided state after a mean of \vsixCollapseEvents{}
+public events, which is the figure \S\ref{sec:mechanisms} uses to size the
+endgame regime.
+
+\paragraph{Notation.} $\mathcal{H}$ is the set of live half-suits and $H \in
+\mathcal{H}$ one of them. Fix an observer $i$. $U$ is the set of cards in live
+half-suits whose holder is not publicly known to $i$, and for $c \in U$ the map
+$\sigma : U \to \{0,\dots,5\}$ gives that card's holder, constant in time.
+$M_c \subseteq \{0,\dots,5\}$ is the surviving support of $\sigma(c)$, and $q_p$
+is the capacity of seat $p$, the number of cards of $U$ that seat must hold. $Z$
+is the number of assignments $\sigma$ consistent with the constraints below, the
+partition function of the posterior. The three quantities the policy consumes are
+the per-card ownership marginal $\mu_{c,p} = \Pr[\sigma(c) = p]$; the probability
+$\tau(H,T)$ that team $T$ owns every card of half-suit $H$; and the probability
+$\alpha(A)$ that a named allocation $A$ --- an assignment of all six cards of one
+half-suit to named seats --- is correct. Unhatted symbols are values from the
+exact engine, hatted ones ($\hat\mu_{c,p}$, $\hat\tau$, $\hat\alpha$) the same
+values from the approximate path. Probabilities are conditional on the observer's
+information throughout and the conditioning bar is suppressed.
+
+\paragraph{The constraint system.} The observer's information is exactly five
+constraints on $\sigma$.
+
+\begin{description}[style=unboxed,leftmargin=0pt,itemsep=4pt,parsep=0pt]
+  \item[(C1) Own hand.] $\sigma(c) \ne i$ for every $c \in U$, and every card $i$
+        holds is resolved.
+  \item[(C2) Public transfers and correct declarations.] Any card whose holder
+        has been revealed leaves $U$ with its holder known exactly. A successful
+        ask reveals the holder \emph{before} the transfer, and that is the value
+        relevant to every earlier constraint.
+  \item[(C3) Exclusions.] An ask for $c$ proves the asker did not hold $c$; a
+        miss proves the target did not hold $c$. Both are permanent, because
+        unresolved cards never move. The surviving support $M_c$ records them.
+  \item[(C4) Capacities.] Hand counts are public, so for every player $p$
+        \begin{equation}
+          \bigl|\{c \in U : \sigma(c) = p\}\bigr| \;=\; q_p \;:=\; h_p - k_p ,
+          \label{eq:capacity}
+        \end{equation}
+        where $h_p$ is $p$'s public card count and $k_p$ the number of live cards
+        already known to be $p$'s. Note $\sum_p q_p = |U|$ automatically, and
+        that a declaration --- correct or not --- is absorbed by
+        \eqref{eq:capacity} without special handling, because the count drop it
+        causes is public.
+  \item[(C5) Ask legality.] An ask for $c$ in half-suit $H$ by player $a$ proves
+        that $a$ held some \emph{other} card of $H$ at that moment. Because
+        unresolved cards never move, this is the time-independent disjunction
+        \begin{equation}
+          \bigvee_{d \in D} \bigl[\sigma(d) = a\bigr],
+          \qquad D = \{d \in H \setminus \{c\} : d \text{ unresolved},\; a \in M_d\},
+          \label{eq:disj}
+        \end{equation}
+        vacuous if some card of $H$ is already known to be $a$'s. Every such
+        certificate is confined to a single half-suit, which is the structural
+        fact \S\ref{sec:belief-count} exploits.
+\end{description}
+
+The prior is uniform over deals consistent with the rules, so the posterior is
+uniform over the assignments $\sigma$ satisfying (C1)--(C5) and $\Pr[\sigma] =
+1/Z$ for each of them. That sentence contains the whole of
+\S\ref{sec:belief-exactworse} in advance: the object is exact with respect to
+\emph{that} prior, and the prior is a modelling choice, not a rule of the game.
+
+\subsection{The exact count law}
+\label{sec:belief-count}
+
+Set (C5) aside. Counting assignments subject to (C3) and (C4) is a
+degree-constrained bipartite counting problem, solved exactly by a
+forward--backward recursion over the vector $n = (n_0,\dots,n_5)$ of
+\emph{remaining} capacities. Ordering $U$ as $c_1,\dots,c_{|U|}$, $F_j(n)$ counts
+placements of the first $j$ cards leaving $n$ unused and $B_j(n)$ placements of
+the rest out of $n$:
+\begin{align}
+  F_j(n) &= \sum_{p \,\in\, M_{c_j} :\, n_p < q_p} F_{j-1}(n + e_p),
+  &F_0(q) &= 1, \label{eq:fwd}\\
+  B_j(n) &= \sum_{p \,\in\, M_{c_{j+1}} :\, n_p \ge 1} B_{j+1}(n - e_p),
+  &B_{|U|}(\mathbf{0}) &= 1, \label{eq:bwd}\\
+  Z &= F_{|U|}(\mathbf{0}) \;=\; B_0(q), \label{eq:Z}
+\end{align}
+with $e_p$ the $p$-th unit vector. Every card consumes exactly one unit of
+capacity, so the layer index is recoverable from $n$ and the $|U|$-layer table
+collapses to two arrays of at most $10^5$ entries (\S\ref{app:inf-count}). These
+recursions count rather than sample, so they and the per-card marginal they
+contract to are exact for (C1)--(C4).
+
+\paragraph{Ask legality by half-suit block enumeration.} Constraint (C5) is
+disjunctive and breaks the product form of \eqref{eq:fwd}--\eqref{eq:bwd}, and
+inclusion--exclusion over the tens of certificates a game accumulates would cost
+$2^k$ passes. The escape is structural: every certificate lives inside one
+half-suit, so $U$ partitions into half-suit blocks admitting one of two exact
+treatments. A block with no live certificate is expanded card by card as in
+\eqref{eq:fwd}--\eqref{eq:bwd}. A block with a live certificate is enumerated
+exhaustively --- at most $\prod_{c \in H}|M_c| \le 5^6$ assignments --- each
+tested against \eqref{eq:disj} directly, and the survivors aggregated into a
+count-vector table
+\begin{equation}
+  g_H(t) \;=\; \bigl|\{\text{assignments } \beta \text{ of } H :
+    \mathrm{count}(\beta) = t,\; \beta \models \text{certificates of } H\}\bigr| ,
+  \label{eq:blocktable}
+\end{equation}
+where $\mathrm{count}(\beta)_p$ is the number of $H$'s unresolved cards $\beta$
+gives to seat $p$. Either way a block consumes a known number of cards, so the
+layer identity survives and the dynamic program runs over blocks rather than
+cards. Writing $S_t$ for the path mass of count vector $t$ at its block's entry
+layer,
+\begin{equation}
+  S_t \;=\; \sum_{|n| \,=\, \text{entry layer}} F(n)\, B(n - t),
+  \label{eq:pathmass}
+\end{equation}
+the three quantities of \S\ref{sec:belief-state} are read straight off the
+tables:
+\begin{align}
+  \mu_{c,p} &= \frac{1}{Z}\sum_t g_H^{(c \to p)}(t)\, S_t
+  &&\text{(per-card ownership)} \label{eq:q1}\\
+  \alpha(A) &= \frac{S_{t(A)}}{Z}
+  &&\text{(the declaration query)} \label{eq:q2}\\
+  \tau(H,T) &= \frac{1}{Z}\sum_{t \,:\, \mathrm{supp}(t) \subseteq T} g_H(t)\, S_t
+  &&\text{(does one team hold the half-suit?)} \label{eq:q3}
+\end{align}
+All three are exact under the uniform prior; no independence assumption and no
+sampling enters. \S\ref{app:inf-blocks} gives the mechanics of both block kinds.
+
+\paragraph{Exactness here is cheap.} An exact rebuild costs \vsixCountCost{}~ms
+mean over \vsixCountStates{} states, against \vsixSinkhornCost{}~microseconds for
+the approximate path. That ratio is large but the absolute cost is small, and it
+is small enough that the result of \S\ref{sec:belief-exactworse} is not a budget
+story. The exact posterior is not too expensive to deploy. It is worse.
+
+\paragraph{What is verified and what is merely unfalsified.} Two exactness claims
+in this machinery are of different standing, and the distinction is stated here
+rather than buried in the appendix. The count law and the block enumeration are
+checked against a brute-force enumerator that factorises nothing
+(\S\ref{app:inf-audit}), and the agreement is at integer rather than rounding
+scale. The team-allocation search, by contrast, does not re-check the survival
+constraint of \eqref{eq:disj} on the allocation it returns; it has failed zero
+times, which is not the same as a proof. \S\ref{app:inf-latent} lists that case
+and two others --- a count routine that falls back to a greedy approximation for
+heterogeneous non-singleton masks, and an enumeration truncation that leaves a
+partial table which is then normalised as if complete --- each with its
+reachability argument.
+
+\paragraph{The approximate path.} Six observers invoke the posterior after every
+public event, which puts it in the inner loop of every large experiment, so the
+engine also implements an approximation and that is what ships. The Fast path
+keeps the exact bookkeeping of (C1)--(C3) and the exact capacities (C4), fits
+them by Sinkhorn scaling of the support matrix, and interleaves a conditioning
+step for (C5) that reweights a certificate's cards by treating their entries as
+independent Bernoulli indicators before capacity fitting is re-run
+(\S\ref{app:inf-sinkhorn}). The independence assumption is false, because the
+capacity constraints that make \eqref{eq:q2} necessary also couple the cards
+inside a certificate. Every performance number in this report was produced by
+this path.
+
+\subsection{The policy prior}
+\label{sec:belief-prior}
+
+The posterior of (C1)--(C5) is exact with respect to the rules and is not the
+full Bayesian posterior over deals, which would additionally weight each deal $x$
+by the likelihood that the observed actions would have been chosen given $x$.
+That likelihood is playstyle-dependent: a player who has taken many turns and
+never asked in half-suit $H$ is, under any plausible policy, less likely to hold
+cards of $H$, and the rules alone say nothing about this.
+
+The engine implements a two-parameter family of such corrections as prior weights
+inside the same machinery,
+\begin{equation}
+  w(c,p) \;=\; \exp\!\bigl(\theta\, a_{p,H(c)} - \phi\,(a_p - a_{p,H(c)})\bigr),
+  \label{eq:prior}
+\end{equation}
+where $a_{p,H}$ counts $p$'s public asks in half-suit $H$, $a_p$ their total
+public asks, and $H(c)$ is the half-suit of card $c$. The weights replace the
+uniform initialisation of the Sinkhorn fit, so $\theta = \phi = 0$ recovers the
+policy-agnostic posterior of \S\ref{sec:belief-state}. Both parameters are
+fitted jointly with the rest of the policy (\S\ref{sec:fitting}); the shipped
+values are $\theta = \vsixPriorTheta{}$ and $\phi = \vsixPriorPhi{}$. Deleting
+the prior from the shipped configuration, leaving every other coordinate at its
+fitted value, costs \vsixPriorDeleteCost{} points, interval
+[\vsixPriorDeleteCI{}].
+
+Two architectural facts follow, and they are what makes
+\S\ref{sec:belief-exactworse} possible. \emph{First}, \eqref{eq:prior} is the
+only channel by which behaviour enters the belief; everything else in
+(C1)--(C5) is a rule. \emph{Second}, the approximate path has that channel and
+the exact path structurally cannot: the block construction of
+\S\ref{sec:belief-count} takes the deduction state alone and has no parameter
+through which an opponent model could reach it. The two paths are therefore not
+a fast approximation and its exact reference. They are two different posteriors
+over the same hidden state, one policy-agnostic and exact under a uniform deal
+prior, the other policy-aware and approximate.
+
+\subsection{The exact posterior is a worse predictor than the approximation}
+\label{sec:belief-exactworse}
+
+Both posteriors were scored as predictors, on the same states, by two measures
+that do not involve playing a game: predictive log loss over the unresolved cards
+of each state, and the realised hit rate of each posterior's own argmax ask ---
+the ask the posterior itself rates most likely to succeed, scored against the
+truth. The probe is \texttt{fish v6probe --mode=belief}
+(\S\ref{sec:engine-impl}), and the source of record is
+\filepath{research/v06/notes/R12-mechanism-trials.md}, \S3.
+
+The comparison carries no fitted weights on either side. It scores posteriors,
+not policies, so nothing in it depends on which posterior the ask weights were
+tuned against. That is why it can settle a question that a substitution
+experiment in play cannot.
+
+\begin{table}[ht]
+\centering
+\caption{Each posterior scored as a predictor on identical states: mean
+predictive negative log likelihood over the unresolved cards, the probability
+each posterior assigns to its own argmax ask, and the realised hit rate of that
+ask. Rows are the exact count law under the uniform deal prior, the approximate
+path with the policy prior deleted, and the approximate path at the shipped
+prior, followed by the $\theta$ sweep. Lower NLL and higher hit rate are better.
+The unit is one card for the NLL column and one decision for the hit column.}
+\label{tab:belief}
+\small
+%
+\input{tables_v06/belief}
+\end{table}
+
+The ordering is unambiguous and it is the wrong way round. The exact count law
+under a uniform deal prior scores \vsixBeliefExactNLL{} nats per card and
+\vsixBeliefExactHit{}\% argmax hit rate. The approximate path with only the
+certificate half of the prior deleted ($\theta = 0$) scores \vsixBeliefNoPriorNLL{} and
+\vsixBeliefNoPriorHit{}\%; with the prior deleted outright ($\theta = \phi = 0$,
+\filepath{research/v06/results/F2-belief-noprior.txt}) it scores $1.39339$ and $49.14\%$ --- still
+ahead of the exact law on both measures. The shipped prior scores \vsixBeliefShippedNLL{} and
+\vsixBeliefShippedHit{}\%. The exact object is the worst predictor of the three,
+and the gap between the second and third rows is the policy prior alone:
+\numThetaPriorHitGain{} points of argmax hit rate and \numThetaPriorNatGain{}
+nats.
+
+The same ordering appears on the full live candidate set rather than on the card
+marginals. Over the ask decisions of a \vfive{} mirror, the approximate argmax
+converts \vsixFullFastFive{}\% of the time and the exact argmax
+\vsixFullExactFive{}\%, on identical states, with the two argmaxes disagreeing at
+\vsixDisagreeFive{}\% of decisions; hindsight converts
+\vsixFullBestFive{}\%. Substituting the exact posterior into the shipped policy
+therefore does not merely fail to help. It replaces the better predictor with the
+worse one at every decision on which they differ.
+
+Three consequences follow, and the note draws all three.
+
+\begin{enumerate}
+  \item \textbf{``Exact'' is exact under a uniform-deal prior, and that prior is
+        wrong.} The exact count law is the worst predictor in
+        Table~\ref{tab:belief}. Part of the gap is \eqref{eq:prior}: deleting
+        the prior costs the approximation about a point and a half of argmax hit
+        rate. But it is not the whole gap --- with both prior parameters deleted
+        the approximation still predicts better than the exact law, so the
+        remainder is the Sinkhorn fit's own maximum-entropy smoothing, which
+        hedges better than an exact conditional distribution taken under a prior
+        that is wrong. Exactness with respect to the
+        rules is not exactness with respect to the game, because the observed
+        actions carry information the rules do not encode. Calling the block
+        posterior ``the exact posterior'' without that qualification --- as the
+        earlier reports in this corpus do --- names it after a property it has
+        only relative to an assumption nobody tested.
+  \item \textbf{The residual belief error is not an approximation error to be
+        engineered away.} This settles the corpus's standing open question
+        --- whether a matched-budget refit of the ask weights under
+        \texttt{belief=block} would recover the deficit the v0.4 substitution
+        ablation measured --- in the negative. The refit is not worth running,
+        because the object it would fit is a strictly less informative posterior.
+        The question stayed open for two studies because it was posed as a
+        budget question, and it is not one: \S\ref{sec:belief-count} shows the
+        exact path is affordable, and this subsection shows it is worse anyway.
+  \item \textbf{The predictive optimum is not the playing optimum.} Raising
+        $\theta$ improves prediction well past its fitted value: the sweep in
+        Table~\ref{tab:belief} minimises NLL at $\theta \approx
+        \numThetaPredictiveOpt{}$, against the shipped $\numThetaShipped{}$. In
+        play the same change loses --- \numThetaSixtyCost{} points of win rate at
+        $\theta = \numThetaTrialLow{}$ and \numThetaElevenCost{} at $\theta =
+        \numThetaTrialHigh{}$, at \numThetaTrialN{} games per cell. The ask weights were fitted at the
+        shipped $\theta$ and do not transfer to a different one. Belief and
+        policy are therefore not separable objects to be optimised in turn; any
+        change to $\theta$ has to be refitted jointly with the weights that
+        consume it, which is what the fit of \S\ref{sec:fitting} does.
+\end{enumerate}
+
+The third consequence is the one that generalises beyond this game. A better
+posterior is not a better agent, and an inference component evaluated on
+predictive loss can be improved into a policy that plays worse. The two
+objectives coincide only when the downstream policy is optimal for whatever
+posterior it is handed, and no fitted linear policy is.

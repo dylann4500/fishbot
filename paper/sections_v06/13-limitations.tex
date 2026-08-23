@@ -1,0 +1,82 @@
+\section{Threats to validity}
+\label{sec:limitations}
+
+\paragraph{\vsix{} is not separated from \vfive{} head to head, and this paper says so.}
+Pooled over every head-to-head cell in the battery it is \vsixHeadPooled\% with a naive $z$ of
+\vsixHeadZ{} (\S\ref{sec:results-h2h}). Its claim is on the axis this project has always said it
+cares about --- the paired panel comparison and the worst case across playstyles --- together with a
+set of corrections and negative results that close off most of the design register it inherited.
+
+\paragraph{The worst-case improvement is carried by one column.} Minimax regret over the
+thirteen-style set is \vsixPoolRegretSix{} for \vsix{} against \vsixPoolRegretFive{} for \vfive{}, but
+delete the withholder column and the three arms converge. The withholder was in the fitting panel
+of both fits. The correct reading is that the refit bought robustness against a deception archetype
+it was shown, which is what a minimax-regret objective over a panel containing that archetype is
+supposed to do, and not that \vsix{} is uniformly more robust.
+
+\paragraph{The null results are null \emph{at this budget and against this panel}.}
+Five mechanisms are reported as worth zero. Each was measured paired, at a thousand deals per cell,
+on two disjoint banks, against a six- or seven-opponent panel. That resolves effects of roughly a
+point; it does not resolve effects of a quarter of a point, and a policy improvement of a quarter of
+a point per mechanism, compounded across a dozen mechanisms, would be a real policy improvement.
+What this study establishes is that none of the mechanisms on the inherited register is large, not
+that the sum of many small ones is zero.
+
+\paragraph{The search verdict is conditional on two quantities.}
+Test-time search is reported as not paying, and the conclusion rests on the variance of the terminal
+return and the fidelity of the rollout blueprint. Both are movable. A shaped or truncated return
+with a well-fitted leaf evaluator would cut the variance; a blueprint closer to the deployed policy
+at the same cost would cut the bias. This study measured the frontier for the second
+(Table~\ref{tab:rollout}) and did not build the first, because the leaf evaluator available is
+algebraically close to a rescaling of the hit probability. A study that rebuilds the value function
+first should re-open the search question; \S\ref{sec:search-ships} says so, and the machinery is
+retained switched off for exactly that reason.
+
+\paragraph{Exchangeability is established for the tied set, not for the whole candidate set.}
+The finding of \S\ref{sec:diag-irreducible} is that candidates the policy's score cannot separate
+are also candidates the \emph{exact posterior} cannot separate. It is not a claim that the exact
+posterior is uninformative in general --- it disagrees with the deployed approximation about the
+best ask at \vsixDisagreeFive\% of decisions --- only that where the deployed score ties, the
+information ties too.
+
+\paragraph{\vsix{}'s advantage is a self-play advantage and does not transfer to a change of
+partner.} This is the sharpest limitation in the paper and it is measured, not conjectured. Against
+three \vfive{} opponents, \vsix{} beats \vfive{} by $2.25$ points when its two partners are copies
+of itself, by $1.4$ when they are \vthree{}, by $-0.1$ when they are the detective and by $-0.8$
+when they are the withholder (Table~\ref{tab:partners}; 800 games a cell, none of the three mixed
+rows separated from zero). A refit whose objective is scored in self-play buys a policy that
+coordinates with copies of itself, and that coordination is exactly what a human partner does not
+supply. The project owner's standing decision --- never headline the self-play configuration as
+though it were the one a human will meet --- is why this table exists, and it is why the paper does
+not claim \vsix{} is a better partner for a person.
+
+\paragraph{The opponent panel is a modelling choice and the deception archetypes are hand-built.}
+The withholder, the silent and the feint are stylised implementations of manoeuvres the project
+owner reported from live play; they are not humans. A gain against the withholder is evidence about
+robustness to a class of behaviour, not a measurement of play against a person. The partner-regime
+columns have the same limitation from the other side: a ``human-model partner'' is a weaker or
+deceptive bot, not a human.
+
+\paragraph{Exploitability is a lower bound within a searched class.}
+The best-response probe fits a responder from the same policy family with the same optimiser. A
+stronger response outside that family would give a larger number. A response that fails to reach
+parity therefore proves nothing, which is precisely the reading error \S\ref{sec:corr-vfour}
+corrects in the v0.4 record.
+
+\paragraph{The engine correction changes previously published numbers.}
+Any earlier result computed with the exact block belief in a configuration where more than one seat
+held such an object was affected by the table-aliasing defect. This study re-runs what it quotes;
+it does not re-run the whole of the v0.4 and v0.5 studies, and it does not claim to know the size of
+the effect on their published tables.
+
+\paragraph{Fitting seeds are disjoint from evaluation banks, but the panel is not.}
+The refit's panel contains opponents that also appear in the evaluation panel. The head-to-head and
+per-style results are therefore in-panel for those cells and held-out only in the seed sense. The
+cells that are held out in both senses --- the styles absent from the fitting panel --- are marked
+as such in Table~\ref{tab:perstyle}, and they are the ones a sceptical reader should weigh.
+
+\paragraph{Termination remains empirical.}
+As in v0.5, no configuration shipped here hits the action cap in any measured run, but that is a
+measurement rather than a theorem. The structural backstop is M1, whose gate is a hard deduction and
+cannot be wrong; what is not proved is that M1 plus the stopping rule terminates on every reachable
+position.

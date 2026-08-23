@@ -1,0 +1,10 @@
+### v06 carrying v05's vector with every switch off must be v05 BIT FOR BIT
+v06-off md5 47c3e2bb6a1f079b9c05a3c3c6df2e13
+v05     md5 47c3e2bb6a1f079b9c05a3c3c6df2e13
+IDENTITY PASS
+
+### BlockDP table aliasing (v0.6 E2): QUERY mismatches must be 0
+same BlockDP object, same query, before/after a second build() elsewhere
+  checks 180   QUERY mismatches 0   worst |delta| 0   (raw shared-pool field reads that differ: 175)
+same BlockDP object, same query, before/after a second build() elsewhere
+  checks 121   QUERY mismatches 0   worst |delta| 0   (raw shared-pool field reads that differ: 117)

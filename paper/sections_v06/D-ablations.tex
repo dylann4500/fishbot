@@ -1,0 +1,100 @@
+\section{Extended ablations}
+\label{app:ablations}
+
+\subsection{Design}
+\label{app:abl-design}
+
+Every ablation in this study is paired. A variant plays the \emph{same} deals against the \emph{same}
+panel as the reference, and the statistic is the per-deal margin, bootstrapped resampling deals as
+clusters because the rotations of one deal are a single correlated observation. This is the
+`ablate' command, and it is the only estimator used for a mechanism claim anywhere in this paper.
+
+The reason is in \S\ref{sec:protocol-paired} and is worth restating here, because it is the single
+most consequential methodological fact this study produced. Five mechanisms cleared a $95\%$ paired
+interval at four hundred to sixteen hundred games per cell --- the budget at which most published
+ablation rows in this project's three prior studies were collected --- and returned \emph{exactly}
+zero at three thousand, on two disjoint seed banks. Table~\ref{tab:abl-null} is that table.
+
+\subsection{The mechanisms that vanished}
+\label{app:abl-null}
+
+\begin{table}[h]\centering
+\caption{Five mechanisms, at the corpus's usual per-cell budget and at this study's. A negative
+delta means the variant beats the reference. Every large-$n$ row is the result of record.}
+\label{tab:abl-null}
+\small
+\begin{tabular}{lll}
+\toprule
+mechanism & small-$n$ paired delta & large-$n$, two disjoint banks \\
+\midrule
+void creation, $w=1.5$ & $-0.0292$ $[-0.0537, -0.0037]$ & $+0.0007$ $[-0.0213, +0.0227]$; $+0.0200$ $[-0.0017, +0.0413]$ \\
+void creation, $w=3$ & $-0.0313$ $[-0.0593, -0.0033]$ & as above \\
+delete the perseveration bonus & $-0.0200$ $[-0.0356, -0.0044]$ & $-0.0012$ $[-0.0137, +0.0112]$; $+0.0035$ $[-0.0092, +0.0158]$ \\
+declaration margin $-0.06$ & $+1.75$ points unpaired & $+0.0133$ $[+0.0013, +0.0247]$ \\
+delete the negative value-of-information term & $-0.0053$ $[-0.0244, +0.0141]$ & not separated \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two readings, and the second is the one that generalises. The first is that none of these mechanisms
+works. The second is that the evidence standard this project has used since v0.3 cannot separate a
+real one-point effect from a seed draw, which means the design register the three prior studies
+built --- and which this study inherited and set out to work through --- was partly assembled from
+noise.
+
+\subsection{The switched-off mechanisms}
+\label{app:abl-off}
+
+\vsix{} ships several mechanisms switched off. Each is listed with why, so that a later study does
+not rebuild it:
+
+\begin{itemize}
+\item \textbf{Test-time search} (\S\ref{sec:search}). Off by default and shipped as the separate
+  \vsixsearch{} configuration: it is the one mechanism here that beats a static rule, and it costs
+  three orders of magnitude in throughput.
+\item \textbf{Ownership features scaled by hit probability.} Measured at $-1.33$ points by the v0.5
+  study once M1 removes the case the scaling was for.
+\item \textbf{A blanket $(\text{card},\text{target})$ repetition guard.} Measured at $-6.13$ points
+  --- the largest single-switch effect in this codebase --- because cards move, so a repeat after a
+  public transfer is frequently the best ask on the board. The \emph{dead}-ask repeat guard v0.6
+  uses is a different object and is provably free (\S\ref{sec:search-deadask}).
+\item \textbf{Certificate de-duplication.} Correct, and it changes the approximate posterior, so it
+  is opt-in and off by default to keep v0.4 and v0.5 bit-identical.
+\end{itemize}
+
+\subsection{Per-opponent detail}
+\label{app:abl-peropponent}
+
+\begin{table}[h]\centering
+\caption{Paired ablations against \vsix{} over the six-opponent panel.}
+\label{tab:abl-full}
+\input{tables_v06/ablations}
+\end{table}
+
+\subsection{The four-way that separates two confounded switches}
+\label{app:abl-fourway}
+
+A non-zero extra ask weight is what sets the flag that selects the v0.6 scoring path, and the v0.6
+scoring path is the one that does \emph{not} run v0.5's top-$K$ chain and threat re-scoring.
+Switching the extra terms off therefore switches that pass back on, so the obvious ablation moves
+two things at once. Table~\ref{tab:fourway} runs all four cells.
+
+\begin{table}[h]\centering
+\caption{The four-way. A negative delta means the variant beats \vsix{}. All four are null.}
+\label{tab:fourway}
+\input{tables_v06/fourway}
+\end{table}
+
+Two things follow. The extra ask terms are worth nothing, and so is the chain pass --- which is why
+\vsix{} drops it, and why \vsix{} is the fastest policy in the family
+(\vsixThroughputSix{} games per second against \vfive{}'s \vsixThroughputFive{}). And resolving
+the tie group at random is worth nothing too, which is the control that makes
+\S\ref{sec:diag-irreducible}'s reading of the search result possible.
+
+\subsection{Specification of every arm}
+\label{app:abl-specs}
+
+Arms are named by the configuration grammar of Appendix~\ref{app:params}. \texttt{v06:legacy=1} is
+\vsix{} carrying v0.5's parameter vector and is bit-identical to \vfive{}; it is the arm that
+isolates the refit from every other change. \texttt{v06:xf=0} removes the three extra ask terms.
+\texttt{v06:s1=1,...} switches the search on at the stated budget.

@@ -1,0 +1,5 @@
+v04                                147.855 games/s over 400 games
+v05                                276.294 games/s over 400 games
+v06                                303.369 games/s over 400 games
+v05:topk=0                         286.027 games/s over 400 games
+v05:belief=indep,topk=0            9289.03 games/s over 400 games

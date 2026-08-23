@@ -1,0 +1,39 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Three FishBot studies in a row have ended with a policy that is not measurably stronger than the one
+before it. This one explains why.
+
+The design register the project had accumulated --- a blind target dimension, a large tie channel, an
+exact posterior held back only by its cost, a two-ply search that could be deepened --- described a
+policy with several points of accessible headroom. Measured at a resolution the project had not
+previously used, none of it is there. The ties are exchangeable and therefore irreducible. The exact
+posterior is a worse predictor than the approximation, because exactness is bought by discarding the
+policy prior. The search is dominated by the variance of its own return, to the tune of \vsixCurseGap{} points,
+and once that is corrected it has nothing left to say. Four further mechanisms, each keyed to a
+measured channel and each fitted rather than hand-set, are worth zero.
+
+What was actually broken was the apparatus. The optimiser could not move a policy: one step size for
+thirty-four coordinates spanning two and a half orders of magnitude, an unpaired objective, and an
+objective documented as a worst case that was a weighted mean. The evaluation could not resolve a
+point: five mechanisms in this study passed a 95\% interval at the budget the corpus uses and failed
+at three times it. And the exact inference engine, the one component nobody doubted, was returning
+another observer's tables whenever two observers held one.
+
+\vsix{} fixes those, and the fixed optimiser then finds what forty generations of the old one could
+not: a policy that is ahead of \vfive{} on the paired panel comparison at all three banks it was
+measured on, and that gains nine points against the deception archetype the project owner brought
+here from live play. Head to head it is a null --- \vsixHeadPooled\% over \vsixHeadPooledN{} games
+--- and the paper says so in the abstract, because an earlier draft of this work quoted only the
+five banks that agreed and the correction is exactly the kind this study exists to make. That is a
+smaller headline than a new mechanism would have been. It is also the only one the evidence
+supports, and stating it that way is the point.
+
+Three things the next study should take from this. The tie-break question is closed --- any candidate
+signal must first be shown to separate the tied set under the exact posterior, and none of the
+obvious ones can. The search question is open but conditional: it should be re-opened only after the
+leaf evaluator is rebuilt, because the present one is algebraically close to a rescaling of the hit
+probability and cannot support a depth-limited search. And the evidence standard is now the binding
+constraint on everything else: at a thousand deals per cell, paired, on two banks, this policy class
+looks flat, and a study that wants to find a quarter-point mechanism will need a per-decision
+objective rather than a per-game one.

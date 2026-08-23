@@ -1,0 +1,86 @@
+\section{Test-time search: implementation detail}
+\label{app:search}
+
+\subsection{Sampling the deal}
+\label{app:search-sampling}
+
+The capacity dynamic program of \S\ref{sec:belief-count} is an exact sampler as well as an exact
+counter: descending it with the backward table as the branch weights draws uniformly from the deals
+satisfying constraints C1--C4. Certificates (C5) are enforced by rejection, exactly as the
+reference posterior does, so an accepted draw is an exact sample of the policy-agnostic posterior.
+
+The policy prior is then applied as an \emph{importance weight} rather than being folded into the
+sampler. Two reasons. The sampler stays exact and testable against the brute-force enumerator; and
+the prior stays a separable, auditable object, which matters because \S\ref{sec:belief-exactworse}
+shows the prior is carrying more of the posterior's predictive value than the exactness is. The
+weighted statistics use Kish's effective sample size, so the deviation rule's standard error is not
+overstated when the weights are uneven.
+
+Measured cost at a decision: the dynamic program builds in tens to hundreds of microseconds
+depending on how much of the deal is still unresolved, and one accepted draw costs well under a
+microsecond. Determinization is not the expensive part of this search; the rollout is.
+
+\subsection{Reconstructing the six information sets}
+\label{app:search-control}
+
+The reconstruction rests on a structural fact about the deduction state: every write it performs is
+a function of the public event alone, except the two lines that maintain the observer's own hand.
+Six such objects fed the same event stream from an all-possible start therefore agree bit for bit
+outside those two fields, so the public deduction state is \emph{one} object, replayed once per
+decision, and a seat's information set is that object refined by the hand the determinization gives
+it.
+
+This is checked against ground truth rather than argued. Over \vsixReconStates{} states and \vsixReconChecks{} card
+checks the reconstruction differs from the seat's real deduction state on \vsixReconMaskPct\% of
+cards, and in \vsixReconWider{} of \vsixReconWider{} differing cases the reconstruction is \emph{wider}: it is a strict under-approximation.
+No simulated player is ever credited with knowledge the real one lacks, which is the direction the
+soundness argument needs.
+
+The cost of reconstructing all six seats is a few microseconds, because the shared object is
+replayed once and the six refinements are linear in the deck.
+
+\subsection{The blueprint used inside the rollout}
+\label{app:search-blueprint}
+
+A rollout is only as informative as the policy that plays it. Table~\ref{tab:rollout} gives the
+frontier. Two axes were available and the corpus had only ever used one of them:
+
+\begin{itemize}
+\item \textbf{Dropping the two-ply refinement} costs little strength and removes most of the
+  per-decision cost, because that refinement rebuilds the approximate posterior twice per candidate.
+\item \textbf{Reducing the Sinkhorn iteration count}, which the corpus had not tried, is the cheap
+  axis. The deployed setting is four outer and eight inner sweeps; two and four is statistically
+  indistinguishable from the full blueprint at a fraction of the cost, and one and one costs a few
+  points.
+\item \textbf{Replacing the belief with independent marginals} is $62\times$ cheaper per event and
+  $38$ points weaker. It was the first blueprint tried and it is why the first search build scored
+  in single digits.
+\end{itemize}
+
+\subsection{The deviation rule}
+\label{app:search-guard}
+
+Candidate $0$ is the blueprint's own choice. For each other candidate $r$ the search forms the
+paired difference $d_r = \sum_d w_d\,(v_{r,d} - v_{0,d})$ over the shared determinizations, its
+weighted variance, and a standard error using the effective sample size; it deviates to
+$\arg\max_r\, (d_r - \kappa\,\mathrm{se}_r)$ only when that lower bound is positive.
+
+Inside the blueprint's own tie group the penalty is waived, because there the blueprint expresses no
+preference and ``deviating'' from whichever candidate the enumerator emitted first is not a
+deviation. That waiver is load-bearing: applying the penalty inside the tie group as well takes the
+win rate to \vsixSearchTieGuardedWin\% --- the advantage goes with it.
+
+\subsection{The deviation rate, and why it has to be decomposed}
+\label{app:search-kappa}
+
+Table~\ref{tab:searchdev} is the diagnostic, and read naively it says the search is mis-scaled: it
+moves \vsixSearchDevTwoFive\% of the decisions it searches at the best setting, and the rate never
+falls below about $31\%$ however far $\kappa$ is raised.
+
+The floor is the waived tie group. Applying the same penalty there collapses the rate to
+\vsixSearchDevGuardedTwoFive\% at $\kappa = 2.5$ and \vsixSearchDevGuardedFour\% at
+$\kappa = 4$, so the search's \emph{evidence-backed} deviation rate is inside the band the
+literature associates with a refinement, and the $31\%$ floor is re-choosing among candidates the
+blueprint could not separate. Since the win goes away when that waiver is removed
+(\vsixSearchTieGuardedWin\%), the tie group is where the search is doing its work --- though
+\S\ref{sec:search-falsifier} states why the attribution is not resolved at this sample size.

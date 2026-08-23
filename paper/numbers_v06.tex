@@ -1,0 +1,721 @@
+%% numbers_v06.tex -- every number quoted in the v0.6 manuscript.
+%%
+%% PLACEHOLDER SCAFFOLD.  Nothing in this file has been measured.  Every value
+%% is a deliberately impossible literal (XX.XX, XX, X,XXX, XXXXXXX) so that a
+%% missing or forgotten regeneration is visible on the page rather than silently
+%% plausible.  Do not "fill one in by hand" -- the pipeline is:
+%%
+%%   engine/experiments_v06.sh  ->  research/v06/results/<artifact>
+%%   engine/build_tables_v06.py ->  paper/numbers_v06_generated.tex
+%%                                  (\providecommand{}{}\renewcommand{}{value},
+%%                                   one source comment per macro)
+%%   fishbot_v06.tex            ->  inputs THIS file, then conditionally inputs
+%%                                  numbers_v06_generated on top of it
+%%
+%% (The two file names above are deliberately written without their input
+%% commands: paper/inline.py expands any \input it sees, including one inside a
+%% comment, so a comment that names its own file recurses to the depth limit and
+%% pastes this file into the flattened Overleaf output six times over.)
+%%
+%% so the generated file always wins and these defaults only reach the PDF when
+%% the battery has not been run.  This is the two-file scheme v0.5 introduced
+%% (research/v06/notes/R5-state-of-knowledge.md e.6), and it is deliberate that
+%% the fallback is ugly.
+%%
+%% Discipline: no number appears as a literal anywhere in sections_v06/.  If a
+%% section needs a figure, it gets a macro here and the macro cites its source
+%% artifact in the comment above it.  paper/check.py (a --v06 profile still has
+%% to be added at check.py:160-171) enforces the first half of that rule;
+%% paper/check_provenance.py enforces the second.
+%%
+%% Naming convention: \vsix... for a quantity this study measured, \num... for a
+%% quantity carried forward from the v0.3/v0.4/v0.5 record or fixed by the
+%% protocol.  \providecommand throughout so a partially generated file can be
+%% \input first without a clash.
+%%
+%% Amendment to the header above, made when the background sections were
+%% written.  The two classes are no longer both placeholders, and the difference
+%% is deliberate.  Every \vsix... macro is a quantity the v0.6 battery has to
+%% produce and every one of them is still an impossible literal, so a forgotten
+%% regeneration is loud.  A \num... macro carried forward from the v0.4 or v0.5
+%% record is a TRANSCRIBED number in the sense of paper/check_provenance.py: the
+%% battery will never generate it, it was read out of an artifact that already
+%% exists on disk, and leaving it as XX.XX would make the sentence quoting it
+%% unreadable rather than visibly unfinished.  Those macros therefore carry their
+%% real values, each under a comment naming the artifact it was read from.  A
+%% \num... macro whose source is a v0.6 measurement (the comparison rows of
+%% sec:corrections, for instance) stays a placeholder like any \vsix... one.
+
+%% ---------------------------------------------------------------------------
+%% Title block
+%% ---------------------------------------------------------------------------
+%% The commit each experiment group ran at.  Fill from `git rev-parse --short HEAD`
+%% at the moment experiments_v06.sh is launched; split into two macros if the
+%% groups diverge, as the v0.4 title block does.
+\providecommand{\commitplaceholder}{XXXXXXX}
+
+%% ===========================================================================
+%% sec:rules and app:dialect -- the dialect studied, and the two places the
+%% engine is more restrictive than the rules of record allow.  Both channels
+%% were measured by the v0.5 study and neither figure is regenerated here.
+%% ===========================================================================
+%% Turn transfer: research/v05/results/P8-coordination.md sections 1.3 and 1.4,
+%% cross-checked in research/v05/results/P8-verify-turn-transfer.md.  A genuine
+%% multi-candidate transfer decision arises \numTransferEvents{} times per game;
+%% giving one team a ground-truth chooser and pairing on common deals is worth
+%% \numTransferDelta{} sets/game.
+\providecommand{\numTransferEvents}{0.148}
+\providecommand{\numTransferDelta}{-0.0007}
+\providecommand{\numTransferCI}{0.0024}
+\providecommand{\numTransferGames}{6{,}000}
+\providecommand{\numTransferDiverged}{0.48}
+%% Declaration arbitration: research/v05/results/P6-verify-arbitration-cost.md
+%% sections 3 and 4.  Confidence ranking against lowest-seat arbitration, pooled
+%% over five seeds; and the clairvoyant arbitrator that bounds the channel.
+\providecommand{\numArbCost}{+0.37}
+\providecommand{\numArbRange}{+0.28 to +0.45}
+\providecommand{\numArbOracle}{+0.35}
+\providecommand{\numArbGames}{30{,}000}
+%% The action-cap incidence under the v0.6 battery.  Not yet measured.
+\providecommand{\vsixLimitRate}{X.XX}
+
+%% ===========================================================================
+%% sec:engine -- verification, information safety, and the v0.6 engine repairs
+%% research/v06/results/E1-verify.txt, and the repair regression suite
+%% ===========================================================================
+\providecommand{\vsixVerifyChecks}{X{,}XXX{,}XXX}
+\providecommand{\vsixVerifyViolations}{XX}
+\providecommand{\vsixVerifyGames}{XXX}
+\providecommand{\vsixVerifyDeterminism}{XXXX}
+\providecommand{\vsixVerifyPool}{XX}
+\providecommand{\vsixVerifyPairs}{XX}
+%% BlockDP thread_local table aliasing (R5 d.3, R0 sec.7 row 1): the mismatch
+%% count before the repair and after it, on the same probe.
+\providecommand{\vsixAliasChecksBefore}{XXX}
+\providecommand{\vsixAliasMismatchBefore}{XXX}
+\providecommand{\vsixAliasChecksAfter}{XXX}
+\providecommand{\vsixAliasMismatchAfter}{XX}
+%% Duplicate-certificate accumulation in Knowledge::onEvent (belief.hpp:168-171)
+\providecommand{\vsixCertStoreBefore}{XX}
+\providecommand{\vsixCertStoreAfter}{XX}
+\providecommand{\vsixBlockCostBefore}{XX.XX}
+\providecommand{\vsixBlockCostAfter}{XX.XX}
+%% BruteForce::enumerate uninitialised stack at nU==0 (oracle.hpp:102,108-113)
+\providecommand{\vsixQzeroShare}{XX.XX}
+%% Oracle coverage: the exact oracle only verifies states small enough to
+%% brute-force, and the skipped ones are the high-entropy early game
+\providecommand{\vsixOracleEnumerated}{XX{,}XXX}
+\providecommand{\vsixOracleSkipped}{XX{,}XXX}
+\providecommand{\vsixOracleCoverage}{XX.X}
+\providecommand{\vsixThroughput}{XXX}
+\providecommand{\vsixThroughputVfive}{XXX}
+
+%% ===========================================================================
+%% sec:belief -- the observer-conditioned posterior, and the result that the
+%% exact posterior is a WORSE predictor than the policy-aware approximation
+%% research/v06/results/E?-belief.txt; replicates R6 sec.2b at two seed banks
+%% ===========================================================================
+\providecommand{\vsixBlockWin}{XX.XX}
+\providecommand{\vsixBlockCI}{XX.XX--XX.XX}
+\providecommand{\vsixBlockWinB}{XX.XX}
+\providecommand{\vsixBlockCIB}{XX.XX--XX.XX}
+\providecommand{\vsixBlockSeedA}{XXXXXX}
+\providecommand{\vsixBlockSeedB}{XXXXXX}
+\providecommand{\vsixBlockGames}{X{,}XXX}
+\providecommand{\vsixBlockDeficit}{XX.X}
+%% resolution vs calibration: the exact posterior breaks more ties and predicts
+%% hits worse.  Both halves must be reported together (R0 sec.6 item 1).
+\providecommand{\vsixTieRateFast}{XX.XX}
+\providecommand{\vsixTieRateBlock}{XX.XX}
+\providecommand{\vsixTieBroken}{XX.X}
+\providecommand{\vsixHitFast}{XX.XX}
+\providecommand{\vsixHitBlock}{XX.XX}
+\providecommand{\vsixDecisionsFast}{X{,}XXX}
+\providecommand{\vsixDecisionsBlock}{X{,}XXX}
+%% the policy prior itself
+\providecommand{\vsixPriorTheta}{X.XXXXX}
+\providecommand{\vsixPriorPhi}{X.XXXXX}
+\providecommand{\vsixPriorThetaEff}{X.XXXXX}
+\providecommand{\vsixPriorDeleteCost}{X.XX}
+\providecommand{\vsixPriorDeleteCI}{X.XX, X.XX}
+%% the exact count law
+\providecommand{\vsixCountStates}{XX{,}XXX}
+\providecommand{\vsixCountCost}{X.XXXX}
+\providecommand{\vsixSinkhornCost}{XX.X}
+\providecommand{\vsixCollapseEvents}{XX.X}
+
+%% ===========================================================================
+%% sec:diagnosis -- what v0.5 does wrong, and the two negative results
+%% research/v06/results/D?-*.txt (the diagnostic battery)
+%% ===========================================================================
+%% -- the tie census (R10 sec.4, probe/margin.cpp) ---------------------------
+\providecommand{\vsixTieDecisions}{XX{,}XXX}
+\providecommand{\vsixTieShare}{XX.XX}
+\providecommand{\vsixTieForcedShare}{X.XX}
+\providecommand{\vsixTieCandidates}{XX.X}
+\providecommand{\vsixTieSpread}{X.XX}
+\providecommand{\vsixTieGapMedian}{X.XXXXXX}
+\providecommand{\vsixTieSameSuit}{XX.XX}
+\providecommand{\vsixTieGroundTruthDiffer}{XX.XX}
+\providecommand{\vsixTieDegenerate}{X.XX}
+\providecommand{\vsixTieMaxPHit}{XX.XX}
+%% -- negative result 1: exchangeable ties are IRREDUCIBLE by rollout --------
+\providecommand{\vsixTieOnlyWinLow}{XX.XX}
+\providecommand{\vsixTieOnlyCILow}{XX.XX--XX.XX}
+\providecommand{\vsixTieOnlyWinHigh}{XX.XX}
+\providecommand{\vsixTieOnlyCIHigh}{XX.XX--XX.XX}
+\providecommand{\vsixTieOnlyDetLow}{XX}
+\providecommand{\vsixTieOnlyDetHigh}{XX}
+\providecommand{\vsixTieOnlyN}{XXX}
+\providecommand{\vsixTieSymmetricShare}{XX.X}
+%% -- negative result 2: v0.5's fit was sampling noise (R4) ------------------
+\providecommand{\vsixFitTraceGens}{XX}
+\providecommand{\vsixFitIncumbentStart}{X.XXXX}
+\providecommand{\vsixFitIncumbentEnd}{X.XXXX}
+\providecommand{\vsixFitIncumbentSd}{X.XXXX}
+\providecommand{\vsixFitSlope}{X.XXXXX}
+\providecommand{\vsixFitSlopeSE}{X.XXXXX}
+\providecommand{\vsixFitSlopeT}{X.XX}
+\providecommand{\vsixFitBestGap}{X.XXXX}
+\providecommand{\vsixFitOrderStat}{X.XXXX}
+\providecommand{\vsixFitPop}{XX}
+\providecommand{\vsixClipWorst}{XX.X}
+\providecommand{\vsixClipWorstKnob}{XXXXXXXX}
+\providecommand{\vsixClipFrozenKnob}{XXXXXXXX}
+%% -- the loss channels v0.5 still leaks through ----------------------------
+\providecommand{\vsixOwnLocked}{X.XX}
+\providecommand{\vsixOwnLockedShareOfMiss}{XX.XX}
+\providecommand{\vsixAllocDelay}{X.XXX}
+\providecommand{\vsixDeclWrong}{X.XX}
+\providecommand{\vsixOracleBound}{X.XX}
+\providecommand{\vsixOracleBoundWin}{XX.XX}
+\providecommand{\vsixTurnValueMid}{X.XX}
+\providecommand{\vsixTurnValueLate}{X.XX}
+
+%% ===========================================================================
+%% sec:mechanisms -- the v0.6 mechanism set, each keyed to a measured defect
+%% research/v06/results/E5-ablations.jsonl (frozen-policy, paired)
+%% ===========================================================================
+\providecommand{\vsixMechN}{XX}
+\providecommand{\vsixAblDeals}{XXX}
+\providecommand{\vsixAblSeed}{XXXXXX}
+\providecommand{\vsixAblGames}{X{,}XXX}
+\providecommand{\vsixAblControl}{XX.XX}
+\providecommand{\vsixAblControlCI}{XX.XX--XX.XX}
+%% M1 -- per-card / per-target ask dimension (breaks the exact tie)
+\providecommand{\vsixMoneDelta}{+X.XX}
+\providecommand{\vsixMoneCI}{+X.XX, +X.XX}
+\providecommand{\vsixMoneTieAfter}{X.XX}
+%% M2 -- harness repair (measured in sec:fitting, gated here)
+\providecommand{\vsixMtwoClipAfter}{XX.X}
+%% M3 -- shared common-knowledge object plus per-seat refinement
+\providecommand{\vsixMthreeDelta}{+X.XX}
+\providecommand{\vsixMthreeCI}{+X.XX, +X.XX}
+\providecommand{\vsixMthreeOwnLocked}{X.XX}
+\providecommand{\vsixMthreeUnsoundFires}{XX}
+\providecommand{\vsixMthreeUnsoundChecks}{X{,}XXX{,}XXX}
+%% M4 -- memoised proposeDeclaration
+\providecommand{\vsixMfourSpeedup}{X.XX}
+%% M5 -- local best response / exploitability auditor
+\providecommand{\vsixLbrWin}{XX.XX}
+\providecommand{\vsixLbrCI}{XX.XX--XX.XX}
+\providecommand{\vsixLbrVfive}{XX.XX}
+\providecommand{\vsixLbrVfour}{XX.XX}
+%% M6 -- multi-valued leaf states
+\providecommand{\vsixMsixDelta}{+X.XX}
+%% M8 -- recalibrated pAlloc and declaration thresholds
+\providecommand{\vsixMeightDelta}{+X.XX}
+\providecommand{\vsixMeightECEBefore}{X.XXXXX}
+\providecommand{\vsixMeightECEAfter}{X.XXXXX}
+%% M9 -- joint allocation naming
+\providecommand{\vsixMnineDelta}{+X.XX}
+%% M10 -- the three sign-broken ask weights
+\providecommand{\vsixSignBroken}{X}
+\providecommand{\vsixMtenDelta}{+X.XX}
+%% M11 -- offensive void value
+\providecommand{\vsixMelevenDelta}{+X.XX}
+%% M12 -- per-seat policy specs and the partner-regime split
+\providecommand{\vsixMtwelveBotDelta}{+X.XX}
+\providecommand{\vsixMtwelveHumanDelta}{+X.XX}
+
+%% ===========================================================================
+%% sec:search -- determinized information-set search, the optimizer's curse,
+%% and the paired deviation rule
+%% research/v06/results/E?-search.jsonl (extends R11)
+%% ===========================================================================
+\providecommand{\vsixSearchUnguarded}{XX.XX}
+\providecommand{\vsixSearchUnguardedCI}{XX.XX--XX.XX}
+\providecommand{\vsixSearchControl}{XX.XX}
+\providecommand{\vsixSearchControlCI}{XX.XX--XX.XX}
+\providecommand{\vsixCurseGap}{XX}
+\providecommand{\vsixLeafSd}{X.X}
+\providecommand{\vsixKappaSweep}{X, X, X.X, X, X}
+\providecommand{\vsixKappaStar}{X.X}
+\providecommand{\vsixSearchGuarded}{XX.XX}
+\providecommand{\vsixSearchGuardedCI}{XX.XX--XX.XX}
+\providecommand{\vsixSearchDet}{XX}
+\providecommand{\vsixSearchCand}{X}
+\providecommand{\vsixSearchN}{XXX}
+\providecommand{\vsixSearchSeed}{XXXXX}
+\providecommand{\vsixRolloutCost}{X.XX}
+\providecommand{\vsixEventCost}{X.XX}
+\providecommand{\vsixDecisionBudget}{XX}
+\providecommand{\vsixBranching}{XX.X}
+\providecommand{\vsixLiveBranching}{XX.X}
+\providecommand{\vsixSearchThroughput}{XX.X}
+
+%% ===========================================================================
+%% sec:fitting -- the repaired optimiser
+%% research/v06/runs/fit-round?.jsonl, research/v06/runs/roundtrip-assert.txt
+%% ===========================================================================
+\providecommand{\vsixFitDims}{XX}
+\providecommand{\vsixFitAskFeats}{XX}
+\providecommand{\vsixFitKnobs}{XX}
+\providecommand{\vsixSigmaRule}{X.XX}
+\providecommand{\vsixSigmaFloor}{X.XX}
+\providecommand{\vsixClipGateThresh}{XX}
+\providecommand{\vsixPairedWidth}{X.XXX}
+\providecommand{\vsixUnpairedWidth}{X.XXX}
+\providecommand{\vsixPairedRatio}{X.X}
+\providecommand{\vsixPairedVarianceRatio}{XX}
+\providecommand{\vsixPairedSelfDelta}{X.XXXX}
+\providecommand{\vsixRegretObjective}{XX.XX}
+\providecommand{\vsixSoftMinRatio}{X.XX}
+\providecommand{\vsixSoftMinBias}{XX.X}
+\providecommand{\vsixFitRounds}{X}
+\providecommand{\vsixFitGens}{XX}
+\providecommand{\vsixFitBestGen}{XX}
+\providecommand{\vsixFitScore}{X.XXXX}
+\providecommand{\vsixFitSeed}{XXXXXX}
+\providecommand{\vsixFitDeals}{XXX}
+\providecommand{\vsixFitPanelN}{X}
+\providecommand{\vsixFitPanel}{XXXX, XXXX, XXXX, XXXX, XXXX, XXXX}
+\providecommand{\vsixFitTotalGames}{X{,}XXX{,}XXX}
+\providecommand{\vsixFitWorst}{XX.XX}
+\providecommand{\vsixFitSanityRecovered}{XX}
+\providecommand{\vsixFitCurse}{X.XXXX}
+\providecommand{\vsixRoundTrip}{XX.XXXX}
+\providecommand{\vsixRoundTripPass}{XXXXXX}
+%% commit-gate KPIs (the pathology gate; `fish pathology --gate`)
+\providecommand{\vsixGateDeadAsk}{X.XX}
+\providecommand{\vsixGateDeadRun}{X}
+\providecommand{\vsixGateRepeatAsk}{X.XX}
+\providecommand{\vsixGateDeclWrong}{X.XX}
+\providecommand{\vsixGateOwnLocked}{X.XX}
+\providecommand{\vsixGateStarved}{X.XX}
+\providecommand{\vsixGateN}{X}
+
+%% ===========================================================================
+%% sec:protocol -- six-rotation duplicate blocks, deal-clustered bootstrap,
+%% seed separation, paired estimators
+%% ===========================================================================
+\providecommand{\vsixRotations}{X}
+\providecommand{\vsixBootReps}{XX{,}XXX}
+\providecommand{\vsixBootAlpha}{XX}
+\providecommand{\vsixHeldOutBanks}{X}
+\providecommand{\vsixFitBanks}{X}
+\providecommand{\vsixReservedSeeds}{XX}
+\providecommand{\vsixMirrorDuplication}{XX}
+
+%% ===========================================================================
+%% sec:results
+%% ===========================================================================
+\providecommand{\vsixMirrorWin}{XX.XX}
+\providecommand{\vsixMirrorCI}{XX.XX--XX.XX}
+\providecommand{\vsixMirrorGames}{X{,}XXX}
+\providecommand{\vsixHeadWin}{XX.XX}
+\providecommand{\vsixHeadCI}{XX.XX--XX.XX}
+\providecommand{\vsixHeadRange}{XX.XX--XX.XX}
+\providecommand{\vsixHeadSeeds}{X}
+\providecommand{\vsixHeadDeals}{XXX}
+\providecommand{\vsixHeadGames}{X{,}XXX}
+\providecommand{\vsixHeadPaired}{+X.XX}
+\providecommand{\vsixHeadPairedCI}{+X.XX, +X.XX}
+\providecommand{\vsixHeadSetsDelta}{+X.XX}
+%% the twelve-style panel (E4's nine styles + E10's three deception archetypes),
+%% reported as one table with an explicit worst case and minimax regret
+%% (R5 f.1: never headline an aggregate)
+\providecommand{\vsixStyleN}{XX}
+\providecommand{\vsixStyleDeals}{XXX}
+\providecommand{\vsixStyleSeed}{XXXXXX}
+\providecommand{\vsixStyleGames}{X{,}XXX}
+\providecommand{\vsixWorst}{XX.XX}
+\providecommand{\vsixWorstOpp}{XXXXXX}
+\providecommand{\vsixRegret}{X.XX}
+\providecommand{\vsixRegretOpp}{XXXXXX}
+\providecommand{\vsixMean}{XX.XX}
+\providecommand{\numFiveWorst}{XX.XX}
+\providecommand{\numFiveWorstOpp}{XXXXXX}
+\providecommand{\numFiveRegret}{X.XX}
+\providecommand{\numFiveMean}{XX.XX}
+\providecommand{\numFourWorst}{XX.XX}
+\providecommand{\numFourRegret}{X.XX}
+\providecommand{\numFourMean}{XX.XX}
+%% calibration
+\providecommand{\vsixCalibAskECE}{X.XXXXX}
+\providecommand{\vsixCalibAskBrier}{X.XXXXX}
+\providecommand{\vsixCalibAskN}{XX{,}XXX}
+\providecommand{\vsixCalibDeclECE}{X.XXXXX}
+\providecommand{\vsixCalibDeclBrier}{X.XXXXX}
+\providecommand{\vsixCalibDeclN}{X{,}XXX}
+%% rules-dialect robustness
+\providecommand{\vsixDialectN}{X}
+\providecommand{\vsixDialectSpan}{XX.XX--XX.XX}
+\providecommand{\vsixDialectSeed}{XXXXXX}
+\providecommand{\vsixDialectDeals}{XXX}
+
+%% ===========================================================================
+%% sec:corrections -- corrections to the v0.4 and v0.5 records
+%% research/v06/notes/R5-state-of-knowledge.md a.4 (U1-U12) and
+%% research/v06/notes/R0-OPPORTUNITY-REGISTER.md sec.6
+%% ===========================================================================
+\providecommand{\vsixCorrN}{XX}
+%% U4: the fitted adversary DID reach 50% against v0.4
+\providecommand{\numVfourLbrWin}{XX.XX}
+\providecommand{\numVfourLbrCI}{XX.XX--XX.XX}
+%% U5: value-based declaration was NOT worth measurable win rate
+\providecommand{\numVfourVdeclDelta}{+X.XX}
+\providecommand{\numVfourVdeclCI}{-X.XX, +X.XX}
+%% U8/U9: residue adjudication and the forced-endgame ladder.  Transcribed from
+%% research/v05/results/C1-v04-corrections.md entries C7 and C9, which take them
+%% in turn from research/v05/results/P4-verify-forcing-horizon.md section 5 and
+%% research/v05/results/P2-forced-endgame.md section 5.  Neither figure was
+%% printed by the v0.5 paper.
+\providecommand{\numResidueHeld}{4.08}
+\providecommand{\numLadderLiveSets}{1}
+\providecommand{\numLadderOccasions}{566}
+\providecommand{\numLadderSeed}{31}
+%% C4/defect J: the soft minimum is a weighted mean
+\providecommand{\numSoftMinBetaFour}{XX}
+\providecommand{\numSoftMinBetaFive}{XX}
+\providecommand{\numSoftMinRatioFour}{1.88}
+\providecommand{\numSoftMinBelowMin}{11.2}
+%% M7's calibration point drifted between v0.4 and v0.5
+\providecommand{\numThetaEffFour}{X.XXXXX}
+\providecommand{\numThetaEffFive}{X.XXXXX}
+\providecommand{\numThetaEffDrift}{XX}
+%% gateaudit is dead code for v0.5
+\providecommand{\numGateAuditOpps}{X}
+\providecommand{\numGateAuditVfourFalseNeg}{XXX}
+%% defect H: stale computeAggregates is real but inert
+\providecommand{\numDefectHDiffers}{XX.XX}
+\providecommand{\numDefectHFlips}{X.XX}
+%% carried forward from the v0.4 and v0.5 records for the comparison rows
+\providecommand{\numVfiveHeadWin}{XX.XX}
+\providecommand{\numVfiveHeadRange}{XX.XX--XX.XX}
+\providecommand{\numVfourVsVthree}{XX.XX}
+
+%% ===========================================================================
+%% sec:limitations and app:repro -- provenance of the manuscript's own figures,
+%% computed by engine/build_tables_v06.py over paper/sections_v06/ so the
+%% paragraph that quotes them cannot itself go stale.  Audited by
+%% paper/check_provenance.py.
+%% ===========================================================================
+\providecommand{\vsixProvUsed}{XXX}
+\providecommand{\vsixProvGenerated}{XXX}
+\providecommand{\vsixProvTranscribed}{XX}
+\providecommand{\vsixManifestFiles}{XX}
+\providecommand{\vsixWallClock}{XX}
+\providecommand{\vsixCores}{XX}
+
+%% ===========================================================================
+%% ADDENDUM, added while sec:engine, sec:belief, sec:fitting, sec:protocol,
+%% app:inference, app:params and app:repro were drafted.  Same two-class rule as
+%% the header states: \vsix... is a quantity engine/build_tables_v06.py emits
+%% from a v0.6 artifact and is an impossible literal until the battery has run;
+%% \num... is a transcribed quantity read out of a file that already exists on
+%% disk, and carries its real value under a comment naming that file.
+%% ===========================================================================
+
+%% ---------------------------------------------------------------------------
+%% E0 identity controls and the BlockDP aliasing repair (engine/experiments_v06.sh
+%% step E0 -> research/v06/results/E0-identity.txt).  vsixIdentity is the md5
+%% comparison of the full `fish pathology` output between v05 and v06:legacy=1;
+%% the two alias macros separate the QUERY check (must be 0) from the raw
+%% shared-pool field read (documented, not fixed).
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixIdentity}{XXXX}
+\providecommand{\vsixAliasQueryMismatch}{XX}
+\providecommand{\vsixAliasRawMismatch}{XXX}
+%% The pre-repair measurement of the same defect is a v0.5-record number that the
+%% v0.6 battery will never regenerate: research/v05/results/P2-forced-endgame.md
+%% section 6, `fish blockalias --a=v04 --games=40 --seed=31`.
+\providecommand{\numAliasChecks}{294}
+\providecommand{\numAliasMismatch}{285}
+
+%% ---------------------------------------------------------------------------
+%% E1 verify (research/v06/results/E1-verify.txt).  The generator emits the
+%% audit counters and the overall verdict under these names; the pool size and
+%% the ordered-pair count are fixed by engine/src/main.cpp and are transcribed.
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixAuditViolations}{XX}
+\providecommand{\vsixAuditChecks}{X{,}XXX{,}XXX}
+\providecommand{\vsixVerify}{XXXX}
+%% engine/src/main.cpp, the `verify` command's policy pool
+\providecommand{\numVerifyPool}{nine}
+\providecommand{\numVerifyPairs}{81}
+
+%% ---------------------------------------------------------------------------
+%% E10 declaration pre-gate audit, enabled for v0.5 and v0.6 by this study
+%% (research/v06/results/E10-gateaudit.txt)
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixGateOpportunities}{XX{,}XXX}
+\providecommand{\vsixGateRejected}{X{,}XXX}
+\providecommand{\vsixGateFalseNeg}{XX}
+\providecommand{\vsixGateVerdict}{XXXX}
+
+%% ---------------------------------------------------------------------------
+%% E9 throughput (research/v06/results/E9-throughput.txt), games/s
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixThroughputSix}{XXX.X}
+\providecommand{\vsixThroughputFive}{XXX.X}
+\providecommand{\vsixThroughputFour}{XXX.X}
+
+%% ---------------------------------------------------------------------------
+%% E8 belief: each posterior scored as a PREDICTOR on the same states, by
+%% predictive log loss over the unresolved cards and by the realised hit rate of
+%% its own argmax ask (research/v06/results/E8-belief.txt, rendered as
+%% paper/tables_v06/belief.tex).
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixBeliefExactNLL}{X.XXXXX}
+\providecommand{\vsixBeliefExactHit}{XX.XX}
+\providecommand{\vsixBeliefNoPriorNLL}{X.XXXXX}
+\providecommand{\vsixBeliefNoPriorHit}{XX.XX}
+\providecommand{\vsixBeliefShippedNLL}{X.XXXXX}
+\providecommand{\vsixBeliefShippedHit}{XX.XX}
+%% E8 ties, full live candidate set rather than the tie subset
+%% (research/v06/results/E8-ties.txt, the v0.5-mirror block)
+\providecommand{\vsixFullFastFive}{XX.XX}
+\providecommand{\vsixFullExactFive}{XX.XX}
+\providecommand{\vsixFullBestFive}{XX.XX}
+\providecommand{\vsixDisagreeFive}{XX.XX}
+
+%% ---------------------------------------------------------------------------
+%% The policy prior's two operating points, transcribed from
+%% research/v06/notes/R12-mechanism-trials.md section 3.  The battery re-measures
+%% the predictive column but not these play-side costs, so they are \num...
+%% ---------------------------------------------------------------------------
+\providecommand{\numThetaShipped}{0.44458}
+\providecommand{\numThetaPredictiveOpt}{0.60--0.80}
+\providecommand{\numThetaPriorHitGain}{2.16}
+\providecommand{\numThetaPriorNatGain}{0.011}
+\providecommand{\numThetaSixtyCost}{4.4}
+\providecommand{\numThetaElevenCost}{7.1}
+\providecommand{\numThetaTrialN}{1{,}200}
+
+%% ---------------------------------------------------------------------------
+%% Parameter-vector shape.  Code constants, transcribed from the headers named.
+%% ---------------------------------------------------------------------------
+%% engine/src/v04.hpp, NFEAT
+\providecommand{\numAskFeats}{20}
+%% engine/src/main.cpp, the fourteen knobs appended by --full
+\providecommand{\numVfiveKnobs}{14}
+%% engine/src/v06.hpp, the three v0.6 ask terms
+\providecommand{\numVsixAskTerms}{3}
+%% engine/src/tuner.hpp and engine/src/main.cpp: the v0.5 vector
+\providecommand{\numVfiveParams}{34}
+%% engine/src/v06.hpp, NV6PARAM = NFEAT + 14 + 3
+\providecommand{\numVsixParams}{37}
+
+%% ---------------------------------------------------------------------------
+%% The four fitting defects, transcribed from
+%% research/v06/notes/R4-harness-and-fitting.md sections 2 and 3.  The battery
+%% does not re-derive them: they are properties of the v0.5 fit trace.
+%% ---------------------------------------------------------------------------
+\providecommand{\numSigmaScalar}{0.6}
+\providecommand{\numSigmaRangeMin}{0.10}
+\providecommand{\numSigmaRangeMax}{40}
+\providecommand{\numClipDeclMargin}{93.4}
+\providecommand{\numValueWeightStep}{1.5}
+\providecommand{\numFitTraceGensVfive}{40}
+
+%% ---------------------------------------------------------------------------
+%% The harness acceptance tests.  The self-comparison is an invariant, not a
+%% measurement.  The handicapped-base recovery run is an acceptance criterion
+%% stated in research/v06/DESIGN.md (E4) and research/v06/notes/R4-harness-and-fitting.md
+%% (H2); it is run by hand from the command in app:repro-commands and is NOT one
+%% of engine/experiments_v06.sh's blocks, so engine/build_tables_v06.py does not
+%% regenerate these and they are transcribed rather than generated.
+%% ---------------------------------------------------------------------------
+\providecommand{\numFitSanityGens}{10}
+\providecommand{\numFitSanityBase}{45.89}
+\providecommand{\numFitSanityAfter}{48.33}
+\providecommand{\numFitSanityVthree}{76.83}
+
+%% ---------------------------------------------------------------------------
+%% The resolution requirement (sec:protocol).  Five mechanisms that cleared a
+%% 95% paired interval at 400-1,600 games per cell and returned exactly zero at
+%% the larger budget on two disjoint banks.  All transcribed from
+%% research/v06/notes/R12-mechanism-trials.md section 6.1.  Sign convention is
+%% the corpus's: delta = reference - variant, so a NEGATIVE delta means the
+%% variant is better.
+%% ---------------------------------------------------------------------------
+\providecommand{\numPlateauMechs}{Five}
+\providecommand{\numResVoidSmall}{-0.0292}
+\providecommand{\numResVoidSmallCI}{-0.0537, -0.0037}
+\providecommand{\numResVoidSmallN}{400}
+\providecommand{\numResVoidLargeA}{+0.0007}
+\providecommand{\numResVoidLargeACI}{-0.0213, +0.0227}
+\providecommand{\numResVoidLargeB}{+0.0200}
+\providecommand{\numResVoidLargeBCI}{-0.0017, +0.0413}
+\providecommand{\numResVoidLargeN}{1{,}000}
+\providecommand{\numResVoidThreeSmall}{-0.0313}
+\providecommand{\numResVoidThreeSmallCI}{-0.0593, -0.0033}
+\providecommand{\numResVoidThreeSmallN}{500}
+\providecommand{\numResPerseverSmall}{-0.0200}
+\providecommand{\numResPerseverSmallCI}{-0.0356, -0.0044}
+\providecommand{\numResPerseverSmallN}{800}
+\providecommand{\numResPerseverLargeA}{-0.0012}
+\providecommand{\numResPerseverLargeACI}{-0.0137, +0.0112}
+\providecommand{\numResPerseverLargeB}{+0.0035}
+\providecommand{\numResPerseverLargeBCI}{-0.0092, +0.0158}
+\providecommand{\numResPerseverLargeN}{1{,}000}
+\providecommand{\numResDeclSmall}{+1.75}
+\providecommand{\numResDeclSmallN}{1{,}200}
+\providecommand{\numResDeclLarge}{+0.0133}
+\providecommand{\numResDeclLargeCI}{+0.0013, +0.0247}
+\providecommand{\numResVoiSmall}{-0.0053}
+\providecommand{\numResVoiSmallCI}{-0.0244, +0.0141}
+\providecommand{\numResVoiSmallN}{800}
+\providecommand{\numResLargeBudget}{3{,}000}
+
+%% ---------------------------------------------------------------------------
+%% Fit traces, research/v06/runs/fitA.jsonl and research/v06/runs/fitC.jsonl.
+%% engine/build_tables_v06.py reads the header record and the generation records
+%% and \renewcommand's every one of these; the placeholders exist so the
+%% manuscript compiles when the runs directory is absent.
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixFitAGens}{XX}
+\providecommand{\vsixFitAPanel}{XXXX+XXXX+XXXX+XXXX}
+\providecommand{\vsixFitASeed}{XXXXXXXX}
+\providecommand{\vsixFitAPop}{XX}
+\providecommand{\vsixFitADeals}{XXXxX}
+\providecommand{\vsixFitASigmaRel}{X.XXX}
+\providecommand{\vsixFitAClipGenZero}{XX.XX}
+\providecommand{\vsixFitCGens}{XX}
+\providecommand{\vsixFitCPanel}{XXXX+XXXX+XXXX+XXXX}
+\providecommand{\vsixFitCSeed}{XXXXXXXX}
+\providecommand{\vsixFitCPop}{XX}
+\providecommand{\vsixFitCDeals}{XXXxX}
+\providecommand{\vsixFitCSigmaRel}{X.XXX}
+\providecommand{\vsixFitCClipGenZero}{XX.XX}
+
+%% ---------------------------------------------------------------------------
+%% Macros quoted by sec:diagnosis and sec:search that had no placeholder.  Added
+%% here so the manuscript compiles; the generator emits the E8-, E2-, E12- and
+%% E15-derived ones under exactly these names.
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixAblateRef}{XX.XX}
+\providecommand{\vsixTieNFive}{X{,}XXX}
+\providecommand{\vsixTieShareFive}{XX.XX}
+\providecommand{\vsixTieSameCardFive}{X.XX}
+\providecommand{\vsixTieSameSuitFive}{XX.XX}
+\providecommand{\vsixTieSpreadFive}{X.XXXXX}
+\providecommand{\vsixTieGapFive}{X.XXXXX}
+\providecommand{\vsixTieExactSepPctFive}{X.XX}
+\providecommand{\vsixTieShipMovedFive}{XX.XX}
+\providecommand{\vsixTieHitArrayFive}{XX.XX}
+\providecommand{\vsixTieHitFastFive}{XX.XX}
+\providecommand{\vsixTieHitShipFive}{XX.XX}
+\providecommand{\vsixTieHitExactFive}{XX.XX}
+\providecommand{\vsixTieHitBestFive}{XX.XX}
+\providecommand{\vsixPathFiveContested}{XX.XX}
+\providecommand{\vsixPathFiveDeclwrong}{X.XX}
+\providecommand{\vsixPathFiveOwnlocked}{X.XX}
+\providecommand{\vsixSearchDead}{XX.XX}
+\providecommand{\vsixSearchSpread}{XX.XX}
+\providecommand{\vsixSearchDevTwoFive}{XX.XX}
+\providecommand{\vsixSearchGps}{XX.X}
+\providecommand{\vsixDeadWin}{XX.XX}
+\providecommand{\vsixDeadWinLo}{XX.XX}
+\providecommand{\vsixDeadWinHi}{XX.XX}
+\providecommand{\vsixDeadPathDead}{XX.XX}
+\providecommand{\vsixDeadPathLongest}{XXX}
+\providecommand{\vsixDeadPathLimit}{X.XX}
+%% The two swept theta settings quoted in sec:belief-exactworse, from the same
+%% source (research/v06/notes/R12-mechanism-trials.md section 3).
+\providecommand{\numThetaTrialLow}{0.60}
+\providecommand{\numThetaTrialHigh}{1.10}
+%% The small-budget range the five non-replicating mechanisms were first run at
+%% (research/v06/notes/R12-mechanism-trials.md, headline and section 6.1).
+\providecommand{\numResSmallBudgetLo}{400}
+\providecommand{\numResSmallBudgetHi}{1{,}600}
+
+%% ---------------------------------------------------------------------------
+%% Compile guard, not a number.  sec:mechanisms writes \textmu, a TS1 symbol
+%% that this preamble does not load textcomp for, so it is undefined and halts
+%% the build.  \providecommand supplies a math fallback and does nothing if a
+%% later preamble change loads textcomp properly.
+%% ---------------------------------------------------------------------------
+\providecommand{\textmu}{\ensuremath{\mu}}
+
+%% ---------------------------------------------------------------------------
+%% Further placeholders for macros quoted by sec:mechanisms and sec:results.
+%% \providecommand is idempotent, so these are harmless if the same names are
+%% also declared above or by a later edit; they exist so that the manuscript
+%% compiles before engine/build_tables_v06.py has run.
+%% E2-pathology.txt, per arm; E4-perstyle.jsonl; E3-headtohead.jsonl.
+%% ---------------------------------------------------------------------------
+\providecommand{\vsixExactBuildUsFive}{XX.X}
+\providecommand{\vsixPathSixEvents}{XXX.XX}
+\providecommand{\vsixPathSixHit}{XX.XX}
+\providecommand{\vsixPathSixDead}{X.XX}
+\providecommand{\vsixPathSixLongest}{XX}
+\providecommand{\vsixPathSixRunSix}{X.XX}
+\providecommand{\vsixPathSixRepeatACT}{X.XX}
+\providecommand{\vsixPathSixDeclwrong}{X.XX}
+\providecommand{\vsixPathSixLimit}{X.XX}
+\providecommand{\vsixPathFiveEvents}{XXX.XX}
+\providecommand{\vsixPathFiveHit}{XX.XX}
+\providecommand{\vsixPathFiveDead}{X.XX}
+\providecommand{\vsixPathFiveLongest}{XX}
+\providecommand{\vsixPathFiveRunSix}{X.XX}
+\providecommand{\vsixPathFiveRepeatACT}{X.XX}
+\providecommand{\vsixPathFiveLimit}{X.XX}
+\providecommand{\vsixPathFourEvents}{XXX.XX}
+\providecommand{\vsixPathFourHit}{XX.XX}
+\providecommand{\vsixPathFourDead}{X.XX}
+\providecommand{\vsixPathFourLongest}{XX}
+\providecommand{\vsixPathFourRunSix}{X.XX}
+\providecommand{\vsixPathFourRepeatACT}{X.XX}
+\providecommand{\vsixPathFourDeclwrong}{X.XX}
+\providecommand{\vsixPathFourLimit}{X.XX}
+\providecommand{\vsixStyleWorstSix}{XX.XX}
+\providecommand{\vsixStyleWorstFive}{XX.XX}
+\providecommand{\vsixStyleWorstFour}{XX.XX}
+\providecommand{\vsixStyleMeanSix}{XX.XX}
+\providecommand{\vsixStyleMeanFive}{XX.XX}
+\providecommand{\vsixStyleMeanFour}{XX.XX}
+\providecommand{\vsixStyleWorstOppSix}{XXXXXX}
+\providecommand{\vsixStyleWorstOppFive}{XXXXXX}
+\providecommand{\vsixStyleWorstOppFour}{XXXXXX}
+\providecommand{\vsixRegretSix}{X.XX}
+\providecommand{\vsixRegretFive}{X.XX}
+\providecommand{\vsixRegretFour}{X.XX}
+\providecommand{\vsixHeadFiveMean}{XX.XX}
+\providecommand{\vsixHeadFiveMin}{XX.XX}
+\providecommand{\vsixHeadFiveMax}{XX.XX}
+\providecommand{\vsixHeadFiveBanks}{X}
+\providecommand{\vsixHeadFiveN}{X{,}XXX}
+\providecommand{\vsixHeadFourMean}{XX.XX}
+\providecommand{\vsixHeadFourMin}{XX.XX}
+\providecommand{\vsixHeadFourMax}{XX.XX}
+
+%% ---------------------------------------------------------------------------
+%% app:inference -- the v0.6-era exactness checks and the three latent
+%% approximations.  All transcribed from research/v06/notes/R2-inference-stack.md
+%% section 8; the v0.6 battery does not re-run them, so they are \num...
+%% ---------------------------------------------------------------------------
+\providecommand{\numCountUniformQueries}{673}
+\providecommand{\numCountGeneralQueries}{1{,}633}
+\providecommand{\numCountAgree}{1.7\times10^{-15}}
+\providecommand{\numAllocSurvivalChecks}{35{,}161}
+\providecommand{\numAllocSurvivalCert}{10{,}374}
+\providecommand{\numAllocSurvivalFailures}{0}
+\providecommand{\numAllocSurvivalDeals}{40}
+\providecommand{\numAllocSurvivalSeed}{4242}
+%% engine/src/blockdp.hpp: the three capacity constants behind the truncation
+\providecommand{\numMaxEnt}{512}
+\providecommand{\numMaxCountVectors}{462}
+\providecommand{\numCertCap}{16}
+\providecommand{\numNodeGuard}{2{,}000{,}000}

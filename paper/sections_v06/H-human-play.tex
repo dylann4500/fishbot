@@ -1,0 +1,98 @@
+\section{Implications for human play}
+\label{app:human}
+
+This project exists because a person plays this game and wanted a better opponent. This appendix
+answers the questions that came from live play, in the order they were asked, and separates what
+the evidence supports from what it does not.
+
+\subsection{Does FishBot play for itself or for the team?}
+\label{app:human-labels}
+
+For the team, unambiguously, and this is a property of the objective rather than a tuning choice.
+Every quantity the value function reads is team-relative: the score differential is the team's, the
+card counts are the team's totals, and the per-half-suit control term is the expected fraction of
+that half-suit held by the \emph{team}, not by the seat. There is no per-seat score in this game and
+none in the policy. A configuration that maximised the acting seat's own holdings would be a
+different program, and it is not the one that ships.
+
+What is true, and is the substantive half of the question, is that the \emph{policy} is unilateral.
+Through v0.5, FishBot maintained a deduction state for itself and for nobody else --- the only two
+clones of that object anywhere in the policy are clones of its own --- so no term could ask what a
+partner knows, or which of two teammates is better placed to act. Teammates entered only as
+aggregate probability mass. v0.6 adds the machinery for per-seat modelling, uses it inside the
+search, and reports that at the resolution of \S\ref{sec:protocol} the terms built on it are worth
+nothing. That is a finding about this game rather than a concession: with every card movement
+public, most of what a partner knows, you already know.
+
+\subsection{Why a well-trained human still out-reasons it}
+\label{app:human-ask}
+
+The honest answer from this study is that the gap is in the \emph{action space}, not in the
+arithmetic. M1, the mechanism that fixed v0.4's deadlock, restricts the candidate set to asks the
+actor cannot prove will miss. That is the right fix for the deadlock and it deletes the move class
+that most named human tactics are built from: blackballing, deliberately handing the turn to the
+opponent who can do least with it, and paying for a signal with a safe ask are all a guaranteed miss
+at a \emph{chosen} seat. Such a move is available at $79.2\%$ of decisions, and at two or more
+distinct chosen opponents at $50.1\%$.
+
+\S\ref{sec:search-deadask} reports what happened when it was given back. Unbanned wholesale, it
+raises the win rate and destroys the policy. Rationed against the fitted linear score, it is never
+chosen --- and the reason is structural rather than a matter of weights: the hit-probability term is
+zero on a deliberate miss by construction, and every other term of the score is a penalty, so no
+setting of the admission margin changes the output. Its value is the value of the position the
+donated turn produces, which is a forward-looking quantity that no static feature computes. Offered
+to the search, which is the only evaluator in the system that can price it, it produces the best
+search configuration measured, and the search as a whole is the one mechanism in this study that
+beats a static rule (\S\ref{sec:search}).
+
+So: a human who blackballs is doing something the bot structurally cannot express, and the bot is
+not obviously losing points by failing to. Both halves of that sentence are measured.
+
+\subsection{Deception}
+\label{app:human-bluff}
+
+The manoeuvre the project owner reported --- holding cards of a half-suit you were asked for, then
+declining to ask back in it --- is implemented as the \emph{withholder} archetype and is the one
+opponent against which v0.6 is decisively better. The gain replicates in sign and size on two
+disjoint seed banks and is the largest replicated effect in this study. It comes from the refit
+rather than from an opponent model: the fitting panel contains the archetype and the objective is
+minimax regret, so the optimiser buys robustness against it directly.
+
+The complementary archetype, the \emph{feint}, manufactures a misleading ask-legality certificate
+instead, and it remains the worst cell in the profile. v0.5's exposure there was created by its own
+fit and could not be tuned away at fixed weights; v0.6's fit includes it in the panel and improves
+it on one bank while giving a little back on the other.
+
+\subsection{Playing against it}
+\label{app:human-declare}
+
+Three things a person should know when sitting down against this program.
+
+\begin{itemize}
+\item \textbf{It never asks a question it can prove will fail.} That is a hard deduction from your
+  own public record, so a question it does ask is always one it cannot rule out --- which means an
+  ask carries less information about its hand than a human's ask does.
+\item \textbf{It is deterministic.} Given the same public history and the same hand it plays the
+  same move. A person who has played many games against it can, in principle, read it. Adding
+  stochasticity is the outstanding item: the machinery for a partner-aware temperature is specified
+  and the harness now supports the two partner regimes as separate columns, but the temperature
+  itself is not fitted here.
+\item \textbf{Its declarations are conservative and accurate.} In mirror play it declares wrongly on
+  roughly two percent of declarations, and the pre-gates that decide when to evaluate a declaration
+  are exact --- \vsixGateFalseNeg{} false negatives in \vsixGateRejected{} rejections. If it
+  declares, it is almost always right; the exploitable side is the timing, not the accuracy.
+\end{itemize}
+
+\subsection{Where a human should expect to keep an edge}
+\label{app:human-ties}
+
+At more than half of its decisions the program's own score cannot separate its leading candidates,
+and \S\ref{sec:diag-irreducible} establishes that a correct posterior cannot separate them either.
+A human facing the same information is in the same position. This is worth stating plainly because
+it is the opposite of the usual intuition about card-game programs: the residual uncertainty here is
+not a modelling deficiency that better software will remove --- it is the game.
+
+Where a human should expect an edge is in the places this study found and could not close: choosing
+\emph{which} opponent to hand the turn to when nothing good is available, paying a small material
+price for a signal a partner will read, and varying behaviour so as not to be read. All three are
+moves in the class M1 deletes.

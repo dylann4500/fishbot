@@ -1,0 +1,23 @@
+### kappa=2.5, tie group ALSO guarded (kappatie=kappa)
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=2.5,kappatie=2.5 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 934
+  decisions searched                926  (99.1435%)
+  searches that MOVED the action    25  (2.69978% of searches, 2.67666% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   87819
+deliberate misses offered/played    0 / 0
+rollouts                            55419   events 3228282   mean depth 58.2523
+wall clock                          209.372 s over 20 games (0.0955236 games/s, 1 thread)
+
+### kappa=4, tie group ALSO guarded
+v6probe search: A=v06:legacy=1,s1=1,det=12,cand=4,kappa=4,kappatie=4 B=v05 games=20 seed=90210
+
+ask decisions by the searching team 902
+  decisions searched                892  (98.8914%)
+  searches that MOVED the action    1  (0.112108% of searches, 0.110865% of decisions)
+  exact DP unavailable              0
+  determinizations rejected on C5   71363
+deliberate misses offered/played    0 / 0
+rollouts                            53387   events 3057486   mean depth 57.2702
+wall clock                          204.218 s over 20 games (0.0979346 games/s, 1 thread)
