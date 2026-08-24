@@ -77,6 +77,14 @@ struct V06Extra {
   int    rollOuter   = 1;
   int    rollInner   = 1;
   bool   rollValue   = true;
+  // v0.7 C3.  The blueprint the OPPOSING seats play inside the rollout.  Empty
+  // reproduces v0.6 exactly (everyone rolls out as us).  Set to the target's
+  // spec and the same machinery becomes a best-response search: see
+  // v06_rollout.hpp RolloutConfig::oppSpec.
+  std::string rollOpp    = "";
+  // v0.7: which leaf evaluator prices a depth cut.  "material" is the v0.6
+  // formula and is bit-identical to it.
+  std::string leafSpec   = "material";
   std::string rolloutSpec() const {
     std::string s = rollBase + ":topk=0";
     if (!rollBelief.empty()) s += ",belief=" + rollBelief;
@@ -234,6 +242,14 @@ struct V06Agent : V05Agent {
 
   void reset(int s, uint64_t hand, const Rules& r, uint64_t seed) override {
     V05Agent::reset(s, hand, r, seed);
+    resetV6(seed);
+  }
+  void resetWithKnowledge(int s, uint64_t hand, const Rules& r, uint64_t seed,
+                          const Knowledge& k0) override {
+    V05Agent::resetWithKnowledge(s, hand, r, seed, k0);
+    resetV6(seed);
+  }
+  void resetV6(uint64_t seed) {
     srng = Rng(mixSeed(seed, 0x0606ull));
     xbOk = xmuOk = false;
     memset(deadTried, 0, sizeof(deadTried));
@@ -310,7 +326,7 @@ struct V06Agent : V05Agent {
   // The blueprint score v0.5 maximises, without the top-K chain/threat pass.
   // Used only to rank candidates for the search; when the search is off the
   // base class runs unchanged, including that pass.
-  double blueprintScore(const PublicState& pub, int card, int target, double* fOut) {
+  virtual double blueprintScore(const PublicState& pub, int card, int target, double* fOut) {
     double f[NFEAT];
     features(pub, card, target, f);
     double u = 0;
@@ -322,6 +338,7 @@ struct V06Agent : V05Agent {
       extraTerms(pub, card, target, f[0], g);
       u += cfg.linearWeight * (x.wVoid * g[0] + x.wTeamHas * g[1] + x.wLastLive * g[2]);
     }
+    if (cfg.plantKind) u += plantTerm(pub, card, target);
     if (fOut) *fOut = f[0];
     return u;
   }
@@ -383,12 +400,54 @@ struct V06Agent : V05Agent {
     return best;
   }
 
+  // v0.7 D1 on the v0.6 scoring path.  The candidate scores are already in
+  // hand here, so the tie group and the margin are free -- which matters,
+  // because the tie group is 53.2% of this policy's ask decisions
+  // (research/v06/results/E8-ties.txt) and is invisible in any per-game metric.
+  void captureV6(int n, const std::vector<double>& u, const std::vector<int>& ord,
+                 int tie, AskMove pick, double p) {
+    lastDec.clear();
+    lastDec.nCand = n;
+    lastDec.nTie = tie;
+    lastDec.score = u[size_t(ord[0])];
+    lastDec.margin = (n >= 2 && tie < 2) ? (u[size_t(ord[0])] - u[size_t(ord[1])]) : 0.0;
+    lastDec.p = p;
+    lastDec.dead = provablyDead(pick.card, pick.target);
+  }
+
+  // The live-ask gate's binding rate, on the v0.6 scoring path.  Ledger entry
+  // L10 is the hypothesis that M1 -- a naive knowledge-limited pruning rule, of
+  // exactly the kind Zhang & Sandholm PROVE can increase exploitability -- is an
+  // untested hazard, and the quantity an exploiter would try to raise is this
+  // one: how often the gate removes what would otherwise have been the argmax.
+  // The corpus measured it once at 5.78% of decisions (R1) and it is a property
+  // of DECISIONS, so it is invisible in every per-game metric.
+  void captureGateBind(const PublicState& pub) {
+    if (!cfg.liveAskGate) { lastDec.gateBound = false; return; }
+    AskMove all[NSET * SETSZ * 3];
+    int na = enumerateAsks(pub, k.myHand, seat, all);
+    double best = -1e18; int bi = -1;
+    for (int i = 0; i < na; i++) {
+      double u = blueprintScore(pub, all[i].card, all[i].target, nullptr);
+      if (u > best) { best = u; bi = i; }
+    }
+    lastDec.gateBound = (bi >= 0) && provablyDead(all[bi].card, all[bi].target);
+  }
+
+  // A subclass that widens the score has to reach the v0.6 candidate path even
+  // with every v0.6 switch off; and it may want dead candidates in the
+  // enumeration, which the v0.6 path never does.
+  virtual bool wantV6Path() const { return x.search || x.extraFeats || x.deadAsk; }
+  virtual int enumerateForScore(const PublicState& pub, AskMove* buf) {
+    return cfg.liveAskGate ? enumerateLive(pub, buf) : enumerateAsks(pub, k.myHand, seat, buf);
+  }
+  virtual void prepareScore(const PublicState& pub) { (void)pub; }
+
   AskMove chooseAsk(const PublicState& pub) override {
-    if (!x.search && !x.extraFeats && !x.deadAsk) return V05Agent::chooseAsk(pub);
+    if (!wantV6Path()) return V05Agent::chooseAsk(pub);
     refresh();
     AskMove buf[NSET * SETSZ * 3];
-    int n = cfg.liveAskGate ? enumerateLive(pub, buf)
-                            : enumerateAsks(pub, k.myHand, seat, buf);
+    int n = enumerateForScore(pub, buf);
     if (n <= 0) return AskMove{0, 0};
     decisions++;
     if (n == 1) { lastMySet = setOf(buf[0].card); lastAskP = bel.marg[buf[0].card][buf[0].target]; return buf[0]; }
@@ -398,6 +457,7 @@ struct V06Agent : V05Agent {
 
     if (cfg.useValue) computeAggregates(pub);
     prepareRunway(pub);
+    prepareScore(pub);
     std::vector<double> u(n), pp(n);
     for (int i = 0; i < n; i++) { double p; u[i] = blueprintScore(pub, buf[i].card, buf[i].target, &p); pp[i] = p; }
     std::vector<int> ord(n);
@@ -492,6 +552,7 @@ struct V06Agent : V05Agent {
       }
       if (x.chainPass && cfg.searchTopK > 1) pick = chainRescore(pub, buf, ord, n, u);
       lastMySet = setOf(buf[pick].card); lastAskP = pp[pick];
+      if (decisionCapture()) { captureV6(n, u, ord, tie, buf[pick], pp[pick]); captureGateBind(pub); }
       return buf[pick];
     }
 
@@ -537,9 +598,13 @@ struct V06Agent : V05Agent {
     // Roll out.  Common random numbers: every candidate is evaluated on the
     // same determinization set, so the comparison is paired and the sampling
     // noise that matters is the noise in the DIFFERENCE, not in the level.
-    if (roll.cfg.rolloutSpec != x.rolloutSpec()) { roll.cfg.rolloutSpec = x.rolloutSpec(); for (int j = 0; j < NPLAY; j++) roll.ag[j].reset(); }
+    roll.cfg.rolloutSpec = x.rolloutSpec();
+    roll.cfg.oppSpec = x.rollOpp;
+    roll.cfg.myTeam = teamOf(seat);
     roll.cfg.maxDepth = x.maxDepth;
-    roll.cfg.leafLambda = x.leafLambda;
+    if (roll.cfg.leafSpec != x.leafSpec || roll.cfg.leafLambda != x.leafLambda) {
+      roll.cfg.leafSpec = x.leafSpec; roll.cfg.leafLambda = x.leafLambda; roll.rebuildEvaluator();
+    }
     roll.beginDecision(pub);
     const int team = teamOf(seat);
     // The search's candidate list: K live candidates in blueprint order,
@@ -551,7 +616,17 @@ struct V06Agent : V05Agent {
     for (int r = 0; r < nDead; r++) cand.push_back(deadCand[r]);
     const int KC = int(cand.size());
     const int D = int(det.size());
-    std::vector<double> val(size_t(KC) * size_t(D), 0.0);
+    const size_t NV = size_t(KC) * size_t(D);
+    std::vector<double> val(NV, 0.0);
+    // v0.7 T1 (d): the batch leaf path.  A truncated rollout writes its leaf's
+    // feature row here and returns without pricing it; every leaf of the
+    // decision is then priced in ONE call.  With `maxDepth = 0` nothing is
+    // truncated and the buffers are never allocated, so the unrestricted search
+    // is untouched.
+    std::vector<double> leafBuf;
+    std::vector<uint8_t> wasTrunc;
+    const bool batchLeaves = x.maxDepth > 0;
+    if (batchLeaves) { leafBuf.assign(NV * size_t(NLEAF), 0.0); wasTrunc.assign(NV, 0); }
     uint64_t hand[NPLAY];
     Knowledge seatK[NPLAY];
     for (int d = 0; d < D; d++) {
@@ -559,11 +634,30 @@ struct V06Agent : V05Agent {
       for (int j = 0; j < NPLAY; j++) { seatK[j] = roll.pubK; v06::refineWithHand(seatK[j], j, hand[j]); }
       uint64_t rs = mixSeed(srng.next(), uint64_t(d) * 7919 + 11);
       for (int r = 0; r < KC; r++) {
-        for (int j = 0; j < NPLAY; j++) {
-          roll.ag[j]->reset(j, hand[j], pub.rules, mixSeed(rs, uint64_t(j) * 131 + 7));
-          roll.ag[j]->k = seatK[j];
+        for (int j = 0; j < NPLAY; j++)
+          roll.ag[j]->resetWithKnowledge(j, hand[j], pub.rules, mixSeed(rs, uint64_t(j) * 131 + 7), seatK[j]);
+        size_t idx = size_t(r) * size_t(D) + size_t(d);
+        if (batchLeaves) {
+          bool tr = false;
+          val[idx] = roll.playOut(hand, seat, team, &cand[size_t(r)],
+                                  leafBuf.data() + idx * size_t(NLEAF), &tr);
+          wasTrunc[idx] = uint8_t(tr ? 1 : 0);
+        } else {
+          val[idx] = roll.playOut(hand, seat, team, &cand[size_t(r)]);
         }
-        val[size_t(r) * size_t(D) + size_t(d)] = roll.playOut(hand, seat, team, &cand[size_t(r)]);
+      }
+    }
+    if (batchLeaves) {
+      std::vector<double> pack; std::vector<size_t> where;
+      pack.reserve(NV * size_t(NLEAF)); where.reserve(NV);
+      for (size_t i = 0; i < NV; i++) if (wasTrunc[i]) {
+        where.push_back(i);
+        pack.insert(pack.end(), leafBuf.begin() + long(i * NLEAF), leafBuf.begin() + long((i + 1) * NLEAF));
+      }
+      if (!where.empty()) {
+        std::vector<double> out(where.size());
+        roll.evaluator().valueBatch(pack.data(), int(where.size()), out.data());
+        for (size_t j = 0; j < where.size(); j++) val[where[j]] = out[j];
       }
     }
     searched++;
@@ -594,6 +688,11 @@ struct V06Agent : V05Agent {
     if (bestR >= K) { deadTried[pick.card][pick.target] = true; deadUsed++; deadPlayed++; }
     lastMySet = setOf(pick.card);
     lastAskP = bestR < K ? pp[ord[bestR]] : 0.0;
+    if (decisionCapture()) {
+      captureV6(n, u, ord, tie, pick, lastAskP);
+      captureGateBind(pub);
+      lastDec.searched = true; lastDec.changed = (bestR != 0);
+    }
     return pick;
   }
 };

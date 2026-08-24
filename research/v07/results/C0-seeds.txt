@@ -1,0 +1,43 @@
+seed       role         study  unseal battery
+20260823   fit          v06    0      fitA (tune)
+20260824   fit          v06    0      fitC (tune)
+90210      eval         v06    0      E3 head-to-head; E8 ties(non-mirror); E10 gateaudit; E12 search; E13 rollout; E14 searchdev; E2 pathology(vs v05)
+31337      eval         v06    0      E3 head-to-head; F0 search-confirm
+515151     eval         v06    0      E3 head-to-head; F0 search-confirm
+777001     eval         v06    0      E3 head-to-head
+424242     eval         v06    0      E3 head-to-head
+515253     eval         v06    0      E4 per-style panel
+515253     fit          v06    0      X1 exploitability responder fit (exploitability_v06.sh FITSEED)
+6543210    eval         v06    0      X1 exploitability responder evaluation (EVALSEED)
+606060     eval         v06    0      E5 ablations; F1 chain2x2
+717171     eval         v06    0      E6 calibration
+828282     eval         v06    0      E7 rule dialects
+313131     eval         v06    0      E11 partner regimes
+31         diagnostic   v06    0      E0 identity; E2 pathology; E8 ties/belief; E15 deliberate miss
+20260821   eval         v05    0      arena default (MatchConfig::seed)
+20260822   diagnostic   v05    0      P1 deadlock verification
+777        diagnostic   v05    0      P2 forced-endgame replay
+424243     fit          v05    0      v0.5 fitting
+7010001    diagnostic   v07    0      T1 throughput table
+7010002    diagnostic   v07    0      T2 rollout-fidelity ladder
+7011001    diagnostic   v07    0      D1 per-decision channel
+7011002    diagnostic   v07    0      D2 per-decision channel, replicate
+7012001    diagnostic   v07    0      W1 transcript-inversion bit measurement
+7012002    diagnostic   v07    0      W2 transcript-inversion bit measurement, replicate
+7020001    fit          v07    0      C1 responder fitting bank A (planted-edge calibration)
+7020002    fit          v07    0      C1 responder fitting bank B (planted-edge calibration)
+7021001    eval         v07    0      C1 responder evaluation bank A (fresh; planted-edge calibration)
+7021002    eval         v07    0      C1 responder evaluation bank B (fresh; replicate)
+7022001    eval         v07    0      C0 planted-edge ground truth (reference exploiter vs handicapped target)
+7022002    eval         v07    0      C0 planted-edge ground truth, replicate
+7030001    eval         v07    0      train bank 1
+7030002    eval         v07    0      train bank 2
+7030003    eval         v07    0      train bank 3
+7030004    eval         v07    0      train bank 4
+7090001    sealed       v07    5      holdout bank 1
+7090002    sealed       v07    5      holdout bank 2
+7090003    sealed       v07    5      holdout bank 3
+7091001    sealed       v07    5      sealed adversary half
+
+R1 VIOLATION seed 515253: 'v06/E4 per-style panel' (eval) and 'v06/X1 exploitability responder fit (exploitability_v06.sh FITSEED)' (fit)
+1 violation(s).  FISH_UNSEAL_PHASE=0

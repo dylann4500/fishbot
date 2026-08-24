@@ -1,0 +1,22 @@
+=== target v06:hcap=decl,hstr=0.08 ===
+  fitting C1 (base=v06) against v06:hcap=decl,hstr=0.08
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=decl,hstr=0.08
+    C2 done
+    C5 done
+=== target v06:hcap=decl,hstr=0.11 ===
+  fitting C1 (base=v06) against v06:hcap=decl,hstr=0.11
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=decl,hstr=0.11
+    C2 done
+    C5 done
+=== readability rung v06:hcap=leak,hstr=1.5 (C5 and the C1 reference only) ===
+=== readability rung v06:hcap=leak,hstr=4.0 (C5 and the C1 reference only) ===
+done. artifacts in ../research/v07/results
+=== target v06:hcap=leak,hstr=1.5 ===
+  fitting C1 (base=v06) against v06:hcap=leak,hstr=1.5
+    C1 done
+=== readability rung v06:hcap=leak,hstr=1.5 (C5 and the C1 reference only) ===
+=== readability rung v06:hcap=leak,hstr=4.0 (C5 and the C1 reference only) ===
+done. artifacts in ../research/v07/results
+########## FINER RUNGS DONE ##########

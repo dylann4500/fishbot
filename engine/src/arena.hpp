@@ -1,6 +1,7 @@
 // Threaded, seed-paired, orientation-balanced match runner.
 #pragma once
 #include "factory.hpp"
+#include "v07_power.hpp"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -22,6 +23,11 @@ struct MatchStats {
   long long auditViolations = 0, auditChecks = 0;
   std::vector<uint8_t> paired;   // per deal: A wins across the two orientations (0..2)
   double seconds = 0;
+  int threadsUsed = 0;
+  std::vector<DecisionRecord> decisions;   // v0.7 D1, empty unless requested
+  double gamesPerSec(int rotations) const {
+    return seconds > 0 ? double(games) * double(rotations) / seconds : 0.0;
+  }
   void merge(const MatchStats& o) {
     games += o.games; winsA += o.winsA; events += o.events; limitHits += o.limitHits;
     auditViolations += o.auditViolations; auditChecks += o.auditChecks;
@@ -59,6 +65,21 @@ struct MatchConfig {
   Rules rules;
   bool audit = false;
   int threads = 0;
+  // v0.7 D1.  When set, every decision by the requested seats is recorded.
+  // Capture costs roughly 2x on the ask path (it re-scores the ungated
+  // candidate set to measure the live-ask gate's binding rate), so it is off in
+  // every strength battery and on only in the per-decision batteries.
+  bool captureDecisions = false;
+  bool captureTeamAOnly = true;
+  // v0.7 A2: draw a per-game ex-ante correlation signal for the A seats.
+  bool correlated = false;
+  // v0.7 T1: seed-bank sharding.  Shard s of n plays the deals of the SAME bank
+  // whose index is congruent to s mod n, so the shards partition the bank
+  // exactly, never overlap, and reassemble into it -- the deal's seed is a
+  // function of its index and of nothing else.  A long battery can then be split
+  // across processes or machines without either double-counting a deal or
+  // needing a second bank, and the union is bit-identical to the unsharded run.
+  int shard = 0, shards = 1;
 };
 
 inline MatchStats runMatch(const MatchConfig& mc) {
@@ -66,8 +87,28 @@ inline MatchStats runMatch(const MatchConfig& mc) {
   if (nThreads < 1) nThreads = 1;
   nThreads = std::min(nThreads, std::max(1, mc.games));
   std::vector<MatchStats> local(nThreads);
-  std::vector<std::vector<uint8_t>> pairedLocal(nThreads);
+  std::vector<std::vector<DecisionRecord>> decLocal(nThreads);
+  // v0.7 T1 (a).  The paired vector is now indexed BY DEAL rather than
+  // concatenated in thread order.  The old form made the bootstrap interval a
+  // function of std::thread::hardware_concurrency(): clusterBootstrap resamples
+  // positions in this vector with a fixed Rng, so the same deals in a different
+  // order give a different interval.  Measured on E3's own cell (v06 vs v05,
+  // seed 90210, 300 deals x 6): --threads=1 gives ci [0.491667, 0.538333] and
+  // --threads=4/8/15 give [0.491111, 0.537778].  The win rate was always
+  // thread-invariant; the INTERVAL was not, so no published half-width in the
+  // corpus is reproducible on a machine with a different core count.  Indexing
+  // by deal removes the dependence entirely.
+  std::vector<uint8_t> pairedAll(size_t(std::max(0, mc.games)), 0);
   auto t0 = std::chrono::steady_clock::now();
+  // v0.7 T1 (b).  Work-stealing over a shared atomic deal counter instead of
+  // the static stride `for (i = t; i < games; i += nThreads)`.  Per-deal cost
+  // varies by an order of magnitude under the search configuration (a deal that
+  // resolves early searches far fewer decisions), and the static stride makes
+  // the whole match wait for the slowest thread's whole strand.  Measured on
+  // the search configuration at 20 deals over 15 cores the old scheduler ran at
+  // 791% CPU; the deal seed is a function of the deal INDEX and not of the
+  // thread, so the change is bit-neutral.
+  std::atomic<int> next{0};
   std::vector<std::thread> pool;
   for (int t = 0; t < nThreads; t++) {
     pool.emplace_back([&, t]() {
@@ -77,9 +118,16 @@ inline MatchStats runMatch(const MatchConfig& mc) {
         B[i] = makeAgent(mc.specB);
       }
       MatchStats& st = local[t];
-      auto& pr = pairedLocal[t];
       Game game;
-      for (int i = t; i < mc.games; i += nThreads) {
+      DecisionSink sink;
+      if (mc.captureDecisions) {
+        decisionCapture() = true;
+        sink.teamAOnly = mc.captureTeamAOnly;
+      }
+      for (;;) {
+        int i = next.fetch_add(1, std::memory_order_relaxed);
+        if (i >= mc.games) break;
+        if (mc.shards > 1 && (i % mc.shards) != mc.shard) continue;
         uint64_t s = mixSeed(mc.seed, uint64_t(i) * 2654435761ull + 1);
         int aWins = 0;
         // Duplicate blocks.  With 2 rotations we simply swap which team A holds.
@@ -102,6 +150,17 @@ inline MatchStats runMatch(const MatchConfig& mc) {
           }
           game.audit = mc.audit; game.auditViolations = 0; game.auditChecks = 0;
           game.rotation = shift;
+          // v0.7 A2.  Drawn from a stream keyed by a constant of its own, so it
+          // is not the deal seed and cannot be inverted to one; and handed to no
+          // policy through any argument, so a target that does not implement the
+          // regime cannot observe it.  Zero when the regime is off.
+          correlationSignal() = mc.correlated
+              ? mixSeed(mixSeed(mc.seed ^ 0xA2C00DEDull, uint64_t(i) * 1000003ull + uint64_t(rot)), 0xC0FFEEull)
+              : 0ull;
+          if (mc.captureDecisions) {
+            sink.deal = int32_t(i); sink.rot = int16_t(rot); sink.teamA = orient;
+            game.dsink = &sink;
+          }
           GameResult r = game.run(s, mc.rules, ag);
           int teamA = orient, teamB = 1 - orient;
           if (r.winner == teamA) { st.winsA++; aWins++; }
@@ -120,15 +179,34 @@ inline MatchStats runMatch(const MatchConfig& mc) {
           st.auditViolations += game.auditViolations; st.auditChecks += game.auditChecks;
         }
         st.games++;
-        pr.push_back(uint8_t(aWins));
+        pairedAll[size_t(i)] = uint8_t(aWins);
       }
+      if (mc.captureDecisions) { decisionCapture() = false; decLocal[t].swap(sink.rows); }
     });
   }
   for (auto& th : pool) th.join();
   MatchStats total;
-  for (int t = 0; t < nThreads; t++) {
-    total.merge(local[t]);
-    total.paired.insert(total.paired.end(), pairedLocal[t].begin(), pairedLocal[t].end());
+  for (int t = 0; t < nThreads; t++) total.merge(local[t]);
+  if (mc.shards > 1) {                    // compact to the deals this shard played
+    std::vector<uint8_t> kept;
+    kept.reserve(size_t(mc.games / mc.shards) + 1);
+    for (int i = mc.shard; i < mc.games; i += mc.shards) kept.push_back(pairedAll[size_t(i)]);
+    pairedAll.swap(kept);
+  }
+  total.paired.swap(pairedAll);
+  total.threadsUsed = nThreads;
+  if (mc.captureDecisions) {
+    size_t n = 0; for (auto& v : decLocal) n += v.size();
+    total.decisions.reserve(n);
+    for (auto& v : decLocal) total.decisions.insert(total.decisions.end(), v.begin(), v.end());
+    // Deal order, so a per-decision artifact does not depend on the schedule.
+    std::sort(total.decisions.begin(), total.decisions.end(),
+              [](const DecisionRecord& a, const DecisionRecord& b) {
+                if (a.deal != b.deal) return a.deal < b.deal;
+                if (a.rot != b.rot) return a.rot < b.rot;
+                if (a.event != b.event) return a.event < b.event;
+                return a.seat < b.seat;
+              });
   }
   total.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
   return total;

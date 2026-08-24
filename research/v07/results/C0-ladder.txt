@@ -1,0 +1,27 @@
+hcap=none              dTrue= +0.00 pts  [ +0.00, +0.00]  targetDecl=0.9797 targetAsk=0.5402
+hcap=hit,hstr=0.02     dTrue= +0.02 pts  [ -0.88, +0.92]  targetDecl=0.9795 targetAsk=0.5403
+hcap=hit,hstr=0.05     dTrue= -0.35 pts  [ -1.35, +0.65]  targetDecl=0.9789 targetAsk=0.5391
+hcap=hit,hstr=0.10     dTrue= -0.10 pts  [ -1.20, +0.98]  targetDecl=0.9788 targetAsk=0.5371
+hcap=hit,hstr=0.20     dTrue= +0.07 pts  [ -1.10, +1.20]  targetDecl=0.9791 targetAsk=0.5330
+hcap=hit,hstr=0.40     dTrue= +0.37 pts  [ -0.85, +1.60]  targetDecl=0.9787 targetAsk=0.5240
+hcap=hit,hstr=1.0      dTrue= +4.15 pts  [ +2.90, +5.38]  targetDecl=0.9768 targetAsk=0.4806
+hcap=decl,hstr=0.05    dTrue= +0.85 pts  [ +0.07, +1.63]  targetDecl=0.9824 targetAsk=0.5335
+hcap=decl,hstr=0.15    dTrue= +2.70 pts  [ +1.60, +3.80]  targetDecl=0.9788 targetAsk=0.5182
+hcap=decl,hstr=0.4     dTrue= +2.77 pts  [ +1.68, +3.85]  targetDecl=0.9787 targetAsk=0.5181
+hcap=decl,hstr=1.0     dTrue= +2.77 pts  [ +1.68, +3.85]  targetDecl=0.9787 targetAsk=0.5181
+hcap=prior,hstr=0.25   dTrue= +0.05 pts  [ -1.10, +1.18]  targetDecl=0.9786 targetAsk=0.5352
+hcap=prior,hstr=0.6    dTrue= +2.23 pts  [ +1.05, +3.40]  targetDecl=0.9771 targetAsk=0.5300
+hcap=prior,hstr=1.0    dTrue= +5.97 pts  [ +4.73, +7.18]  targetDecl=0.9730 targetAsk=0.5251
+hcap=gate,hstr=0.02    dTrue= -0.03 pts  [ -0.30, +0.25]  targetDecl=0.9796 targetAsk=0.5402
+hcap=gate,hstr=0.05    dTrue= +0.03 pts  [ -0.73, +0.78]  targetDecl=0.9794 targetAsk=0.5399
+hcap=gate,hstr=0.15    dTrue= +0.40 pts  [ -0.58, +1.38]  targetDecl=0.9792 targetAsk=0.5402
+hcap=gate,hstr=0.4     dTrue= -0.92 pts  [ -2.05, +0.23]  targetDecl=0.9782 targetAsk=0.5405
+hcap=leak,hstr=0.15    dTrue= -0.15 pts  [ -0.83, +0.55]  targetDecl=0.9793 targetAsk=0.5392
+hcap=leak,hstr=0.5     dTrue= -0.42 pts  [ -1.38, +0.55]  targetDecl=0.9791 targetAsk=0.5383
+hcap=leak,hstr=1.5     dTrue= +1.58 pts  [ +0.45, +2.72]  targetDecl=0.9778 targetAsk=0.5319
+hcap=leak,hstr=4.0     dTrue= +5.18 pts  [ +3.97, +6.38]  targetDecl=0.9785 targetAsk=0.5158
+hcap=tell,hstr=0.15    dTrue= -0.02 pts  [ -1.27, +1.20]  targetDecl=0.9779 targetAsk=0.5393
+hcap=tell,hstr=0.5     dTrue= -0.80 pts  [ -2.05, +0.45]  targetDecl=0.9784 targetAsk=0.5358
+hcap=tell,hstr=1.5     dTrue= +1.32 pts  [ +0.05, +2.57]  targetDecl=0.9787 targetAsk=0.5203
+
+[exited with code 0]

@@ -1,0 +1,58 @@
+=== target v06 ===
+  fitting C1 (base=v06) against v06
+    C1 done
+  fitting C2 (base=v07) against v06
+    C2 done
+    C3 done
+    C5 done
+=== target v06:hcap=decl,hstr=0.05 ===
+  fitting C1 (base=v06) against v06:hcap=decl,hstr=0.05
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=decl,hstr=0.05
+    C2 done
+    C3 done
+    C5 done
+=== target v06:hcap=decl,hstr=0.15 ===
+  fitting C1 (base=v06) against v06:hcap=decl,hstr=0.15
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=decl,hstr=0.15
+    C2 done
+    C3 done
+    C5 done
+=== target v06:hcap=hit,hstr=1.0 ===
+  fitting C1 (base=v06) against v06:hcap=hit,hstr=1.0
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=hit,hstr=1.0
+    C2 done
+    C3 done
+    C5 done
+./exploitability_v07.sh: line 152: --seed=7021002: command not found
+./exploitability_v07.sh: line 154: syntax error near unexpected token `done'
+./exploitability_v07.sh: line 154: `    done'
+########## floor: the fifth rung, appended (a second mechanism in the ~2-point band) ##########
+=== target v06:hcap=prior,hstr=0.6 ===
+  fitting C1 (base=v06) against v06:hcap=prior,hstr=0.6
+    C1 done
+  fitting C2 (base=v07) against v06:hcap=prior,hstr=0.6
+    C2 done
+    C3 done
+    C5 done
+=== readability rung v06:hcap=leak,hstr=1.5 (C5 and the C1 reference only) ===
+=== readability rung v06:hcap=leak,hstr=4.0 (C5 and the C1 reference only) ===
+done. artifacts in ../research/v07/results
+########## T1b: the three throughput rows lost to a malformed opponent-model spec ##########
+########## T2 fast-search strength: the throughput claim must not be vacuous ##########
+########## W2/W3: the readability handicap, in bits and in play ##########
+fish: unknown handicap 'leak+hstr=0.5'
+fish: unknown handicap 'leak+hstr=1.5'
+fish: unknown handicap 'leak+hstr=4.0'
+fish: unknown handicap 'tell+hstr=1.5'
+########## C2 budget curve ##########
+########## T3: the work-stealing scheduler ##########
+########## re-run the repaired gates ##########
+V05/V06 IDENTITY PASS
+V07 IDENTITY PASS
+V07I IDENTITY PASS
+TRUNCATION DETERMINISM PASS
+SHARD PARTITION PASS
+########## PHASE 1 COMPUTE DONE ##########

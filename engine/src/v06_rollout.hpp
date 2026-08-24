@@ -31,6 +31,7 @@
 // and j's knowledge is precisely the public record plus its own hand.
 #pragma once
 #include "game.hpp"
+#include "v07_leaf.hpp"
 #include <memory>
 #include <string>
 
@@ -79,8 +80,21 @@ inline void refineWithHand(Knowledge& kk, int j, uint64_t hand) {
 
 struct RolloutConfig {
   std::string rolloutSpec = "v05:belief=indep,topk=0";
+  // v0.7 C3.  The blueprint used for the OPPOSING seats of the rollout.  Empty
+  // means "the same as ours", which is what v0.6 did and is the right choice for
+  // self-improvement: the search then assumes its opponents play as it does.
+  // It is the wrong choice for EXPLOITATION.  A responder that knows the target
+  // exactly -- which the threat model grants it, T3 -- should roll the target's
+  // seats out with the TARGET's policy, so that the value it maximises is the
+  // value against the opponent it actually faces rather than against a mirror of
+  // itself.  This one string is the difference between a search that improves a
+  // policy and a search that best-responds to one, and the corpus has only ever
+  // run the first.
+  std::string oppSpec  = "";
+  int   myTeam     = -1;     // which team the searching seat belongs to
   int   maxDepth   = 0;      // 0 = play to the end
   double leafLambda = 1.0;   // weight on expected half-suit control at a depth cut
+  std::string leafSpec = "material";
   int   askCap     = 260;    // per-rollout safety valve
 };
 
@@ -93,12 +107,27 @@ struct RolloutEngine {
   bool pubReady = false;
   Game sim;
   int deckSets = 9;
-  long long rollouts = 0, rolloutEvents = 0;
+  long long rollouts = 0, rolloutEvents = 0, truncations = 0;
+  std::unique_ptr<LeafEvaluator> leafEval;
+  std::string builtSig;
 
-  void ensureAgents() {
-    if (ag[0]) return;
-    for (int p = 0; p < NPLAY; p++) ag[p] = makeAgent(cfg.rolloutSpec);
+  std::string agentSig() const {
+    return cfg.rolloutSpec + "||" + cfg.oppSpec + "||" + std::to_string(cfg.myTeam);
   }
+  void ensureAgents() {
+    std::string sig = agentSig();
+    if (ag[0] && sig == builtSig) return;
+    for (int p = 0; p < NPLAY; p++) {
+      bool mine = (cfg.myTeam < 0) || (teamOf(p) == cfg.myTeam) || cfg.oppSpec.empty();
+      ag[p] = makeAgent(mine ? cfg.rolloutSpec : cfg.oppSpec);
+    }
+    builtSig = sig;
+  }
+  LeafEvaluator& evaluator() {
+    if (!leafEval) leafEval = makeLeafEvaluator(cfg.leafSpec, cfg.leafLambda);
+    return *leafEval;
+  }
+  void rebuildEvaluator() { leafEval.reset(); }
 
   // Replay the public record once.  Everything downstream copies this.
   void beginDecision(const PublicState& pub) {
@@ -131,7 +160,15 @@ struct RolloutEngine {
   // for `team`.  Half-suits still active are priced by the fraction of the
   // half-suit the team physically holds, which is the quantity the adjudication
   // rule (game.hpp:271-287) actually resolves on.
-  double leafValue(const GameState& g, int team) const {
+  double leafValue(const GameState& g, int team) {
+    double f[NLEAF];
+    leafFeatures(g, team, cfg.leafLambda, f);
+    return evaluator().value(f);
+  }
+  // The v0.6 formula, kept verbatim so the refactor has an identity control
+  // rather than an argument.  `fish v7leafcheck` asserts leafValue == this for
+  // the default evaluator over a sample of real leaves.
+  double leafValueV06(const GameState& g, int team) const {
     double v = double(g.pub.score[team]) - double(g.pub.score[1 - team]);
     for (int s = 0; s < NSET; s++) {
       if (!g.pub.setActive[s]) continue;
@@ -146,7 +183,12 @@ struct RolloutEngine {
   // setup(), the value sink and the calibration sink; the driver's own methods
   // (declarationRound, forcedEndgame, emit, adjudicateRemaining) are reused so
   // the rules cannot drift between the search and the real game.
-  double playOut(const uint64_t* hand, int turn, int team, const AskMove* first) {
+  // `leafFeat`/`truncated` are the batch path: when a depth cut fires and a
+  // buffer is supplied, the leaf's feature row is written and the value is left
+  // for the caller to compute in one batched call per decision.  With no buffer
+  // the evaluator is called inline, which is what v0.6 did.
+  double playOut(const uint64_t* hand, int turn, int team, const AskMove* first,
+                 double* leafFeat = nullptr, bool* truncated = nullptr) {
     sim.rules = basePub.rules;
     sim.g.pub.history.clear();
     sim.g.pub = basePub;
@@ -179,7 +221,8 @@ struct RolloutEngine {
     }
     while (true) {
       if (cfg.maxDepth > 0 && sim.g.pub.nEvents - startEv >= cfg.maxDepth) {
-        rollouts++; rolloutEvents += sim.g.pub.nEvents - startEv;
+        rollouts++; truncations++; rolloutEvents += sim.g.pub.nEvents - startEv;
+        if (leafFeat) { leafFeatures(sim.g, team, cfg.leafLambda, leafFeat); if (truncated) *truncated = true; return 0.0; }
         return leafValue(sim.g, team);
       }
       sim.declarationRound();

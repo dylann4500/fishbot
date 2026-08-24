@@ -9,6 +9,85 @@ namespace fish {
 
 struct DeclProposal { Declaration decl; double conf = 0; bool want = false; };
 
+// ---------------------------------------------------------------- v0.7 D1
+// The per-decision evaluation channel.
+//
+// "A study that wants to find a quarter-point mechanism will need a
+// per-decision objective rather than a per-game one"
+// (paper/sections_v06/14-conclusion.tex).  The arithmetic behind that sentence
+// is 98/sqrt(N): at a thousand deals a cell this policy class looks flat, and
+// the corpus documents six mechanisms that resolved at a small budget and
+// vanished at a large one.  A declaration fires 4.48 times a game and its
+// errors are individually labelled by ground truth, so scoring the mechanism on
+// DECLARATIONS rather than on GAMES buys roughly the ratio of decisions to
+// games in effective sample.
+//
+// Capture is opt-in through a thread-local flag rather than a member, because
+// the agent that fills the record cannot see the Game that owns the sink and
+// the shipped hot path must not pay for a feature it does not use.  With the
+// flag off the cost is one thread-local bool load per decision.
+inline bool& decisionCapture() { static thread_local bool b = false; return b; }
+
+// ---------------------------------------------------------------- v0.7 A2
+// The adversary's ex-ante correlation device.
+//
+// THREAT-MODEL.md T4 names three adversary correlation regimes and makes A2 --
+// one vector plus a shared pre-play signal secret from the target -- the
+// headline, because it is the TMECor class and the only regime under which a
+// low score certifies anything.  The asymmetry is deliberate: "the adversary is
+// a measuring instrument, not a competitor bound by the same charter" (section
+// 4.3), and the v0.7 team itself is denied this by H1.
+//
+// The signal is drawn per game by the arena from a stream that no policy is
+// handed and that no policy can observe.  It is common to the three adversary
+// seats and unavailable to the target, which is exactly what a correlation
+// device is.  A responder that does not read it is A1 by construction, so the
+// two regimes differ by one option and are measured on the same code path.
+inline uint64_t& correlationSignal() { static thread_local uint64_t s = 0; return s; }
+
+// What the POLICY knows about the decision it just made.  Filled by the policy;
+// everything ground-truth-dependent is filled by the driver.
+struct DecisionInfo {
+  int    nCand    = 0;      // candidates the policy actually ranked
+  int    nTie     = 0;      // how many tied the leader bit for bit
+  double p        = -1;     // the policy's own forecast for the chosen action
+  double margin   = 0;      // score gap, leader to runner-up (0 inside a tie)
+  double score    = 0;      // the leader's blueprint score
+  bool   dead     = false;  // the chosen ask is provably dead from the actor's view
+  bool   gateBound= false;  // the live-ask gate removed what would have been the argmax
+  int    nFeasible= 0;      // feasible allocations enumerated (declaration path)
+  double pAlloc   = -1;     // the policy's own P(named allocation correct)
+  bool   searched = false;  // a test-time search ran at this decision
+  bool   changed  = false;  // ... and it moved the choice off the blueprint's
+  void clear() { *this = DecisionInfo{}; }
+};
+
+// One row per decision.  Ground truth fields are computed by the driver and are
+// never visible to a policy.
+struct DecisionRecord {
+  int32_t deal = 0;
+  int16_t rot = 0;
+  int16_t event = 0;
+  int8_t  seat = 0, team = 0, arm = 0;
+  int8_t  kind = 0;         // 0 ask, 1 voluntary declaration, 2 forced declaration
+  int8_t  card = 0, target = 0, set = 0;
+  int8_t  hit = 0;          // ask: did it land.  declaration: was it correct
+  int8_t  ownLocked = 0;    // GROUND TRUTH: this team already holds all six of `set`
+  int8_t  oppLocked = 0;    // GROUND TRUTH: the opposing team already holds all six
+  int8_t  truthHolder = -1; // GROUND TRUTH: who actually holds `card`
+  int8_t  dead = 0, gateBound = 0, searched = 0, changed = 0;
+  int16_t nCand = 0, nTie = 0, nFeasible = 0;
+  float   p = -1, margin = 0, score = 0, pAlloc = -1;
+  int16_t unresolved = 0;   // |unresolved| at the decision, from the actor's view
+};
+
+struct DecisionSink {
+  std::vector<DecisionRecord> rows;
+  int32_t deal = 0; int16_t rot = 0; int8_t arm = 0;
+  bool teamAOnly = false; int teamA = 0;     // restrict to one arm's seats
+  void reserveFor(int deals) { rows.reserve(size_t(deals) * 120); }
+};
+
 struct Agent {
   int seat = 0;
   Knowledge k;
@@ -18,6 +97,13 @@ struct Agent {
     seat = s; k.init(s, hand, r.deckSets); (void)seed;
   }
   virtual void observe(const Event& e) { k.onEvent(e); }
+  // v0.7 T1 (c).  A rollout reconstructs six agents at their information sets
+  // KC x D times per searched decision and then OVERWRITES `k` on every one of
+  // them, so the `k.init` inside reset() is pure waste -- 54 cards of setup
+  // thrown away immediately.  This entry point does the same job without it and
+  // is exactly equivalent to `reset(...); k = k0;`.
+  virtual void resetWithKnowledge(int s, uint64_t hand, const Rules& r, uint64_t seed,
+                                  const Knowledge& k0) { reset(s, hand, r, seed); k = k0; }
   virtual AskMove chooseAsk(const PublicState& pub) = 0;
   // Forecast attached to the most recent ask (negative when not modelled).
   virtual double lastAskForecast() const { return -1; }
@@ -31,6 +117,9 @@ struct Agent {
   virtual bool willingForced(const PublicState& pub, int set, Declaration& d, double& conf, double threshold) {
     (void)pub; (void)set; (void)d; (void)conf; (void)threshold; return false;
   }
+  // v0.7 D1: what the policy knows about the decision it just made.  Null when
+  // the policy does not implement the channel.
+  virtual const DecisionInfo* lastDecision() const { return nullptr; }
   virtual void bestGuess(const PublicState& pub, int set, Declaration& d, double& conf) {
     (void)pub; d.set = uint8_t(set); conf = 0;
     for (int i = 0; i < SETSZ; i++) d.owner[i] = uint8_t(seat);
@@ -90,6 +179,7 @@ public:
   int calibTeam = -1;
   ValueSink* vsink = nullptr;
   int vsinkStart = 0;
+  DecisionSink* dsink = nullptr;      // v0.7 D1: per-decision records
   int lockedAt[NSET];
 
   int rotation = 0;   // duplicate-block rotation: seat i receives hand (i+rotation)%6
@@ -167,6 +257,25 @@ public:
   // costs one null check per event and changes nothing.
   std::function<void(const Game&)> observer;
 
+  // v0.7 D1.  Ground-truth annotation of a decision record.  Reads g.hand, so it
+  // exists only on the driver side and is never reachable from a policy.
+  bool teamOwnsAll(int st, int team) const {
+    uint64_t t = 0;
+    for (int p = team; p < NPLAY; p += 2) t |= g.hand[p];
+    return (t & setMask(st)) == setMask(st);
+  }
+  bool wantRecord(int seat) const {
+    if (!dsink) return false;
+    if (dsink->teamAOnly && teamOf(seat) != dsink->teamA) return false;
+    return true;
+  }
+  void baseRecord(DecisionRecord& r, int seat) const {
+    r.deal = dsink->deal; r.rot = dsink->rot; r.arm = dsink->arm;
+    r.event = int16_t(g.pub.nEvents);
+    r.seat = int8_t(seat); r.team = int8_t(teamOf(seat));
+    r.unresolved = int16_t(__builtin_popcountll(agents[seat]->k.unresolved));
+  }
+
   void applyDeclaration(int actor, const Declaration& d, bool forced, double conf) {
     int team = teamOf(actor);
     bool correct = true;
@@ -174,6 +283,20 @@ public:
       int c = cardOf(d.set, i);
       int claimed = d.owner[i];
       if (teamOf(claimed) != team || !(g.hand[claimed] & bit(c))) { correct = false; break; }
+    }
+    if (wantRecord(actor)) {
+      DecisionRecord r; baseRecord(r, actor);
+      r.kind = forced ? 2 : 1;
+      r.set = int8_t(d.set); r.card = -1; r.target = -1;
+      r.hit = int8_t(correct ? 1 : 0);
+      r.ownLocked = int8_t(teamOwnsAll(d.set, team) ? 1 : 0);
+      r.oppLocked = int8_t(teamOwnsAll(d.set, 1 - team) ? 1 : 0);
+      r.pAlloc = float(conf); r.p = float(conf);
+      if (const DecisionInfo* di = agents[actor]->lastDecision()) {
+        r.nFeasible = int16_t(di->nFeasible);
+        r.nCand = int16_t(di->nCand);
+      }
+      dsink->rows.push_back(r);
     }
     if (lockedAt[d.set] >= 0 && correct) {
       res.lockHeldEvents[team] += g.pub.nEvents - lockedAt[d.set];
@@ -340,6 +463,22 @@ public:
       int actor = g.turn, target = mv.target, card = mv.card;
       bool success = (g.hand[target] & bit(card)) != 0;
       int team = teamOf(actor);
+      if (wantRecord(actor)) {
+        DecisionRecord r; baseRecord(r, actor);
+        r.kind = 0;
+        r.card = int8_t(card); r.target = int8_t(target); r.set = int8_t(setOf(card));
+        r.hit = int8_t(success ? 1 : 0);
+        r.ownLocked = int8_t(teamOwnsAll(setOf(card), team) ? 1 : 0);
+        r.oppLocked = int8_t(teamOwnsAll(setOf(card), 1 - team) ? 1 : 0);
+        for (int q = 0; q < NPLAY; q++) if (g.hand[q] & bit(card)) r.truthHolder = int8_t(q);
+        if (const DecisionInfo* di = agents[actor]->lastDecision()) {
+          r.nCand = int16_t(di->nCand); r.nTie = int16_t(di->nTie);
+          r.p = float(di->p); r.margin = float(di->margin); r.score = float(di->score);
+          r.dead = int8_t(di->dead ? 1 : 0); r.gateBound = int8_t(di->gateBound ? 1 : 0);
+          r.searched = int8_t(di->searched ? 1 : 0); r.changed = int8_t(di->changed ? 1 : 0);
+        }
+        dsink->rows.push_back(r);
+      }
       if (calib && team == calibTeam) {
         double f = agents[actor]->lastAskForecast();
         if (f >= 0) calib->ask.push_back({float(f), uint8_t(success ? 1 : 0)});

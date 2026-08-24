@@ -125,6 +125,33 @@ struct V05Config {
   // after a miss is provably dead.  Off by default; kept for the ablation.
   bool   repeatGuard        = false;
   bool   feasibleDecl       = true;   // M2 on the voluntary path too
+
+  // ---- v0.7: calibration by planted weakness --------------------------------
+  // A responder that cannot recover a planted two-point edge contributes
+  // nothing to a claim about a one-point difference, and the phase-1 report has
+  // to be able to say so in those words (THREAT-MODEL.md T5).  The corpus's
+  // only calibration point is a single ~4-point handicap built by zeroing the
+  // hit-probability weight (paper/sections_v06/09-fitting.tex, sec:fit-objective:
+  // 45.89% recovered to 48.33%).  These knobs turn that one point into a graded
+  // ladder, and add a family the strength ladder cannot express.
+  //
+  //   plantKind 1 LEAK.  Add plantStr * (cards of this half-suit I hold) to the
+  //     ask score.  The bias is nearly free in strength -- it correlates with
+  //     f[3] own-set progress, which the policy already rewards -- but it makes
+  //     the CHOICE OF HALF-SUIT a monotone read-out of the asker's holding in
+  //     it.  This is a READABILITY handicap, and it is the only one in the
+  //     ladder that a white-box inversion responder should find at a smaller
+  //     size than a strength-seeking one.  If C5 does not beat C1 here, C5 has
+  //     no case anywhere.
+  //   plantKind 2 TELL.  Add plantStr to any ask whose target is the
+  //     lowest-indexed live opponent: a fixed, public, per-target bias that the
+  //     v0.6 feature set contains no coordinate for.  Separates C1 from C2.
+  //   plantKind 3 GATE.  Disable M1's live-ask filter on a deterministic
+  //     plantStr fraction of decisions (by public event index, so it is
+  //     reproducible and carries no hidden randomness).  Reintroduces the
+  //     guaranteed-miss asks M1 exists to delete, at a controlled rate.
+  int    plantKind          = 0;
+  double plantStr           = 0.0;
 };
 
 struct V05Agent : Agent {
@@ -142,11 +169,24 @@ struct V05Agent : Agent {
   // provably dead, so this only catches the residue.
   bool asked[NCARD][NPLAY] = {};
   const char* label = "fishbot_v05";
+  // v0.7 D1: the per-decision channel.  Filled only when decisionCapture() is
+  // set by the harness, so the shipped hot path pays one thread-local load.
+  DecisionInfo lastDec;
 
   const char* name() const override { return label; }
+  const DecisionInfo* lastDecision() const override { return &lastDec; }
 
   void reset(int s, uint64_t hand, const Rules& r, uint64_t seed) override {
     Agent::reset(s, hand, r, seed);
+    rng = Rng(mixSeed(seed, 0x0404ull));
+    dirty = true; lastMySet = -1; lastAskP = -1;
+    memset(asked, 0, sizeof(asked));
+    teamMask = 0; oppMask = 0;
+    for (int p = 0; p < NPLAY; p++) { if (teamOf(p) == teamOf(s)) teamMask |= 1 << p; else oppMask |= 1 << p; }
+  }
+  void resetWithKnowledge(int s, uint64_t hand, const Rules& r, uint64_t seed,
+                          const Knowledge& k0) override {
+    seat = s; k = k0;
     rng = Rng(mixSeed(seed, 0x0404ull));
     dirty = true; lastMySet = -1; lastAskP = -1;
     memset(asked, 0, sizeof(asked));
@@ -479,9 +519,26 @@ struct V05Agent : Agent {
   // M1: legal asks that are not provably dead.  Falls back to the full legal set
   // when every ask is dead -- a genuinely starved turn, measured at 0.29% of
   // turns, where the rules still oblige the actor to move.
+  // v0.7 planted weakness, kinds 1 and 2.  Zero unless a handicap is installed.
+  double plantTerm(const PublicState& pub, int card, int target) const {
+    if (cfg.plantKind == 1)
+      return cfg.plantStr * double(popcount64(k.myHand & setMask(setOf(card))));
+    if (cfg.plantKind == 2) {
+      for (int q = 0; q < NPLAY; q++)
+        if ((oppMask & (1 << q)) && pub.handCount[q]) return (target == q) ? cfg.plantStr : 0.0;
+    }
+    return 0.0;
+  }
+  bool plantGateOpen(const PublicState& pub) const {
+    if (cfg.plantKind != 3) return false;
+    int pct = int(std::lround(cfg.plantStr * 100.0));
+    return pct > 0 && (pub.nEvents % 100) < pct;
+  }
+
   int enumerateLive(const PublicState& pub, AskMove* out) const {
     AskMove buf[NSET * SETSZ * 3];
     int n = enumerateAsks(pub, k.myHand, seat, buf);
+    if (plantGateOpen(pub)) { for (int i = 0; i < n; i++) out[i] = buf[i]; return n; }
     int m = 0;
     for (int i = 0; i < n; i++) {
       if (provablyDead(buf[i].card, buf[i].target)) continue;
@@ -509,14 +566,19 @@ struct V05Agent : Agent {
     prepareRunway(pub);
     double bestScore = -1e18; AskMove best = buf[0]; double bestP = 0;
     double f[NFEAT];
+    const bool cap = decisionCapture();
+    double us[NSET * SETSZ * 3];
     for (int i = 0; i < n; i++) {
       features(pub, buf[i].card, buf[i].target, f);
       double u = 0;
       for (int j = 0; j < NFEAT; j++) u += cfg.w[j] * f[j];
       u *= cfg.linearWeight;
       if (cfg.useValue) u += cfg.valueWeight * askExpectedValue(pub, buf[i].card, buf[i].target, f[0]);
+      if (cfg.plantKind) u += plantTerm(pub, buf[i].card, buf[i].target);
+      us[i] = u;
       if (u > bestScore) { bestScore = u; best = buf[i]; bestP = f[0]; }
     }
+    if (cap) captureAsk(pub, buf, us, n, bestScore);
     if (cfg.searchTopK > 1) {
       // Rank, keep the leaders, and re-score them with an exact posterior update
       // on each branch.  A hit resolves the card to us and keeps the turn; a
@@ -529,6 +591,7 @@ struct V05Agent : Agent {
         for (int j = 0; j < NFEAT; j++) u += cfg.w[j] * f[j];
         u *= cfg.linearWeight;
         if (cfg.useValue) u += cfg.valueWeight * askExpectedValue(pub, buf[i].card, buf[i].target, f[0]);
+        if (cfg.plantKind) u += plantTerm(pub, buf[i].card, buf[i].target);
         cs[i] = Cand{u, i};
       }
       int K = std::min(cfg.searchTopK, n);
@@ -583,11 +646,50 @@ struct V05Agent : Agent {
       }
       lastMySet = setOf(pick.card);
       lastAskP = pickP;
+      if (cap) { lastDec.p = pickP; lastDec.dead = provablyDead(pick.card, pick.target); }
       return pick;
     }
     lastMySet = setOf(best.card);
     lastAskP = bestP;
+    if (cap) { lastDec.p = bestP; lastDec.dead = provablyDead(best.card, best.target); }
     return best;
+  }
+
+  // v0.7 D1.  The candidate-set anatomy of one ask decision: how many
+  // candidates the policy ranked, how many of them tied the leader BIT FOR BIT
+  // (which is 53.2% of v0.6's ask decisions -- research/v06/results/E8-ties.txt),
+  // the score gap to the runner-up, and whether the live-ask gate removed what
+  // would otherwise have been the argmax.  The last of these is what makes
+  // ledger entry L10 measurable at all: the gate's binding rate is a property of
+  // decisions, not of games.
+  void captureAsk(const PublicState& pub, const AskMove* buf, const double* us, int n, double bestScore) {
+    lastDec.clear();
+    lastDec.nCand = n;
+    int tie = 0; double second = -1e18;
+    for (int i = 0; i < n; i++) {
+      if (us[i] >= bestScore - 1e-12) tie++;
+      else if (us[i] > second) second = us[i];
+    }
+    lastDec.nTie = tie;
+    lastDec.score = bestScore;
+    lastDec.margin = (tie >= 2 || second <= -1e17) ? 0.0 : bestScore - second;
+    // Would the ungated argmax have been a candidate the gate removed?
+    if (cfg.liveAskGate) {
+      AskMove all[NSET * SETSZ * 3];
+      int na = enumerateAsks(pub, k.myHand, seat, all);
+      double f2[NFEAT], bestAll = -1e18; int bestIdx = -1;
+      for (int i = 0; i < na; i++) {
+        features(pub, all[i].card, all[i].target, f2);
+        double u = 0;
+        for (int j = 0; j < NFEAT; j++) u += cfg.w[j] * f2[j];
+        u *= cfg.linearWeight;
+        if (cfg.useValue) u += cfg.valueWeight * askExpectedValue(pub, all[i].card, all[i].target, f2[0]);
+        if (u > bestAll) { bestAll = u; bestIdx = i; }
+      }
+      if (bestIdx >= 0 && provablyDead(all[bestIdx].card, all[bestIdx].target))
+        lastDec.gateBound = true;
+    }
+    (void)buf;
   }
 
   // Highest posterior legal ask value available to me right now.
@@ -616,7 +718,9 @@ struct V05Agent : Agent {
   // at most 3^6 = 729 assignments.  We enumerate it exhaustively, reject on
   // capacity, and score the survivors with the same joint estimator the
   // declaration rule already uses.  Exact, and cheaper than the DP it replaces.
+  int lastFeasibleCount = 0;    // v0.7 D1: feasible allocations surviving capacity+certificates
   bool feasibleAllocation(int set, int* owners, double& prob) {
+    lastFeasibleCount = 0;
     int mates[3], nm = 0;
     for (int p = 0; p < NPLAY; p++) if (teamMask & (1 << p)) mates[nm++] = p;
     uint8_t q[NPLAY]; k.capacities(q);
@@ -641,6 +745,7 @@ struct V05Agent : Agent {
       for (int i = 0; i < SETSZ; i++) cards[i] = cardOf(set, i);
       prob = bel.jointSequential(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
                                  cfg.priorTheta, cfg.priorPhi);
+      lastFeasibleCount = 1;
       return true;
     }
 
@@ -660,7 +765,9 @@ struct V05Agent : Agent {
         if (++cnt[p] > int(q[p]) + used[p]) { ok = false; break; }  // capacity
         score *= bel.marg[c][p];
       }
-      if (!ok || score <= bestScore) continue;
+      if (!ok) continue;
+      lastFeasibleCount++;
+      if (score <= bestScore) continue;
       bestScore = score; found = true;
       for (int i = 0; i < nFree; i++) best[free_[i]] = pick[i];
     }
@@ -871,6 +978,12 @@ struct V05Agent : Agent {
       if (changed) G.actionsChanged.fetch_add(1, std::memory_order_relaxed);
     }
     conf = bestConf;
+    if (decisionCapture()) {
+      lastDec.clear();
+      lastDec.pAlloc = bestConf;
+      lastDec.nFeasible = lastFeasibleCount;
+      lastDec.nCand = unresolvedCount;
+    }
     return found;
   }
 

@@ -1,0 +1,3 @@
+deals=50  17.412 games/s
+deals=100  20.291 games/s
+deals=233  21.104 games/s

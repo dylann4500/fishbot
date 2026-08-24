@@ -1,0 +1,24 @@
+### v06 carrying v05's vector with every switch off must be v05 BIT FOR BIT
+v06-off md5 47c3e2bb6a1f079b9c05a3c3c6df2e13
+v05     md5 47c3e2bb6a1f079b9c05a3c3c6df2e13
+V05/V06 IDENTITY PASS
+
+### v07 with its twelve responder coordinates at zero must be v06 BIT FOR BIT
+v07-zero md5 02772c5891dd3281b73f8d1881d1949d
+v06      md5 02772c5891dd3281b73f8d1881d1949d
+V07 IDENTITY PASS
+
+### v07i with inversion off must be v06 BIT FOR BIT
+v07i-off md5 02772c5891dd3281b73f8d1881d1949d
+v06      md5 02772c5891dd3281b73f8d1881d1949d
+V07I IDENTITY PASS
+
+### the leaf-evaluator refactor must reproduce v0.6's leafValue exactly
+### (checked against the pre-refactor binary in RESEARCH-LOG.md; here the
+###  truncated search must be reproducible run to run)
+TRUNCATION DETERMINISM PASS
+
+### sharding must partition a bank exactly
+whole=0.533333 120  shards: 40 40 | 44 40 | 44 40
+  whole: 128 wins over 120 deals;  shards: 128 wins over 120 deals
+SHARD PARTITION PASS

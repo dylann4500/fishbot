@@ -1,0 +1,10 @@
+### block A -- deployed and responder policies, 1200 games all-threads / 200 single-thread
+/tmp/through.sh: line 5: 49412 Killed: 9               ./fish7 v7through --specs="$FAST" --b=v06 --games=600 --games1=100 --rotations=2 --seed=7010001
+
+### block B -- search configurations, 120 games all-threads / 15 single-thread
+### row 1 repeats v06 so the two blocks share a reference on the SAME basis
+configuration                                          g/s (all) g/s (1 thr)     x v06  x v06 1t
+v06                                                      138.207       8.783     1.000     1.000
+Killed: 9               ./fish7 v7through --specs="$SPECS" --b=v06 --games=600 --games1=40 --rotations=2 --seed=7010001 --json
+
+### json

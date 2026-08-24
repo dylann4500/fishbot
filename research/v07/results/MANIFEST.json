@@ -1,0 +1,124 @@
+{
+ "study": "v07-phase1",
+ "engineCommit": "db6066c",
+ "binary": "fish7 (clang++ -O3 -march=native -DFISH_NO_SERVE, see RESEARCH-LOG.md 1.0)",
+ "machine": "Apple M5 Pro, 15 logical cores, macOS 25.5.0",
+ "generated": "2026-08-24T01:25:53",
+ "note": "timestamps and throughput are from this machine; strength cells are machine-independent",
+ "artifacts": [
+  {
+   "file": "C0-ladder.txt",
+   "sha256": "cf59aadc897c8b41",
+   "bytes": 2347,
+   "command": "scratchpad ladder sweep: fish7 match --a=v06 --b=\"v06:hcap=...\" --games=3000 --rotations=2 --seed=7022001 (per rung)"
+  },
+  {
+   "file": "C0-seeds.txt",
+   "sha256": "90cc10fd998836e2",
+   "bytes": 2969,
+   "command": "fish7 seeds --require=7020001,7021001,7021002,7022001"
+  },
+  {
+   "file": "C1-floor-aborted.jsonl",
+   "sha256": "10268767344b2879",
+   "bytes": 911,
+   "command": "first launch, aborted for ladder trim; superseded by C1-floor.jsonl"
+  },
+  {
+   "file": "C1-floor.jsonl",
+   "sha256": "c6a6fd41616d1019",
+   "bytes": 83118,
+   "command": "engine/exploitability_v07.sh (+ APPEND=1 passes: prior rung, finer decl rungs, C1 leak rung)"
+  },
+  {
+   "file": "C2-budget.jsonl",
+   "sha256": "cd9b3a08116db9ba",
+   "bytes": 7431,
+   "command": "/tmp/phase1rest_tail.sh budget block: fish7 tune (3 budgets) + match at 6000x2 per bank"
+  },
+  {
+   "file": "D1-decisions.jsonl",
+   "sha256": "9eeec7641d5d1814",
+   "bytes": 4096,
+   "command": "engine/experiments_v07.sh D1: fish7 v7decide --games=400 (v06,v05 x 2 banks)"
+  },
+  {
+   "file": "D1-decisions.txt",
+   "sha256": "93784357bd3e43ee",
+   "bytes": 1009,
+   "command": "fish7 v7decide --a=v06 --b=v06 --games=400 --seed=7011001 --dump=D1-records-v06.csv"
+  },
+  {
+   "file": "D1-records-v06.csv",
+   "sha256": "29cf415309a493d9",
+   "bytes": 3216287,
+   "command": "per-decision rows for the cell above"
+  },
+  {
+   "file": "G0-seeds.txt",
+   "sha256": "90cc10fd998836e2",
+   "bytes": 2969,
+   "command": "fish7 seeds (registry dump + violation check)"
+  },
+  {
+   "file": "G1-identity.txt",
+   "sha256": "645af0101fe5d669",
+   "bytes": 953,
+   "command": "engine/experiments_v07.sh G1 (identity/determinism/shard gates)"
+  },
+  {
+   "file": "G2-pathology.txt",
+   "sha256": "4ede2558bbbc1865",
+   "bytes": 2161,
+   "command": "engine/experiments_v07.sh G2 (commit-gate KPIs, v06/v07/v07i mirrors)"
+  },
+  {
+   "file": "T1-throughput.jsonl",
+   "sha256": "07ea0388d930620f",
+   "bytes": 10184,
+   "command": "/tmp/t1.sh + T1b block: fish7 v7through, mirror basis 600 deals, vs-v06 basis 50 deals"
+  },
+  {
+   "file": "T1-throughput.txt",
+   "sha256": "fb095ad35b981440",
+   "bytes": 729,
+   "command": "first-pass text table (superseded by the JSONL artifacts)"
+  },
+  {
+   "file": "T1b-throughput-400.jsonl",
+   "sha256": "1f576322fb481852",
+   "bytes": 5521,
+   "command": "/tmp/t1c.sh: fish7 v7through --b=v06 --games=400 --games1=25 (clean re-timing; supersedes the 50-deal search rows)"
+  },
+  {
+   "file": "T2-searchstrength.jsonl",
+   "sha256": "1198bab2dbfed169",
+   "bytes": 8234,
+   "command": "/tmp/phase1rest_tail.sh T2: fish7 match, fast-search configs vs v06 at 6000x2 per bank"
+  },
+  {
+   "file": "T3-scheduler.txt",
+   "sha256": "14d617c93cb14fba",
+   "bytes": 77,
+   "command": "scheduler scaling check at 50/100/233 deals"
+  },
+  {
+   "file": "W1-inversion.jsonl",
+   "sha256": "bde0272ec7575450",
+   "bytes": 1438,
+   "command": "engine/experiments_v07.sh W1: fish7 v7bits --games=120 --det=64 (v06,v05 x 2 banks)"
+  },
+  {
+   "file": "W1-inversion.txt",
+   "sha256": "51d20a8f28539be4",
+   "bytes": 626,
+   "command": "fish7 v7bits text form of the first W1 cell"
+  },
+  {
+   "file": "W2-leakbits.jsonl",
+   "sha256": "6e5a5ac61fad9604",
+   "bytes": 1937,
+   "command": "fish7 v7bits vs handicapped targets, --model=<target>, 100 deals, det=64"
+  }
+ ]
+}

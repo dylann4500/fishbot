@@ -1,0 +1,51 @@
+### v06 mirror
+v06 vs v06
+games              400
+events/game        93.345   median 93  p90 108  p99 116  max 122
+asks/game          83.995   hit rate 52.9853%
+DEAD asks          6  (0.0178582% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.0178582% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     770  (2.2918%)
+repeat (a,suit,t)  15734  (46.8302%)
+asks in own-locked 4086  (12.1614% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 106 (2.94444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+
+### v07 mirror
+v07 vs v07
+games              400
+events/game        93.345   median 93  p90 108  p99 116  max 122
+asks/game          83.995   hit rate 52.9853%
+DEAD asks          6  (0.0178582% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.0178582% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     770  (2.2918%)
+repeat (a,suit,t)  15734  (46.8302%)
+asks in own-locked 4086  (12.1614% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 106 (2.94444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+
+### v07i:idet=48 mirror
+v07i:idet=48 vs v07i:idet=48
+games              400
+events/game        94.015   median 93  p90 108  p99 119  max 134
+asks/game          84.68   hit rate 53.6786%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+starved turns      0  (0% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     792  (2.33821%)
+repeat (a,suit,t)  15904  (46.9532%)
+asks in own-locked 3814  (11.26% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 84 (2.33333%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   4   wrong 4 (100%)
+action-limit games 0 (0%)
+

@@ -1,0 +1,46 @@
+########## gate-first battery ##########
+== G0 reserved-seed registry (must pass) ==
+
+R1 VIOLATION seed 515253: 'v06/E4 per-style panel' (eval) and 'v06/X1 exploitability responder fit (exploitability_v06.sh FITSEED)' (fit)
+1 violation(s).  FISH_UNSEAL_PHASE=0
+== G1 identity controls (must pass) ==
+V05/V06 IDENTITY PASS
+V07 IDENTITY PASS
+V07I IDENTITY PASS
+TRUNCATION DETERMINISM FAIL
+SHARD PARTITION FAIL
+== G2 pathology KPIs for every class that will be measured ==
+dead runs          6  mean length 1  longest 1
+action-limit games 0 (0%)
+dead runs          6  mean length 1  longest 1
+action-limit games 0 (0%)
+dead runs          0  mean length 0  longest 0
+action-limit games 0 (0%)
+== T1 throughput, replacing E9 (both bases, never mixed) ==
+  (run separately by /tmp/through.sh on a quiet machine; see T1-throughput.jsonl)
+== D1 per-decision channel ==
+v7decide  v06 vs v06  seed 7011001  400 deals x 2  -> 37835 decision records  (325.6 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.54032  [0.5327, 0.5482]            34235       0.530
+  ownLockedAskRate          0.10644  [0.0982, 0.1150]            34235       0.530
+  tieShare                  0.60371  [0.5990, 0.6081]            34018       0.531
+  gateBindRate              0.00938  [0.0079, 0.0110]            34235       0.530
+  deadAskRate               0.00000  [0.0000, 0.0000]            34235       0.530
+  searchRate                0.00000  [0.0000, 0.0000]            34235       0.530
+  searchChangeRate          0.00000  [0.0000, 0.0000]                0       0.000
+  declAccuracy              0.97663  [0.9716, 0.9816]             3594       1.635
+  declAllocErrorShare       0.88095  [0.8101, 0.9444]               84      10.693
+  forcedDeclAccuracy        0.00000  [0.0000, 0.0000]                6      40.008
+== W1 transcript inversion: bits, and whether bits become a better posterior ==
+v7bits  observer=v06  target=v06  model=v06  seed=7012001  n=120 deals x 2
+  target asks seen        10342   inverted 10342   skipped 0   det=64
+  contraction             1.9454 bits/ask  (SE 0.0180)  mean surviving fraction 0.4441
+  by event index          [0-20) 2.66  [20-40) 2.38  [40-60) 2.03  [60-80) 1.50  [80-100) 0.83  [100-120) 0.53  
+  marginals over 259732 unresolved cards, scored against ground truth:
+    certificates + fitted policy prior   1.40094 nats   argmax 0.3515
+    ... plus measured transcript inversion 1.39194 nats   argmax 0.3573
+  oracle calls            657372    elapsed 1.80s  (133.69 games/s)
+done.
+########## detection floor ##########
+=== target v06 ===
+  fitting C1 (base=v06) against v06

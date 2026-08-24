@@ -1,0 +1,12 @@
+v7decide  v06 vs v06  seed 7011001  400 deals x 2  -> 37835 decision records  (312.9 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.54032  [0.5327, 0.5482]            34235       0.530
+  ownLockedAskRate          0.10644  [0.0982, 0.1150]            34235       0.530
+  tieShare                  0.60371  [0.5990, 0.6081]            34018       0.531
+  gateBindRate              0.00938  [0.0079, 0.0110]            34235       0.530
+  deadAskRate               0.00000  [0.0000, 0.0000]            34235       0.530
+  searchRate                0.00000  [0.0000, 0.0000]            34235       0.530
+  searchChangeRate          0.00000  [0.0000, 0.0000]                0       0.000
+  declAccuracy              0.97663  [0.9716, 0.9816]             3594       1.635
+  declAllocErrorShare       0.88095  [0.8101, 0.9444]               84      10.693
+  forcedDeclAccuracy        0.00000  [0.0000, 0.0000]                6      40.008

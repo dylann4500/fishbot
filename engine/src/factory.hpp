@@ -4,6 +4,7 @@
 #include "v04.hpp"
 #include "v05.hpp"
 #include "v06.hpp"
+#include "v07_responder.hpp"
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
@@ -106,6 +107,24 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     c.liveAskGate       = optI(o, "m1", c.liveAskGate ? 1 : 0) != 0;
     c.ownershipByP      = optI(o, "m1p", c.ownershipByP ? 1 : 0) != 0;
     c.feasibleDecl      = optI(o, "m2", c.feasibleDecl ? 1 : 0) != 0;
+    // ---- v0.7 planted weakness ---------------------------------------------
+    // `hcap` names the family and `hstr` its size.  hit/decl/prior are pure
+    // config transforms (no policy code runs for them); leak/tell/gate set
+    // V05Config::plantKind.  Applied AFTER `allparams`, so a handicap survives
+    // a fitted vector being loaded on top of it.
+    { auto hit2 = o.find("hcap");
+      if (hit2 != o.end()) {
+        double xs = optD(o, "hstr", 1.0);
+        const std::string& h = hit2->second;
+        if      (h == "hit")   c.w[0] *= (1.0 - xs);
+        else if (h == "decl")  c.declareMargin += 0.5 * xs;
+        else if (h == "prior") { c.priorTheta *= (1.0 - xs); c.priorPhi *= (1.0 - xs); }
+        else if (h == "leak")  { c.plantKind = 1; c.plantStr = xs; }
+        else if (h == "tell")  { c.plantKind = 2; c.plantStr = xs; }
+        else if (h == "gate")  { c.plantKind = 3; c.plantStr = xs; }
+        else if (h == "none")  { }
+        else { fprintf(stderr, "fish: unknown handicap '%s'\n", h.c_str()); std::exit(2); }
+      } }
     c.forceStage2       = optI(o, "stage2", c.forceStage2 ? 1 : 0) != 0;
     c.repeatGuard       = optI(o, "norepeat", c.repeatGuard ? 1 : 0) != 0;
     for (int i = 0; i < NFEAT; i++) {
@@ -128,18 +147,11 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     }
 }
 
-inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
-  std::string base;
-  auto o = parseOpts(spec, base);
-  if (base == "v06" || base == "fishbot_v06") {
-    auto a = std::make_unique<V06Agent>();
-    // `legacy=1` restores v0.5's parameter vector, which is what makes the
-    // all-switches-off identity control meaningful once v0.6 has its own fit.
+// Shared v0.6 option application, so the v0.7 classes accept every v0.6 knob
+// without the parsing being copied.  Split out of makeAgent verbatim.
+inline void applyV06Opts(V06Agent* a, const std::map<std::string, std::string>& o) {
     if (optI(o, "legacy", 0)) { V05Config d; a->cfg = d; a->x.wVoid = a->x.wTeamHas = a->x.wLastLive = 0.0; a->x.extraFeats = false; }
     applyV05Opts(a->cfg, o);
-    // The v0.6 flat parameter vector extends v0.5's by three coordinates so the
-    // optimiser covers the new ask terms; the offset is derived from NFEAT and
-    // the v0.5 knob count, never hard-coded.
     { auto ap = o.find("allparams");
       if (ap != o.end()) {
         std::vector<double> v;
@@ -154,7 +166,6 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
           a->x.extraFeats = true;
         }
       } }
-    // v0.6 search knobs
     a->x.search      = optI(o, "s1", a->x.search ? 1 : 0) != 0;
     a->x.nDet        = optI(o, "det", a->x.nDet);
     a->x.topK        = optI(o, "cand", a->x.topK);
@@ -185,9 +196,66 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     a->x.gapEps      = optD(o, "gapeps", a->x.gapEps);
     { auto it = o.find("roll"); if (it != o.end()) a->x.rollBase = it->second; }
     { auto it = o.find("rbelief"); if (it != o.end()) a->x.rollBelief = it->second; }
+    { auto it = o.find("roppo"); if (it != o.end()) {
+        std::string t = it->second;
+        for (auto& ch : t) if (ch == '+') ch = ',';
+        a->x.rollOpp = t; } }
+    { auto it = o.find("leafeval"); if (it != o.end()) a->x.leafSpec = it->second; }
     a->x.rollOuter = optI(o, "rsouter", a->x.rollOuter);
     a->x.rollInner = optI(o, "rsinner", a->x.rollInner);
     a->x.rollValue = optI(o, "rvalue", a->x.rollValue ? 1 : 0) != 0;
+}
+
+inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
+  std::string base;
+  auto o = parseOpts(spec, base);
+  // ---- v0.7 responder classes ------------------------------------------
+  if (base == "v07" || base == "v07r") {
+    auto a = std::make_unique<V07Responder>();
+    applyV06Opts(a.get(), o);
+    a->x.extraFeats = true;              // the widened score is always live
+    // The flat vector extends v0.6's by NR7 coordinates.  With those twelve at
+    // zero the class is v0.6 bit for bit, which is the identity control.
+    { auto ap = o.find("allparams");
+      if (ap != o.end()) {
+        std::vector<double> v;
+        std::stringstream ws(ap->second); std::string tok;
+        while (std::getline(ws, tok, '|')) v.push_back(atof(tok.c_str()));
+        const size_t K7 = size_t(NFEAT) + 14 + 3;
+        for (int i = 0; i < NR7; i++) if (v.size() > K7 + size_t(i)) a->rw[i] = v[K7 + size_t(i)];
+      } }
+    for (int i = 0; i < NR7; i++) {
+      char key[8]; snprintf(key, sizeof(key), "r%d", i);
+      a->rw[i] = optD(o, key, a->rw[i]);
+    }
+    a->admitDead = optI(o, "dead7", a->admitDead ? 1 : 0) != 0;
+    a->deadCap   = optI(o, "deadcap", a->deadCap);
+    a->corrPlans = optI(o, "corr", a->corrPlans);
+    return a;
+  }
+  if (base == "v07i") {
+    auto a = std::make_unique<V07InvertAgent>();
+    applyV06Opts(a.get(), o);
+    a->invOn        = optI(o, "inv", 1) != 0;
+    a->invClip      = optD(o, "iclip", a->invClip);
+    a->inv.nDet     = optI(o, "idet", a->inv.nDet);
+    a->inv.gain     = optD(o, "igain", a->inv.gain);
+    a->inv.alpha    = optD(o, "ialpha", a->inv.alpha);
+    a->inv.fromEvent= optI(o, "ifrom", a->inv.fromEvent);
+    a->inv.maxQ     = optI(o, "imaxq", a->inv.maxQ);
+    a->inv.kappa    = optD(o, "ikappa", a->inv.kappa);
+    a->inv.stepClip = optD(o, "istep", a->inv.stepClip);
+    a->inv.mode     = optI(o, "imode", a->inv.mode);
+    a->inv.focus    = optI(o, "ifocus", a->inv.focus);
+    { auto it = o.find("imodel");
+      std::string t = it != o.end() ? it->second : std::string("v06");
+      for (auto& ch : t) if (ch == '+') ch = ',';
+      a->inv.oracle.spec = t; }
+    return a;
+  }
+  if (base == "v06" || base == "fishbot_v06") {
+    auto a = std::make_unique<V06Agent>();
+    applyV06Opts(a.get(), o);
     return a;
   }
   if (base == "v05" || base == "fishbot_v05") {

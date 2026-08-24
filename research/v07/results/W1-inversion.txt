@@ -1,0 +1,8 @@
+v7bits  observer=v06  target=v06  model=v06  seed=7012001  n=120 deals x 2
+  target asks seen        10342   inverted 10342   skipped 0   det=64
+  contraction             1.9454 bits/ask  (SE 0.0180)  mean surviving fraction 0.4441
+  by event index          [0-20) 2.66  [20-40) 2.38  [40-60) 2.03  [60-80) 1.50  [80-100) 0.83  [100-120) 0.53  
+  marginals over 259732 unresolved cards, scored against ground truth:
+    certificates + fitted policy prior   1.40094 nats   argmax 0.3515
+    ... plus measured transcript inversion 1.39194 nats   argmax 0.3573
+  oracle calls            657372    elapsed 1.75s  (136.88 games/s)

@@ -105,14 +105,37 @@ struct Knowledge {
   //     w(c, p) = exp( theta * asks[p][suit(c)] - phi * (asks[p] - asks[p][suit(c)]) ),
   // clipped for stability.  Setting theta = phi = 0 recovers the policy-agnostic
   // posterior, which is what the ablation compares against.
+  // v0.7 C5.  The heuristic above is a HAND-FITTED APPROXIMATION to a quantity a
+  // white-box adversary can compute: "given that this seat played the actions it
+  // played, and given that I know its policy exactly, how much more or less
+  // likely is it to hold this card?"  `policyLL`, when set, is a table of
+  // log-likelihood-ratio evidence accumulated by inverting the observed
+  // transcript against the known deterministic policy (v07_invert.hpp).  It
+  // enters at exactly the same point as theta/phi, because it is the same object
+  // measured rather than guessed -- which is also why ledger entry C2's finding
+  // that "the policy prior is the entire difference" between the exact posterior
+  // and the deployed approximation is the strongest prior evidence that this is
+  // worth measuring.  It carries its own, wider clip: the heuristic's +/-2.6 is
+  // calibrated to ask tallies, and a policy-inversion log-odds of 4 is a real
+  // 55:1 and must not be throttled to 13:1.
+  const double (*policyLL)[NPLAY] = nullptr;
+  double policyClip = 5.0;
   double priorWeight(int card, int p, double theta, double phi) const {
-    if (theta == 0 && phi == 0) return 1.0;
-    int S = setOf(card);
-    double a = double(askCount[p][S]);
-    double other = double(totalAsks[p]) - a;
-    double z = theta * a - phi * other;
-    if (z > 2.6) z = 2.6; else if (z < -2.6) z = -2.6;
-    return std::exp(z);
+    double w = 1.0;
+    if (theta != 0 || phi != 0) {
+      int S = setOf(card);
+      double a = double(askCount[p][S]);
+      double other = double(totalAsks[p]) - a;
+      double z = theta * a - phi * other;
+      if (z > 2.6) z = 2.6; else if (z < -2.6) z = -2.6;
+      w = std::exp(z);
+    }
+    if (policyLL) {
+      double z2 = policyLL[card][p];
+      if (z2 > policyClip) z2 = policyClip; else if (z2 < -policyClip) z2 = -policyClip;
+      w *= std::exp(z2);
+    }
+    return w;
   }
 
   // Capacity-only estimate that a half-suit is wholly owned by one team.  No
@@ -501,6 +524,10 @@ struct Belief {
     if (!Q) return;
     for (int i = 0; i < Q; i++) for (int p = 0; p < NPLAY; p++)
       marg[idx[i]][p] = (kk.mask[idx[i]] & (1u << p)) ? kk.priorWeight(idx[i], p, theta, phi) : 0.0;
+    // priorWeight returns 1.0 for every cell when theta = phi = 0 and no policy
+    // table is attached, which is the policy-agnostic posterior the ablation
+    // compares against; with a table attached it is not 1.0 and the fit below
+    // carries the evidence through the capacity constraints.
     for (int o = 0; o < outer; o++) {
       for (int it = 0; it < inner; it++) {
         for (int i = 0; i < Q; i++) { double t = 0; int c = idx[i];

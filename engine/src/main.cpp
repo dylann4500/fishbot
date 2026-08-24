@@ -2,7 +2,14 @@
 #include "tuner.hpp"
 #include "blockdp.hpp"
 #include "oracle.hpp"
+// The interactive table pulls in the HTTP server, the lobby and the tunnel.
+// Those are another workstream's files and are edited concurrently; the v0.7
+// instrument batteries must stay buildable while they are mid-flight, so the
+// dependency is guarded.  Default behaviour is unchanged -- `-DFISH_NO_SERVE`
+// is opt-in and only ever used by the phase-1 battery's own build.
+#ifndef FISH_NO_SERVE
 #include "serve.hpp"
+#endif
 #include "diag.hpp"
 #include "probe_deadlock.hpp"
 #include "probe_vdeadlock.hpp"
@@ -20,6 +27,7 @@
 #include "probe_vpolicy.hpp"        // appended: adversarial verify (P4/D1 forcing horizon)
 #include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
 #include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
+#include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -90,7 +98,10 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
        << ",\"limitHitRate\":" << (n ? double(st.limitHits) / n : 0)
        << ",\"auditViolations\":" << st.auditViolations
        << ",\"auditChecks\":" << st.auditChecks
-       << ",\"seconds\":" << st.seconds << "}";
+       << ",\"seconds\":" << st.seconds
+       << ",\"gamesPerSec\":" << st.gamesPerSec(rotations)
+       << ",\"threads\":" << st.threadsUsed
+       << "," << powerJson(powerLine(n, st.games, rotations, a == b)) << "}";
   } else {
     os << a << " vs " << b << "\n";
     os << "  win rate      " << 100 * wr << "%  [" << 100 * lo << ", " << 100 * hi << "]  n=" << n << "\n";
@@ -104,7 +115,9 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
        << " / " << (st.lockedDecls[1] ? double(st.lockHeld[1]) / st.lockedDecls[1] : 0) << " events before cashing\n";
     os << "  events/game   " << double(st.events) / n << "   limit hits " << 100.0 * st.limitHits / n << "%\n";
     if (st.auditChecks) os << "  audit         " << st.auditViolations << " violations in " << st.auditChecks << " checks\n";
-    os << "  elapsed       " << st.seconds << "s  (" << (n / std::max(1e-9, st.seconds)) << " games/s)\n";
+    os << "  elapsed       " << st.seconds << "s  (" << (n / std::max(1e-9, st.seconds))
+       << " games/s on " << st.threadsUsed << " threads)\n";
+    os << powerText(powerLine(n, st.games, rotations, a == b)) << "\n";
   }
 }
 
@@ -123,6 +136,11 @@ int main(int argc, char** argv) {
     mc.audit = argFlag(argc, argv, "audit");
     mc.threads = threads;
     mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    { std::string sh = argVal(argc, argv, "shard", "");
+      if (!sh.empty()) { auto sl = sh.find('/');
+        if (sl != std::string::npos) { mc.shard = atoi(sh.substr(0, sl).c_str());
+                                       mc.shards = std::max(1, atoi(sh.substr(sl + 1).c_str())); } } }
+    mc.correlated = argFlag(argc, argv, "correlated");
     MatchStats st = runMatch(mc);
     bool json = argFlag(argc, argv, "json");
     printMatch(st, mc.specA, mc.specB, json, std::cout, mc.rotations);
@@ -191,7 +209,19 @@ int main(int argc, char** argv) {
   if (cmd == "tune") {
     TuneSpec sp;
     std::string panel = argVal(argc, argv, "panel", "v03,lockout,detective,diversifier");
-    { std::stringstream ss(panel); std::string it; while (std::getline(ss, it, ',')) sp.panel.push_back(it); }
+    // A panel member may itself be a spec with options, and the spec grammar
+    // separates options with commas -- so an exploitability panel of ONE target
+    // ("v06:hcap=decl,hstr=0.15") silently became a panel of two.  When the
+    // string contains a semicolon it is the separator, and '+' inside a member
+    // is restored to ','.  Both are backwards compatible with every existing
+    // call in engine/*.sh.
+    { char sep = panel.find(';') != std::string::npos ? ';' : ',';
+      std::stringstream ss(panel); std::string it;
+      while (std::getline(ss, it, sep)) {
+        if (it.empty()) continue;
+        for (auto& ch : it) if (ch == '+') ch = ',';
+        sp.panel.push_back(it);
+      } }
     sp.gamesPerOpponent = atoi(argVal(argc, argv, "games", "250").c_str());
     sp.population = atoi(argVal(argc, argv, "pop", "24").c_str());
     sp.elite = atoi(argVal(argc, argv, "elite", "6").c_str());
@@ -214,10 +244,24 @@ int main(int argc, char** argv) {
     std::vector<double> mu;
     std::string init = argVal(argc, argv, "init", "");
     if (!init.empty()) { std::stringstream ss(init); std::string t; while (std::getline(ss, t, '|')) mu.push_back(atof(t.c_str())); }
+    else if (argFlag(argc, argv, "fromv6")
+             || sp.baseSpec.rfind("v07", 0) == 0) {
+      // v0.7 P-3 fix.  The v0.6 exploitability probe fitted a responder from
+      // v0.5's 34-coordinate family, seeded from v0.5's weights, against a
+      // 37-coordinate v0.6 target on a different scoring path
+      // (SUBOPTIMALITY-LEDGER.md P-3).  An exploiter should start from the
+      // incumbent it is attacking, in the incumbent's own class.
+      for (int i = 0; i < NV6PARAM; i++) mu.push_back(V6PARAMS[i]);
+    }
     else if (sp.baseSpec.rfind("v05", 0) == 0 || sp.baseSpec.rfind("v06", 0) == 0) {
       V05Config d; for (int i = 0; i < NFEAT; i++) mu.push_back(d.w[i]);
     }
     else { V04Config d; for (int i = 0; i < NFEAT; i++) mu.push_back(d.w[i]); }
+    // The v0.7 responder class extends the vector by NR7 coordinates; at zero
+    // they make it v0.6 bit for bit, so starting the fit there is starting it at
+    // the incumbent.
+    if (sp.baseSpec.rfind("v07", 0) == 0 && mu.size() == size_t(NV6PARAM))
+      for (int i = 0; i < NR7; i++) mu.push_back(0.0);
     if (argFlag(argc, argv, "full") && mu.size() == NFEAT
         && (sp.baseSpec.rfind("v05", 0) == 0 || sp.baseSpec.rfind("v06", 0) == 0)) {
       V05Config d;
@@ -255,6 +299,14 @@ int main(int argc, char** argv) {
       const double q6hi[3] = { 12.0,   0.0,  12.0 };
       for (int i = 0; i < 3 && NFEAT + 14 + i < (int)mu.size(); i++) {
         sp.lo[NFEAT + 14 + i] = q6lo[i]; sp.hi[NFEAT + 14 + i] = q6hi[i];
+      }
+      // The v0.7 responder coordinates are left unsigned: every one of them is a
+      // hypothesis about how the TARGET can be exploited, and fixing its sign in
+      // advance would be assuming the answer.  `deadDonation` in particular is
+      // the coordinate that lets a linear score price a deliberate miss for the
+      // first time, and which way it should point is exactly what is unknown.
+      for (int i = 0; i < NR7 && NFEAT + 17 + i < (int)mu.size(); i++) {
+        sp.lo[NFEAT + 17 + i] = -12.0; sp.hi[NFEAT + 17 + i] = 12.0;
       }
     }
     { std::string sigPer = argVal(argc, argv, "sigmaparams", "");
@@ -634,6 +686,221 @@ int main(int argc, char** argv) {
     return 2;
   }
 
+  // ---- v0.7 T1: throughput, on ONE basis --------------------------------
+  // Replaces E9.  The v0.6 record states the search costs "three orders of
+  // magnitude"; that figure divides an all-threads number (303.4 g/s) by a
+  // single-thread one (0.144 g/s) and is not a same-basis ratio, which the
+  // corpus's own final audit already flagged (V2-final-audit.md SF-6) and the
+  // ledger re-measured at 300-420x (SUBOPTIMALITY-LEDGER.md section 0.1).  This
+  // command reports BOTH bases for every configuration and the ratio within
+  // each, so the mistake is not available.
+  if (cmd == "v7through") {
+    std::string specs = argVal(argc, argv, "specs", "v06");
+    std::string opp = argVal(argc, argv, "b", "v06");
+    int games = atoi(argVal(argc, argv, "games", "200").c_str());
+    int games1 = atoi(argVal(argc, argv, "games1", "0").c_str());
+    int rot = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    uint64_t seed = strtoull(argVal(argc, argv, "seed", "7010001").c_str(), nullptr, 10);
+    bool json = argFlag(argc, argv, "json");
+    bool mirror = argFlag(argc, argv, "mirror");
+    Rules rules = rulesFrom(argc, argv);
+    std::vector<std::string> list;
+    { std::stringstream ss(specs); std::string it; while (std::getline(ss, it, ';')) if (!it.empty()) list.push_back(it); }
+    double ref = 0, ref1 = 0;
+    if (!json) printf("%-52s %11s %11s %9s %9s\n", "configuration", "g/s (all)", "g/s (1 thr)", "x v06", "x v06 1t");
+    for (size_t i = 0; i < list.size(); i++) {
+      MatchConfig mc; mc.specA = list[i];
+      // E9 timed every policy against ITSELF; the ledger's F-search and F-mid
+      // rows time a search arm against `v05`/`v06`.  Those are different
+      // quantities -- a mirror pays the configuration's cost on both sides --
+      // and mixing them is how the corpus arrived at a cost ratio that is not a
+      // same-basis ratio.  `--mirror` selects the first; `--b` selects the
+      // second; the block heading records which.
+      mc.specB = mirror ? list[i] : opp;
+      mc.games = games;
+      mc.rotations = rot; mc.seed = seed; mc.rules = rules; mc.threads = threads;
+      MatchStats st = runMatch(mc);
+      double gps = st.gamesPerSec(rot);
+      MatchConfig m1 = mc; m1.threads = 1;
+      m1.games = games1 > 0 ? games1 : std::max(1, games / 8);
+      MatchStats s1 = runMatch(m1);
+      double gps1 = s1.gamesPerSec(rot);
+      if (i == 0) { ref = gps; ref1 = gps1; }
+      if (json) {
+        printf("{\"spec\":\"%s\",\"opp\":\"%s\",\"seed\":%llu,\"deals\":%d,\"rotations\":%d,"
+               "\"mirror\":%s,\"gamesPerSecAll\":%.4f,\"threads\":%d,\"gamesPerSecOne\":%.4f,\"deals1\":%d,"
+               "\"relAll\":%.4f,\"relOne\":%.4f,\"winRateA\":%.4f,\"eventsPerGame\":%.2f,%s}\n",
+               list[i].c_str(), mc.specB.c_str(), (unsigned long long)seed, games, rot,
+               mirror ? "true" : "false", gps, st.threadsUsed, gps1, m1.games,
+               ref > 0 ? gps / ref : 0.0, ref1 > 0 ? gps1 / ref1 : 0.0,
+               double(st.winsA) / double(std::max(1, st.games * rot)),
+               double(st.events) / double(std::max(1, st.games * rot)),
+               powerJson(powerLine(st.games * rot, st.games, rot, mc.specA == mc.specB)).c_str());
+      } else {
+        printf("%-52s %11.3f %11.3f %9.3f %9.3f\n", list[i].c_str(), gps, gps1,
+               ref > 0 ? gps / ref : 0.0, ref1 > 0 ? gps1 / ref1 : 0.0);
+      }
+      fflush(stdout);
+    }
+    return 0;
+  }
+
+  // ---- v0.7 D1: per-decision records and per-decision scoring -------------
+  if (cmd == "v7decide") {
+    MatchConfig mc;
+    mc.specA = argVal(argc, argv, "a", "v06");
+    mc.specB = argVal(argc, argv, "b", "v06");
+    mc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    mc.seed = strtoull(argVal(argc, argv, "seed", "7011001").c_str(), nullptr, 10);
+    mc.rules = rulesFrom(argc, argv);
+    mc.threads = threads;
+    mc.captureDecisions = true;
+    mc.captureTeamAOnly = !argFlag(argc, argv, "bothteams");
+    MatchStats st = runMatch(mc);
+    std::string dump = argVal(argc, argv, "dump", "");
+    if (!dump.empty()) {
+      FILE* f = fopen(dump.c_str(), "w");
+      if (f) {
+        fprintf(f, "deal,rot,event,seat,team,kind,card,target,set,hit,ownLocked,oppLocked,"
+                   "truthHolder,dead,gateBound,searched,changed,nCand,nTie,nFeasible,p,margin,score,pAlloc,unresolved\n");
+        for (const auto& r : st.decisions)
+          fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d\n",
+                  r.deal, r.rot, r.event, r.seat, r.team, r.kind, r.card, r.target, r.set, r.hit,
+                  r.ownLocked, r.oppLocked, r.truthHolder, r.dead, r.gateBound, r.searched, r.changed,
+                  r.nCand, r.nTie, r.nFeasible, r.p, r.margin, r.score, r.pAlloc, r.unresolved);
+        fclose(f);
+      }
+    }
+    v07::DecSummary S = v07::summariseDecisions(st.decisions, mc.games);
+    bool json = argFlag(argc, argv, "json");
+    if (json) {
+      printf("{\"probe\":\"v7decide\",\"a\":\"%s\",\"b\":\"%s\",\"seed\":%llu,\"deals\":%d,"
+             "\"rotations\":%d,\"records\":%lld,\"gamesPerSec\":%.3f,\"metrics\":{",
+             mc.specA.c_str(), mc.specB.c_str(), (unsigned long long)mc.seed, mc.games,
+             mc.rotations, S.rows, st.gamesPerSec(mc.rotations));
+      for (size_t i = 0; i < S.m.size(); i++) {
+        double m, lo, hi;
+        v07::clusterRatioCI(S.m[i].perDealNum, S.m[i].perDealDen, m, lo, hi);
+        printf("%s\"%s\":{\"rate\":%.6f,\"ci\":[%.6f,%.6f],\"n\":%.0f,\"halfWidth98\":%.4f}",
+               i ? "," : "", S.m[i].name, m, lo, hi, S.m[i].den, halfWidth98(S.m[i].den));
+      }
+      printf("}}\n");
+    } else {
+      printf("v7decide  %s vs %s  seed %llu  %d deals x %d  -> %lld decision records  (%.1f games/s)\n",
+             mc.specA.c_str(), mc.specB.c_str(), (unsigned long long)mc.seed, mc.games,
+             mc.rotations, S.rows, st.gamesPerSec(mc.rotations));
+      printf("  %-22s %10s  %-22s %10s %12s\n", "metric", "rate", "95% CI (deal-clustered)", "decisions", "98/sqrt(n)");
+      for (size_t i = 0; i < S.m.size(); i++) {
+        double m, lo, hi;
+        v07::clusterRatioCI(S.m[i].perDealNum, S.m[i].perDealDen, m, lo, hi);
+        char ci[64]; snprintf(ci, sizeof(ci), "[%.4f, %.4f]", lo, hi);
+        printf("  %-22s %10.5f  %-22s %10.0f %11.3f\n", S.m[i].name, m, ci, S.m[i].den, halfWidth98(S.m[i].den));
+      }
+    }
+    return 0;
+  }
+
+  // ---- v0.7: the reserved-seed registry ----------------------------------
+  if (cmd == "seeds") {
+    SeedCheck c = checkSeeds();
+    bool json = argFlag(argc, argv, "json");
+    if (json) {
+      printf("{\"registry\":[");
+      const auto& R = seedRegistry();
+      for (size_t i = 0; i < R.size(); i++)
+        printf("%s{\"seed\":%llu,\"role\":\"%s\",\"study\":\"%s\",\"battery\":\"%s\",\"unsealPhase\":%d}",
+               i ? "," : "", (unsigned long long)R[i].seed, roleName(R[i].role), R[i].study,
+               R[i].battery, R[i].unsealPhase);
+      printf("],\"violations\":%d}\n", c.violations);
+    } else {
+      printf("%-10s %-12s %-6s %-4s %s\n", "seed", "role", "study", "unseal", "battery");
+      for (const auto& e : seedRegistry())
+        printf("%-10llu %-12s %-6s %-6d %s\n", (unsigned long long)e.seed, roleName(e.role),
+               e.study, e.unsealPhase, e.battery);
+      printf("\n%s", c.report.empty() ? "no violations\n" : c.report.c_str());
+      printf("%d violation(s).  FISH_UNSEAL_PHASE=%d\n", c.violations, unsealPhase());
+    }
+    std::string req = argVal(argc, argv, "require", "");
+    if (!req.empty()) {
+      std::stringstream ss(req); std::string t; int bad = 0;
+      while (std::getline(ss, t, ',')) {
+        uint64_t sd = strtoull(t.c_str(), nullptr, 10);
+        std::string why;
+        if (!seedRegistered(sd)) { printf("UNREGISTERED seed %llu\n", (unsigned long long)sd); bad++; }
+        else if (!seedUsable(sd, why)) { printf("%s\n", why.c_str()); bad++; }
+      }
+      if (bad) return 3;
+    }
+    return c.violations && argFlag(argc, argv, "strict") ? 4 : 0;
+  }
+
+  // ---- v0.7 W1: transcript-inversion bit measurement ----------------------
+  if (cmd == "v7bits") {
+    v07::BitProbeConfig bc;
+    bc.specA = argVal(argc, argv, "a", "v06");
+    bc.specB = argVal(argc, argv, "b", "v06");
+    bc.model = argVal(argc, argv, "model", "");
+    bc.games = atoi(argVal(argc, argv, "games", "100").c_str());
+    bc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    bc.nDet = atoi(argVal(argc, argv, "det", "64").c_str());
+    bc.fromEvent = atoi(argVal(argc, argv, "from", "0").c_str());
+    bc.maxQ = atoi(argVal(argc, argv, "maxq", "0").c_str());
+    bc.everyK = atoi(argVal(argc, argv, "every", "1").c_str());
+    bc.gain = atof(argVal(argc, argv, "gain", "1.0").c_str());
+    bc.alpha = atof(argVal(argc, argv, "alpha", "0.5").c_str());
+    bc.kappa = atof(argVal(argc, argv, "kappa", "3.0").c_str());
+    bc.stepClip = atof(argVal(argc, argv, "stepclip", "1.25").c_str());
+    bc.clip = atof(argVal(argc, argv, "clip", "5.0").c_str());
+    bc.mode = atoi(argVal(argc, argv, "mode", "0").c_str());
+    bc.focus = atoi(argVal(argc, argv, "focus", "1").c_str());
+    bc.theta = atof(argVal(argc, argv, "theta", "0.44458").c_str());
+    bc.phi = atof(argVal(argc, argv, "phi", "0.12198").c_str());
+    bc.thetaInv = atof(argVal(argc, argv, "thetainv", "-1").c_str());
+    bc.phiInv = atof(argVal(argc, argv, "phiinv", "-1").c_str());
+    bc.seed = strtoull(argVal(argc, argv, "seed", "7012001").c_str(), nullptr, 10);
+    bc.rules = rulesFrom(argc, argv);
+    bc.threads = threads;
+    v07::BitResult R = v07::runBitProbe(bc);
+    double mean = R.inverted ? R.bitsSum / R.inverted : 0;
+    double var = R.inverted > 1 ? (R.bitsSq / R.inverted - mean * mean) : 0;
+    double se = R.inverted > 1 ? std::sqrt(std::max(0.0, var) / double(R.inverted)) : 0;
+    bool json = argFlag(argc, argv, "json");
+    if (json) {
+      printf("{\"probe\":\"v7bits\",\"a\":\"%s\",\"b\":\"%s\",\"model\":\"%s\",\"seed\":%llu,"
+             "\"games\":%d,\"rotations\":%d,\"det\":%d,\"asks\":%lld,\"inverted\":%lld,\"skipped\":%lld,"
+             "\"bitsPerAsk\":%.4f,\"bitsSE\":%.4f,\"meanConsistentFrac\":%.4f,"
+             "\"predN\":%lld,\"natsBase\":%.5f,\"natsInv\":%.5f,\"argmaxBase\":%.5f,\"argmaxInv\":%.5f,"
+             "\"oracleCalls\":%.0f,\"seconds\":%.2f,\"gamesPerSec\":%.3f}\n",
+             bc.specA.c_str(), bc.specB.c_str(), (bc.model.empty() ? bc.specB : bc.model).c_str(),
+             (unsigned long long)bc.seed, bc.games, bc.rotations, bc.nDet,
+             R.asks, R.inverted, R.skipped, mean, se, R.inverted ? R.qSum / R.inverted : 0.0,
+             R.predN, R.predN ? R.natBase / R.predN : 0.0, R.predN ? R.natInv / R.predN : 0.0,
+             R.predN ? double(R.hitBase) / R.predN : 0.0, R.predN ? double(R.hitInv) / R.predN : 0.0,
+             R.oracleCalls, R.seconds, double(bc.games * bc.rotations) / std::max(1e-9, R.seconds));
+    } else {
+      printf("v7bits  observer=%s  target=%s  model=%s  seed=%llu  n=%d deals x %d\n",
+             bc.specA.c_str(), bc.specB.c_str(), (bc.model.empty() ? bc.specB : bc.model).c_str(),
+             (unsigned long long)bc.seed, bc.games, bc.rotations);
+      printf("  target asks seen        %lld   inverted %lld   skipped %lld   det=%d\n",
+             R.asks, R.inverted, R.skipped, bc.nDet);
+      printf("  contraction             %.4f bits/ask  (SE %.4f)  mean surviving fraction %.4f\n",
+             mean, se, R.inverted ? R.qSum / R.inverted : 0.0);
+      printf("  by event index          ");
+      for (int b = 0; b < 6; b++)
+        printf("[%d-%d) %.2f  ", b * 20, b * 20 + 20, R.bucketN[b] ? R.bucketBits[b] / R.bucketN[b] : 0.0);
+      printf("\n");
+      printf("  marginals over %lld unresolved cards, scored against ground truth:\n", R.predN);
+      printf("    certificates + fitted policy prior   %.5f nats   argmax %.4f\n",
+             R.predN ? R.natBase / R.predN : 0.0, R.predN ? double(R.hitBase) / R.predN : 0.0);
+      printf("    ... plus measured transcript inversion %.5f nats   argmax %.4f\n",
+             R.predN ? R.natInv / R.predN : 0.0, R.predN ? double(R.hitInv) / R.predN : 0.0);
+      printf("  oracle calls            %.0f    elapsed %.2fs  (%.2f games/s)\n",
+             R.oracleCalls, R.seconds, double(bc.games * bc.rotations) / std::max(1e-9, R.seconds));
+    }
+    return 0;
+  }
+
   if (cmd == "pathology") {
     PathologyConfig pc;
     pc.specA = argVal(argc, argv, "a", "v04");
@@ -752,11 +1019,20 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+#ifndef FISH_NO_SERVE
   if (cmd == "serve") {
-    int port = atoi(argVal(argc, argv, "port", "8173").c_str());
-    return runServe(port, argVal(argc, argv, "web", ""), argv[0]);
+    ServeOptions o;
+    o.port         = atoi(argVal(argc, argv, "port", "8173").c_str());
+    o.webDir       = argVal(argc, argv, "web", "");
+    o.bindAll      = argFlag(argc, argv, "lan");
+    o.publicTunnel = argFlag(argc, argv, "public");
+    o.forceAuth    = argFlag(argc, argv, "auth");
+    o.tunnel       = argVal(argc, argv, "tunnel", "auto");
+    o.invite       = argVal(argc, argv, "invite", "");
+    return runServe(o, argv[0]);
   }
 
+#endif
   if (cmd == "dumpvalue") {
     DumpConfig dc;
     dc.specA = argVal(argc, argv, "a", "v04");
@@ -1219,5 +1495,11 @@ int main(int argc, char** argv) {
 
   std::cout << "usage: fish <match|verify|matrix|bench|serve> [--a=SPEC] [--b=SPEC] [--games=N] [--seed=S] [--legacy] [--json] [--audit]\n";
   std::cout << "       fish serve [--port=8173] [--web=DIR]   interactive table in a browser\n";
+  std::cout << "         --lan             also listen on the local network, for players in the room\n";
+  std::cout << "         --public          publish an https address via a tunnel, for players anywhere\n";
+  std::cout << "         --tunnel=NAME     which tunnel to use: cloudflared, ssh, or auto (default)\n";
+  std::cout << "         --auth            require credentials even on loopback\n";
+  std::cout << "         --invite=CODE     fix the invite code instead of generating one\n";
+  std::cout << "         (--lan/--public mint a host token and per-seat tokens: see docs/PLAY.md)\n";
   return 0;
 }
