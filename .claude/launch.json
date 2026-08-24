@@ -9,6 +9,27 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "fish-table",
+      "runtimeExecutable": "./fish",
+      "runtimeArgs": [
+        "serve",
+        "--port=8173"
+      ],
+      "cwd": "engine",
+      "port": 8173
+    },
+    {
+      "name": "fish-table-lan",
+      "runtimeExecutable": "./fish",
+      "runtimeArgs": [
+        "serve",
+        "--port=8173",
+        "--lan"
+      ],
+      "cwd": "engine",
+      "port": 8173
     }
   ]
 }

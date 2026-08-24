@@ -1,10 +1,14 @@
 // `fish serve` -- HTTP front end for the interactive table.
 #pragma once
 #include "table.hpp"
+#include "lobby.hpp"
+#include "tunnel.hpp"
 #include <fstream>
 #include <sstream>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 
 namespace fish {
 
@@ -34,14 +38,41 @@ inline std::string mimeFor(const std::string& p) {
   return "application/octet-stream";
 }
 
+// Every non-loopback IPv4 address the host answers on, so the console can print
+// a link a phone on the same wifi can actually open.
+inline std::vector<std::string> localAddresses() {
+  std::vector<std::string> out;
+  ifaddrs* ifa = nullptr;
+  if (getifaddrs(&ifa) != 0) return out;
+  for (ifaddrs* p = ifa; p; p = p->ifa_next) {
+    if (!p->ifa_addr || p->ifa_addr->sa_family != AF_INET) continue;
+    if (!(p->ifa_flags & IFF_UP) || (p->ifa_flags & IFF_LOOPBACK)) continue;
+    char ip[INET_ADDRSTRLEN] = {0};
+    auto* sin = (sockaddr_in*)p->ifa_addr;
+    if (inet_ntop(AF_INET, &sin->sin_addr, ip, sizeof(ip))) out.push_back(ip);
+  }
+  freeifaddrs(ifa);
+  return out;
+}
+
 // Upper bound on the per-event delay.  A human watching six seats and trying to
 // track 54 cards wants far more thinking time than a plausible animation delay,
 // so this is generous rather than cosmetic.
 static constexpr int PACE_MAX = 20000;
+// Longest a long-poll may block before it must answer anyway.  Short enough that
+// an intermediary will not time the connection out on us, long enough that an
+// idle table costs one request a minute per player instead of three a second.
+static constexpr int WAIT_MAX = 25000;
 
 struct Server {
   Table table;
+  Lobby lobby;
   std::string webDir;
+  // The address other people should use, which is exactly the one the host's
+  // own browser cannot work out: a host on loopback sees location.origin =
+  // 127.0.0.1, and a Copy button that hands that to three friends is worse than
+  // no Copy button.  Set once the listener (and any tunnel) is up.
+  std::string shareUrl;
   std::mutex ctl;            // serialises new/abandon against each other
 
   static HttpResponse json(const std::string& body, int status = 200) {
@@ -55,6 +86,29 @@ struct Server {
     return json("{\"error\":" + jesc(msg) + "}", status);
   }
   static HttpResponse okj() { return json("{\"ok\":true}"); }
+  // Every rejected credential costs the caller a fifth of a second.  Against an
+  // eight-symbol invite that is the difference between a feasible online guess
+  // and an infeasible one, and no honest client ever pays it twice.
+  static HttpResponse deny(const char* msg, int status = 401) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    return err(msg, status);
+  }
+
+  // The credential travels in a header so that it stays out of proxy logs,
+  // browser history and the Referer of anything the page links to.  The query
+  // parameter is accepted only as a fallback for hand-driven calls (curl, a
+  // pasted URL), never emitted by the browser client.
+  static std::string tokenOf(const HttpRequest& req) {
+    std::string t = req.header("x-fish-token");
+    return t.empty() ? req.get("t") : t;
+  }
+  // Running the table and sitting at it are separate powers held by separate
+  // secrets, so they travel separately too: a host who is also a player sends
+  // both, and neither one can be mistaken for the other.
+  static std::string hostTokenOf(const HttpRequest& req) {
+    std::string t = req.header("x-fish-host");
+    return t.empty() ? req.get("h") : t;
+  }
 
   // Reads owner=a,b,c,d,e,f and checks the allocation is well formed and names
   // only the declaring seat's own team, which is what game.hpp requires of a
@@ -87,6 +141,79 @@ struct Server {
     return o;
   }
 
+  // The seat configuration, as the host's setup screen states it.  Shared by
+  // /api/table (publish it so the lobby can be joined) and /api/new (publish it
+  // and deal), so the two can never drift.
+  bool readSeats(const HttpRequest& req, SeatCfg out[NPLAY], std::string& why) {
+    bool human[NPLAY];
+    for (int p = 0; p < NPLAY; p++) {
+      char key[4]; snprintf(key, sizeof(key), "s%d", p);
+      std::string spec = req.get(key, "v06");
+      if (spec.empty()) spec = "v06";
+      if (!knownPolicy(spec)) { why = "unknown policy '" + spec + "' at seat " + std::to_string(p); return false; }
+      out[p].spec = spec;
+      char hk[4]; snprintf(hk, sizeof(hk), "h%d", p);
+      out[p].human = req.getb(hk, false);
+      human[p] = out[p].human;
+      char nk[4]; snprintf(nk, sizeof(nk), "n%d", p);
+      out[p].name = cleanName(req.get(nk, ""));
+    }
+    // The host owns the shape of the table, so a seat turned into a bot loses
+    // its claim rather than overriding the host.  A seat that stays human and is
+    // claimed is named by whoever is sitting in it, not by the host.
+    lobby.releaseNonHuman(human);
+    for (int p = 0; p < NPLAY; p++) {
+      if (lobby.claimed(p)) { out[p].human = true; out[p].name = lobby.nameOf(p); }
+      if (out[p].name.empty()) out[p].name = defaultSeatName(p, out[p].human);
+    }
+    // De-duplication is a display concern and belongs to Table::displayNames,
+    // which recomputes it from these base names on every publish.
+    return true;
+  }
+
+  // An unclaimed player seat at a shared table belongs to nobody yet, so
+  // calling it "You" would be a lie to five of the six people looking at it.
+  std::string defaultSeatName(int p, bool human) const {
+    if (!human) return Table::defaultName(p);
+    return lobby.guard ? ("Seat " + std::to_string(p)) : std::string("You");
+  }
+
+  // A claim has to reach the seat itself, not just the lobby, or the table goes
+  // on showing the placeholder until the host next touches something.
+  void seatNameFromLobby(int p) {
+    table.seats[p].name = lobby.claimed(p) ? lobby.nameOf(p)
+                                           : defaultSeatName(p, table.seats[p].human);
+  }
+
+  // In a guarded game a human seat nobody has claimed is a seat the table would
+  // wait on forever, so dealing is refused until every one of them is filled.
+  bool seatsReady(const SeatCfg cfg[NPLAY], std::string& why) {
+    if (!lobby.guard) return true;
+    for (int p = 0; p < NPLAY; p++)
+      if (cfg[p].human && !lobby.claimed(p)) {
+        why = "seat " + std::to_string(p) + " is still waiting for a player";
+        return false;
+      }
+    return true;
+  }
+
+  // The fields the browser needs that are about *who is asking* rather than
+  // about the game: appended to the game snapshot rather than mixed into it.
+  std::string authJson(const std::string& tok, bool host, bool authed) {
+    std::string o = ",\"guard\":" + std::string(lobby.guard ? "true" : "false")
+                  + ",\"auth\":" + std::string(authed ? "true" : "false")
+                  + ",\"host\":" + std::string(host ? "true" : "false")
+                  + ",\"lobby\":" + lobby.json(tok)
+                  + ",\"mySeats\":" + lobby.mineJson(tok);
+    // The invite is a secret the host distributes; it is never sent to anybody
+    // else, so a player cannot re-share the table behind the host's back.
+    if (host && lobby.guard) {
+      o += ",\"invite\":" + jesc(lobby.invite);
+      if (!shareUrl.empty()) o += ",\"shareUrl\":" + jesc(shareUrl);
+    }
+    return o;
+  }
+
   HttpResponse handle(const HttpRequest& req) {
     if (req.path == "/" || req.path == "/index.html") {
       std::string p = webDir + "/index.html";
@@ -113,30 +240,104 @@ struct Server {
       return r;
     }
 
+    const std::string tok = tokenOf(req);
+    const bool host = lobby.isHost(hostTokenOf(req));
+    const bool authed = host || lobby.inviteOk(req.get("j"), tok);
+    lobby.touch(tok);
+
     // ------------------------------------------------------------- read
-    if (req.path == "/api/state") return json(table.stateJson(req.geti("seat", -1)));
+    if (req.path == "/api/state") {
+      if (!authed) return deny("this table needs an invite code");
+      // Long poll.  The client passes the revision it already has and how long
+      // it is prepared to wait; the server answers the moment anything changes,
+      // so a table on the far side of a tunnel costs one request per event
+      // rather than three a second per player.
+      long long since = atoll(req.get("since", "-1").c_str());
+      int waitMs = std::max(0, std::min(WAIT_MAX, req.geti("wait", 0)));
+      if (waitMs > 0 && since >= 0) {
+        std::unique_lock<std::mutex> lk(table.io.mu);
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(waitMs);
+        while ((long long)table.io.rev <= since) {
+          if (table.io.cv.wait_until(lk, deadline) == std::cv_status::timeout) break;
+        }
+      }
+      // The single line that keeps the game a hidden information game: a hand is
+      // disclosed only to the credential that claimed its seat.  Ask for
+      // somebody else's and you are silently a spectator.
+      int want = req.geti("seat", -1);
+      int viewSeat = lobby.holdsSeat(tok, want) ? want : -1;
+      return json(table.stateJson(viewSeat, authJson(tok, host, true)));
+    }
+
+    // ------------------------------------------------------------- lobby
+    if (req.path == "/api/claim") {
+      if (!authed) return deny("wrong invite code");
+      int p = req.geti("seat", -1);
+      if (p < 0 || p >= NPLAY) return err("bad seat");
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (!table.snap.isHuman[p]) return err("that seat is not a player's seat", 409);
+        if (table.snap.running) return err("that table has already been dealt", 409);
+      }
+      std::string name = cleanName(req.get("name"));
+      if (name.empty()) name = "Player " + std::to_string(p);
+      std::string out, why;
+      if (!lobby.claim(p, name, tok, out, why)) return err(why, 409);
+      // publishConfig reads `seats` (through displayNames) without a lock of its
+      // own, so the write and the publish share one critical section or they
+      // race a concurrent /api/table on a std::string.
+      { std::lock_guard<std::mutex> ck(ctl);
+        table.seats[p].human = true; seatNameFromLobby(p); table.publishConfig(); }
+      return json("{\"ok\":true,\"seat\":" + std::to_string(p) + ",\"token\":" + jesc(out) + "}");
+    }
+
+    if (req.path == "/api/release") {
+      int p = req.geti("seat", -1);
+      if (!lobby.holdsSeat(tok, p)) return deny("that is not your seat", 403);
+      lobby.release(p);
+      { std::lock_guard<std::mutex> ck(ctl); seatNameFromLobby(p); table.publishConfig(); }
+      return okj();
+    }
+
+    // A player who closed the tab has taken their token with them; without this
+    // the seat would be unclaimable for the life of the process.
+    if (req.path == "/api/kick") {
+      if (!host) return deny("only the host may free a seat", 403);
+      int p = req.geti("seat", -1);
+      if (p < 0 || p >= NPLAY) return err("bad seat");
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (table.snap.running) return err("not while a game is running", 409);
+      }
+      lobby.release(p);
+      { std::lock_guard<std::mutex> ck(ctl); seatNameFromLobby(p); table.publishConfig(); }
+      return okj();
+    }
 
     // ------------------------------------------------------------- setup
-    if (req.path == "/api/new") {
+    // Publish the seat configuration without dealing, so that players can see
+    // which seats are open and claim one while the host is still setting up.
+    if (req.path == "/api/table") {
+      if (!host) return deny("only the host may configure the table", 403);
       SeatCfg cfg[NPLAY];
-      int nHuman = 0;
-      for (int p = 0; p < NPLAY; p++) {
-        char key[4]; snprintf(key, sizeof(key), "s%d", p);
-        std::string spec = req.get(key, "v04");
-        if (spec.empty()) spec = "v04";
-        if (!knownPolicy(spec)) return err("unknown policy '" + spec + "' at seat " + std::to_string(p));
-        cfg[p].spec = spec;
-        char hk[4]; snprintf(hk, sizeof(hk), "h%d", p);
-        cfg[p].human = req.getb(hk, false);
-        if (cfg[p].human) nHuman++;
-        char nk[4]; snprintf(nk, sizeof(nk), "n%d", p);
-        cfg[p].name = cleanName(req.get(nk, ""));
-        if (cfg[p].name.empty()) cfg[p].name = cfg[p].human ? "You" : Table::defaultName(p);
+      std::string why;
+      if (!readSeats(req, cfg, why)) return err(why);
+      std::lock_guard<std::mutex> ck(ctl);
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (table.snap.running) return err("a game is already running", 409);
       }
-      (void)nHuman;
-      for (int p = 0; p < NPLAY; p++)
-        for (int q = 0; q < p; q++)
-          if (cfg[q].name == cfg[p].name) cfg[p].name += " " + std::to_string(p + 1);
+      for (int p = 0; p < NPLAY; p++) table.seats[p] = cfg[p];
+      table.publishConfig();
+      return okj();
+    }   // ctl held across the write and the publish, as above
+
+    if (req.path == "/api/new") {
+      if (!host) return deny("only the host may deal", 403);
+      SeatCfg cfg[NPLAY];
+      std::string why;
+      if (!readSeats(req, cfg, why)) return err(why);
+      if (!seatsReady(cfg, why)) return err(why, 409);
       Rules r;
       r.deckSets = 9;
       r.maxAsks = std::max(40, std::min(2000, req.geti("maxasks", 400)));
@@ -163,9 +364,17 @@ struct Server {
       return okj();
     }
 
-    if (req.path == "/api/abandon") { std::lock_guard<std::mutex> ck(ctl); table.stop(); return okj(); }
+    if (req.path == "/api/abandon") {
+      if (!host) return deny("only the host may end the game", 403);
+      std::lock_guard<std::mutex> ck(ctl);
+      table.stop();
+      return okj();
+    }
 
+    // Pause, step and pace are properties of the table rather than of a viewer,
+    // so they belong to whoever is running it.
     if (req.path == "/api/pause") {
+      if (!host) return deny("only the host may pause the table", 403);
       std::lock_guard<std::mutex> lk(table.io.mu);
       table.io.paused = req.getb("paused", true);
       table.io.stepBudget = 0;
@@ -173,6 +382,7 @@ struct Server {
       return okj();
     }
     if (req.path == "/api/step") {
+      if (!host) return deny("only the host may step the table", 403);
       std::lock_guard<std::mutex> lk(table.io.mu);
       table.io.paused = true;
       table.io.stepBudget += std::max(1, std::min(50, req.geti("n", 1)));
@@ -180,6 +390,7 @@ struct Server {
       return okj();
     }
     if (req.path == "/api/pace") {
+      if (!host) return deny("only the host may set the pace", 403);
       std::lock_guard<std::mutex> lk(table.io.mu);
       table.io.paceMs = std::max(0, std::min(PACE_MAX, req.geti("ms", 2000)));
       table.io.bump();
@@ -189,6 +400,9 @@ struct Server {
     // -------------------------------------------------------- human moves
     int seat = req.geti("seat", -1);
     if (seat < 0 || seat >= NPLAY) return err("bad seat");
+    // A move is accepted only from the credential that claimed the seat, which
+    // is the same check that governs seeing its cards.
+    if (!lobby.holdsSeat(tok, seat)) return deny("that is not your seat", 403);
     {
       std::lock_guard<std::mutex> lk(table.io.mu);
       if (!table.snap.running) return err("no game in progress", 409);
@@ -277,9 +491,19 @@ struct Server {
   }
 };
 
-inline int runServe(int port, const std::string& webDirArg, const char* argv0) {
+struct ServeOptions {
+  int port = 8173;
+  std::string webDir;
+  bool bindAll = false;      // --lan / --public
+  bool forceAuth = false;    // --auth: credentials even on loopback
+  bool publicTunnel = false; // --public: borrow an https address from a tunnel
+  std::string tunnel = "auto";// --tunnel=cloudflared|ssh|auto
+  std::string invite;        // --invite=CODE, otherwise generated
+};
+
+inline int runServe(const ServeOptions& opt, const char* argv0) {
   Server srv;
-  srv.webDir = webDirArg;
+  srv.webDir = opt.webDir;
   if (srv.webDir.empty()) {
     if (fileExists("web/index.html")) srv.webDir = "web";
     else {
@@ -290,13 +514,68 @@ inline int runServe(int port, const std::string& webDirArg, const char* argv0) {
       else srv.webDir = "web";
     }
   }
+  // Reachable from another machine means reachable by somebody who was not
+  // invited, so the credentials come on automatically rather than by being
+  // remembered.  A loopback table stays exactly as open as it always was.
+  // --public reaches further than --lan even though it binds narrower, so it
+  // turns the credentials on for the same reason.
+  const bool guard = opt.bindAll || opt.forceAuth || opt.publicTunnel;
+  srv.lobby.init(guard, opt.invite);
+
   int bound = 0;
-  int fd = httpListen(port, bound);
-  if (fd < 0) { fprintf(stderr, "fish serve: could not bind a port at or above %d\n", port); return 1; }
-  printf("FishLab table -- open http://127.0.0.1:%d in a browser\n", bound);
-  printf("  web assets: %s\n", srv.webDir.c_str());
-  printf("  Ctrl-C to stop.\n");
+  int fd = httpListen(opt.port, bound, opt.bindAll);
+  if (fd < 0) { fprintf(stderr, "fish serve: could not bind a port at or above %d\n", opt.port); return 1; }
+
+  printf("FishLab table\n");
+  if (!guard) {
+    printf("  open http://127.0.0.1:%d in a browser\n", bound);
+    printf("  loopback only -- pass --lan or --public to let other people in\n");
+  } else {
+    printf("  HOST  http://127.0.0.1:%d/?h=%s\n", bound, srv.lobby.hostToken.c_str());
+    printf("        ^ open this one yourself: it is what lets you configure and deal.\n");
+    printf("  INVITE CODE  %s\n", srv.lobby.invite.c_str());
+    if (opt.bindAll) {
+      auto addrs = localAddresses();
+      for (const auto& ip : addrs)
+        printf("  PLAYERS (same network)  http://%s:%d/?j=%s\n", ip.c_str(), bound, srv.lobby.invite.c_str());
+      if (!addrs.empty())
+        srv.shareUrl = "http://" + addrs.front() + ":" + std::to_string(bound);
+    }
+    printf("  Players see only their own hand; the host token is not a card-visibility\n"
+           "  credential and is never sent to anybody else.\n");
+  }
   fflush(stdout);
+
+  // The tunnel is started after the listener is up, so the first request it
+  // forwards cannot beat the server to the port.
+  Tunnel tun;
+  if (opt.publicTunnel) {
+    std::string url;
+    printf("\n  opening a public address");
+    if (opt.tunnel != "auto") printf(" via %s", opt.tunnel.c_str());
+    printf("...\n");
+    fflush(stdout);
+    if (tun.start(bound, url, opt.tunnel)) {
+      srv.shareUrl = url;                 // beats a LAN address: it works from both
+      printf("\n  PLAYERS (anywhere)  %s/?j=%s\n", url.c_str(), srv.lobby.invite.c_str());
+      printf("  Send that one link to everybody -- it carries the invite code. The tunnel\n"
+             "  closes when this process does, and %s can see the traffic on the way\n"
+             "  through, so it is for a card game and not for anything confidential.\n",
+             tun.via.c_str());
+    } else {
+      printf("\n  --public: no tunnel came up.\n            %s\n", tun.error.c_str());
+      // Without --lan the socket is loopback-only, so a failed tunnel leaves
+      // nobody able to reach the table but the person sitting at it.  Say so
+      // rather than implying the addresses above are of any use to a guest.
+      if (opt.bindAll) printf("  The table is still reachable on the network addresses above.\n");
+      else printf("  The table is reachable only from this machine. Re-run with --lan (or\n"
+                  "  --lan --public) to let other people in.\n");
+    }
+    fflush(stdout);
+  }
+  printf("\n  Ctrl-C to stop.\n");
+  fflush(stdout);
+
   httpAcceptLoop(fd, [&srv](const HttpRequest& r) { return srv.handle(r); });
   return 0;
 }

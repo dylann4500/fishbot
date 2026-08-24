@@ -14,7 +14,7 @@
 namespace fish {
 
 struct SeatCfg {
-  std::string spec = "v04";
+  std::string spec = "v06";
   std::string name;          // display name; distinct names are what make a
   bool human = false;        // table of six bots readable at all
 };
@@ -22,8 +22,10 @@ struct SeatCfg {
 inline bool knownPolicy(const std::string& spec) {
   std::string base;
   parseOpts(spec, base);
-  static const char* ok[] = {"v04", "fishbot_v04", "v03", "fishbot_v03", "v02", "fishbot_v02",
-                             "random", "hunter", "diversifier", "detective", "lockout", "bluffer"};
+  static const char* ok[] = {"v06", "fishbot_v06", "v05", "fishbot_v05",
+                             "v04", "fishbot_v04", "v03", "fishbot_v03", "v02", "fishbot_v02",
+                             "random", "hunter", "diversifier", "detective", "lockout", "bluffer",
+                             "silent", "feint", "withholder"};
   for (const char* n : ok) if (base == n) return true;
   return false;
 }
@@ -32,7 +34,22 @@ inline std::string policyLabel(const std::string& spec) {
   std::string base;
   auto o = parseOpts(spec, base);
   std::string name;
-  if (base == "v04" || base == "fishbot_v04") {
+  // A belief mode other than the shipped default is the one option worth
+  // spelling out on the table, because it is a different agent to play against
+  // rather than a tuning detail; the rest of the spec stays in the tooltip.
+  auto beliefSuffix = [&](const char* dflt) {
+    auto it = o.find("belief");
+    if (it == o.end() || it->second == dflt) return std::string();
+    return "-" + std::string(1, char(toupper((unsigned char)it->second[0]))) + it->second.substr(1);
+  };
+  if (base == "v06" || base == "fishbot_v06") {
+    name = "FishBot v0.6";
+    if (optI(o, "s1", 0)) name = "FishBot v0.6-Search";
+    else if (optI(o, "legacy", 0)) name = "FishBot v0.6-legacy";
+    name += beliefSuffix("fast");
+  }
+  else if (base == "v05" || base == "fishbot_v05") name = "FishBot v0.5" + beliefSuffix("fast");
+  else if (base == "v04" || base == "fishbot_v04") {
     auto it = o.find("belief");
     name = "FishBot v0.4";
     if (it != o.end() && it->second == "block") name = "FishBot v0.4-Block";
@@ -102,22 +119,34 @@ struct Table {
   }
 
   Table() {
-    for (int p = 0; p < NPLAY; p++) { seats[p].spec = "v04"; seats[p].name = defaultName(p); }
+    for (int p = 0; p < NPLAY; p++) { seats[p].spec = "v06"; seats[p].name = defaultName(p); }
     seats[0].human = true;
     seats[0].name = "You";
     publishConfig();
+  }
+
+  // Display names, de-duplicated.  Recomputed from the base names on every
+  // publish rather than edited in place, because a name that is disambiguated
+  // in place grows another suffix every time somebody joins.
+  void displayNames(std::string out[NPLAY]) const {
+    for (int p = 0; p < NPLAY; p++) out[p] = resolvedName(p);
+    for (int p = 0; p < NPLAY; p++)
+      for (int q = 0; q < p; q++)
+        if (out[q] == out[p]) { out[p] += " " + std::to_string(p + 1); break; }
   }
 
   // Copies the seat configuration into the snapshot so that stateJson never
   // has to touch `seats` -- the game thread owns those, the HTTP thread reads
   // only the snapshot.  Callers must not hold io.mu.
   void publishConfig() {
+    std::string disp[NPLAY];
+    displayNames(disp);
     std::lock_guard<std::mutex> lk(io.mu);
     for (int p = 0; p < NPLAY; p++) {
       snap.spec[p] = seats[p].spec;
       snap.isHuman[p] = seats[p].human;
       snap.label[p] = seats[p].human ? std::string("Human") : policyLabel(seats[p].spec);
-      snap.name[p] = resolvedName(p);
+      snap.name[p] = disp[p];
     }
     io.bump();
   }
@@ -146,11 +175,13 @@ struct Table {
       snap.everStarted = true;
       snap.seed = seed;
       snap.deckSets = rules.deckSets;
+      std::string disp[NPLAY];
+      displayNames(disp);
       for (int p = 0; p < NPLAY; p++) {
         snap.spec[p] = seats[p].spec;
         snap.isHuman[p] = seats[p].human;
         snap.label[p] = seats[p].human ? std::string("Human") : policyLabel(seats[p].spec);
-        snap.name[p] = resolvedName(p);
+        snap.name[p] = disp[p];
         snap.handCount[p] = rules.deckSets;
       }
       snap.hist.clear();
@@ -289,7 +320,10 @@ struct Table {
     os << "]";
   }
 
-  std::string stateJson(int viewSeat) {
+  // `extra` is a pre-rendered ",\"k\":v" run appended before the closing brace.
+  // Who is asking is a question for the lobby, not for the game, so those
+  // fields are composed by the caller rather than reaching in here.
+  std::string stateJson(int viewSeat, const std::string& extra = std::string()) {
     std::lock_guard<std::mutex> lk(io.mu);
     std::ostringstream os;
     os << "{\"rev\":" << io.rev
@@ -373,6 +407,7 @@ struct Table {
       os << "}";
     } else os << ",\"you\":null";
 
+    os << extra;
     os << "}";
     return os.str();
   }

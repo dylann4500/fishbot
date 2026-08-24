@@ -244,12 +244,28 @@ not a reimplementation of it.
 ```bash
 cd engine && make
 ./fish serve                                    # then open http://127.0.0.1:8173
+./fish serve --lan                              # players on the same wifi
+./fish serve --public                           # players anywhere: prints one link to send
 ```
 
-Give each seat an engine and a name — six seats all labelled "FishBot v0.4" are
-impossible to track — then deal. Presets cover you plus two v0.4 teammates against
-three v0.4s, and you plus two v0.3 teammates against three v0.4s. You are sent
-your own hand and the public event stream and nothing else. See `docs/PLAY.md`.
+Give each seat an engine and a name — six seats all labelled "FishBot v0.6" are
+impossible to track — then deal. The engine list is the same one `fish match --a=`
+takes: **v0.6** (the deployed policy, the default at every bot seat), **v0.6-Search**,
+v0.5, v0.4, v0.4-Block, v0.3, v0.2, the three deceptive archetypes and the baseline
+population. Presets cover you plus two v0.6 teammates against three v0.6s, against
+three v0.6-Searches, and a v0.3 partnership against three v0.6s. **Speak** reads
+every ask, declaration and turn aloud through the browser's own voice, which is
+useful when you are reading your hand rather than the log. You are sent your own
+hand and the public event stream and nothing else.
+
+**Three of you against three bots.** `--lan` and `--public` put the six seats on
+the network: the host gets a link that runs the table, everybody else gets one
+invite link, types a name and takes a seat, and the "3 players vs 3× v0.6" preset
+does the rest. Off loopback the table is credentialed, because Fish is a hidden
+information game and a shared address without per-seat secrets would hand every
+player the other five hands. The host token governs the table and confers no card
+visibility; a seat token is the only thing that will disclose that seat's cards.
+See `docs/PLAY.md`.
 
 ## Run locally
 

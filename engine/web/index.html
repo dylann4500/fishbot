@@ -147,6 +147,42 @@ aside{width:390px;flex:none;background:var(--panel);border-left:1px solid var(--
 .toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .toggle input{width:auto}
 .pacerow{display:flex;align-items:center;gap:9px}
+.vsel{flex:1;min-width:0;padding:4px 7px;font-size:12px}
+.vbtn{flex:none;padding:4px 9px;line-height:1.2}
+.voicerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.voicerow select{width:auto;max-width:280px;padding:4px 8px;font-size:12px}
+.voicerow button{padding:4px 12px;font-size:12px}
+
+/* --------------------------------------------------------------- networked */
+.sbox.narrow{max-width:620px}
+.joinrow{display:flex;gap:8px;align-items:center}
+.joinrow input{flex:1;min-width:0}
+.joinrow input.code{font:600 18px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;
+  text-transform:uppercase;padding:11px 12px}
+.seatpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.spick{display:flex;align-items:center;gap:10px;text-align:left;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:11px 13px;width:100%}
+.spick:hover:not(:disabled){border-color:var(--accent);background:#1c2941}
+.spick.taken{opacity:.62}
+.spick.mine{border-color:var(--A);background:#17352a}
+.spick .who{flex:1;min-width:0}
+.spick .who .t{font-weight:650;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spick .who .s{font-size:11px;color:var(--dim)}
+.spick .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:5px;
+  border:1px solid var(--line);color:var(--dim);flex:none}
+.sharebox{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.sharebox .joinrow input{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+.srowwrap{margin-bottom:10px}
+.srowwrap .srow{margin-bottom:0}
+.srowstat{font-size:11px;margin:4px 0 0 53px;display:flex;align-items:center;gap:7px}
+.srowstat .free{background:none;border:0;color:var(--dim);text-decoration:underline;padding:0;font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.dot.on{background:var(--good)} .dot.away{background:var(--warn)} .dot.off{background:#55617a}
+.netbar{background:#3a1f24;border:1px solid #6a3238;color:#f2b4b9;border-radius:9px;padding:7px 11px;
+  font-size:12px}
+.rost .p .dot{margin-left:4px}
+#waitline{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
 .pacerow .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);flex:none}
 .pacerow .val{font-size:12px;color:var(--ink);flex:none;min-width:96px;text-align:right;
   font-variant-numeric:tabular-nums}
@@ -211,6 +247,35 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
 </head>
 <body>
 
+<!-- =============================================================== JOIN -->
+<div id="join" class="screen" hidden>
+  <div class="sbox narrow">
+    <h1>FishLab table</h1>
+    <div class="sub" id="joinSub">Six seats, two teams of three.</div>
+
+    <div id="joinInvite" hidden>
+      <label class="f">Invite code</label>
+      <div class="joinrow">
+        <input id="inviteIn" class="code" placeholder="XXXXXXXX" maxlength="24"
+               autocapitalize="characters" autocomplete="off" spellcheck="false">
+        <button class="pri" id="inviteGo">Enter</button>
+      </div>
+      <div class="sub tiny" id="inviteErr" style="margin:8px 0 0"></div>
+    </div>
+
+    <div id="joinSeats" hidden>
+      <label class="f">Your name</label>
+      <input id="joinName" maxlength="20" placeholder="What the table should call you">
+      <label class="f" style="margin-top:16px">Take a seat</label>
+      <div class="seatpick" id="seatPick"></div>
+      <div class="sub tiny" id="joinErr" style="margin:10px 0 0"></div>
+      <div class="joinrow" style="margin-top:14px"><button id="joinWatch">Watch instead</button></div>
+    </div>
+
+    <div id="waitline" hidden></div>
+  </div>
+</div>
+
 <!-- ============================================================== SETUP -->
 <div id="setup" class="screen">
   <div class="sbox">
@@ -218,9 +283,11 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
     <div class="sub">Six seats, alternating teams. Choose an engine and a name for each seat, then deal.
       Distinct names matter — a table of six identically-labelled bots is impossible to read.</div>
     <div class="pres">
-      <button id="p1">You + 2× v0.4 vs 3× v0.4</button>
-      <button id="p2">You + 2× v0.3 vs 3× v0.4</button>
-      <button id="p3">Watch six v0.4s</button>
+      <button id="p0">3 players vs 3× v0.6</button>
+      <button id="p1">You + 2× v0.6 vs 3× v0.6</button>
+      <button id="p2">You + 2× v0.6 vs 3× v0.6-Search</button>
+      <button id="p3">You + 2× v0.3 vs 3× v0.6</button>
+      <button id="p4">Watch six v0.6s</button>
       <button id="pn">Shuffle names</button>
     </div>
     <div class="teams">
@@ -234,6 +301,18 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
         <span class="val" id="paceInLbl">2.0s per move</span></div></div>
       <div><label class="f">You are viewing</label><select id="viewSel"></select></div>
       <div style="display:flex;align-items:end"><button class="pri" id="dealBtn" style="width:100%">Deal</button></div>
+    </div>
+    <div class="sharebox" id="shareBox" hidden>
+      <label class="f">Send this to the other players</label>
+      <div class="joinrow"><input id="shareLink" readonly><button id="shareCopy">Copy</button></div>
+      <div class="sub tiny" id="shareNote" style="margin:8px 0 0"></div>
+    </div>
+    <div class="voicerow" id="voiceSetupRow">
+      <label class="toggle"><input type="checkbox" id="voiceOnSetup"> Speak the table out loud</label>
+      <select id="voiceSelSetup"></select>
+      <button id="voiceTest">Test</button>
+      <span class="sub tiny" style="margin:0">Every ask, declaration and turn is read aloud by your
+        browser&rsquo;s own voice — nothing leaves this machine.</span>
     </div>
     <div class="sub tiny" style="margin-top:12px">Bots never see your cards. A seat's hand is only ever sent
       to a browser asking for that seat, so two people on two machines can share a table.</div>
@@ -257,6 +336,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
       <div class="a"><h4>Team A</h4><div id="rA"></div><div class="sets" id="setsA"></div></div>
       <div class="b"><h4>Team B</h4><div id="rB"></div><div class="sets" id="setsB"></div></div>
     </div></div>
+    <div id="netbar" class="netbar" hidden>Connection lost — retrying…</div>
     <div class="btnrow">
       <button class="dec" id="declBtn">Declare</button>
       <button id="pauseBtn">Pause</button>
@@ -267,6 +347,14 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
     <div class="pacerow"><span class="lbl">Pace</span>
       <input type="range" id="paceSlider" min="0" max="100" step="1" value="32">
       <span class="val" id="paceLbl">2.0s per move</span></div>
+    <div class="pacerow" id="voiceRow">
+      <label class="toggle"><input type="checkbox" id="voiceOn"> Speak</label>
+      <select id="voiceSel" class="vsel"></select>
+      <button id="repeatBtn" class="vbtn" title="Say the last event again">&#128266;</button>
+    </div>
+    <div class="pacerow" id="voiceRateRow" hidden><span class="lbl">Voice</span>
+      <input type="range" id="voiceRate" min="60" max="200" step="5" value="115">
+      <span class="val" id="voiceRateLbl">1.15&times;</span></div>
     <div id="banner" class="info">—</div>
     <div id="prev"></div>
     <div style="display:flex;align-items:center">
@@ -292,9 +380,24 @@ const SETN=['Low Spades','High Spades','Low Hearts','High Hearts','Low Diamonds'
             'High Diamonds','Low Clubs','High Clubs','Eights & Jokers'];
 const SETSUIT=['♠','♠','♥','♥','♦','♦','♣','♣','★'];
 const RANKL={J:'Jack',Q:'Queen',K:'King',A:'Ace'};
-const POLICIES=[['v04','FishBot v0.4'],['v04:belief=block','FishBot v0.4-Block'],['v03','FishBot v0.3'],
-  ['v02','FishBot v0.2'],['lockout','Lockout'],['detective','Detective'],['hunter','Hunter'],
-  ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']];
+// The spec strings the setup screen offers, grouped the way the study groups
+// them.  These are the same strings `fish match --a=` takes, so anything you can
+// measure on the command line you can also sit down opposite.
+const SEARCH_SPEC='v06:s1=1,det=12,cand=4,kappa=2.5,roll=v06';
+const POLICY_GROUPS=[
+  ['FishBot',[
+    ['v06','FishBot v0.6'],
+    [SEARCH_SPEC,'FishBot v0.6-Search'],
+    ['v05','FishBot v0.5'],
+    ['v04','FishBot v0.4'],
+    ['v04:belief=block','FishBot v0.4-Block'],
+    ['v03','FishBot v0.3'],
+    ['v02','FishBot v0.2']]],
+  ['Deceptive archetypes',[
+    ['withholder','Withholder'],['feint','Feint'],['silent','Silent']]],
+  ['Baselines',[
+    ['lockout','Lockout'],['detective','Detective'],['hunter','Hunter'],
+    ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']]]];
 const NAMEPOOL=['Nova','Orion','Lyra','Rigel','Vega','Atlas','Juno','Mira','Draco','Pavo',
                 'Sirius','Altair','Cygnus','Perseus','Tycho','Kepler'];
 
@@ -363,31 +466,234 @@ function avatar(name,team,cls){
   return a;
 }
 
+/* =========================================================== credentials */
+// Three secrets exist and this browser holds at most two.  `invite` admits you
+// to the table, `token` is the seat you are sitting in, `host` is the right to
+// run the table.  They are stored per origin, so the same laptop can host one
+// table and be a guest at another without the two treading on each other.
+const CK='fishlab.'+location.host+'.';
+const cred={
+  get invite(){return localStorage.getItem(CK+'invite')||''},
+  set invite(v){v?localStorage.setItem(CK+'invite',v):localStorage.removeItem(CK+'invite')},
+  get token(){return localStorage.getItem(CK+'token')||''},
+  set token(v){v?localStorage.setItem(CK+'token',v):localStorage.removeItem(CK+'token')},
+  get host(){return localStorage.getItem(CK+'host')||''},
+  set host(v){v?localStorage.setItem(CK+'host',v):localStorage.removeItem(CK+'host')},
+  get name(){return localStorage.getItem(CK+'name')||''},
+  set name(v){localStorage.setItem(CK+'name',v||'')}
+};
+// A credential left in the address bar survives in history, in a screenshot and
+// in whatever the next person reads over your shoulder, so the join link is
+// banked and then removed from the URL on the way in.
+(function absorbLink(){
+  const q=new URLSearchParams(location.search);
+  let took=false;
+  if(q.get('h')){cred.host=q.get('h');took=true;}
+  if(q.get('j')){cred.invite=q.get('j').toUpperCase();took=true;}
+  if(took) history.replaceState(null,'',location.pathname);
+})();
+// Credentials travel in headers rather than the query string so they stay out
+// of the tunnel's request log.
+function authHeaders(extra){
+  const h=Object.assign({},extra||{});
+  if(cred.token) h['X-Fish-Token']=cred.token;
+  if(cred.host)  h['X-Fish-Host'] =cred.host;
+  return h;
+}
+
 /* =================================================================== api */
-let st=null, view=-1, lastBody='', flash='', flashAt=0, forceSetup=false;
+let st=null, view=-1, lastBody='', flash='', flashAt=0, forceSetup=false, lastRev=-1;
+let online=true, wasOnline=true, spectate=false;
+// How long a poll may hang waiting for something to happen.  The table is often
+// on the far side of a tunnel, where three requests a second per player is both
+// slow and rude; this way an idle table costs six a minute and a move is
+// delivered the instant it is made.
+const LONGPOLL_MS=10000;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function setFlash(msg){
+  flash=msg; flashAt=Date.now();
+  setTimeout(()=>{if(Date.now()-flashAt>=6000){flash='';render();}},6100);
+}
+
 async function post(path,params){
-  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams(params).toString()});
-  let j={}; try{j=await r.json();}catch(e){}
-  if(!r.ok){flash=j.error||('HTTP '+r.status);flashAt=Date.now();
-    setTimeout(()=>{if(Date.now()-flashAt>=6000){flash='';render();}},6100);}
-  await poll();
+  const p=Object.assign({},params||{});
+  if(cred.invite) p.j=cred.invite;
+  let j={};
+  try{
+    const r=await fetch(path,{method:'POST',
+      headers:authHeaders({'Content-Type':'application/x-www-form-urlencoded'}),
+      body:new URLSearchParams(p).toString()});
+    try{j=await r.json();}catch(e){}
+    if(!r.ok) setFlash(j.error||('HTTP '+r.status));
+    online=true;
+  }catch(e){ online=false; j={error:'offline'}; }
+  await poll(0);                       // 0: never wait behind a long poll
   return j;
 }
-async function poll(){
+
+// Which seats this browser may look at.  Unguarded that is every human seat,
+// exactly as it always was; guarded it is whatever the server says the token
+// holds, and nothing else is ever offered.
+function mySeats(s){
+  s=s||st;
+  if(!s||!s.seats) return [];
+  return s.guard ? (s.mySeats||[]) : s.seats.filter(x=>x.human).map(x=>x.i);
+}
+const amHost =()=>!!(st&&(!st.guard||st.host));
+const seatLive=p=>{const l=st&&st.lobby&&st.lobby[p];return l&&l.taken&&!l.away;};
+
+async function poll(waitMs){
+  const qs=new URLSearchParams();
+  if(view>=0) qs.set('seat',String(view));
+  if(cred.invite) qs.set('j',cred.invite);
+  if(waitMs&&lastRev>=0){qs.set('since',String(lastRev));qs.set('wait',String(waitMs));}
   try{
-    const r=await fetch('/api/state?seat='+view);
+    const r=await fetch('/api/state?'+qs.toString(),{headers:authHeaders()});
     const txt=await r.text(), s=JSON.parse(txt);
-    const humans=(s.seats||[]).filter(x=>x.human).map(x=>x.i);
-    if(s.everStarted&&humans.length&&humans.indexOf(view)<0){
+    online=true;
+    // Two polls are in flight whenever a move is made -- the loop's and the one
+    // that follows the POST -- and they can land out of order.  `rev` is the
+    // server's monotonic counter, so an overtaken response is simply dropped.
+    // Acting on one is not cosmetic: the seat repair below would run against the
+    // *previous* table, which is how dealing a bot-only game straight after a
+    // human one used to leave the spectator anchored to seat 0.
+    if(typeof s.rev==='number'){ if(s.rev<lastRev) return true; lastRev=s.rev; }
+    else lastRev=-1;                   // an unauthenticated reply carries no revision
+    const mine=mySeats(s);
+    if(s.everStarted&&mine.length&&mine.indexOf(view)<0){
       const saved=Number(localStorage.getItem('fishlab.view'));
-      view=humans.indexOf(saved)>=0?saved:humans[0];
-      lastBody=''; return poll();
+      view=mine.indexOf(saved)>=0?saved:mine[0];
+      lastBody=''; return poll(0);
     }
-    const body=txt.replace(/^\{"rev":\d+,/,'{');
+    if(s.guard&&!mine.length&&view>=0){ view=-1; lastBody=''; return poll(0); }
+    // idleMs ticks on every reply and would otherwise force a full re-render of
+    // the felt ten times a minute for no visible change.
+    const body=txt.replace(/^\{"rev":\d+,/,'{').replace(/"idleMs":\d+/g,'"idleMs":0');
     st=s;
-    if(body!==lastBody){lastBody=body;render();}
-  }catch(e){}
+    if(body!==lastBody||online!==wasOnline){lastBody=body;wasOnline=online;render();}
+    return true;
+  }catch(e){
+    online=false;
+    if(online!==wasOnline){wasOnline=online;render();}
+    return false;
+  }
+}
+
+let looping=false;
+async function pollLoop(){
+  if(looping) return;
+  looping=true;
+  for(;;){
+    const authed=!(st&&st.guard&&!st.auth);
+    const t0=Date.now();
+    const ok=await poll(authed?LONGPOLL_MS:0);
+    const dt=Date.now()-t0;
+    // A floor under the request rate.  Without it a server whose revision
+    // counter has gone backwards -- a restart, say -- answers every long poll
+    // instantly and the loop becomes a spin.
+    if(!ok) await sleep(1500);
+    else if(!authed) await sleep(1500);
+    else if(dt<200) await sleep(200-dt);
+  }
+}
+
+/* ================================================================== join */
+// Where a browser belongs: the lobby until it has an invite and a seat, the
+// host's setup screen if it is the host, the table once one has been dealt.
+// A table the host has ended sits at everStarted-but-not-running, which is also
+// the momentary state between the two halves of a re-deal -- so it only counts
+// once it has persisted, and a render is scheduled to notice when it has.
+let abandonedSince=0;
+function tableEnded(){
+  if(!st) return false;
+  const idle=st.everStarted&&!st.running&&!st.finished;
+  if(!idle){abandonedSince=0;return false;}
+  if(!abandonedSince){abandonedSince=Date.now();setTimeout(render,1700);return false;}
+  return Date.now()-abandonedSince>1500;
+}
+
+function screenFor(){
+  if(!st) return 'join';
+  if(st.guard&&!st.auth) return 'join';
+  if(st.everStarted&&!forceSetup&&!tableEnded()&&(!st.guard||mySeats(st).length||spectate||st.host)) return 'game';
+  if(amHost()&&!st.guard) return 'setup';
+  if(st.host) return 'setup';
+  return 'join';
+}
+
+function renderJoin(){
+  const need=!st||!st.auth;
+  document.getElementById('joinInvite').hidden=!need;
+  document.getElementById('joinSeats').hidden=need;
+  const sub=document.getElementById('joinSub');
+  const wl=document.getElementById('waitline');
+  if(need){
+    sub.textContent='This table needs the invite code the host sent you.';
+    wl.hidden=true;
+    return;
+  }
+  const mine=mySeats(st);
+  const nameIn=document.getElementById('joinName');
+  if(document.activeElement!==nameIn&&!nameIn.value) nameIn.value=cred.name||'';
+  sub.textContent=mine.length
+    ? 'You are seated. The host deals once every seat is filled.'
+    : 'Seats 0, 2 and 4 are Team A; 1, 3 and 5 are Team B. Take an open one.';
+
+  const g=document.getElementById('seatPick'); g.innerHTML='';
+  for(let p=0;p<6;p++){
+    const seat=(st.seats||[])[p]||{name:'Seat '+p,label:'',human:false};
+    const lob=(st.lobby||[])[p]||{};
+    const b=el('button','spick'+(lob.mine?' mine':(lob.taken?' taken':'')));
+    b.appendChild(avatar(seat.name,teamOf(p)));
+    const w=el('div','who');
+    w.appendChild(el('div','t',lob.taken?seat.name:(seat.human?'Open seat':seat.label)));
+    w.appendChild(el('div','s','Seat '+p+' · '+teamName(teamOf(p))+(seat.human?'':' · bot')));
+    b.appendChild(w);
+    b.appendChild(el('div','tag',lob.mine?'you':(lob.taken?'taken':(seat.human?'open':'bot'))));
+    // `running`, not `everStarted`: the latter latches on the first deal and
+    // never clears, so it would lock the lobby for the life of the process the
+    // moment one game had been played.  Between games the seats are open again.
+    b.disabled=!seat.human||st.running||(lob.taken&&!lob.mine);
+    if(lob.mine) b.onclick=()=>releaseSeat(p);
+    else if(!b.disabled) b.onclick=()=>claimSeat(p);
+    g.appendChild(b);
+  }
+
+  const openHuman=(st.seats||[]).filter((s,i)=>s.human&&!((st.lobby||[])[i]||{}).taken).length;
+  wl.hidden=!mine.length&&!spectate;
+  if(!mine.length&&spectate){
+    wl.innerHTML='';
+    wl.appendChild(el('div',null,'Watching. The table appears as soon as the host deals.'));
+    wl.appendChild(el('div','sub tiny','Take a seat above if you would rather play.'));
+  }
+  if(mine.length){
+    wl.innerHTML='';
+    wl.appendChild(el('div',null,'You are '+mine.map(p=>st.seats[p].name+' in seat '+p).join(' and ')+'.'));
+    wl.appendChild(el('div','sub tiny',openHuman
+      ? ('Waiting for '+openHuman+' more player'+(openHuman===1?'':'s')+', then the host deals.')
+      : 'Everyone is seated — waiting for the host to deal.'));
+  }
+}
+
+async function claimSeat(p){
+  const err=document.getElementById('joinErr');
+  const nm=document.getElementById('joinName').value.trim();
+  if(!nm){err.textContent='Type a name first, so the table knows who you are.';
+          document.getElementById('joinName').focus(); return;}
+  cred.name=nm;
+  err.textContent='';
+  const j=await post('/api/claim',{seat:p,name:nm});
+  if(j&&j.token){
+    cred.token=j.token;
+    view=p; localStorage.setItem('fishlab.view',String(p));
+    lastBody=''; await poll(0);
+  } else err.textContent=(j&&j.error)||'That seat could not be taken.';
+}
+async function releaseSeat(p){
+  await post('/api/release',{seat:p});
+  if(!mySeats().length) view=-1;
+  lastBody=''; await poll(0);
 }
 
 /* ================================================================ naming */
@@ -404,10 +710,19 @@ const oppSeats  =()=>[0,1,2,3,4,5].filter(p=>teamOf(p)!==teamOf(view));
 /* =============================================================== rendering */
 function render(){
   if(!st) return;
-  const showGame = st.everStarted && !forceSetup;
-  document.getElementById('setup').hidden = showGame;
-  document.getElementById('game').hidden  = !showGame;
-  if(!showGame) return;
+  const scr=screenFor();
+  document.getElementById('join').hidden  = scr!=='join';
+  document.getElementById('setup').hidden = scr!=='setup';
+  document.getElementById('game').hidden  = scr!=='game';
+  if(scr==='join'){ renderJoin(); return; }
+  if(scr==='setup'){ adoptServerSeats(); if(!rowEl.length) renderSetup(); else syncSetup(); return; }
+  document.getElementById('netbar').hidden = online;
+  // Pausing, stepping, the pace and the next deal are properties of the table,
+  // so at a shared table they belong to whoever is running it and simply are not
+  // offered to anybody else.
+  const host=amHost();
+  ['pauseBtn','stepBtn','newBtn'].forEach(id=>{document.getElementById(id).hidden=!host;});
+  document.getElementById('paceSlider').disabled=!host;
   document.getElementById('seedLbl').textContent='seed '+st.seed;
   document.getElementById('pauseBtn').textContent=st.paused?'Resume':'Pause';
   // Adopt the server's pace (another browser may have changed it), but not on
@@ -416,14 +731,17 @@ function render(){
   const ps=document.getElementById('paceSlider');
   if(document.activeElement!==ps&&Date.now()-paceLocalAt>1500&&st.pace!==paceMs) setPace(st.pace,false);
   renderFelt(); renderHand(); renderRoster(); renderBanner(); renderLog(); syncModal();
-  const humans=st.seats.filter(x=>x.human).map(x=>x.i);
+  // The switcher offers the seats this browser holds -- which at a shared table
+  // is one, and at a local table is every human seat, as before.
+  const mine=mySeats(st);
   const vw=document.getElementById('viewWrap'), vn=document.getElementById('viewNow');
-  vw.hidden = humans.length<2;
-  if(humans.length>1&&vn.options.length!==humans.length){
-    vn.innerHTML=''; humans.forEach(i=>{const o=el('option',null,nameOf(i));o.value=String(i);vn.appendChild(o);});
+  vw.hidden = mine.length<2;
+  if(mine.length>1&&vn.options.length!==mine.length){
+    vn.innerHTML=''; mine.forEach(i=>{const o=el('option',null,nameOf(i));o.value=String(i);vn.appendChild(o);});
   }
-  if(humans.length>1) vn.value=String(view);
+  if(mine.length>1) vn.value=String(view);
   document.getElementById('declBtn').disabled = st.finished||!st.you;
+  narrate();
 }
 
 function lastBubbles(){
@@ -505,6 +823,15 @@ function renderRoster(){
       const d=el('div','p'+(p===view?' me':''));
       d.appendChild(avatar(nameOf(p),t));
       d.appendChild(el('span','n',seatLbl(p)));
+      // Whether a person is still at the other end matters at a shared table,
+      // and is the difference between "thinking" and "gone" when the table
+      // stops moving.
+      if(st.guard&&st.seats[p].human){
+        const l=(st.lobby||[])[p]||{};
+        const dot=el('span','dot '+(!l.taken?'off':(l.away?'away':'on')));
+        dot.title=!l.taken?'nobody in this seat':(l.away?'no contact for a few seconds':'connected');
+        d.appendChild(dot);
+      }
       d.appendChild(el('span','c',st.handCount[p]+'c'));
       w.appendChild(d);
     });
@@ -825,6 +1152,231 @@ function openRules(){
   showModal('Rules',b);
 }
 
+/* ================================================================== voice */
+// Spoken narration.  The browser's own Web Speech API rather than a hosted
+// voice: the table is a loopback server that has to work with the network
+// unplugged, a game emits around ninety events, and at instant pace they arrive
+// far faster than any round-trip could answer.  Every voice here is local, free
+// and immediate, and nothing about the game leaves the machine.
+const SPEECH_OK = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+// Ranked by how well they read a stream of short card names.  The first one
+// actually installed wins; failing that any English voice, failing that the
+// browser default.
+const VOICE_PREF=['Samantha','Ava','Allison','Serena','Zoe','Karen','Moira','Daniel',
+                  'Google US English','Google UK English Female','Microsoft Aria Online (Natural) - English (United States)'];
+
+const Voice={
+  on:false, uri:'', rate:1.15, q:[], speaking:false, since:0, warmed:false,
+
+  list(){
+    if(!SPEECH_OK) return [];
+    return speechSynthesis.getVoices().filter(v=>/^en\b|^en[-_]/i.test(v.lang));
+  },
+  voice(){
+    const vs=this.list();
+    if(!vs.length) return null;
+    const chosen=vs.find(v=>v.voiceURI===this.uri);
+    if(chosen) return chosen;
+    for(const n of VOICE_PREF){const v=vs.find(x=>x.name===n); if(v) return v;}
+    return vs.find(v=>v.localService)||vs[0];
+  },
+
+  // prio 2 and above is anything the player needs: their own seat, a
+  // declaration, the end of the game.  prio 1 is another table's ask, which is
+  // pleasant to hear and safe to drop.
+  say(text,prio,force){
+    if(!SPEECH_OK||!text) return;
+    if(!this.on&&!force) return;
+    this.q.push({text:text,prio:prio||1});
+    // At instant pace the bots outrun any voice -- a whole game is ninety-odd
+    // events in under a second -- and narration half a minute behind the table
+    // is worse than none.  Ordinary asks are dropped first and oldest first; if
+    // even the important events are still stacking up, the oldest of those go
+    // the same way, because what is worth hearing is what just happened.  Use
+    // Pause and Step, not the voice, to follow a fast run event by event.
+    while(this.q.length>4){
+      const i=this.q.findIndex(u=>u.prio<2);
+      if(i>=0) this.q.splice(i,1);
+      else if(this.q.length>6) this.q.shift();
+      else break;
+    }
+    this.pump();
+  },
+  pump(){
+    if(!SPEECH_OK||this.speaking||!this.q.length) return;
+    const u=this.q.shift();
+    const ut=new SpeechSynthesisUtterance(u.text);
+    const v=this.voice();
+    if(v){ut.voice=v;ut.lang=v.lang;}
+    ut.rate=this.rate;
+    const done=()=>{this.speaking=false;this.pump();};
+    ut.onend=done; ut.onerror=done;
+    this.speaking=true; this.since=Date.now();
+    try{speechSynthesis.speak(ut);}catch(e){this.speaking=false;}
+  },
+  cancel(){
+    this.q=[]; this.speaking=false;
+    if(SPEECH_OK){try{speechSynthesis.cancel();}catch(e){}}
+  },
+  // Chrome will not speak until the page has been interacted with, and the first
+  // utterance after that is sometimes swallowed, so the toggle and Deal both
+  // prime it with silence.
+  warm(){
+    if(!SPEECH_OK||this.warmed) return;
+    this.warmed=true;
+    try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}
+  }
+};
+// Chrome stops a long synthesis run after about fifteen seconds unless it is
+// nudged, and drops onend on the floor often enough to strand the queue.
+if(SPEECH_OK) setInterval(()=>{
+  if(!Voice.on&&!Voice.q.length) return;
+  try{ if(speechSynthesis.speaking&&!speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
+  if(Voice.speaking&&!speechSynthesis.speaking&&Date.now()-Voice.since>1500){Voice.speaking=false;Voice.pump();}
+},4000);
+
+/* ---- what a voice should say, which is not what the log should show ------ */
+const sayName=p=>p===view?'you':nameOf(p);
+const sayCard=c=>cardLong(c);
+const saySet =s=>SETN[s].replace('&','and');
+
+function evSpeech(e){
+  if(e.k==='ask'){
+    const head=(e.a===view?'You ask ':nameOf(e.a)+' asks ')+sayName(e.t)
+              +' for the '+sayCard(e.c)+'. ';
+    return head+(e.ok?'Yes.':'No.');
+  }
+  if(e.k==='declare'||e.k==='forced'){
+    const who=e.a===view?'You':nameOf(e.a);
+    const verb=e.k==='forced'
+      ? (e.a===view?' are forced to declare ':' is forced to declare ')
+      : (e.a===view?' declare ':' declares ');
+    return who+verb+saySet(e.s)+'. '
+      +(e.ok?'Correct.':'Misdeclared. '+teamName(1-teamOf(e.a))+' takes it.');
+  }
+  if(e.k==='pass') return (e.a===view?'You are':nameOf(e.a)+' is')+' out of cards. The turn goes to '
+    +sayName(e.t)+'.';
+  return '';
+}
+const evPrio=e=>(e.k!=='ask'||e.a===view||e.t===view)?2:1;
+
+/* ---- the narrator: speaks each event once, in order ---------------------- */
+let spoken={seed:-1,n:0,need:'',over:false};
+function resetNarration(silent){
+  spoken={seed:st?st.seed:-1,n:st?(st.history||[]).length:0,need:'',over:false};
+  if(silent) Voice.cancel();
+}
+function narrate(){
+  if(!SPEECH_OK||!Voice.on||!st) return;
+  const h=st.history||[];
+  if(st.seed!==spoken.seed||h.length<spoken.n){
+    // A fresh deal: start from the top rather than replaying the old game.
+    Voice.cancel();
+    spoken={seed:st.seed,n:0,need:'',over:false};
+    Voice.say('Dealt. '+(st.turn===view?'You lead.':nameOf(st.turn)+' leads.'),2);
+  }
+  for(;spoken.n<h.length;spoken.n++){
+    const e=h[spoken.n];
+    Voice.say(evSpeech(e),evPrio(e));
+  }
+  // Prompts come after the events that caused them, which is the order they
+  // happened in, so the queue needs no special casing.
+  const need=st.you&&!st.finished?st.you.need:'none';
+  if(need!==spoken.need){
+    spoken.need=need;
+    if(need==='turn')       Voice.say('Your turn.',2);
+    else if(need==='pass')  Voice.say('You are out of cards. Choose a teammate to take the turn.',2);
+    else if(need==='forced')Voice.say('Forced endgame. '+saySet(st.you.needSet)+', if you want it.',2);
+    else if(need==='guess') Voice.say('Somebody must declare '+saySet(st.you.needSet)+'. It is you.',2);
+  }
+  if(st.finished&&!spoken.over){
+    spoken.over=true;
+    const a=st.score[0], b=st.score[1];
+    Voice.say(a===b?('Game over. Drawn, '+a+' all.')
+      : 'Game over. '+(a>b?'Team A':'Team B')+' wins, '+Math.max(a,b)+' to '+Math.min(a,b)+'.',2);
+  }
+}
+function repeatLast(){
+  if(!st) return;
+  const h=st.history||[];
+  Voice.cancel();
+  Voice.warm();
+  const last=h.length?evSpeech(h[h.length-1]):'Nothing has happened yet.';
+  const turn=st.finished?'':' '+(st.turn===view?'Your turn.':(nameOf(st.turn)+' to play.'));
+  Voice.say(last+turn,3,true);
+}
+
+/* ---- controls ------------------------------------------------------------ */
+function fillVoiceSelects(){
+  const vs=Voice.list();
+  ['voiceSel','voiceSelSetup'].forEach(id=>{
+    const s=document.getElementById(id);
+    if(!s) return;
+    s.innerHTML='';
+    if(!vs.length){const o=el('option',null,'system default');o.value='';s.appendChild(o);return;}
+    vs.forEach(v=>{
+      const o=el('option',null,v.name+(v.localService?'':' (network)'));
+      o.value=v.voiceURI; s.appendChild(o);
+    });
+    const cur=Voice.voice();
+    s.value=cur?cur.voiceURI:'';
+  });
+}
+function setVoiceOn(on,gesture){
+  Voice.on=!!on;
+  localStorage.setItem('fishlab.voice',Voice.on?'1':'0');
+  ['voiceOn','voiceOnSetup'].forEach(id=>{const c=document.getElementById(id);if(c)c.checked=Voice.on;});
+  const rr=document.getElementById('voiceRateRow'); if(rr) rr.hidden=!Voice.on;
+  if(Voice.on){
+    if(gesture) Voice.warm();
+    // Turning the voice on mid-game must not read the whole game back.
+    if(st) spoken={seed:st.seed,n:(st.history||[]).length,need:(st.you&&st.you.need)||'',over:!!st.finished};
+  } else Voice.cancel();
+}
+function setVoiceRate(r){
+  Voice.rate=Math.max(0.6,Math.min(2,Number(r)||1.15));
+  localStorage.setItem('fishlab.voicerate',String(Voice.rate));
+  const sl=document.getElementById('voiceRate'), lb=document.getElementById('voiceRateLbl');
+  if(sl&&document.activeElement!==sl) sl.value=String(Math.round(Voice.rate*100));
+  if(lb) lb.textContent=Voice.rate.toFixed(2)+'×';
+}
+function setVoiceURI(u){
+  Voice.uri=u||'';
+  localStorage.setItem('fishlab.voiceuri',Voice.uri);
+  ['voiceSel','voiceSelSetup'].forEach(id=>{const s=document.getElementById(id);if(s&&s.value!==Voice.uri)s.value=Voice.uri;});
+}
+function initVoice(){
+  if(!SPEECH_OK){
+    ['voiceRow','voiceRateRow','voiceSetupRow'].forEach(id=>{
+      const n=document.getElementById(id); if(n) n.hidden=true;});
+    return;
+  }
+  Voice.uri=localStorage.getItem('fishlab.voiceuri')||'';
+  setVoiceRate(localStorage.getItem('fishlab.voicerate')||1.15);
+  fillVoiceSelects();
+  speechSynthesis.onvoiceschanged=fillVoiceSelects;
+  setVoiceOn(localStorage.getItem('fishlab.voice')==='1',false);
+  ['voiceOn','voiceOnSetup'].forEach(id=>{
+    const c=document.getElementById(id); if(c) c.onchange=e=>setVoiceOn(e.target.checked,true);});
+  ['voiceSel','voiceSelSetup'].forEach(id=>{
+    const s=document.getElementById(id);
+    if(s) s.onchange=e=>{setVoiceURI(e.target.value);Voice.cancel();Voice.warm();
+      Voice.say('This is '+(Voice.voice()?Voice.voice().name:'the system voice')+'.',3,true);};});
+  const rt=document.getElementById('voiceRate');
+  if(rt) rt.oninput=e=>setVoiceRate(Number(e.target.value)/100);
+  const rp=document.getElementById('repeatBtn'); if(rp) rp.onclick=repeatLast;
+  const tb=document.getElementById('voiceTest');
+  if(tb) tb.onclick=()=>{Voice.cancel();Voice.warm();
+    Voice.say('Nova asks Rigel for the Queen of Hearts. Yes. Your turn.',3,true);};
+  // R repeats the last event, as long as you are not typing a seat name.
+  window.addEventListener('keydown',e=>{
+    if(e.key!=='r'&&e.key!=='R') return;
+    const t=e.target&&e.target.tagName;
+    if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA') return;
+    repeatLast();
+  });
+}
+
 /* ================================================================== pace */
 // The interesting range is half a second to about four; twenty seconds is there
 // for studying a position.  A linear track would bury the useful part in its
@@ -843,8 +1395,9 @@ function setPace(ms,live){
     if(l) l.textContent=paceText(paceMs);
     if(sl&&document.activeElement!==sl) sl.value=pos;
   });
-  // Debounced: dragging the slider should not fire a request per pixel.
-  if(live){paceLocalAt=Date.now();clearTimeout(paceTimer);
+  // Debounced: dragging the slider should not fire a request per pixel.  Only
+  // the host's slider is wired to the server; a guest's would be rejected.
+  if(live&&amHost()){paceLocalAt=Date.now();clearTimeout(paceTimer);
     paceTimer=setTimeout(()=>post('/api/pace',{ms:paceMs}),180);}
 }
 document.getElementById('paceSlider').oninput=e=>setPace(msFromPos(e.target.value),true);
@@ -853,72 +1406,209 @@ document.getElementById('paceIn').oninput=e=>setPace(msFromPos(e.target.value),f
 /* ================================================================= setup */
 let cfg=[];
 function defaultCfg(){
-  return [0,1,2,3,4,5].map(i=>({spec:'v04',name:i===0?'You':NAMEPOOL[i-1],human:i===0}));
+  return [0,1,2,3,4,5].map(i=>({spec:'v06',name:i===0?'You':NAMEPOOL[i-1],human:i===0}));
 }
+// The host's setup screen is rebuilt only when the host changes something.
+// Everything the *server* can change under it -- who has claimed what, whether
+// they are still connected, whether the table is dealable -- is applied by
+// syncSetup() without touching the inputs, so a poll landing mid-keystroke
+// cannot steal the caret.
+let rowEl=[], cfgAdopted=false, tablePubTimer=null;
+
+function seatParams(){
+  const p={};
+  cfg.forEach((c,i)=>{p['s'+i]=c.human?'v06':c.spec;p['h'+i]=c.human?1:0;p['n'+i]=c.name;});
+  return p;
+}
+// Publishing the seat layout without dealing is what lets players see which
+// seats are open and claim one while the host is still choosing engines.
+function publishTable(){
+  if(!st||!st.guard||!st.host||!cfgAdopted) return;
+  if(st.running) return;               // a running game owns its seats; between games it does not
+  clearTimeout(tablePubTimer);
+  tablePubTimer=setTimeout(()=>{post('/api/table',seatParams());},350);
+}
+// On a reload the host's local configuration would otherwise revert to the
+// defaults and the next publish would turn other people's claimed seats back
+// into bots, so the server's copy wins once, on the way in.
+function adoptServerSeats(){
+  if(cfgAdopted||!st||!st.guard||!st.seats) return;
+  cfgAdopted=true;
+  st.seats.forEach((sv,i)=>{cfg[i].human=sv.human;cfg[i].spec=sv.spec||cfg[i].spec;cfg[i].name=sv.name;});
+  renderSetup();
+}
+
 function renderSetup(){
+  rowEl=[];
+  const guard=!!(st&&st.guard);
   ['rowsA','rowsB'].forEach((id,t)=>{
     const w=document.getElementById(id); w.innerHTML='';
     [0,1,2,3,4,5].filter(p=>(p&1)===t).forEach(p=>{
       const c=cfg[p];
+      const wrap=el('div','srowwrap');
       const row=el('div','srow');
       row.appendChild(avatar(c.name,t));
       const nb=el('div'); nb.appendChild(el('label','f','Seat '+p+' name'));
       const ni=el('input'); ni.value=c.name; ni.maxLength=20;
-      ni.oninput=()=>{c.name=ni.value;};
+      ni.oninput=()=>{c.name=ni.value;publishTable();};
       ni.onchange=()=>renderSetup();
       nb.appendChild(ni); row.appendChild(nb);
       const eb=el('div'); eb.appendChild(el('label','f','Played by'));
       const s=el('select');
-      const you=el('option',null,'You (play this seat)'); you.value='human'; s.appendChild(you);
-      POLICIES.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;s.appendChild(o);});
+      // At a shared table the host is not necessarily the person who will sit
+      // here, so the option names a player rather than the reader.
+      const you=el('option',null,guard?'A player (open seat)':'You (play this seat)');
+      you.value='human'; s.appendChild(you);
+      POLICY_GROUPS.forEach(([g,list])=>{
+        const og=document.createElement('optgroup'); og.label=g;
+        list.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;og.appendChild(o);});
+        s.appendChild(og);
+      });
+      // A seat may carry a spec typed on the command line that is not in the
+      // list; show it rather than silently snapping the seat to something else.
+      if(!c.human&&!POLICY_GROUPS.some(([g,l])=>l.some(([v])=>v===c.spec))){
+        const og=document.createElement('optgroup'); og.label='Custom';
+        const o=el('option',null,c.spec); o.value=c.spec; og.appendChild(o); s.appendChild(og);
+      }
       s.value=c.human?'human':c.spec;
       s.onchange=()=>{
         if(s.value==='human'){
           c.human=true;
-          if(NAMEPOOL.indexOf(c.name)>=0) c.name='You';
+          // At a shared table the seat is not the host's, so it is not "You"
+          // until somebody claims it and gives it their own name.
+          if(NAMEPOOL.indexOf(c.name)>=0) c.name=(st&&st.guard)?('Seat '+p):'You';
         }else{
           c.human=false; c.spec=s.value;
           if(c.name==='You') c.name=NAMEPOOL.find(n=>!cfg.some(o=>o.name===n))||('Seat '+p);
         }
-        renderSetup();
+        renderSetup(); publishTable();
       };
       eb.appendChild(s); row.appendChild(eb);
-      w.appendChild(row);
+      wrap.appendChild(row);
+      const stat=el('div','srowstat'); wrap.appendChild(stat);
+      w.appendChild(wrap);
+      rowEl[p]={ni:ni,sel:s,stat:stat};
     });
   });
   const vs=document.getElementById('viewSel'); vs.innerHTML='';
   const humans=cfg.map((c,i)=>c.human?i:-1).filter(i=>i>=0);
   if(!humans.length){const o=el('option',null,'Watch only');o.value='-1';vs.appendChild(o);}
   humans.forEach(i=>{const o=el('option',null,cfg[i].name+' (seat '+i+')');o.value=String(i);vs.appendChild(o);});
+  // At a shared table the host does not choose who is looking at what; each
+  // browser sees the seat it claimed.
+  document.getElementById('viewSel').parentElement.hidden=!!(st&&st.guard);
+  syncSetup();
+}
+
+let claimSig='';
+function syncSetup(){
+  if(!rowEl.length) return;
+  const guard=!!(st&&st.guard), host=!!(st&&st.host);
+  // A claim is the server's statement about a seat, so it overrides the host's
+  // local edit for that seat rather than the other way round.
+  if(guard&&st.lobby) st.lobby.forEach((l,i)=>{ if(l.taken){cfg[i].human=true;cfg[i].name=st.seats[i].name;} });
+  // Somebody arriving or leaving changes a seat's avatar and its name, which
+  // are built rather than updated, so that one case does need the rebuild --
+  // and only that case, or a poll landing mid-keystroke would steal the caret.
+  const sig=JSON.stringify(((st&&st.lobby)||[]).map((l,i)=>[!!l.taken,l.taken?st.seats[i].name:'']));
+  if(sig!==claimSig){ claimSig=sig; renderSetup(); return; }
+  let waiting=0;
+  for(let p=0;p<6;p++){
+    const r=rowEl[p]; if(!r) continue;
+    const l=guard?((st.lobby||[])[p]||{}):{};
+    const claimed=!!l.taken;
+    if(claimed&&document.activeElement!==r.ni&&r.ni.value!==cfg[p].name) r.ni.value=cfg[p].name;
+    r.ni.disabled=claimed; r.sel.disabled=claimed;
+    if(claimed&&r.sel.value!=='human') r.sel.value='human';
+    r.stat.innerHTML='';
+    if(!guard||(!cfg[p].human&&!claimed)){ r.stat.hidden=true; continue; }
+    r.stat.hidden=false;
+    if(claimed){
+      r.stat.appendChild(el('span','dot '+(l.away?'away':'on')));
+      r.stat.appendChild(el('span','muted',cfg[p].name+(l.away?' — no contact just now':' — connected')));
+      const free=el('button','free','free it');
+      free.title='Use this if somebody has closed their tab and cannot get back in.';
+      free.onclick=async()=>{await post('/api/kick',{seat:p});renderSetup();};
+      r.stat.appendChild(free);
+    } else {
+      waiting++;
+      r.stat.appendChild(el('span','dot off'));
+      r.stat.appendChild(el('span','muted','open — waiting for somebody to take it'));
+    }
+  }
+  const sb=document.getElementById('shareBox');
+  sb.hidden=!(guard&&host&&st.invite);
+  if(!sb.hidden){
+    // The server names the address other people should use, because the host's
+    // own origin is often 127.0.0.1 and copying that would send three friends a
+    // link to their own machines.
+    document.getElementById('shareLink').value=(st.shareUrl||location.origin)+'/?j='+st.invite;
+    document.getElementById('shareNote').textContent=
+      'Invite code '+st.invite+'. Anyone with this link can take an open seat; each player is '
+      +'sent only their own hand, and only you can deal.';
+  }
+  const deal=document.getElementById('dealBtn');
+  deal.disabled=waiting>0;
+  deal.textContent=waiting>0?('Waiting for '+waiting+' player'+(waiting===1?'':'s')+'…'):'Deal';
 }
 function preset(n){
   cfg=defaultCfg();
-  if(n===2){cfg[2].spec='v03';cfg[4].spec='v03';}
-  if(n===3){cfg.forEach((c,i)=>{c.human=false;c.spec='v04';c.name=NAMEPOOL[i];});}
-  renderSetup();
+  // The shape a group plays: one team of people against one team of bots.
+  if(n===0){[0,2,4].forEach(p=>{cfg[p].human=true;cfg[p].name=(st&&st.guard)?('Seat '+p):'You';});
+            [1,3,5].forEach(p=>{cfg[p].human=false;cfg[p].spec='v06';});}
+  if(n===2){[1,3,5].forEach(p=>cfg[p].spec=SEARCH_SPEC);}
+  if(n===3){cfg[2].spec='v03';cfg[4].spec='v03';}
+  if(n===4){cfg.forEach((c,i)=>{c.human=false;c.spec='v06';c.name=NAMEPOOL[i];});}
+  renderSetup(); publishTable();
 }
 function shuffleNames(){
   const pool=NAMEPOOL.slice();
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
   let k=0; cfg.forEach(c=>{c.name=c.human?'You':pool[k++];});
-  renderSetup();
+  renderSetup(); publishTable();
 }
+document.getElementById('p0').onclick=()=>preset(0);
 document.getElementById('p1').onclick=()=>preset(1);
 document.getElementById('p2').onclick=()=>preset(2);
 document.getElementById('p3').onclick=()=>preset(3);
+document.getElementById('p4').onclick=()=>preset(4);
 document.getElementById('pn').onclick=shuffleNames;
 document.getElementById('dealBtn').onclick=async()=>{
-  const p={};
-  cfg.forEach((c,i)=>{p['s'+i]=c.human?'v04':c.spec;p['h'+i]=c.human?1:0;p['n'+i]=c.name;});
+  const p=seatParams();
   p.seed=document.getElementById('seedIn').value.trim()||'0';
   p.pace=paceMs;
-  view=Number(document.getElementById('viewSel').value);
+  // At a shared table the host does not choose anybody's viewpoint: each
+  // browser looks at the seat it claimed.
+  if(st&&st.guard){ const m=mySeats(st); view=m.length?m[0]:-1; }
+  else { view=Number(document.getElementById('viewSel').value); }
   localStorage.setItem('fishlab.view',String(view));
-  flash=''; hideModal(); lastBody=''; forceSetup=false; overShown=false;
+  flash=''; hideModal(); lastBody=''; forceSetup=false; overShown=false; abandonedSince=0;
+  Voice.cancel(); Voice.warm();
   await post('/api/new',p);
 };
+
+/* ------------------------------------------------------- lobby controls */
+document.getElementById('inviteGo').onclick=async()=>{
+  const v=document.getElementById('inviteIn').value.trim().toUpperCase();
+  const err=document.getElementById('inviteErr');
+  if(!v){err.textContent='Enter the code the host sent you.';return;}
+  cred.invite=v; lastRev=-1; lastBody='';
+  err.textContent='Checking…';
+  await poll(0);
+  err.textContent=(st&&st.auth)?'':'That code was not accepted.';
+};
+document.getElementById('inviteIn').onkeydown=e=>{if(e.key==='Enter')document.getElementById('inviteGo').click();};
+document.getElementById('joinName').oninput=e=>{cred.name=e.target.value;};
+document.getElementById('joinWatch').onclick=()=>{spectate=true;render();};
+document.getElementById('shareCopy').onclick=async()=>{
+  const i=document.getElementById('shareLink');
+  const b=document.getElementById('shareCopy');
+  try{ await navigator.clipboard.writeText(i.value); }
+  catch(e){ i.select(); document.execCommand&&document.execCommand('copy'); }
+  b.textContent='Copied'; setTimeout(()=>{b.textContent='Copy';},1400);
+};
 document.getElementById('newBtn').onclick=async()=>{
-  hideModal(); forceSetup=true;
+  hideModal(); forceSetup=true; Voice.cancel();
   await post('/api/abandon',{});
   renderSetup();
 };
@@ -932,9 +1622,9 @@ document.getElementById('viewNow').onchange=e=>{
 
 cfg=defaultCfg();
 setPace(localStorage.getItem('fishlab.pace')||2000,false);
+initVoice();
 renderSetup();
-poll();
-setInterval(poll,300);
+pollLoop();
 </script>
 </body>
 </html>
