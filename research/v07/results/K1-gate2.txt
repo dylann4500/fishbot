@@ -19,3 +19,23 @@ v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06
   VERDICT  NOT CERTIFIED   274.242s on 1 threads
 
 ===== S6-only : F-mat bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12  b=v06  seed=7030002  deals=400x2
+  PASS  S6 seat-isolation
+        0/263357 decisions irreproducible (0.0000%);  by kind ask 0/34440, declare 0/228786, pass 0/109, willing 0/21, bestGuess 0/1;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   424.412s on 2 threads
+
+===== v7side F-fit bank 7030001
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,leafeval=linear@-0.2524119725|1.006441838|-0.007067729911|0.1331725493|0.1140997607|0.03249101804|0.142064116|-0.06360956809|-0.01354948052|-0.1514789178|0.09634925984|0.03707876374|0  b=v06  seed=7030001  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 44.726%  opponent-change 37.046%  asymmetry 7.679 +/- 2.333 pts  (n_mate=711, n_opp=1185, nodes=568, no rule-equivalent alternative at 232)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff -0.625 pts [-5.375, 4.125];  ask hit 53.656% -> 54.004%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 51.678%  vs  P(hit|exact posterior) 46.637%   gap 5.041 pts  (n=10250 asks, 8202 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.364 pts over 10226 asks;  A-minus-reference -0.323 pts
+  PASS  S6 seat-isolation
+        0/262998 decisions irreproducible (0.0000%);  by kind ask 0/34406, declare 0/228414, pass 0/134, willing 0/42, bestGuess 0/2;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   659.341s on 2 threads
+   exit=0
+
+===== v7side F-fit bank 7030002
