@@ -215,7 +215,10 @@ struct Table {
     snap.score[1] = g.g.pub.score[1];
     for (int p = 0; p < NPLAY; p++) {
       snap.handCount[p] = g.g.pub.handCount[p];
-      snap.hand[p] = seats[p].human ? g.agents[p]->k.myHand : 0;
+      // Every seat's live hand is captured; who may SEE one is decided at
+      // emission (stateJson): a human's only by its own credential, a bot's
+      // only via the host's all-bots x-ray (serve.hpp).
+      snap.hand[p] = g.agents[p]->k.myHand;
     }
     for (int s = 0; s < NSET; s++) { snap.setActive[s] = g.g.pub.setActive[s]; snap.setWinner[s] = g.g.setWinner[s]; }
     snap.nEvents = g.g.pub.nEvents;
@@ -323,7 +326,7 @@ struct Table {
   // `extra` is a pre-rendered ",\"k\":v" run appended before the closing brace.
   // Who is asking is a question for the lobby, not for the game, so those
   // fields are composed by the caller rather than reaching in here.
-  std::string stateJson(int viewSeat, const std::string& extra = std::string()) {
+  std::string stateJson(int viewSeat, const std::string& extra = std::string(), bool xray = false) {
     std::lock_guard<std::mutex> lk(io.mu);
     std::ostringstream os;
     os << "{\"rev\":" << io.rev
@@ -381,6 +384,14 @@ struct Table {
       os << "]}";
     }
     os << "]";
+
+    // Spectator x-ray: every live hand, emitted only when serve.hpp has
+    // established that the requester is the host and no seat is a person's.
+    if (xray) {
+      os << ",\"hands\":[";
+      for (int p = 0; p < NPLAY; p++) { if (p) os << ","; jarr(os, snap.hand[p]); }
+      os << "]";
+    }
 
     if (snap.reveal) {
       os << ",\"deal\":[";

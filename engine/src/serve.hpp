@@ -266,7 +266,15 @@ struct Server {
       // somebody else's and you are silently a spectator.
       int want = req.geti("seat", -1);
       int viewSeat = lobby.holdsSeat(tok, want) ? want : -1;
-      return json(table.stateJson(viewSeat, authJson(tok, host, true)));
+      // The x-ray for watching bots: full hands are emitted only to the HOST,
+      // and only when no seat belongs to a person -- a bot has no privacy, a
+      // player always does, and an invitee is never shown anything extra.
+      bool allBots = true;
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        for (int p = 0; p < NPLAY; p++) allBots = allBots && !table.snap.isHuman[p];
+      }
+      return json(table.stateJson(viewSeat, authJson(tok, host, true), host && allBots));
     }
 
     // ------------------------------------------------------------- lobby
