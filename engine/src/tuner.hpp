@@ -67,7 +67,16 @@ enum class TuneObjective { SoftMin, Min, Mean, Regret, MinimaxRegret };
 //   limit     limitHits per deal                games driven to the action cap  (harness probe)
 //   events    events per game                   game length; the stalling hypothesis
 // `win` is the incumbent objective and stays the default.
-enum class TuneKpi { Win, DeclErr, Forced, AskSupp, DeclSupp, SetDiff, Limit, Events };
+// v0.7 phase 3 (K4).  Two families live in this enum and they must not be
+// confused.  Phase 2's KPIs -- DeclErr .. Events -- are ADVERSARY objectives:
+// every one reads the TARGET's index [1] and climbs a failure mode of the
+// opponent.  The Self* KPIs added here read the fitting arm's OWN index [0] and
+// climb its own per-decision competence.  They are the mirror image, and they
+// are what ledger L5's "per-decision objective rather than a per-game one"
+// actually asks for when the thing being fitted is a POLICY rather than an
+// exploiter.  All of them remain stated so that LARGER IS BETTER FOR ARM A.
+enum class TuneKpi { Win, DeclErr, Forced, AskSupp, DeclSupp, SetDiff, Limit, Events,
+                     SelfDecl, SelfAsk, SelfAlloc };
 
 inline TuneKpi kpiFromName(const std::string& n) {
   if (n == "declerr")  return TuneKpi::DeclErr;
@@ -77,6 +86,9 @@ inline TuneKpi kpiFromName(const std::string& n) {
   if (n == "setdiff")  return TuneKpi::SetDiff;
   if (n == "limit")    return TuneKpi::Limit;
   if (n == "events")   return TuneKpi::Events;
+  if (n == "selfdecl")  return TuneKpi::SelfDecl;
+  if (n == "selfask")   return TuneKpi::SelfAsk;
+  if (n == "selfalloc") return TuneKpi::SelfAlloc;
   return TuneKpi::Win;
 }
 inline const char* kpiName(TuneKpi k) {
@@ -88,7 +100,23 @@ inline const char* kpiName(TuneKpi k) {
     case TuneKpi::SetDiff:  return "setdiff";
     case TuneKpi::Limit:    return "limit";
     case TuneKpi::Events:   return "events";
+    case TuneKpi::SelfDecl:  return "selfdecl";
+    case TuneKpi::SelfAsk:   return "selfask";
+    case TuneKpi::SelfAlloc: return "selfalloc";
     default:                return "win";
+  }
+}
+// The per-decision DENOMINATOR of each objective, which is the whole point of
+// the family: it is what the effective sample size of one fitting cell is, and
+// it is what the 98/sqrt(N) arithmetic should be applied to when reading a fit.
+inline long long kpiDenominator(TuneKpi k, const MatchStats& st, int rotations) {
+  switch (k) {
+    case TuneKpi::SelfDecl:  return st.decl[0];
+    case TuneKpi::SelfAlloc: return st.decl[0];
+    case TuneKpi::SelfAsk:   return st.asks[0];
+    case TuneKpi::DeclErr:   return st.decl[1];
+    case TuneKpi::AskSupp:   return st.asks[1];
+    default:                 return (long long)st.games * std::max(1, rotations);
   }
 }
 
@@ -106,6 +134,14 @@ inline double kpiValue(TuneKpi kpi, const MatchStats& st, int rotations) {
     case TuneKpi::SetDiff:  return (double(st.sets[0]) - double(st.sets[1])) / n;
     case TuneKpi::Limit:    return double(st.limitHits) / double(std::max(1, st.games));
     case TuneKpi::Events:   return (double(st.events) / n) / 400.0;
+    // v0.7 phase 3 (K4): self-oriented, index [0], larger is better for arm A.
+    case TuneKpi::SelfDecl:  return rate(st.declCorrect[0], st.decl[0]);
+    case TuneKpi::SelfAsk:   return rate(st.hits[0], st.asks[0]);
+    // Allocation errors per own declaration, complemented so larger is better.
+    // Denominator is DECLARATIONS, not wrong declarations: a fit that declared
+    // less often would otherwise be able to raise the ratio by shrinking the
+    // numerator's population rather than by making fewer mistakes.
+    case TuneKpi::SelfAlloc: return 1.0 - rate(st.declAllocErr[0], st.decl[0]);
     default:                return double(st.winsA) / n;
   }
 }
@@ -170,6 +206,7 @@ struct Evaluation {
   double score = 0;
   std::vector<double> winRates;              // absolute, or paired margin when sp.paired
   std::vector<std::vector<uint8_t>> paired;  // per-deal A-wins, per panel member
+  long long denom = 0;                       // v0.7 K4: decisions the objective scored
 };
 
 // Combine a per-opponent profile into one scalar.  `ref` is the per-opponent best
