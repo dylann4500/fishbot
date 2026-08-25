@@ -11,7 +11,7 @@ for BANK in 7030001 7030002; do
   echo "cell $BANK v06 done"
 done
 for BANK in 7030001 7030002; do
-  ./fish7 match --a="v06:jalloc=1" --b="$FCHEAP" --seed=$BANK --games=6000 \
+  ./fish7 match --a="v06:jalloc=1" --b="$FCHEAP" --seed=$BANK --games=4000 \
       --rotations=2 --threads=2 --json >> "$R/K2-screen-vs-fcheap.jsonl"
   echo "cell $BANK fcheap done"
 done
