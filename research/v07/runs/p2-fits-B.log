@@ -1,0 +1,7 @@
+=== X18  C1 base=v06 target=Fcheap kpi=win seed=7040018 budget=8x12x120 - ===
+  X18 fitted in 1455s
+=== X19  C2 base=v07 target=Fcheap kpi=win seed=7040019 budget=8x12x120 - ===
+  X19 fitted in 1468s
+=== X20  C1 base=v06 target=Fcheap kpi=declerr seed=7040020 budget=8x12x120 - ===
+  X20 fitted in 1297s
+=== X21  C1 base=v06 target=Fmid kpi=win seed=7040021 budget=6x10x60 - ===

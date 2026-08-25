@@ -1,0 +1,5 @@
+=== X10  C2 base=v07 target=Ffast kpi=win seed=7040010 budget=12x16x250 - ===
+  X10 FAILED
+=== X29  C2 base=v07 target=Ffast kpi=win seed=7040029 budget=12x16x250 INITFROM:../research/v07/runs/init-denial.txt ===
+  X29 fitted in 2748s
+done -> ../research/v07/results/P2-fits.jsonl

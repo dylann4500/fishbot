@@ -1,0 +1,24 @@
+=== A=v06  B=v06 ===
+events/game        95.27   median 95  p90 109  p99 119  max 130
+  forced endgame   14   wrong 8 (57.1429%)
+action-limit games 0 (0%)
+=== A=v06:declare=0  B=v06 ===
+events/game        104.539   median 104  p90 119  p99 133  max 149
+  forced endgame   3396   wrong 23 (0.677267%)
+action-limit games 0 (0%)
+=== A=v06:dead=1,deadmargin=-1000,deadbudget=999,declare=0,patient=1,pool=45  B=v06 ===
+events/game        105.719   median 105  p90 122  p99 140  max 148
+  forced endgame   471   wrong 15 (3.18471%)
+action-limit games 0 (0%)
+=== A=v07:r12=25  B=v06 ===
+events/game        97.0812   median 97  p90 111  p99 124  max 135
+  forced endgame   22   wrong 17 (77.2727%)
+action-limit games 0 (0%)
+=== A=v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1  B=v06 ===
+events/game        95.7237   median 96  p90 110  p99 123  max 135
+  forced endgame   32   wrong 19 (59.375%)
+action-limit games 0 (0%)
+=== A=v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1  B=v06 ===
+events/game        95.6225   median 96  p90 110  p99 121  max 132
+  forced endgame   25   wrong 15 (60%)
+action-limit games 0 (0%)

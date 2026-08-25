@@ -1,0 +1,10 @@
+# id	cluster	spec  -- arms whose mechanism is characterised on the TARGET arm
+D-r12-25	contestation	v07:r12=25
+D-composite	contestation-x-search	v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+S-Fcheap	search-strength	v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+C5-unfitted	whitebox	v07i:idet=48,imodel=v06
+C6-accel	adaptive-timing	v07c:mode=2
+SW-rtie	one-switch	v06:rtie=1
+SW-m1	one-switch	v06:m1=0
+SW-noURG	one-switch	v06:pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+DEC-feint	deception	feint

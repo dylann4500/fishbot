@@ -1,0 +1,23 @@
+{
+ "kind": "fishbot-v07-seal",
+ "commit": "f4581da58ff0a4408cd222d3313e26a43ad0101a",
+ "phase": 2,
+ "trainBanks": [
+  7030001,
+  7030002,
+  7030003,
+  7030004
+ ],
+ "holdoutBanks": [
+  7090001,
+  7090002,
+  7090003,
+  7090004,
+  7090005,
+  7091001,
+  7091002
+ ],
+ "adversariesTrain": 14,
+ "adversariesHoldout": 14,
+ "adversariesHoldoutSha256": "1ca0346a332586c70a750f1523b105485322af34ff31aab3b9e77a2f0a3b6c52"
+}

@@ -1,0 +1,10 @@
+Mon Aug 24 08:24:36 PDT 2026 2A clear; rebuilding fish7 from current source
+identity v07/v06: 02772c5891dd3281b73f8d1881d1949d / 02772c5891dd3281b73f8d1881d1949d
+Mon Aug 24 08:24:52 PDT 2026 launching P9 and the fit streams together
+/tmp/p2chain5.sh: line 18: 89023 Terminated: 15          BIN=./fish7 THREADS=5 ./exploiters_v07.sh $(tr '\n' ' ' < /tmp/streamA.txt) > ../research/v07/runs/p2-fits-A.log 2>&1
+/tmp/p2chain5.sh: line 18: 89024 Terminated: 15          BIN=./fish7 THREADS=4 ./exploiters_v07.sh $(tr '\n' ' ' < /tmp/streamB.txt) > ../research/v07/runs/p2-fits-B.log 2>&1
+Mon Aug 24 15:20:21 PDT 2026 P9 DONE
+Mon Aug 24 15:20:21 PDT 2026 FITS DONE
+Mon Aug 24 15:30:21 PDT 2026 PRESSURE MAP DONE
+/tmp/p2chain5.sh: line 22:  4868 Terminated: 15          BIN=./fish7 THREADS=14 ./adversaries2_v07.sh > ../research/v07/runs/p1b-screen.log 2>&1
+Mon Aug 24 18:55:39 PDT 2026 DECEPTION SPACE DONE

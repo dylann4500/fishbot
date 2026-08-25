@@ -1,0 +1,5 @@
+# id	cluster	spec  -- the arms whose frontier profile decides the phase-2 headline
+D-r12-25	contestation	v07:r12=25
+D-composite	contestation-x-search	v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+C5-unfitted	whitebox	v07i:idet=48,imodel=v06
+SW-noURG	one-switch	v06:pool=-1,oppfloor=-1,force=1000000,askfloor=-1

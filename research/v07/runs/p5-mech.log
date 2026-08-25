@@ -1,0 +1,22 @@
+== P5 mechanism characterisation, target arm captured, bank 7050001 ==
+  done mirror-Ffast :: v06 vs v06
+  done mirror-Fcheap :: v06 vs v06:s1=1,det=12,cand=4,kap
+  done D-r12-25-vs-Ffast :: v07:r12=25 vs v06
+  done D-r12-25-vs-Fcheap :: v07:r12=25 vs v06:s1=1,det=12,cand=4,kap
+  done D-composite-vs-Ffast :: v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa vs v06
+  done D-composite-vs-Fcheap :: v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa vs v06:s1=1,det=12,cand=4,kap
+  done S-Fcheap-vs-Ffast :: v06:s1=1,det=12,cand=4,kappa=2.5,rbelief vs v06
+  done S-Fcheap-vs-Fcheap :: v06:s1=1,det=12,cand=4,kappa=2.5,rbelief vs v06:s1=1,det=12,cand=4,kap
+  done C5-unfitted-vs-Ffast :: v07i:idet=48,imodel=v06 vs v06
+  done C5-unfitted-vs-Fcheap :: v07i:idet=48,imodel=v06 vs v06:s1=1,det=12,cand=4,kap
+  done C6-accel-vs-Ffast :: v07c:mode=2 vs v06
+  done C6-accel-vs-Fcheap :: v07c:mode=2 vs v06:s1=1,det=12,cand=4,kap
+  done SW-rtie-vs-Ffast :: v06:rtie=1 vs v06
+  done SW-rtie-vs-Fcheap :: v06:rtie=1 vs v06:s1=1,det=12,cand=4,kap
+  done SW-m1-vs-Ffast :: v06:m1=0 vs v06
+  done SW-m1-vs-Fcheap :: v06:m1=0 vs v06:s1=1,det=12,cand=4,kap
+  done SW-noURG-vs-Ffast :: v06:pool=-1,oppfloor=-1,force=1000000,as vs v06
+  done SW-noURG-vs-Fcheap :: v06:pool=-1,oppfloor=-1,force=1000000,as vs v06:s1=1,det=12,cand=4,kap
+  done DEC-feint-vs-Ffast :: feint vs v06
+  done DEC-feint-vs-Fcheap :: feint vs v06:s1=1,det=12,cand=4,kap
+done -> ../research/v07/results/P5-mech.jsonl

@@ -59,6 +59,20 @@ struct DecisionInfo {
   double pAlloc   = -1;     // the policy's own P(named allocation correct)
   bool   searched = false;  // a test-time search ran at this decision
   bool   changed  = false;  // ... and it moved the choice off the blueprint's
+  // v0.7 phase 2.  The declaration path's URGENCY predicate (v05.hpp:939-944):
+  //   unresolvedCount <= patiencePool | oppCards <= oppCardFloor
+  //   | pub.nEvents >= forceDeclareEvents | bestAskProbability < askFloor.
+  // Three of those four inputs are PUBLIC and two are directly under an
+  // opponent's control -- oppCards is the opposing team's own total hand count,
+  // and pub.nEvents is the length of the game.  The thresholds are frozen
+  // constants of a white-box target.  So "declare before you are ready" is a
+  // state an adversary can drive the target into, and this flag is what turns
+  // that from an argument into a measurement.
+  bool   urgent   = false;  // the declaration decision was taken under urgency
+  int    pressure = 0;      // the escalation rung (v05.hpp pressure())
+  int    urgWhy   = 0;      // which urgency clauses fired: bit0 patiencePool,
+                            // bit1 oppCardFloor, bit2 forceDeclareEvents,
+                            // bit3 askFloor
   void clear() { *this = DecisionInfo{}; }
 };
 
@@ -79,6 +93,9 @@ struct DecisionRecord {
   int16_t nCand = 0, nTie = 0, nFeasible = 0;
   float   p = -1, margin = 0, score = 0, pAlloc = -1;
   int16_t unresolved = 0;   // |unresolved| at the decision, from the actor's view
+  int8_t  urgent = 0;       // declaration only: taken under the urgency predicate
+  int8_t  pressure = 0;     // declaration only: the escalation rung
+  int8_t  urgWhy = 0;       // declaration only: which urgency clauses fired
 };
 
 struct DecisionSink {
@@ -295,6 +312,9 @@ public:
       if (const DecisionInfo* di = agents[actor]->lastDecision()) {
         r.nFeasible = int16_t(di->nFeasible);
         r.nCand = int16_t(di->nCand);
+        r.urgent = int8_t(di->urgent ? 1 : 0);
+        r.pressure = int8_t(di->pressure);
+        r.urgWhy = int8_t(di->urgWhy);
       }
       dsink->rows.push_back(r);
     }

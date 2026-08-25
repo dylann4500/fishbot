@@ -38,7 +38,33 @@
 
 namespace fish {
 
-static constexpr int NR7 = 12;                     // the responder's extra ask terms
+// v0.7 phase 2 raises this from twelve to sixteen.  The four new coordinates are
+// the INFORMATION-DENIAL group and they exist because a grep across v04.hpp,
+// v05.hpp, v06.hpp and v07_responder.hpp finds no term anywhere in the lineage
+// that prices what an ask hands to the OPPOSING TEAM.  Every information feature
+// in the family (f[9] leak, f[16] exposure on miss, f[19] leak magnitude) prices
+// what the actor reveals about ITS OWN hand.  Nothing prices the fact that a
+// miss at seat q publishes "q does not hold c" -- a certificate whose only
+// beneficiaries are q's two teammates, who are trying to work out which of them
+// holds it.  That is the exact information the target needs to allocate a
+// declaration correctly, and 88.1% of v0.6's wrong declarations are pure
+// allocation errors (INSTRUMENT.md 1.10).  A vector with these four at zero is
+// the phase-1 twelve-coordinate class, and a vector with all sixteen at zero is
+// `v06` bit for bit, so both identity controls survive.
+// Two further coordinates, added when phase-2 reconnaissance established a
+// property of the target's prior that the corpus has never written down:
+// `Knowledge::priorWeight` (belief.hpp:123-138) reads `askCount[p][S]` and
+// `totalAsks[p]` and NOTHING ELSE.  `missCount` exists (belief.hpp:55, written
+// at :222) and no belief quantity reads it.  The prior is therefore
+// OUTCOME-BLIND: an ask that misses is exactly as much evidence that the asker
+// holds cards of that half-suit as an ask that hits.  Since the rules only
+// require the asker to hold ONE card of the half-suit (fish.hpp:158-165), an
+// adversary holding a single card of S can ask in S repeatedly and drive the
+// target's marginal for its own team's other five cards of S up by as much as
+// exp(2.6) = 13.5x -- the clip at belief.hpp:131 -- at a price of one lost turn
+// per repetition.  That is the channel the `feint` archetype gropes at by
+// restricting which half-suits it asks in, priced linearly for the first time.
+static constexpr int NR7 = 18;                     // the responder's extra ask terms
 static constexpr int NV7PARAM = NFEAT + 14 + 3 + NR7;
 
 inline const char* r7Name(int i) {
@@ -54,13 +80,29 @@ inline const char* r7Name(int i) {
     "targetAskedHere",      // within-match model of the TARGET's public ask tally
     "targetMissedHere",     // ... and its miss tally
     "phaseHit",             // p x game phase: lets the fit choose WHEN to deviate
-    "deadDonation"          // the deliberate miss, priced linearly for the first time
+    "deadDonation",         // the deliberate miss, priced linearly for the first time
+    // ---- information denial: what this ask hands to the OPPOSING team -------
+    "oppCertDonate",        // (1-p) x opp mass x publicly-ambiguous mass: the negative
+                            //   certificate a MISS publishes, which resolves the target
+                            //   team's own internal allocation for them
+    "oppCertHit",           // p x opp mass: what a HIT resolves for them (the card leaves
+                            //   a named seat in public view)
+    "oppNearLock",          // step: the opposing team is within one card of owning this
+                            //   half-suit outright -- the state in which a declaration is
+                            //   imminent and a certificate is worth most to them
+    "oppDenyLate",          // opp mass x game phase: denial is worth more late, when the
+                            //   target is about to declare, than early
+    // ---- tally inflation: lying to an outcome-blind prior ------------------
+    "selfTally",            // my own public ask tally in this half-suit, which is the
+                            //   only thing the target's theta term reads
+    "tallyLie"              // ... times how little of the half-suit I actually hold: the
+                            //   SIZE of the lie the next ask here would tell
   };
   return n[i];
 }
 
 struct V07Responder : V06Agent {
-  double rw[NR7] = {0,0,0,0,0,0,0,0,0,0,0,0};
+  double rw[NR7] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   bool   admitDead = false;      // put provably-dead candidates in the scored set
   int    deadCap   = 3;          // per game per seat, as v0.6 rations them
   int    corrPlans = 0;          // 0 = A1 (no device); K>0 = A2 over K role plans
@@ -195,12 +237,32 @@ struct V07Responder : V06Agent {
     g[9]  = double(k.missCount[target][S]) / 8.0;
     g[10] = p * (double(pub.nEvents) / 100.0);
     g[11] = (p <= 0.0) ? (1.0 - donate) : 0.0;
+    // ---- information denial -------------------------------------------------
+    // `uS` is the number of cards of this half-suit whose holder we cannot
+    // place.  It is a proxy for the opposing team's OWN residual ambiguity:
+    // a card we can place is one whose location is public (or ours), and a
+    // card whose location is public is not ambiguous to them either.  The
+    // proxy over-counts -- our own cards are unknown to them but known to us,
+    // and their cards are unknown to us but known to their holder -- and the
+    // over-count is in a fixed direction, which is what a linear coefficient
+    // can absorb.
+    int uS = 0;
+    for (int i = 0; i < SETSZ; i++) if (k.owner[cardOf(S, i)] >= NPLAY) uS++;
+    const double oppFrac = oMass / double(SETSZ);
+    g[12] = (1.0 - p) * oppFrac * (double(uS) / double(SETSZ));
+    g[13] = p * oppFrac;
+    g[14] = (oMass >= double(SETSZ) - 1.0) ? 1.0 : 0.0;
+    g[15] = oppFrac * (double(pub.nEvents) / 100.0);
+    // ---- tally inflation ----------------------------------------------------
+    const double mine = double(__builtin_popcountll(k.myHand & setMask(S)));
+    g[16] = double(k.askCount[seat][S]) / 8.0;
+    g[17] = g[16] * (1.0 - mine / double(SETSZ));
   }
 
   double blueprintScore(const PublicState& pub, int card, int target, double* fOut) override {
     double u = V06Agent::blueprintScore(pub, card, target, fOut);
     double p = fOut ? *fOut : bel.marg[card][target];
-    double g[NR7];
+    double g[NR7] = {0};
     r7Terms(pub, card, target, p, g);
     double add = 0;
     for (int i = 0; i < NR7; i++) add += rw[i] * g[i];

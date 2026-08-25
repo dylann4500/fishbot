@@ -938,10 +938,20 @@ struct V05Agent : Agent {
     refresh();
     int oppCards = 0;
     for (int p = 0; p < NPLAY; p++) if (oppMask & (1 << p)) oppCards += pub.handCount[p];
-    bool urgent = unresolvedCount <= cfg.patiencePool
-               || oppCards <= cfg.oppCardFloor
-               || pub.nEvents >= cfg.forceDeclareEvents
-               || bestAskProbability(pub) < cfg.askFloor;
+    // v0.7 phase 2.  The four clauses are recorded separately, because they are
+    // not equally attackable and an adversary that raises the urgent share is
+    // only interesting if we can say WHICH lever it pulled.  Clause 2 is the
+    // opposing team's own total hand count and clause 3 is the length of the
+    // game -- both are public and both are things an opponent can move.  Clause
+    // 1 is the target's own residual ambiguity and clause 4 is its own best
+    // available ask, which an opponent moves only indirectly, by starving the
+    // posterior.  The bit order is (1,2,3,4) -> bits 0..3.
+    const bool u0 = unresolvedCount <= cfg.patiencePool;
+    const bool u1 = oppCards <= cfg.oppCardFloor;
+    const bool u2 = pub.nEvents >= cfg.forceDeclareEvents;
+    const bool u3 = bestAskProbability(pub) < cfg.askFloor;
+    bool urgent = u0 || u1 || u2 || u3;
+    const int urgWhyBits = (u0 ? 1 : 0) | (u1 ? 2 : 0) | (u2 ? 4 : 0) | (u3 ? 8 : 0);
     double bestConf = -1; bool found = false;
     double auditBestConf = -1; bool auditFound = false; int auditBestSet = -1;
     long long localSeen = 0, localRejected = 0, localFalseNeg = 0;
@@ -983,6 +993,9 @@ struct V05Agent : Agent {
       lastDec.pAlloc = bestConf;
       lastDec.nFeasible = lastFeasibleCount;
       lastDec.nCand = unresolvedCount;
+      lastDec.urgent = urgent;
+      lastDec.pressure = press;
+      lastDec.urgWhy = urgWhyBits;
     }
     return found;
   }

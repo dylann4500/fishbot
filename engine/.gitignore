@@ -4,3 +4,4 @@ fish[0-9]
 fish_*
 *.o
 *.dSYM/
+fish7b

@@ -130,6 +130,7 @@ int main(int argc, char** argv) {
     mc.specA = argVal(argc, argv, "a", "v04");
     mc.specB = argVal(argc, argv, "b", "v03");
     mc.partnersA = argVal(argc, argv, "partners", "");
+    mc.partnersB = argVal(argc, argv, "partnersb", "");
     mc.games = atoi(argVal(argc, argv, "games", "1000").c_str());
     mc.seed = strtoull(argVal(argc, argv, "seed", "20260821").c_str(), nullptr, 10);
     mc.rules = rulesFrom(argc, argv);
@@ -238,6 +239,19 @@ int main(int argc, char** argv) {
                    : ob == "minimaxregret" ? TuneObjective::MinimaxRegret
                                            : TuneObjective::SoftMin; }
     sp.seed = strtoull(argVal(argc, argv, "seed", "424242").c_str(), nullptr, 10);
+    // v0.7 phase 2.  --kpi selects the quantity the CEM climbs.  The default is
+    // the incumbent behaviour (win rate); the others name a per-decision failure
+    // mode of the TARGET (tuner.hpp, TuneKpi) so that a battery of exploiter
+    // searches does not share one search bias.
+    sp.kpi = kpiFromName(argVal(argc, argv, "kpi", "win"));
+    // v0.7 P2.  --partners fits the one-seat deviation column: the candidate
+    // occupies ONE seat of the adversary team and the other two carry whatever
+    // is named here (normally the target itself).  --correlated draws the A2
+    // ex-ante signal during fitting.
+    { std::string pt = argVal(argc, argv, "partners", "");
+      for (auto& ch : pt) if (ch == '+') ch = ',';
+      sp.partners = pt; }
+    sp.correlated = argFlag(argc, argv, "correlated");
     sp.rules = rulesFrom(argc, argv);
     sp.threads = threads;
     sp.baseSpec = argVal(argc, argv, "base", "v04");
@@ -750,6 +764,8 @@ int main(int argc, char** argv) {
     MatchConfig mc;
     mc.specA = argVal(argc, argv, "a", "v06");
     mc.specB = argVal(argc, argv, "b", "v06");
+    mc.partnersA = argVal(argc, argv, "partners", "");
+    mc.partnersB = argVal(argc, argv, "partnersb", "");
     mc.games = atoi(argVal(argc, argv, "games", "200").c_str());
     mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
     mc.seed = strtoull(argVal(argc, argv, "seed", "7011001").c_str(), nullptr, 10);
@@ -757,27 +773,36 @@ int main(int argc, char** argv) {
     mc.threads = threads;
     mc.captureDecisions = true;
     mc.captureTeamAOnly = !argFlag(argc, argv, "bothteams");
+    // v0.7 phase 2.  --capture=a|b|both chooses whose decisions are recorded.
+    // `b` is the TARGET arm: characterising an exploiter means measuring what
+    // the target does wrong against it, which the phase-1 form could not do.
+    { std::string ca = argVal(argc, argv, "capture", "a");
+      mc.captureArm = ca == "b" ? 1 : (ca == "both" ? 2 : 0);
+      if (mc.captureArm == 2) mc.captureTeamAOnly = false; }
     MatchStats st = runMatch(mc);
     std::string dump = argVal(argc, argv, "dump", "");
     if (!dump.empty()) {
       FILE* f = fopen(dump.c_str(), "w");
       if (f) {
         fprintf(f, "deal,rot,event,seat,team,kind,card,target,set,hit,ownLocked,oppLocked,"
-                   "truthHolder,dead,gateBound,searched,changed,nCand,nTie,nFeasible,p,margin,score,pAlloc,unresolved\n");
+                   "truthHolder,dead,gateBound,searched,changed,nCand,nTie,nFeasible,p,margin,score,pAlloc,unresolved,urgent,pressure,urgWhy\n");
         for (const auto& r : st.decisions)
-          fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d\n",
+          fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d,%d,%d,%d\n",
                   r.deal, r.rot, r.event, r.seat, r.team, r.kind, r.card, r.target, r.set, r.hit,
                   r.ownLocked, r.oppLocked, r.truthHolder, r.dead, r.gateBound, r.searched, r.changed,
-                  r.nCand, r.nTie, r.nFeasible, r.p, r.margin, r.score, r.pAlloc, r.unresolved);
+                  r.nCand, r.nTie, r.nFeasible, r.p, r.margin, r.score, r.pAlloc, r.unresolved,
+                  r.urgent, r.pressure, r.urgWhy);
         fclose(f);
       }
     }
     v07::DecSummary S = v07::summariseDecisions(st.decisions, mc.games);
     bool json = argFlag(argc, argv, "json");
     if (json) {
-      printf("{\"probe\":\"v7decide\",\"a\":\"%s\",\"b\":\"%s\",\"seed\":%llu,\"deals\":%d,"
+      printf("{\"probe\":\"v7decide\",\"a\":\"%s\",\"b\":\"%s\",\"capture\":\"%s\",\"seed\":%llu,\"deals\":%d,"
              "\"rotations\":%d,\"records\":%lld,\"gamesPerSec\":%.3f,\"metrics\":{",
-             mc.specA.c_str(), mc.specB.c_str(), (unsigned long long)mc.seed, mc.games,
+             mc.specA.c_str(), mc.specB.c_str(),
+             mc.captureArm == 1 ? "b" : (mc.captureArm == 2 ? "both" : "a"),
+             (unsigned long long)mc.seed, mc.games,
              mc.rotations, S.rows, st.gamesPerSec(mc.rotations));
       for (size_t i = 0; i < S.m.size(); i++) {
         double m, lo, hi;
@@ -898,6 +923,35 @@ int main(int argc, char** argv) {
       printf("  oracle calls            %.0f    elapsed %.2fs  (%.2f games/s)\n",
              R.oracleCalls, R.seconds, double(bc.games * bc.rotations) / std::max(1e-9, R.seconds));
     }
+    return 0;
+  }
+
+  // ---- v0.7 P2: the bank commitment digest ---------------------------------
+  // A "bank" in this corpus is a seed plus a size, and the deals are generated
+  // rather than stored, so sealing a bank physically means committing to a digest
+  // of the material it generates.  This emits one: for each deal index the arena
+  // would play, the six dealt hands and the dealer, folded into a 64-bit
+  // rolling hash.  It plays no games and constructs no policy, which is what
+  // lets phase 2 compute the digest of a SEALED bank without learning anything
+  // about how any policy performs on it -- the only phase-2 contact with the
+  // holdout, recorded as such in RESEARCH-LOG.md.
+  if (cmd == "bankdigest") {
+    uint64_t seed = strtoull(argVal(argc, argv, "seed", "0").c_str(), nullptr, 10);
+    int deals = atoi(argVal(argc, argv, "deals", "24000").c_str());
+    Rules r = rulesFrom(argc, argv);
+    { std::string why;
+      if (!seedUsable(seed, why)) { fprintf(stderr, "fish: %s\n", why.c_str()); return 5; } }
+    uint64_t h = 0xcbf29ce484222325ull;
+    auto mix = [&](uint64_t v) { h ^= v; h *= 0x100000001b3ull; h ^= h >> 29; };
+    GameState g{};
+    for (int i = 0; i < deals; i++) {
+      uint64_t s = mixSeed(seed, uint64_t(i) * 2654435761ull + 1);
+      dealCards(g, s, r.deckSets);
+      for (int p = 0; p < NPLAY; p++) mix(g.dealt[p]);
+      mix(uint64_t(g.dealer));
+    }
+    printf("{\"probe\":\"bankdigest\",\"seed\":%llu,\"deals\":%d,\"deckSets\":%d,\"digest\":\"%016llx\"}\n",
+           (unsigned long long)seed, deals, r.deckSets, (unsigned long long)h);
     return 0;
   }
 

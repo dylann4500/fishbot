@@ -448,9 +448,34 @@ struct V06Agent : V05Agent {
     refresh();
     AskMove buf[NSET * SETSZ * 3];
     int n = enumerateForScore(pub, buf);
-    if (n <= 0) return AskMove{0, 0};
+    // v0.7 phase 2 -- INSTRUMENT DEFECT D-1, found and fixed here.
+    //
+    // Both of these returns used to leave `lastDec` holding the PREVIOUS
+    // decision's diagnostics, and Game::run reads lastDecision() at every ask
+    // regardless (game.hpp).  So every decision that took one of these paths was
+    // recorded with another decision's nCand, nTie, margin and -- the one that
+    // matters -- gateBound.  That biases the very number ledger entry L10 is
+    // measured on, and it biases it in the worst possible direction: `n == 1` is
+    // reached exactly when the live-ask gate has pruned the candidate set down
+    // to a single survivor, which is the state in which the gate is MOST likely
+    // to have removed the ungated argmax.  The decisions whose gate bit was
+    // stale were disproportionately the decisions where the gate bound.
+    if (n <= 0) {
+      if (decisionCapture()) { lastDec.clear(); lastDec.nCand = 0; captureGateBind(pub); }
+      return AskMove{0, 0};
+    }
     decisions++;
-    if (n == 1) { lastMySet = setOf(buf[0].card); lastAskP = bel.marg[buf[0].card][buf[0].target]; return buf[0]; }
+    if (n == 1) {
+      lastMySet = setOf(buf[0].card); lastAskP = bel.marg[buf[0].card][buf[0].target];
+      if (decisionCapture()) {
+        lastDec.clear();
+        lastDec.nCand = 1; lastDec.nTie = 1; lastDec.margin = 0.0;
+        lastDec.p = lastAskP;
+        lastDec.dead = provablyDead(buf[0].card, buf[0].target);
+        captureGateBind(pub);
+      }
+      return buf[0];
+    }
     const bool doSearch = x.search
       && int(pub.nEvents) >= x.searchFrom
       && (x.searchMaxQ <= 0 || __builtin_popcountll(k.unresolved) <= x.searchMaxQ);
@@ -523,6 +548,11 @@ struct V06Agent : V05Agent {
           deadTried[m.card][m.target] = true;
           deadUsed++; deadPlayed++;
           lastMySet = setOf(m.card); lastAskP = 0.0;
+          if (decisionCapture()) {
+            lastDec.clear(); lastDec.nCand = n; lastDec.nTie = 1;
+            lastDec.p = 0.0; lastDec.dead = true; lastDec.score = deadBestU;
+            captureGateBind(pub);
+          }
           return m;
         }
       }
@@ -541,6 +571,7 @@ struct V06Agent : V05Agent {
     while (K < n && K < x.maxCand && u[ord[K]] >= u[ord[K - 1]] - x.tieEps) K++;
     if (x.tieOnly) {
       if (tie < 2) { lastMySet = setOf(buf[ord[0]].card); lastAskP = pp[ord[0]];
+                     if (decisionCapture()) { captureV6(n, u, ord, tie, buf[ord[0]], pp[ord[0]]); captureGateBind(pub); }
                      return buf[ord[0]]; }
       K = std::min(tie, x.maxCand);
     }
@@ -558,6 +589,7 @@ struct V06Agent : V05Agent {
 
     if (x.minGap >= 0 && (u[ord[0]] - u[ord[1]]) > x.gapEps) {
       lastMySet = setOf(buf[ord[0]].card); lastAskP = pp[ord[0]];
+      if (decisionCapture()) { captureV6(n, u, ord, tie, buf[ord[0]], pp[ord[0]]); captureGateBind(pub); }
       return buf[ord[0]];
     }
 
@@ -568,7 +600,11 @@ struct V06Agent : V05Agent {
     // as an importance weight rather than being baked into the sampler, which
     // keeps the sampler exact and the prior auditable.
     DealDP dp;
-    if (!dp.build(k)) { dpFail++; return V05Agent::chooseAsk(pub); }
+    if (!dp.build(k)) { dpFail++;
+      // V05Agent::chooseAsk runs its own captureAsk, so this fallback is not a
+      // stale-record path -- but it does mean a fraction of "v0.6 search"
+      // decisions are recorded as v0.5 blueprint decisions.  Counted by dpFail.
+      return V05Agent::chooseAsk(pub); }
 
     const int wantDet = std::max(1, x.nDet);
     std::vector<std::array<uint8_t, NCARD>> det;

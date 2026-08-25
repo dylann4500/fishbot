@@ -1,0 +1,20 @@
+=== rung none ===
+  C1 none bank 7021001 done
+  C1 none bank 7021002 done
+=== rung decl,hstr=0.05 ===
+  C1 decl,hstr=0.05 bank 7021001 done
+  C1 decl,hstr=0.05 bank 7021002 done
+=== rung decl,hstr=0.08 ===
+  C1 decl,hstr=0.08 bank 7021001 done
+  C1 decl,hstr=0.08 bank 7021002 done
+=== rung decl,hstr=0.11 ===
+  C1 decl,hstr=0.11 bank 7021001 done
+  C1 decl,hstr=0.11 bank 7021002 done
+done -> ../research/v07/results/P4-floor.jsonl
+=== rung leak,hstr=1.5 ===
+  C1 leak,hstr=1.5 bank 7021001 done
+  C1 leak,hstr=1.5 bank 7021002 done
+=== rung decl,hstr=0.15 ===
+  C1 decl,hstr=0.15 bank 7021001 done
+  C1 decl,hstr=0.15 bank 7021002 done
+done -> ../research/v07/results/P4-floor.jsonl

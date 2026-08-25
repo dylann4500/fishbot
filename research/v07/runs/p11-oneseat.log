@@ -1,0 +1,9 @@
+  done D-r12-25 (k=1)
+  done D-composite (k=1)
+  done C5-unfitted (k=1)
+  done SW-noURG (k=1)
+  done v06:rtie=1 (k=1)
+  done v06:m1=0 (k=1)
+  done v06:m2=0 (k=1)
+  done v06:pool=-1,oppfloor=-1,force=1000000,askfloor=-1 (k=1)
+done -> ../research/v07/results/P11-oneseat.jsonl

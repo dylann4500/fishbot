@@ -1,0 +1,40 @@
+# FishBot v0.7 phase 2 -- the exploiter search table.  One row = one INDEPENDENT search.
+# Nothing here shares a fitting bank, and the searches deliberately do not share a bias:
+# the class varies (C1 in-class linear / C2 extended features), the OBJECTIVE varies (win rate,
+# half-suit margin, and five mechanism objectives that climb a failure mode of the TARGET rather
+# than a scoreboard), the SEED varies (one registered fitting bank per row), the TARGET varies
+# across the frontier, the SEAT COUNT varies (k=3 and k=1), the REGIME varies (A1 and A2), and the
+# BUDGET varies across a curve so that "the search was too small" is a measured claim rather than
+# an excuse.
+# id	class	base	target	kpi	fitseed	gens	pop	deals	extra	hypothesis
+X01	C1	v06	Ffast	win	7040001	12	16	250	-	L0 in-class control at phase-1's standard budget
+X02	C1	v06	Ffast	win	7040002	20	20	350	-	L0 budget-curve top rung: is the null a budget artifact
+X03	C1	v06	Ffast	win	7040003	8	12	150	-	L0 independent replicate at a third seed
+X04	C1	v06	Ffast	setdiff	7040004	8	12	150	-	L0 margin in half-suits, not games: the low-variance objective
+X05	C1	v06	Ffast	declerr	7040005	8	12	150	-	L1 drive the target's misdeclaration rate
+X06	C1	v06	Ffast	asksupp	7040006	8	12	150	-	L3/L10 suppress the target's ask hit rate
+X07	C1	v06	Ffast	forced	7040007	8	12	150	-	L13 raise forced-endgame incidence under pressure
+X08	C1	v06	Ffast	events	7040008	8	12	150	-	stalling: lengthen the game
+X09	C1	v06	Ffast	declsupp	7040009	8	12	150	-	L1 timing: deny the target its declarations
+X10	C2	v07	Ffast	win	7040010	12	16	250	-	L11/L1 extended features incl. information denial
+X11	C2	v07	Ffast	declerr	7040011	8	12	150	-	L1 information denial, scored on the target's errors
+X12	C2	v07	Ffast	setdiff	7040012	8	12	150	-	L1 information denial, scored on the margin
+X13	C2	v07:dead7=1	Ffast	win	7040013	8	12	150	-	L14 the deliberate miss admitted to the scored set
+X14	C2	v07:corr=3	Ffast	win	7040014	8	12	150	--correlated	A2 ex-ante correlated role plans
+X15	C2	v07	Ffast	asksupp	7040015	8	12	150	-	L10 gate pressure via the extended class
+X16	C1	v06	Ffast	limit	7040016	8	12	200	-	harness probe: drive games to the action cap
+X17	C1	v06	Ffast	win	7040017	8	12	150	--partners=v06	k=1 one-seat deviation column, fitted
+X18	C1	v06	Fcheap	win	7040018	8	12	120	-	attack the cheap search end in class
+X19	C2	v07	Fcheap	win	7040019	8	12	120	-	attack the cheap search end, extended
+X20	C1	v06	Fcheap	declerr	7040020	8	12	120	-	L1 against a searching target
+X21	C1	v06	Fmid	win	7040021	6	10	60	-	attack the strongest measured configuration directly
+X22	C1	v06	FRONT	win	7040022	8	12	120	-	dominate the FRONTIER: min over {Ffast, Fcheap}
+X23	C2	v07	FRONT	win	7040023	8	12	120	-	dominate the frontier, extended class
+X24	C2	v07:dead7=1,corr=3	Ffast	win	7040024	8	12	150	--correlated	deliberate miss x correlated roles
+X25	C1	v06	Ffast	win	7040025	8	12	150	NOFROMV6	different starting basin: v0.5 defaults, not the incumbent
+X26	C1	v06	Ffast	win	7040026	8	12	150	--sigmarel=0.30	wide exploration: is the CEM trapped near the incumbent
+X27	C2	v07	Ffast	win	7040027	8	12	150	--sigmarel=0.30	wide exploration in the extended class
+X28	C1	v06	Ffast	setdiff	7040028	8	12	150	--partners=v06	k=1 one-seat deviation, margin objective
+X29	C2	v07	Ffast	win	7040029	12	16	250	INITFROM:../research/v07/runs/init-denial.txt	refine the denial direction rather than rediscover it
+X30	C2	v07	Ffast	setdiff	7040030	8	12	150	INITFROM:../research/v07/runs/init-denial.txt	the same, on the low-variance margin objective
+X31	C2	v07	Fcheap	win	7040031	8	12	120	INITFROM:../research/v07/runs/init-denial.txt	does the refined denial direction survive the frontier's search

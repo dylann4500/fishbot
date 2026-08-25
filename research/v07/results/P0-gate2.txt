@@ -1,0 +1,102 @@
+# Phase-2 commit-gate digests, full form (the P0-gate.txt blocks were tail-trimmed and lost the dead-ask lines).
+
+=== mirror: v06 ===
+games              800
+events/game        94.1925   median 94  p90 109  p99 120  max 131
+asks/game          84.8825   hit rate 53.633%
+DEAD asks          8  (0.011781% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      8  (0.011781% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1532  (2.25606%)
+repeat (a,suit,t)  31860  (46.9178%)
+asks in own-locked 7674  (11.3009% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 184 (2.55556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 4 (66.6667%)
+action-limit games 0 (0%)
+
+=== mirror: v07:r12=25 ===
+games              800
+events/game        99.61   median 99  p90 112  p99 123  max 130
+asks/game          90.055   hit rate 51.1687%
+DEAD asks          12  (0.0166565% of asks)   -- actor could PROVE the target lacks the card
+dead runs          12  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      12  (0.0166565% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1386  (1.92382%)
+repeat (a,suit,t)  35976  (49.9362%)
+asks in own-locked 5354  (7.43157% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 222 (3.08333%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   30   wrong 20 (66.6667%)
+action-limit games 0 (0%)
+
+=== mirror: v06:pool=-1,oppfloor=-1,force=1000000,askfloor=-1 ===
+games              800
+events/game        94.1075   median 94  p90 108  p99 119  max 131
+asks/game          84.78   hit rate 53.7745%
+DEAD asks          20  (0.0294881% of asks)   -- actor could PROVE the target lacks the card
+dead runs          20  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      20  (0.0294881% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1500  (2.21161%)
+repeat (a,suit,t)  31856  (46.9686%)
+asks in own-locked 7570  (11.1612% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 92 (1.27778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   56   wrong 26 (46.4286%)
+action-limit games 0 (0%)
+
+=== mirror: v06:m2=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 ===
+games              800
+events/game        94.1075   median 94  p90 108  p99 119  max 131
+asks/game          84.78   hit rate 53.7745%
+DEAD asks          20  (0.0294881% of asks)   -- actor could PROVE the target lacks the card
+dead runs          20  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      20  (0.0294881% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1500  (2.21161%)
+repeat (a,suit,t)  31856  (46.9686%)
+asks in own-locked 7570  (11.1612% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 92 (1.27778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   56   wrong 26 (46.4286%)
+action-limit games 0 (0%)
+
+=== mirror: v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 ===
+games              800
+events/game        95.6925   median 95  p90 111  p99 125  max 129
+asks/game          86.335   hit rate 53.7673%
+DEAD asks          14  (0.0202699% of asks)   -- actor could PROVE the target lacks the card
+dead runs          14  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      14  (0.0202699% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1690  (2.44686%)
+repeat (a,suit,t)  32764  (47.4373%)
+asks in own-locked 7888  (11.4206% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 74 (1.02778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   50   wrong 20 (40%)
+action-limit games 0 (0%)
+
+=== mirror: v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 ===
+games              800
+events/game        99.88   median 99  p90 114  p99 124  max 142
+asks/game          90.275   hit rate 50.6314%
+DEAD asks          8  (0.0110773% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      8  (0.0110773% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1382  (1.9136%)
+repeat (a,suit,t)  36040  (49.9031%)
+asks in own-locked 5276  (7.30546% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 204 (2.83333%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   42   wrong 24 (57.1429%)
+action-limit games 0 (0%)
+
+=== M2 inertness under urgency-off: md5 of the 400-deal pathology dump ===
+urgency-off        md5 97268b4e98d446f71f672b825b324b25
+urgency-off + m2=0 md5 97268b4e98d446f71f672b825b324b25
+verdict: BIT-IDENTICAL -- M2 is inert once urgency is off

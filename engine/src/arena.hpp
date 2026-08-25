@@ -2,6 +2,7 @@
 #pragma once
 #include "factory.hpp"
 #include "v07_power.hpp"
+#include "v07_seeds.hpp"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -59,6 +60,14 @@ struct MatchConfig {
   // team A that are not the seat under study; empty means "same as specA", which
   // reproduces the old behaviour exactly.
   std::string partnersA;
+  // v0.7 phase 2.  The same for the B arm.  The ledger's L7 -- "independent
+  // multi-agent search corrupts partners' beliefs", the SPARTA collapse -- names
+  // its cheapest decisive experiment as "run the search on ONE seat of the team
+  // only and compare, paired, to all three".  That experiment was not
+  // expressible: runMatch built all three B seats from one string, so a mixed
+  // target team could not be constructed at all.  One line here makes L7
+  // measurable, and it is also what a one-seat TARGET deviation column needs.
+  std::string partnersB;
   int games = 1000;              // deals
   int rotations = 2;             // 2 = team swap; 6 = full duplicate block
   uint64_t seed = 20260821;
@@ -71,6 +80,12 @@ struct MatchConfig {
   // every strength battery and on only in the per-decision batteries.
   bool captureDecisions = false;
   bool captureTeamAOnly = true;
+  // v0.7 phase 2.  Which arm's decisions are recorded.  0 = the A arm (the
+  // adversary), 1 = the B arm (the TARGET), 2 = both.  Characterising an
+  // exploiter means asking what the TARGET does wrong against it, and the
+  // phase-1 form could only ever record the arm under study.  `arm` is stamped
+  // into every record so a `both` capture separates cleanly afterwards.
+  int captureArm = 0;
   // v0.7 A2: draw a per-game ex-ante correlation signal for the A seats.
   bool correlated = false;
   // v0.7 T1: seed-bank sharding.  Shard s of n plays the deals of the SAME bank
@@ -83,6 +98,22 @@ struct MatchConfig {
 };
 
 inline MatchStats runMatch(const MatchConfig& mc) {
+  // v0.7 phase 2 -- the seal, enforced by the binary rather than by the battery.
+  //
+  // INSTRUMENT.md 7 says "the phase-5 banks refuse to unseal below
+  // FISH_UNSEAL_PHASE=5".  At the end of phase 1 that was true only of
+  // `fish seeds --require`, which is a check a battery has to remember to run;
+  // nothing stopped `fish match --seed=7090001` from playing the holdout.  The
+  // phase brief asks for the evaluation material to be sealed PHYSICALLY, before
+  // anything can be tuned against it, and a seal a script can forget to check is
+  // not physical.  Every match in the engine now goes through this gate, so no
+  // command can construct a sealed bank without the environment variable, and
+  // the variable is a deliberate act that shows up in a shell history.
+  { std::string why;
+    if (!seedUsable(mc.seed, why)) {
+      fprintf(stderr, "fish: %s\n", why.c_str());
+      std::exit(5);
+    } }
   int nThreads = mc.threads > 0 ? mc.threads : int(std::thread::hardware_concurrency());
   if (nThreads < 1) nThreads = 1;
   nThreads = std::min(nThreads, std::max(1, mc.games));
@@ -115,14 +146,14 @@ inline MatchStats runMatch(const MatchConfig& mc) {
       std::unique_ptr<Agent> A[3], B[3];
       for (int i = 0; i < 3; i++) {
         A[i] = makeAgent((i == 0 || mc.partnersA.empty()) ? mc.specA : mc.partnersA);
-        B[i] = makeAgent(mc.specB);
+        B[i] = makeAgent((i == 0 || mc.partnersB.empty()) ? mc.specB : mc.partnersB);
       }
       MatchStats& st = local[t];
       Game game;
       DecisionSink sink;
       if (mc.captureDecisions) {
         decisionCapture() = true;
-        sink.teamAOnly = mc.captureTeamAOnly;
+        sink.teamAOnly = mc.captureTeamAOnly && mc.captureArm != 2;
       }
       for (;;) {
         int i = next.fetch_add(1, std::memory_order_relaxed);
@@ -158,7 +189,13 @@ inline MatchStats runMatch(const MatchConfig& mc) {
               ? mixSeed(mixSeed(mc.seed ^ 0xA2C00DEDull, uint64_t(i) * 1000003ull + uint64_t(rot)), 0xC0FFEEull)
               : 0ull;
           if (mc.captureDecisions) {
-            sink.deal = int32_t(i); sink.rot = int16_t(rot); sink.teamA = orient;
+            sink.deal = int32_t(i); sink.rot = int16_t(rot);
+            // `orient` is the team label the A arm holds this rotation, so the
+            // B arm's seats are the complement.  Recording the target arm is
+            // what makes "what does v0.6 do wrong against this exploiter"
+            // measurable at all.
+            sink.teamA = (mc.captureArm == 1) ? (1 - orient) : orient;
+            sink.arm = int8_t(mc.captureArm == 1 ? 1 : 0);
             game.dsink = &sink;
           }
           GameResult r = game.run(s, mc.rules, ag);

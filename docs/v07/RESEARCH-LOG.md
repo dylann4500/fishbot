@@ -735,3 +735,676 @@ hardware); on this machine, against `v06`, it is 242× all-threads and 204× sin
 proceed on a weak instrument; it proceeds on a calibrated one whose floor is measured, stated, and
 purchasable.
 
+---
+
+---
+
+---
+
+---
+
+---
+
+## Phase 2 — Open-ended adversary generation
+
+Started from `f4581da` ("web play: networked lobby, seat credentials, and public tunnels"), working
+tree clean at the start of the session. Inputs read: `docs/v07/THREAT-MODEL.md`,
+`docs/v07/INSTRUMENT.md`, `docs/v07/RESEARCH-LOG.md` (phase 1), `docs/v07/SUBOPTIMALITY-LEDGER.md`,
+`docs/v07/PHASE-PROMPTS.md`, and `engine/src/`.
+
+**Machine.** Apple M5 Pro, 15 logical cores, `clang++ -O3 -march=native`, macOS 25.5.0 — the same
+machine phase 1 used, so its throughput table transfers. `v06` mirror measures 364.2 games/s here
+against phase 1's 364.7. Frontier throughputs re-confirmed at the start of the session:
+
+| frontier point | spec | games/s (14 threads) |
+|---|---|---:|
+| **F-fast** | `v06` | 364.2 |
+| **F-cheap** | `v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26` | 96.3 |
+| **F-mid** | `v06:s1=1,det=16,cand=6,kappa=2.0,maxq=26` | 6.44 |
+| **F-search** | `v06:s1=1,det=12,cand=4,kappa=2.5` | 1.71 |
+
+Those four numbers set the whole shape of the phase's budget. A fitted search against F-fast costs
+minutes; the same search against F-mid costs hours and against F-search is not affordable at all. So
+the fitted searches are run against F-fast and F-cheap, and their transfer to F-mid and F-search is
+**measured rather than assumed** — which turns out to be the more informative experiment anyway
+(§2.9).
+### 2.0 What phase 2 had to build, and why
+
+Phase 1 delivered four responder classes and a calibrated floor. It did not deliver the ability to
+run *different* searches: every exploiter search in the corpus, phase 1's included, is a
+cross-entropy fit of a linear vector maximising win rate from one seed against one target. The phase
+brief is explicit that fifteen runs of that are one run. Six axes of variation were needed and five
+of them did not exist.
+
+| # | Built | Where | Why |
+|---|---|---|---|
+| **P1** | **Mechanism objectives** — the CEM can climb a per-decision failure mode of the *target* instead of a scoreboard: `declerr`, `forced`, `asksupp`, `declsupp`, `setdiff`, `limit`, `events` | `engine/src/tuner.hpp` (`TuneKpi`, `kpiValue`), `--kpi=` | Every one of these reads a `MatchStats` field the arena already accumulates for the B arm, so the objective axis cost no new plumbing and was simply never used |
+| **P2** | **Target-arm decision capture** — `--capture=a\|b\|both` | `engine/src/arena.hpp` (`MatchConfig::captureArm`), `fish7 v7decide` | "Characterise what v0.6 does wrong against this exploiter" is not answerable while the channel can only record the arm under study |
+| **P3** | **Declaration-urgency instrumentation** — `urgent`, `pressure`, and a four-bit `urgWhy` recording *which* clause of the urgency predicate fired | `engine/src/game.hpp` (`DecisionInfo`, `DecisionRecord`), `engine/src/v05.hpp`, `engine/src/v07_probe.hpp` | §2.2: the single most attackable structure found in the target |
+| **P4** | **Information-denial and tally-inflation coordinates** — `NR7` 12 → 18 on the C2 responder | `engine/src/v07_responder.hpp` | §2.3: the two properties of the target's belief that no feature in the lineage prices |
+| **P5** | **`--partners`/`--correlated` in the fitter, `--partnersb` in the arena** | `engine/src/tuner.hpp`, `engine/src/arena.hpp`, `engine/src/main.cpp` | The A2 regime could be measured but not *fitted*, and the one-seat column could not be fitted at all. `--partnersb` is the complement of the pre-existing `--partners`: a mixed **B**-arm team, which a one-seat deviation column needs when the adversary occupies the A arm. (`--partners` itself dates from v0.6's E5 battery, so ledger entry L7's "cheapest decisive experiment" was expressible all along and had simply never been run.) |
+| **P6** | **The seal, enforced in `runMatch`** and `fish7 bankdigest` | `engine/src/arena.hpp`, `engine/src/main.cpp`, `engine/src/v07_seeds.hpp` | §2.11 |
+
+Every one of these is behaviour-neutral on the incumbent, which is checked rather than asserted:
+`v06:legacy=1` ≡ `v05`, `v07` (all responder coordinates zero) ≡ `v06`, and `v07i:inv=0` ≡ `v06`
+are bit-for-bit identical before and after, on the same 60-game pathology digest phase 1 used
+(`02772c5891dd3281b73f8d1881d1949d`), and phase 1's own D1 and W1 cells reproduce to the last digit
+(`askHitRate` 0.54032, `ownLockedAskRate` 0.10644, `declAllocErrorShare` 0.88095; 1.9454 bits/ask).
+### 2.1 Defects found in phase 1's own instrument
+
+**D-1 — five ask decisions in a hundred were recorded with the previous decision's diagnostics, and
+the bias was in the worst possible direction.** `V06Agent::chooseAsk` has five early returns
+(`engine/src/v06.hpp`: `n <= 0`, `n == 1`, the `tieOnly` short-circuit, the deliberate-miss return,
+and the `minGap` short-circuit) and none of them wrote `lastDec`. `Game::run` reads
+`Agent::lastDecision()` at *every* ask, so each of those decisions entered the per-decision channel
+carrying another decision's `nCand`, `nTie`, `margin` and `gateBound`. The `gateBound` bit is the one
+that matters: it is the quantity ledger entry **L10** is measured on, and the `n == 1` path is
+reached exactly when the live-ask gate has pruned the candidate set down to a single survivor — the
+state in which the gate is *most* likely to have removed the ungated argmax. The decisions whose gate
+bit was stale were disproportionately the decisions where the gate bound.
+
+Fixed at all five sites. **Measured consequence: almost none, at v0.6's weights.** On phase 1's own
+D1 cell (`v06` mirror, bank 7011001, 400 deals × 2, 34,235 ask decisions) `gateBindRate` is
+**0.00938 before and 0.00938 after**; `tieShare` moves 0.60371 → 0.60455, because 49 decisions
+(0.14%) now correctly report a single candidate and leave the contested denominator. No phase-1
+number moves outside its interval. The fix is nevertheless load-bearing for phase 2, because the
+adversaries in §2.6 are *designed* to raise gate pressure and would have been measured on a stale
+bit.
+
+**D-2 — `DealDP` never received the repair `BlockDP` was given, and the defect is latent rather than
+live.** Threat-model E-2 records that `BlockDP` parks every instance's tables in a shared per-thread
+pool and that v0.6 repaired it with a generation stamp (`engine/src/blockdp.hpp:97-118`). `DealDP`
+has the identical construction — `static Buffers& buffers() { static thread_local Buffers b; }` at
+`engine/src/belief.hpp:301`, with `F`, `B`, `scr`, `nz`, `nf` and `sumOf` parked into it at `:322-326`
+— and **no stamp**. It is the sampler the v0.6 search's determinization and the phase-1 inverter both
+use.
+
+Whether that matters is a question with a decisive one-line answer, and it was run: a test build with
+`DealDP::buffers()` made a per-instance member rather than a thread_local produces **bit-identical**
+60-game pathology digests to the shipped build on `v06`, `v05`, `v07i:idet=48`, the truncated search
+configuration and `v06:belief=block`. Every `DealDP` use in the current engine is build-then-read
+with no interleaving, so the aliasing is unreachable. It is filed as a **latent** harness defect with
+its reachability test attached: anything phase 3 builds that holds a `DealDP` result across a nested
+build — a search inside an inversion, or a leaf evaluator that samples — makes it live, and the
+repair is to port the `BlockDP` stamp.
+
+**D-3 — the measurement flag is visible to the thing it measures.** `decisionCapture()`
+(`engine/src/game.hpp:29`) is a free function returning a reference to a `static thread_local bool`,
+in the same namespace as every policy. Any agent can read it and branch on it. No policy in the
+corpus does, and phase 2's adversaries do not — but this is a *measurement-integrity* defect rather
+than a curiosity: from phase 3 onward, candidate architectures are developed by the same programme
+that measures them, and a per-decision channel that a policy can detect is not a channel that can
+adjudicate between candidates. The repair is to move the flag out of the shared namespace and pass it
+through `DecisionSink`. Recorded, not repaired here, because repairing it touches every capture site
+and phase 2 changes no policy.
+### 2.2 The declaration-urgency channel: a real structure, and a measured ceiling that kills it
+
+The largest single structure phase 2 found in the target is in the declaration rule, and it is worth
+setting out in full because the arithmetic that makes it look enormous is the arithmetic that turns
+out to be wrong.
+
+`V05Agent::declareNow` (`engine/src/v05.hpp`) is:
+
+```
+if (press >= 2) return true;
+if (press >= 1 && v.pAlloc >= 0.5) return true;
+if (cfg.useValue && cfg.valueDeclare) {
+  if (urgent) return v.pAlloc >= cfg.declThreshold || (locked && v.pAlloc >= 0.5);
+  return declareByValue(pub, v);
+}
+```
+
+v0.6 has `useValue` and `valueDeclare` both true, so the shipped rule is the middle branch:
+**urgency replaces an expected-value comparison with a threshold, and on a half-suit the team
+provably owns (`locked`, `pTeam > 0.9995`) that threshold is a coin flip on the allocation.** That is
+precisely the error class ledger entry **L1** sizes — the team held all six cards and named the wrong
+teammate, 88.1% [81.0, 94.4] of v0.6's remaining misdeclarations (INSTRUMENT.md §1.10).
+
+`urgent` is a disjunction of four clauses, and three of the four are public:
+
+```
+urgent = unresolvedCount <= patiencePool(5)
+      || oppCards        <= oppCardFloor(2.99879)     <- the OPPOSING team's own total hand count
+      || pub.nEvents     >= forceDeclareEvents(220)   <- the length of the game
+      || bestAskProbability(pub) < askFloor(0.26573)
+```
+
+The thresholds are frozen constants of a published policy, so a white-box adversary knows exactly
+where they are; and the second clause is a quantity the adversary controls directly, because
+`oppCards` from the target's point of view is the number of cards in the *adversary's* three hands.
+
+**The per-decision channel says the structure is large.** `fish7 v7decide --capture=b`, v0.6 mirror,
+bank 7050001, 3,000 deals x 2 = 6,000 games, 26,962 voluntary declarations:
+
+| metric | rate | 95% CI (deal-clustered) | n |
+|---|---:|---|---:|
+| `declUrgentShare` | 0.50193 | [0.4963, 0.5076] | 26,962 |
+| `declAccUrgent` | 0.96837 | [0.9654, 0.9712] | 13,533 |
+| `declAccCalm` | 0.98987 | [0.9882, 0.9916] | 13,429 |
+| `urgWhyPatience` | 0.17421 | [0.1720, 0.1765] | 26,962 |
+| `urgWhyOppCards` | 0.14628 | [0.1442, 0.1483] | 26,962 |
+| `urgWhyEvents` | 0.00000 | [0.0000, 0.0000] | 26,962 |
+| `urgWhyAskFloor` | 0.46925 | [0.4636, 0.4750] | 26,962 |
+
+(`research/v07/results/P5-mech.jsonl`, 3,000 deals x 2. An earlier 150-deal smoke run put the
+urgent/calm gap at 3.36 points; at two hundred times the sample it is 2.15, which is the ordinary
+lesson about quoting a difference of two rates from a small sample.)
+
+Half of v0.6's declarations are taken under urgency, and those are **2.15 points less accurate**.
+At the ledger's own conversion — one point of declaration accuracy ≈ 1.2 points of win rate — moving
+the remaining half of the declarations from calm to urgent reads as ≈1.3 points of win rate. That is
+the arithmetic that made this the phase's leading hypothesis.
+
+**The ceiling battery says the arithmetic is wrong, and it says so decisively.** Rather than fitting
+an adversary to raise the urgent share and then arguing about whether it succeeded, the battery hands
+the adversary omnipotence over the predicate: the *target* is modified so that a clause is
+permanently true, and the unmodified incumbent plays it. That is the same construction phase 1 used
+for `dTrue`, and the resulting edge is the ceiling on what any adversary attacking the mechanism
+could ever collect.
+
+| target | what it does | `v06` edge | 95% CI | target decl. acc. |
+|---|---|---:|---|---:|
+| `v06` | control | +0.00 | mirror | 0.9777 |
+| `v06:pool=45` | clause 1 permanently true | +0.38 | [−0.06, +0.82] | 0.9768 |
+| `v06:oppfloor=54` | clause 2 permanently true | +0.38 | [−0.06, +0.82] | 0.9768 |
+| `v06:askfloor=1.1` | clause 4 permanently true | +0.38 | [−0.06, +0.82] | 0.9768 |
+
+n = 12,000 games a cell on bank 7030002, 98/√N = ±0.89.
+
+**A permanently urgent v0.6 loses 0.38 points, and its declaration accuracy falls by nine
+hundredths of a point — not by 3.36.** The three cells agree to the last digit, which is the internal
+consistency check that the instrumentation is right: all three set the same boolean, so the target's
+behaviour is identical and only the route differs.
+
+So the per-decision gap is **confounded**, and the confound is obvious once it is stated: urgency
+fires in hard positions. Forcing it in easy ones costs almost nothing, because in an easy position
+`pAlloc` is already above `declThreshold` and the branch that fires would have declared anyway. The
+3.36-point gap measures the difficulty of the positions in which urgency fires, not the damage
+urgency does.
+
+**This is the single most important negative of phase 2**, and it is worth stating why the ceiling
+battery earns its place: without it, an adversary search that raised the urgent share and gained half
+a point would have been read as a confirmed mechanism at its predicted size, and the whole of phase 3
+lead (b) would have been pointed at a channel worth 0.38 points — below every detection floor the
+instrument has.
+
+**The C6 class, built to attack it, confirms the ceiling from the other side.** `engine/src/v07_adapt.hpp`
+is the corpus's first scripted-adaptive adversary: it carries an online model of whether the target is
+currently holding a half-suit it owns outright but cannot allocate, estimated every decision from the
+adversary's own posterior, and times its own declarations against that estimate. Both polarities were
+run — hold your declarations while the target is safe, and accelerate them when it is vulnerable —
+and both lose:
+
+| arm | edge vs `v06` | 95% CI | target's decl. acc. |
+|---|---:|---|---:|
+| `v07c:mode=1,holdmax=30` (hold) | −2.06 | [−4.13, +0.06] | 0.9799 |
+| `v07c:mode=1,holdmax=60` (hold) | −3.38 | [−5.56, −1.19] | 0.9788 |
+| `v07c:mode=2` (accelerate) | −2.31 | [−3.44, −1.19] | 0.9781 |
+| `v07c:mode=3` (both) | −5.31 | [−7.56, −3.06] | 0.9780 |
+
+n = 1,600 games a cell, bank 7030004. **These are an uncommitted smoke measurement**: the C6 arms sit
+in the deception battery whose artifact was still outstanding when this section was written, so they
+are recorded here as what they are.  The adversary's own declaration accuracy falls to 0.9591 under `mode=2` and to
+0.9552 under `mode=3`, against 0.9788 for the unmodified incumbent. The target's declaration accuracy does not move at all; the
+adversary's own falls by two to three points. **The structural reason is worth recording, because it
+generalises: the only lever an adversary has on `oppCards` is its own hand count, the only way to
+lower its own hand count is to declare, and declaring earlier is exactly the `decl` handicap family
+phase 1 measured at +0.62 to +2.45 points of cost to the holder. The adversary pays the cost it is
+trying to impose.** `v07c:mode=0` is `v06` bit for bit, which is the class's identity control.
+### 2.3 The pressure cliff: fifteen points behind an unreachable counter
+
+The ceiling battery separated two mechanisms that share one threshold and are not the same thing.
+`pub.nEvents >= cfg.forceDeclareEvents` appears both as the third clause of `urgent` **and** as the
+trigger of `pressure()`, and they do very different damage. At `press >= 1`, `evaluateSet` drops
+`teamFloor` from `minTeamProb = 0.849` to 0.25, bypasses the capacity gate, and `declareNow` cashes
+any half-suit at `pAlloc >= 0.5`:
+
+| target | `v06` edge | 95% CI | target decl. acc. | target lock hold |
+|---|---:|---|---:|---:|
+| `v06:force=1` | **+15.18** | [+14.41, +15.94] | **0.8115** | 2.62 |
+
+**v0.6 carries a fifteen-point cliff in its own declaration rule, and it sits behind an event
+counter set to 220.** The question that decides whether that is a vulnerability or a curiosity is how
+long a game an adversary can produce. Measured across every arm phase 2 ran, including the ones built
+specifically to stall: the v0.6 mirror runs at 95.1 events a game, the longest any adversary produced
+is 105.5, and the pathology probe's maximum over 400 games of the strongest denial adversary is 130.
+The cliff needs 220. Nothing in the spec grammar gets within a factor of 1.7 of it, and the reason is
+structural rather than incidental: the game ends when the half-suits are gone, and every ask either
+transfers a card or publishes a certificate, so the transcript cannot be padded without also
+resolving the position that ends it.
+
+Filed as a **standing hazard rather than an exploit**: it is not reachable by any adversary phase 2
+could build, and it is the single largest number in the phase. Any v0.7 candidate that lengthens
+games — and a search that reasons about a longer horizon is a candidate that might — moves toward it.
+Phase 3 should report `eventsPerGame` for every candidate against the 220 rung, and phase 4's commit
+gate should refuse a configuration that crosses it.
+### 2.4 The one arm that clears the bar, and the story it does not support
+
+Phase 2's strongest adversary was not found by any of the thirty-one fitted searches. It was found by
+the search of a different kind — the unfitted coordinate sweep — and it is a single hand-set
+coefficient.
+
+**How it was found, and the provenance caveat that goes with it.** The extended responder class was
+widened from twelve coordinates to eighteen at the start of this session, on the strength of a reading
+of `Knowledge::priorWeight` and of `enumerateAsks`: no feature anywhere in the v0.4–v0.6 lineage
+prices the negative certificate a *miss* publishes about a target seat, and that certificate is the
+only primitive that can separate two seats of one team, because a team can never manufacture one about
+itself. Four coordinates were added to express **information denial**. A reconnaissance pass over the
+engine then measured one of them, `oppCertDonate`, at +1.2 to +3.6 points on **unregistered scratch
+banks** with a source tree being edited underneath it. **No number from that pass is used anywhere in
+this document.** Everything below was re-measured from scratch on registered evaluation banks, with
+the commit gate run first.
+
+**The dose response, on two registered banks at 24,000 games a dose.**
+
+| dose | edge vs `v06` | per bank | adversary decl. acc. | adversary lock hold | target lock hold | target decl./game |
+|---|---:|---|---:|---:|---:|---:|
+| control (`v06`) | +0.00 | mirror | 0.9788 | 4.60 | 4.60 | 4.49 |
+| `r12=5` | +0.65 | +0.19 / +1.11 | 0.9793 | 4.61 | 4.61 | 4.49 |
+| `r12=10` | +0.62 | +0.80 / +0.45 | 0.9746 | 4.27 | 4.86 | 4.43 |
+| `r12=15` | +2.23 | +2.32 / +2.14 | 0.9651 | 3.48 | 5.26 | 4.33 |
+| `r12=20` | +2.53 | +2.69 / +2.38 | 0.9647 | 3.37 | 5.30 | 4.30 |
+| **`r12=25`** | **+2.71** | +2.85 / +2.58 | 0.9643 | 3.41 | 5.29 | 4.30 |
+| `r12=30` | +1.65 | (one bank) | 0.9645 | 3.44 | 5.33 | 4.33 |
+
+Monotone from 5 to 25, peaking at 25, falling away above it, with the two banks agreeing to within
+0.3 points at every dose. The KPI profile moves together with the score and in the same direction at
+every dose, which is what separates a mechanism from a lucky vector.
+
+**The sign is the opposite of the one the coordinate was designed for, and that matters.** The feature
+is (1 − p) · oppFrac · (uS/6) and the design intent was a *negative* coefficient: refuse to publish
+the certificate. Measured, the negative branch is worth −0.77 at −25 and +0.70 at −10; the whole
+effect lives on the positive branch. So whatever this is, **it is not information denial**, and the
+document must not call it that.
+
+**What it is, as far as the evidence supports.** The KPI signature is unambiguous and it is not a
+strength signature: the adversary's own declaration accuracy falls from 0.9788 to 0.9643 and its own
+ask accuracy falls from 0.5426 to 0.5336, while it claims *more* half-suits (4.67 a game against 4.49)
+and cashes its own locked half-suits 1.2 events sooner (lock hold 4.60 → 3.41). The target's mirror
+image: it claims fewer (4.30), holds its locks 0.7 events longer (5.29), and its ask accuracy falls
+from 0.5426 to 0.5199. **The adversary plays a worse game by two of its own KPIs and wins by nearly
+three points**, which is the discriminator the phase brief asks for.
+
+**Three controls, each at 4,000 games on bank 7030004, rule out the obvious reductions.**
+
+| control | edge | what it rules out |
+|---|---:|---|
+| `v07:r2=25` | −1.30 [−2.88, +0.25] | "prefer half-suits the opposing team dominates" — the plain opponent-mass term, without the (1 − p) and ambiguity factors |
+| `v07:r2=10` | −0.77 [−2.22, +0.68] | the same at a lower dose |
+| `v06:w0=8` | +0.40 [−1.02, +1.82] | "weight hit probability less" |
+| `v06:w0=6` | −0.62 [−2.10, +0.82] | the same, further |
+| `v06:w0=4` | −1.97 [−3.48, −0.50] | the same, further still |
+| `v07:r12=25,r2=-25` | −11.50 [−13.00, −10.00] | the coordinate with the plain opponent-mass term cancelled |
+
+Neither factor reproduces the effect alone and neither does a blunt reduction in the leading ask
+weight. The product is load-bearing.
+
+**What phase 2 will not claim.** It is characterised, not attributed. Which of the two lock-hold
+movements is cause and which is consequence is not settled by these measurements, and the feature is a
+product of three quantities whose separate contributions were not resolved. That is phase 3/4 work,
+and it is precisely the work the v0.6 record says it could not afford. What is settled: real,
+replicated on two banks at every dose, dose-responsive with a peak, commit-gate clean (0.022% dead
+asks, longest dead run 1, no games at the action limit), and outside every class the corpus had.
+### 2.5 Harness findings
+
+The phase brief: "An exploiter that works only through a harness defect is a finding about the
+harness — file it as such." Phase 2 found five, refuted two the threat model or its own
+reconnaissance had proposed, and closed one question the corpus had left open. Every one of them was
+checked in code and, where a check was possible, tested rather than argued.
+
+**H-1 — the deal-seed inversion channel (threat-model E-1) is still open.** `Game::setup` hands seat
+*p* the value `mixSeed(s, p + 77)` where the same `s` generates the deal, and `mixSeed` is a
+bijection, so any policy can recover the deal in closed form and read all six hands. Phase 0 verified
+the invertibility numerically. Phase 2 did **not** build the clairvoyant agent that would demonstrate
+it: doing so would produce a number (an adversary at or near 100%) that is not an exploitability
+number under T3 and could only ever be quoted as an upper anchor, and the channel's existence is
+already established by construction. Threat-model **T10** — hand each seat a stream drawn
+independently of the deal — remains unimplemented and remains the single most important harness
+repair outstanding. No policy in the corpus reads it, which is what makes the omission survivable
+rather than disqualifying.
+
+**H-2 — `Event::confidence` is not merely broadcast, it is in the public history.** The threat model
+records that `Game::emit` hands the full event, confidence included, to every agent's `observe`.
+Phase 2 adds that `emit` also pushes the event onto `g.pub.history`, so the declarer's private
+`pAlloc` is a *persistent* field of the public state rather than a transient argument, and any policy
+that walks the history can read every declaration confidence any seat has ever stated. The field is
+documented as "diagnostic only" and no policy in the corpus reads it — verified again here by grep
+across `v04.hpp`, `v05.hpp`, `v06.hpp`, `v07_responder.hpp`, `v07_invert.hpp`, `v07_adapt.hpp`,
+`belief.hpp`, `baselines.hpp` and `human.hpp`. The repair is one line (strip it before `emit` and
+carry it on the driver-side sink next to `DecisionSink`); the test is a build with the field poisoned
+to NaN, under which any battery must be bit-identical.
+
+**H-3 — `DealDP` never received the repair `BlockDP` was given, and the defect is latent.** See §2.1
+D-2. `BlockDP` carries a generation stamp; `DealDP`, which is the sampler the v0.6 search's
+determinization and the phase-1 inverter both use, carries none. Tested: a build with the pool made
+per-instance is **bit-identical** on `v06`, `v05`, `v07i:idet=48`, the truncated search configuration
+and `v06:belief=block`. Every use is build-then-read with no interleaving, so the aliasing is
+unreachable today. It becomes live the moment anything holds a `DealDP` result across a nested build.
+
+**H-4 — the measurement flag is visible to the thing it measures.** See §2.1 D-3. `decisionCapture()`
+is a `static thread_local bool` behind a free function in the same namespace as every policy. From
+phase 3 onward, candidates are developed by the same programme that measures them, and a per-decision
+channel a policy can detect is not a channel that can adjudicate between candidates.
+
+**H-5 — two residue rules disagree with each other, and neither is a rule of the game; both are
+dead code.** `forcedEndgame` resolves an unclaimed half-suit by physical majority with **every 3–3
+tie going to team 0 unconditionally**; `adjudicateRemaining`, thirty lines later, resolves the same
+physical situation by physical majority with ties to the holder of the lowest card. The first is an
+unconditional asymmetry between the two teams. Both were instrumented with a counter and neither
+fired in 1,600 v0.6 mirror games or in 1,600 games against `v06:declare=0`, a configuration that
+produces 4.24 forced declarations a game — because the willingness ladder's last rung is `-1.0`,
+which forces `bestGuess`, so no half-suit ever survives to the residue. Filed as dead code with an
+asymmetry in it, to be removed or unified rather than left for a future policy to reach.
+
+**Refuted: the action-cap adjudication farm.** `game.hpp` breaks the game at `rules.maxAsks` (400)
+and adjudicates the residue by physical majority with no declaration risk, which deletes the target's
+largest edge from the payoff. It is unreachable. Every stalling configuration in the spec grammar was
+tried, including `v06:dead=1,deadmargin=-1000,deadbudget=999,declare=0,patient=1,pool=45`, and every
+one returns a **limit-hit rate of exactly 0.0000**, and the longest single game any adversary produced
+against the incumbent runs **149 events** against a 400-**ask** cap. The mechanism exists and cannot be reached; it is retained as a
+harness finding and as a reporting obligation — `limitHitRate` is printed with every phase-2 cell and
+is zero in all of them.
+
+**Not tested: arm asymmetry, and the test that looked like one is an identity.** Every exploitability
+number in the corpus is measured with the adversary as the A arm. Measured on bank 7051001 at 3,000
+games, `v06:vmargin=-0.02` as A scores 49.77% and `v06` as A against it scores 50.23%, summing to
+exactly 100.00; with one-seat partners on either side, exactly 100.00 again. **That is a harness
+identity, not evidence.** At `--rotations=2` the arena plays both orientations of every deal, so
+exchanging the arm labels replays the same game multiset — the two cells report identical
+`eventsPerGame` to four decimals, which is the giveaway. The identity holding is worth recording,
+because it would break if the orientation loop or the seat construction were asymmetric; but a real
+test needs a single fixed orientation, which the arena cannot express. Filed as **not tested**, with
+the construction that would test it named.
+
+**Refuted: `BlockDP` aliasing (threat-model E-2).** The threat model lists it as open. It is not: the
+generation stamp, `current()` and `ensureCurrent()` are present and are checked at every query site.
+The 175 raw shared-pool field mismatches the v0.6 record reports are reads of the raw pool, which the
+query-level guard makes unobservable. **THREAT-MODEL.md §6.3 E-2 should be corrected in phase 6.**
+### 2.6 A ledger entry closed, and a number in it corrected
+
+**L13 — forced-endgame allocation — is closed, and for a better reason than incidence.** The ledger
+demotes it to a priority of 0.014 on incidence grounds (0.0031 forced endgames a game) but keeps it
+open on one condition: "incidence is an adversarial variable […] Phase 2 should measure
+forced-endgame incidence under adversarial pressure before this entry is closed for good, and if an
+adversary can raise it by an order of magnitude the entry returns at ~0.15 points."
+
+Measured, and the answer is not the one the entry anticipated. `v06:declare=0` — a team that never
+claims a half-suit voluntarily — raises the **game's** forced-endgame incidence to **4.20 declarations
+a game** against a mirror baseline of 0.0056. But they are made by the `declare=0` team *itself*:
+`forcedPerGameA` = 4.20167 with `forcedAccB` = 0.000000 over 12,000 games. A team that never claims
+keeps its cards while the other team empties, so it is the *other* team that goes cardless and the
+non-declaring team that must then declare everything. **The target's own incidence stays at exactly
+zero**, and the construction that would raise it — the adversary going cardless itself — measures −17
+points.
+
+The second half of the measurement is the one that closes the entry:
+
+> **v0.6's forced path, exercised 1,400x more often than normal, resolves correctly 99.3–99.5% of the
+> time — not 28.6%.**
+
+23 wrong in 3,396 over 800 games (99.32%), and 0.994863 over 12,000 games in the paired cell. The
+corpus's 0.286 rests on two to eight observations per battery at an incidence of 0.003 a game; it is a
+small-sample artifact, and the v0.5 study's ~40.6% "feasible ceiling" is a ceiling on a quantity
+measured in a regime the forced endgame is almost never in. The adversary pays 7.5 to 7.8 points for
+the construction.
+
+**L13 is closed on both counts: the target's incidence is not raisable cheaply, and the mechanism is
+not broken.** The
+brief's lead (b), which names the forced endgame, should be read as naming the *voluntary*
+declaration channel only — which is what the ledger already concluded on different grounds.
+### 2.7 The detection floor at 4× the evaluation power, and a phase-1 claim refuted
+
+Phase 1 measured its floors at 12,000 evaluation games a bank and then made a claim about what would
+happen with more: *"Below ~1.7 points the floor is evaluation-power-limited, not search-limited […]
+the floor therefore scales roughly as (evaluation games)^−1/2 from here: phase 2 can buy a ~0.9-point
+floor with 4× the evaluation games per cell, without touching the responders."* The evidence was that
+at the undetected `decl 0.08` rung the pooled excesses were positive (+0.69 C1, +0.98 C5) while the
+estimator's ±1.2-point width could not exclude zero.
+
+Phase 2 cannot rest a null on an extrapolated scaling law, so it was tested: the same phase-1
+responders, the same rungs, the same two evaluation banks, at **48,000 games a cell instead of
+12,000**. The banks are extended rather than replaced — a deal's seed is a function of its index
+alone, so the first 6,000 deals of each are bit-identical to phase 1's — which makes the comparison
+nested.
+
+| class | rung | dTrue (re-measured at 24,000 games) | dFound pooled, 96,000 games | excess over control | detected |
+|---|---|---:|---|---|:--:|
+| C1 | `none` (control) | 0.00, mirror | +0.79 [+0.48, +1.10] | — | — |
+| C1 | `decl,hstr=0.05` | +0.67 [+0.28, +1.06] | +1.04 [+0.73, +1.34] | +0.25 [−0.19, +0.68] | no |
+| C1 | `decl,hstr=0.08` | +0.88 [+0.47, +1.28] | +0.78 [+0.47, +1.08] | **−0.01 [−0.45, +0.42]** | no |
+| C1 | `decl,hstr=0.11` | +2.13 [+1.61, +2.65] | +3.46 [+3.02, +3.90] | +2.67 [+2.13, +3.20] | **yes** |
+
+A fifth rung, `leak,hstr=1.5`, is the one phase 1 quoted its 1.68-point floor from. At four times the
+power its `dTrue` re-measures at **+1.53 [+0.96, +2.11]** and its excess over the control is
+**+1.74 [+1.30, +2.18]** — detected. So the class floor moved from 1.68 to 1.53: four times the games
+bought **0.15 points of floor**, against the 0.78 the scaling law predicts.
+
+**The scaling law does not hold, and the reason is the interesting part.** At four times the power the
+`decl 0.08` excess does not sharpen to a small positive number — it collapses to **zero**, ±0.44. The
++0.69 phase 1 saw at that rung was noise, and buying more games buys a sharper zero rather than a
+resolvable effect. Below about two points on the declaration family the C1 responder is not
+*unresolved*, it is **empty**: the search finds nothing there, and the binding constraint is search
+power after all.
+
+Two consequences, and both raise the bar rather than lower it.
+
+1. **Phase 2's claims are read against a class floor of 1.53 points, and 2.13 on the declaration
+   family — not the 0.9 phase 1 projected.** Every severity in ADVERSARIES.md carries those numbers.
+2. **INSTRUMENT.md §6's clause-1 verdict needs the qualification.** Its statement that the floor is
+   "purchasable" — "≈0.9 points at 4× the games" — is measured here and is not. The exit criterion
+   itself is unaffected: the effects phase 1 put on the table (+1.5 to +2.5) still sit at or above
+   the floor, and the floor is still stated rather than assumed. What changes is that phase 3 cannot
+   buy resolution below ~2 points with games alone, and a sub-two-point claim needs a better
+   responder or a per-decision estimator, which is exactly what ledger entry L5 says.
+
+**The control rung is the other result, and it replicates phase 1's I5 at four times the power.** A
+properly specified in-class responder reaches **+0.79 [+0.48, +1.10]** against the *unhandicapped*
+incumbent over 96,000 games — against phase 1's +0.76 [+0.15, +1.37] over 24,000, and against the
+v0.6 probe's published −1.64. v0.6's in-class exploitability is at least 0.79 points, and the
+interval is now a third of its former width.
+### 2.8 What was searched, and the honest accounting of it
+
+The phase brief's constraint is that the searches must not share a bias. Six axes were varied and five
+of them did not exist at the end of phase 1 (§2.0). The inventory is in ADVERSARIES.md §1; the
+accounting that matters here is which axis produced what.
+
+* **The unfitted coordinate sweep produced the phase's strongest arm** and, separately, its most useful
+  negative — that every axis-aligned deviation of the incumbent's belief and policy prior loses, which
+  is a stronger statement about the shipped configuration than any fit produced.
+* **The ceiling batteries produced the two results that reshape phase 3** — the urgency channel's
+  0.38-point ceiling and the 1.4-point gain from switching it off — and neither is an adversary.
+  Measuring a mechanism's worth before fitting anything against it is the single highest-value
+  procedure phase 2 adopted, and it is the phase-1 `dTrue` construction applied to mechanisms rather
+  than to handicaps.
+* **The mechanism objectives were built so that a search could climb a per-decision failure mode of the
+  target rather than a scoreboard.** Their value is diagnostic as much as competitive: an adversary
+  that doubles the target's misdeclaration rate and gains nothing in win rate is telling us the
+  channel is not worth what the ledger's conversion arithmetic says it is.
+* **The fitted searches are the continuity column.** They are what makes "nothing else clears the bar"
+  a measured statement rather than an absence.
+### 2.9 The fitted searches
+
+Thirty-one independent cross-entropy searches, one registered fitting bank each, listed in full in
+ADVERSARIES.md §1. The budgets are not uniform and the reason is stated rather than hidden: the three
+control rows carry phase 1's standard 12 × 16 × 250 (96,000 games), one row carries phase 1's
+budget-curve top rung at 20 × 20 × 350 (280,000 games), and the exploratory rows carry 8 × 12 × 150
+(28,800 games). Phase 1's own budget curve is what licenses that — a 21,600-game fit reached +3.20 of
+the +4.08 the curve plateaus at, so the marginal point per game past ~30,000 is small, and the phase
+brief's constraint is on the *number of distinct search biases*, not on the depth of each. Every row
+prints its budget into the artifact, and the two rows that carry the full and the extended budget are
+there precisely so that "the exploratory rows were too small" is a checkable claim rather than an
+excuse.
+
+**What the axes bought.** The searches vary in six dimensions (ADVERSARIES.md §1) and the honest
+summary of what each dimension produced is:
+
+* **Objective.** The five mechanism objectives are new to this corpus, and their value here is
+  diagnostic rather than competitive. A search that climbs the target's misdeclaration rate and gains
+  nothing in win rate is a measurement of the channel's conversion, which is exactly what the ceiling
+  batteries measured directly and more cheaply. That is worth saying plainly: **the ceiling
+  construction dominated the objective axis.** Measuring what a mechanism is worth by handing the
+  adversary omnipotence over it costs one cell; fitting an adversary to earn it costs a battery, and
+  answers a strictly weaker question.
+* **Starting basin.** Whether the CEM is trapped near the incumbent is a real question — every fit in
+  the corpus, phase 1's included, starts at the incumbent's own vector because of the P-3a repair —
+  and it is answered by running the same objective from the v0.5 defaults and from a wide sigma.
+* **Seat count.** The one-seat column is mandatory under threat-model T2 and had never been reported.
+* **Target.** Fitting against the frontier's search end, and against the two-member frontier panel
+  under a `min` objective, is the only way to ask for an adversary that dominates the frontier rather
+  than its cheap point.
+
+**What they reached.** Eight of the thirty-one designed searches completed inside the session's
+simulator budget, spanning both classes, both structural switches (`dead7`, and `corr` with the A2
+device live), two objectives, two frontier targets, four budgets from 23,040 to 280,000 games, and one
+registered fitting bank each. Three have been evaluated on the training banks so far:
+
+| id | class | fitted against | objective | fitting games | edge vs `v06` | 95% CI |
+|---|---|---|---|---:|---:|---|
+| X01 | C1 | `Ffast` | `win` | 96,000 | **+0.98** | [+0.54, +1.42] |
+| X13 | C2 (`dead7=1`) | `Ffast` | `win` | 28,800 | +0.67 | [+0.06, +1.28] |
+| X05 | C1 | `Ffast` | `declerr` | 28,800 | **−8.42** | [−8.85, −7.99] |
+
+**Not one clears its class floor**, and the best of them lands where phase 1's C1 landed (+0.76) and
+where the floor battery's control rung landed (+0.79) at four times the power. Three independent fits,
+three banks, three batteries, one answer: a correctly-specified in-class responder gets about a point
+out of `v06` and no more.
+
+**X05 is the row worth reading twice.** It was fitted to maximise the *target's* misdeclaration rate,
+not its own win rate, and it scores −8.42 in games. That is the mechanism objective working as a
+diagnostic rather than failing as a competitor: it says the ledger's conversion — drive the target's
+declarations wrong and the wins follow — does not survive being pursued single-mindedly. Read with the
+0.38-point ceiling on the same channel (§2.2), the two independent measurements agree that **the
+declaration channel is not where an adversary's points are**, which is the opposite of where this
+phase started.
+### 2.10 The train / holdout split, and what "sealed" was made to mean
+
+The phase brief: *"seal the evaluation material, physically, before anything can be tuned against it"*,
+and *"split the adversary bank the same way (train half / sealed half)"*.
+
+A bank in this corpus is a **seed plus a size** — the deals are generated from the deal index and
+never stored — so sealing one cannot mean secrecy. It was made to mean three things instead, and
+`research/v07/banks/README.md` states them in the directory itself.
+
+**1. A commitment.** `fish7 bankdigest` (new) folds the six dealt hands and the dealer of every deal a
+bank would produce into a 64-bit rolling hash. It plays no game and constructs no policy, so the
+digest of a *sealed* bank can be computed now without learning anything about how any policy performs
+on it. **That computation is the only phase-2 contact with the holdout material, and this sentence is
+the record of it.** Phase 5 recomputes each digest and compares.
+
+**2. A seal the binary enforces.** INSTRUMENT.md §7 states that the phase-5 banks "refuse to unseal
+below `FISH_UNSEAL_PHASE=5`". At the end of phase 1 that was true only of `fish7 seeds --require`,
+which is a check a battery has to remember to run; nothing stopped `fish7 match --seed=7090001`. The
+check now lives in `runMatch`, so it covers every command in the binary:
+
+```
+$ ./fish7 match --a=v06 --b=v06 --games=2 --seed=7090001
+fish: seed 7090001 is SEALED until phase 5 (set FISH_UNSEAL_PHASE to unseal)   [exit 5]
+```
+
+**3. A split made by a rule rather than by a choice.** The adversary bank is sorted by row id and
+assigned alternately, even positions train and odd positions holdout. The rule is in
+`engine/seal_banks_v07.py` and was written before any phase-2 result was known, so the split cannot
+have been chosen to flatter either half. The train half is plaintext; the holdout half is base64 with
+its plaintext SHA-256 in the file header, so it is not readable by eye or by a careless `grep` during
+phases 3–4 and is exactly verifiable in phase 5.
+
+**The banks.**
+
+| half | seeds | role |
+|---|---|---|
+| train | 7030001, 7030002, 7030003, 7030004 | phase-2 adversary evaluation; phases 3–4 training |
+| sealed | 7090001–7090005, 7091001, 7091002 | phase-5 holdout, the phase-5 fresh adversary search, its fitting bank, and the phase-5 negative controls |
+
+Phase 2 evaluated every adversary on 7030001–7030003, so those banks are burnt by the time phase 3
+starts. That is deliberate — it is what makes them the training half. The fitting banks
+7040001–7040031, one per independent search, carry role `Fit` in the registry, which is what makes the
+registry's R1 rule (no seed may be both a fitting and an evaluation bank) enforceable rather than
+aspirational; the one R1 violation in the corpus remains v0.6's 515253, reported by `fish7 seeds` on
+every run.
+
+None of this is cryptography and the README says so. It is a **commitment**: after this is committed
+the sealed material cannot be silently changed, and any phase that reads it has to do something
+deliberate that shows up in the record.
+### 2.11 The verdict
+
+**Nothing phase 2 built exploits the v0.6 frontier beyond the detection floor**, and the brief asks
+for that to be said plainly rather than hedged.
+
+The best measured exploitability of the deployed policy is the in-class figure: **+0.79
+[+0.48, +1.10]** over 96,000 games, a correctly-specified C1 responder against the unhandicapped
+incumbent, replicating phase 1's I5 at four times the power and confirming that the v0.6 probe's
+published 48.36% was a mis-specified-exploiter artifact. It sits **below** the class's re-measured
+detection floor of 1.53 points.
+
+Two arms beat `v06` by more than that, and both were measured and found to be **better policies rather
+than exploits**:
+
+* **The target's own test-time search**, at +1.89 on the phase-2 training banks. It is not an exploit
+  by construction — it is the configuration the deployed policy ships switched off for cost — and there
+  is no KPI that separates it from being stronger. Naming that explicitly is what stops it being
+  smuggled into a ranking, and it corrects phase 1's reading of its own class ladder: most of C3's
+  +1.86 was the search improving the policy, not the `roppo=` opponent model attacking it.
+* **A single out-of-class coordinate**, at +2.56 [+2.12, +3.00] over 48,000 games. Its KPI signature
+  looked like an exploit — the adversary's own declaration accuracy falls 1.5 points while it wins —
+  and the cross-opponent profile at 8,000 games a cell appeared to confirm it. Re-run at 48,000 games a
+  cell and re-expressed in the corpus's own linear unit, the gain is +2.52 / +2.26 / +1.83 / +1.40
+  win-rate-equivalent points against `v06` / `v05` / `v04` / `detective`: a mild gradient monotone in
+  the opponent's strength, with no discontinuity at the boundary of the FishBot family. The apparent
+  specificity was win-rate compression at a 77.5% operating point.
+
+**So the phase-2 deliverable is a taxonomy of closed directions and a list of defects in the
+incumbent, not a list of exploits.** That reshapes phase 3 in the way the brief's gate anticipates:
+the v0.7 case rests on beating the frontier, and phase 2's contribution to it is that several of the
+things worth beating it with are already measured.
+### 2.12 What phase 2 hands to phase 3, and what it takes off the table
+
+**Taken off the table, with numbers.** Each of these is closed in the sense that matters — measured at
+or below zero with an interval, not merely "not found":
+
+| direction | why it is closed | number |
+|---|---|---|
+| declaration-timing / urgency induction as an **attack** | ceiling measured by making the target permanently urgent | +0.38 [−0.06, +0.82] |
+| the action-cap adjudication farm | unreachable by any spec in the grammar | limit-hit rate exactly 0.0000 everywhere; longest game 105.5 events against a 400-ask cap |
+| stalling to the pressure rung at `nEvents >= 220` | the same barrier, from the other side | 105.5 measured against 220 needed |
+| forced-endgame induction | the target's forced path is not broken, and inducing it is expensive | forced accuracy 0.9943 under pressure; adversary pays 6.5 to 7.8 points |
+| the deception family, swept | its best arm is a loss, and no threat to `v06` | best is `feint:tol=0.02` at −1.21 [−2.32, −0.11]; the published defaults are three to twenty-eight points worse — **see the note below** |
+| axis-aligned belief and prior perturbation | the shipped configuration is a local optimum in its own neighbourhood | best of twelve is −0.84 [−1.67, −0.02] |
+| buying resolution below ~2 points with more evaluation games | the floor does not scale as asserted | the +0.88 rung's excess is −0.01 [−0.45, +0.42] at 4× power |
+| C6 declaration-timing manoeuvres | the adversary pays the cost it is trying to impose | both polarities lose, −2.1 to −5.3 |
+
+**Closed on size, but not for the reason the corpus gives.** The deception family's `tol` and `k`
+parameters have never been set by any committed artifact, and the sweep that sets them changes the
+reasoning even though it does not change the verdict. `tol` — how much hit probability the archetype
+will sacrifice per deviation — spans **6.75 points for `feint` alone** (−1.21 at 0.02, −1.74 at 0.05,
+−4.21 at the default 0.10, −7.96 at 0.20), with the same monotone shape for `withholder` and `silent`.
+The published value is three points off the family's best, and at its best `feint` reaches **−1.21**,
+which is *parity with* the unrestricted `v04` it restricts rather than below it. So the tidy claim in
+the row above — every restriction costs more than the corruption it buys — is not right as stated;
+what is right is that the family's best is still a loss, and still no threat to `v06`.
+
+`k` is a **dead knob**: `feint:k=1`, `k=3`, `k=6` and `k=12` are bit-identical to each other and to
+the default in every column of the artifact. It belongs on ledger entry C12's list alongside `patient`
+and `lockthr`, and any future ablation on it measures nothing.
+
+**Handed over, with numbers.**
+
+1. **Switch off the urgency escalation.** +1.23 to +1.62 over `v06`, replicated on three banks, mirror
+   misdeclaration rate 2.94% → 1.22%, commit gate clean. It is a configuration change, not an
+   architecture, and it is the largest well-measured improvement over the incumbent anyone in this
+   programme has produced. M2 rides along inside it.
+2. **The one-switch defects stack, and the commit gate decides which stack.** `rtie=1` on top of
+   urgency-off is **+1.91 [+1.29, +2.54]**, replicated on two banks, mirror misdeclaration rate
+   2.37% → 1.11%, gate-clean (longest dead run 1, zero action-limit games), and above the class
+   detection floor of 1.53. Adding `m1=0` reaches +2.68 and **fails the gate**: 2.91% provably-dead
+   asks, a 326-ask dead run, 0.33% of games killed by the action limit, and a game-length tail to 405
+   events. That is ledger entry C14 happening again, and the gate caught it before the strength number
+   was quoted, which is what the gate is for.
+3. **Half-suit contestation.** Real, replicated, dose-responsive, out of class, and unattributed.
+   Phase 3 should either attribute it or price it as an opponent.
+4. **The pressure cliff is a hazard to design against, not an opportunity.** Print `eventsPerGame`
+   against the 220 rung for every candidate; a search that reasons over a longer horizon moves toward
+   it.
+5. **Three harness repairs, in priority order**: T10's independent per-seat stream (threat-model E-1
+   is still open); stripping `Event::confidence` before `emit`; and moving `decisionCapture()` out of
+   the shared namespace before phase 3 begins developing candidates against the channel that measures
+   them.

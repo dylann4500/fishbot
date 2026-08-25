@@ -98,16 +98,62 @@ inline const std::vector<SeedEntry>& seedRegistry() {
     {7021002, SeedRole::Eval, "v07", "C1 responder evaluation bank B (fresh; replicate)", 0, ""},
     {7022001, SeedRole::Eval, "v07", "C0 planted-edge ground truth (reference exploiter vs handicapped target)", 0, ""},
     {7022002, SeedRole::Eval, "v07", "C0 planted-edge ground truth, replicate", 0, ""},
-    // Phase 2-4 training banks.
-    {7030001, SeedRole::Eval, "v07", "train bank 1", 0, "research/v07/banks/train"},
-    {7030002, SeedRole::Eval, "v07", "train bank 2", 0, "research/v07/banks/train"},
-    {7030003, SeedRole::Eval, "v07", "train bank 3", 0, "research/v07/banks/train"},
-    {7030004, SeedRole::Eval, "v07", "train bank 4", 0, "research/v07/banks/train"},
+    // Phase 2-4 training banks.  Phase 2 EVALUATES every exploiter on these, so
+    // they are burnt by the time phase 3 starts; that is deliberate and is what
+    // makes them the training half.  Nothing in phase 2 may touch a 709xxxx seed.
+    {7030001, SeedRole::Eval, "v07", "train bank 1 (phase-2 adversary evaluation A)", 0, "research/v07/banks/train"},
+    {7030002, SeedRole::Eval, "v07", "train bank 2 (phase-2 adversary evaluation B)", 0, "research/v07/banks/train"},
+    {7030003, SeedRole::Eval, "v07", "train bank 3 (phase-2 replication / transfer)", 0, "research/v07/banks/train"},
+    {7030004, SeedRole::Eval, "v07", "train bank 4 (phase-3/4 reserve)", 0, "research/v07/banks/train"},
+    // ---- phase 2 --------------------------------------------------------
+    // Adversary FITTING banks.  One per independent search, so that two searches
+    // never share a deal bank: the phase brief's requirement that the searches
+    // not share a bias applies to the sampling noise as much as to the
+    // objective, and a shared fitting bank is a shared bias.
+    {7040001, SeedRole::Fit, "v07", "P2 adversary fit bank 01", 0, ""},
+    {7040002, SeedRole::Fit, "v07", "P2 adversary fit bank 02", 0, ""},
+    {7040003, SeedRole::Fit, "v07", "P2 adversary fit bank 03", 0, ""},
+    {7040004, SeedRole::Fit, "v07", "P2 adversary fit bank 04", 0, ""},
+    {7040005, SeedRole::Fit, "v07", "P2 adversary fit bank 05", 0, ""},
+    {7040006, SeedRole::Fit, "v07", "P2 adversary fit bank 06", 0, ""},
+    {7040007, SeedRole::Fit, "v07", "P2 adversary fit bank 07", 0, ""},
+    {7040008, SeedRole::Fit, "v07", "P2 adversary fit bank 08", 0, ""},
+    {7040009, SeedRole::Fit, "v07", "P2 adversary fit bank 09", 0, ""},
+    {7040010, SeedRole::Fit, "v07", "P2 adversary fit bank 10", 0, ""},
+    {7040011, SeedRole::Fit, "v07", "P2 adversary fit bank 11", 0, ""},
+    {7040012, SeedRole::Fit, "v07", "P2 adversary fit bank 12", 0, ""},
+    {7040013, SeedRole::Fit, "v07", "P2 adversary fit bank 13", 0, ""},
+    {7040014, SeedRole::Fit, "v07", "P2 adversary fit bank 14", 0, ""},
+    {7040015, SeedRole::Fit, "v07", "P2 adversary fit bank 15", 0, ""},
+    {7040016, SeedRole::Fit, "v07", "P2 adversary fit bank 16", 0, ""},
+    {7040017, SeedRole::Fit, "v07", "P2 adversary fit bank 17", 0, ""},
+    {7040018, SeedRole::Fit, "v07", "P2 adversary fit bank 18", 0, ""},
+    {7040019, SeedRole::Fit, "v07", "P2 adversary fit bank 19", 0, ""},
+    {7040020, SeedRole::Fit, "v07", "P2 adversary fit bank 20", 0, ""},
+    {7040021, SeedRole::Fit, "v07", "P2 adversary fit bank 21", 0, ""},
+    {7040022, SeedRole::Fit, "v07", "P2 adversary fit bank 22", 0, ""},
+    {7040023, SeedRole::Fit, "v07", "P2 adversary fit bank 23", 0, ""},
+    {7040024, SeedRole::Fit, "v07", "P2 adversary fit bank 24", 0, ""},
+    {7040025, SeedRole::Fit, "v07", "P2 adversary fit bank 25", 0, ""},
+    {7040026, SeedRole::Fit, "v07", "P2 adversary fit bank 26", 0, ""},
+    {7040027, SeedRole::Fit, "v07", "P2 adversary fit bank 27", 0, ""},
+    {7040028, SeedRole::Fit, "v07", "P2 adversary fit bank 28", 0, ""},
+    {7040029, SeedRole::Fit, "v07", "P2 adversary fit bank 29", 0, ""},
+    {7040030, SeedRole::Fit, "v07", "P2 adversary fit bank 30", 0, ""},
+    {7040031, SeedRole::Fit, "v07", "P2 adversary fit bank 31", 0, ""},
+    // Characterisation banks: the per-decision channel pointed at the TARGET
+    // arm while an exploiter plays it.  Diagnostic, never a strength claim.
+    {7050001, SeedRole::Diagnostic, "v07", "P2 mechanism characterisation (v7decide --capture=b)", 0, ""},
+    {7050002, SeedRole::Diagnostic, "v07", "P2 mechanism characterisation, replicate", 0, ""},
+    {7051001, SeedRole::Diagnostic, "v07", "P2 harness probes (arm swap, action cap, clairvoyance anchor)", 0, ""},
     // Phase 5 holdout.  SEALED: unsealPhase 5.
     {7090001, SeedRole::Sealed, "v07", "holdout bank 1", 5, "sealed until phase 5"},
     {7090002, SeedRole::Sealed, "v07", "holdout bank 2", 5, "sealed until phase 5"},
     {7090003, SeedRole::Sealed, "v07", "holdout bank 3", 5, "sealed until phase 5"},
-    {7091001, SeedRole::Sealed, "v07", "sealed adversary half", 5, "sealed until phase 5"},
+    {7090004, SeedRole::Sealed, "v07", "holdout bank 4 (fresh adversary search against the frozen v0.7)", 5, "sealed until phase 5"},
+    {7090005, SeedRole::Sealed, "v07", "holdout bank 5 (phase-5 negative controls / planted-edge recovery)", 5, "sealed until phase 5"},
+    {7091001, SeedRole::Sealed, "v07", "sealed adversary half (research/v07/banks/holdout/adversaries-holdout.sealed)", 5, "sealed until phase 5"},
+    {7091002, SeedRole::Sealed, "v07", "sealed adversary half, fitting bank for the phase-5 fresh search", 5, "sealed until phase 5"},
   };
   return R;
 }

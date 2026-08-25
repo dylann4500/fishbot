@@ -1,0 +1,25 @@
+== P8 denial dose response vs v06 ==
+  done control
+  done r12=5
+  done r12=10
+  done r12=15
+  done r12=20
+  done r12=25
+  done r12=30
+  done r12=40
+  done r13=25
+  done r14=25
+  done r15=25
+  done r16=25
+  done r17=25
+  done denial-all
+  done m2off
+  done m2off-r12
+  done search
+  done search-r12
+  done search-m2
+  done composite
+== P8 transfer: does denial survive the frontier's own search? ==
+  done r12-vs-Fcheap
+  done composite-vs-Fcheap
+done -> ../research/v07/results/P8-denial.jsonl

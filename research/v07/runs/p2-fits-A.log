@@ -1,0 +1,5 @@
+=== X01  C1 base=v06 target=Ffast kpi=win seed=7040001 budget=12x16x250 - ===
+  X01 fitted in 1649s
+=== X02  C1 base=v06 target=Ffast kpi=win seed=7040002 budget=20x20x350 - ===
+  X02 fitted in 4923s
+=== X03  C1 base=v06 target=Ffast kpi=win seed=7040003 budget=8x12x150 - ===

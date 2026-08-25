@@ -1,0 +1,184 @@
+=== v06 ===
+repeat (a,suit,t)  15734  (46.8302%)
+asks in own-locked 4086  (12.1614% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 106 (2.94444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v07:r12=20 ===
+repeat (a,suit,t)  17332  (48.9881%)
+asks in own-locked 2812  (7.94799% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 148 (4.11111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   18   wrong 14 (77.7778%)
+action-limit games 0 (0%)
+=== v07:r12=25 ===
+repeat (a,suit,t)  18046  (50.1584%)
+asks in own-locked 2870  (7.9771% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 118 (3.27778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   14   wrong 10 (71.4286%)
+action-limit games 0 (0%)
+=== v07:r12=40 ===
+repeat (a,suit,t)  18430  (51.1461%)
+asks in own-locked 2488  (6.90459% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 110 (3.05556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   20   wrong 8 (40%)
+action-limit games 0 (0%)
+=== v06:m2=0 ===
+repeat (a,suit,t)  15740  (46.8424%)
+asks in own-locked 4090  (12.1719% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 72 (2%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   18   wrong 10 (55.5556%)
+action-limit games 0 (0%)
+=== v07:m2=0,r12=25 ===
+repeat (a,suit,t)  18040  (50.1501%)
+asks in own-locked 2872  (7.98399% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 102 (2.83333%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   24   wrong 12 (50%)
+action-limit games 0 (0%)
+=== v07c:mode=2 ===
+repeat (a,suit,t)  15484  (46.6723%)
+asks in own-locked 3634  (10.9537% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 164 (4.55556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   2   wrong 2 (100%)
+action-limit games 0 (0%)
+=== v07:r16=25 ===
+repeat (a,suit,t)  15538  (46.5935%)
+asks in own-locked 4200  (12.5945% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 108 (3%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v07:r17=25 ===
+repeat (a,suit,t)  15826  (46.9141%)
+asks in own-locked 4148  (12.2962% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 100 (2.77778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 ===
+repeat (a,suit,t)  17908  (49.9094%)
+asks in own-locked 2685  (7.48307% of asks)   -- guaranteed miss, but emits a certificate
+declarations       3600   wrong 116 (3.22222%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   23   wrong 18 (78.2609%)
+action-limit games 0 (0%)
+=== v06 ===
+asks/game          83.995   hit rate 52.9853%
+DEAD asks          6  (0.0178582% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+declarations       3600   wrong 106 (2.94444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v06:xf=0 ===
+asks/game          86.07   hit rate 53.7876%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+declarations       3600   wrong 86 (2.38889%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v06:m1=0 ===
+asks/game          86.06   hit rate 52.7423%
+DEAD asks          652  (1.89403% of asks)   -- actor could PROVE the target lacks the card
+dead runs          648  mean length 1.00617  longest 2
+games w/ run>=6    0  (0%)
+declarations       3600   wrong 88 (2.44444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   8   wrong 4 (50%)
+action-limit games 0 (0%)
+=== v06:rtie=1 ===
+asks/game          85.65   hit rate 53.9813%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+declarations       3600   wrong 70 (1.94444%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 6 (100%)
+action-limit games 0 (0%)
+=== v06:m2=0 ===
+asks/game          84.005   hit rate 52.979%
+DEAD asks          8  (0.0238081% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+declarations       3600   wrong 72 (2%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   18   wrong 10 (55.5556%)
+action-limit games 0 (0%)
+=== v06 ===
+games              600
+events/game        94.59   median 94  p90 110  p99 120  max 131
+asks/game          85.25   hit rate 53.2903%
+DEAD asks          6  (0.0117302% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.0117302% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1136  (2.22092%)
+declarations       5400   wrong 128 (2.37037%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 ===
+games              600
+events/game        97.1633   median 96  p90 111  p99 132  max 405
+asks/game          87.8333   hit rate 52.8159%
+DEAD asks          1534  (2.91082% of asks)   -- actor could PROVE the target lacks the card
+dead runs          880  mean length 1.74318  longest 326
+games w/ run>=6    2  (0.333333%)
+starved turns      328  (0.622391% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     2570  (4.87666%)
+declarations       5392   wrong 56 (1.03858%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   20   wrong 12 (60%)
+action-limit games 2 (0.333333%)
+=== v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 ===
+games              600
+events/game        95.8333   median 96  p90 111  p99 122  max 129
+asks/game          86.46   hit rate 53.8399%
+DEAD asks          10  (0.0192767% of asks)   -- actor could PROVE the target lacks the card
+dead runs          10  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      10  (0.0192767% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1300  (2.50598%)
+declarations       5400   wrong 60 (1.11111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   40   wrong 18 (45%)
+action-limit games 0 (0%)
+=== v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 ===
+events/game        93.3   median 93  p90 108  p99 121  max 124
+asks/game          84.0267   hit rate 52.88%
+DEAD asks          2  (0.00793399% of asks)   -- actor could PROVE the target lacks the card
+dead runs          2  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+declarations       2700   wrong 60 (2.22222%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   0   wrong 0 (0%)
+action-limit games 0 (0%)
+=== v07:r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 ===
+events/game        99.4733   median 99  p90 115  p99 122  max 123
+asks/game          89.8533   hit rate 50.6678%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+declarations       2700   wrong 98 (3.62963%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   10   wrong 8 (80%)
+action-limit games 0 (0%)
+=== v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,ma ===
+events/game        99.4733   median 99  p90 115  p99 122  max 123
+asks/game          89.8533   hit rate 50.6678%
+DEAD asks          0  (0% of asks)   -- actor could PROVE the target lacks the card
+dead runs          0  mean length 0  longest 0
+games w/ run>=6    0  (0%)
+declarations       2700   wrong 92 (3.40741%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   16   wrong 14 (87.5%)
+action-limit games 0 (0%)

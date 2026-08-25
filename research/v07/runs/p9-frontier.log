@@ -1,0 +1,10 @@
+  done D-r12-25 vs Fcheap
+  done D-r12-25 vs Fmid
+  done D-composite vs Fcheap
+  done D-composite vs Fmid
+  done C5-unfitted vs Fcheap
+  done C5-unfitted vs Fmid
+  done SW-noURG vs Fcheap
+  done SW-noURG vs Fmid
+  done D-r12-25 vs Fsearch
+done -> ../research/v07/results/P9-frontier.jsonl

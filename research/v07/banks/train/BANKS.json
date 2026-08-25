@@ -1,0 +1,44 @@
+{
+ "kind": "fishbot-v07-bank-manifest",
+ "half": "train",
+ "commit": "f4581da58ff0a4408cd222d3313e26a43ad0101a",
+ "written": "phase 2",
+ "banks": [
+  {
+   "seed": 7030001,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "4bafec09b74925d6",
+   "rotations": 2,
+   "role": "train",
+   "note": "phase-2 adversary evaluation bank A; phases 3-4 training"
+  },
+  {
+   "seed": 7030002,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "fb56483b3fffe0bb",
+   "rotations": 2,
+   "role": "train",
+   "note": "phase-2 adversary evaluation bank B; phases 3-4 training"
+  },
+  {
+   "seed": 7030003,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "031ce425e3fdef3d",
+   "rotations": 2,
+   "role": "train",
+   "note": "phase-2 replication / transfer; phases 3-4 training"
+  },
+  {
+   "seed": 7030004,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "e4acaae8326faed9",
+   "rotations": 2,
+   "role": "train",
+   "note": "phases 3-4 reserve"
+  }
+ ]
+}

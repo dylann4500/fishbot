@@ -1,0 +1,12 @@
+== P7 channel ceilings, bank 7030002, 6000 deals x 2 ==
+  done control  v06
+  done urg-always-pool  v06:pool=45
+  done urg-always-oppcard  v06:oppfloor=54
+  done urg-always-events  v06:force=1
+  done urg-always-askfl  v06:askfloor=1.1
+  done urg-always-all  v06:pool=45,oppfloor=54,force=1,askfloor=1.1
+  done urg-never  v06:pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+  done m2-off  v06:m2=0
+  done m2-off-never-urg  v06:m2=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+  done no-declare  v06:declare=0
+done -> ../research/v07/results/P7-ceilings.jsonl

@@ -5,6 +5,7 @@
 #include "v05.hpp"
 #include "v06.hpp"
 #include "v07_responder.hpp"
+#include "v07_adapt.hpp"
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
@@ -214,8 +215,11 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     auto a = std::make_unique<V07Responder>();
     applyV06Opts(a.get(), o);
     a->x.extraFeats = true;              // the widened score is always live
-    // The flat vector extends v0.6's by NR7 coordinates.  With those twelve at
-    // zero the class is v0.6 bit for bit, which is the identity control.
+    // The flat vector extends v0.6's by NR7 coordinates.  With those sixteen at
+    // zero the class is v0.6 bit for bit, which is the identity control; a
+    // phase-1 vector carrying only the first twelve loads unchanged and leaves
+    // the four phase-2 information-denial coordinates at zero, so every phase-1
+    // fitted responder still reproduces itself under this build.
     { auto ap = o.find("allparams");
       if (ap != o.end()) {
         std::vector<double> v;
@@ -231,6 +235,20 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     a->admitDead = optI(o, "dead7", a->admitDead ? 1 : 0) != 0;
     a->deadCap   = optI(o, "deadcap", a->deadCap);
     a->corrPlans = optI(o, "corr", a->corrPlans);
+    return a;
+  }
+  // C6, the scripted-adaptive class (v07_adapt.hpp).  `hold=0` reduces it to
+  // v0.6 bit for bit, which is the identity control.
+  if (base == "v07c") {
+    auto a = std::make_unique<V07AdaptAgent>();
+    applyV06Opts(a.get(), o);
+    a->holdOn   = optI(o, "hold", a->holdOn);
+    a->holdMax  = optI(o, "holdmax", a->holdMax);
+    a->lockProb = optD(o, "lockp", a->lockProb);
+    a->ambigMin = optI(o, "ambig", a->ambigMin);
+    a->dumpOn   = optI(o, "dump", a->dumpOn);
+    a->mode     = optI(o, "mode", a->mode);
+    a->aggrMargin = optD(o, "aggr", a->aggrMargin);
     return a;
   }
   if (base == "v07i") {

@@ -42,6 +42,74 @@ namespace fish {
 //      fit is running rather than two studies later.
 enum class TuneObjective { SoftMin, Min, Mean, Regret, MinimaxRegret };
 
+// v0.7 phase 2 -- MECHANISM OBJECTIVES.
+//
+// Every exploiter search the corpus has ever run maximised WIN RATE against the
+// frozen target.  Fifteen runs of one search are one run, and a search that
+// only ever climbs one gradient has one search bias.  These objectives climb a
+// different one: each names a per-decision failure mode of the TARGET and asks
+// the optimiser to make it fire more often, whether or not that immediately
+// converts into games.  The value is diagnostic as much as competitive -- an
+// adversary that doubles the target's declaration error rate and gains nothing
+// in win rate is telling us the channel is not worth what the ledger's
+// conversion arithmetic says it is, and that is a result.
+//
+// Every one of these reads a field of MatchStats that the arena ALREADY
+// accumulates for the B arm, so none of them needs new plumbing:
+//   declerr   1 - declCorrect[1]/decl[1]        the target's misdeclaration rate  (L1)
+//   forced    fdecl[1] per game                 the target's forced-endgame incidence  (L13)
+//   asksupp   1 - hits[1]/asks[1]               the target's miss rate  (L3, L10)
+//   declsupp  1 - decl[1]/(4.5 per game)        declarations denied to the target  (L1 timing)
+//   setdiff   (sets[0]-sets[1]) per game        the MARGIN in half-suits rather than in games:
+//                                               the same quantity win rate coarsens to a bit,
+//                                               and the ledger's own conversion (1 unit of
+//                                               differential = 14.7 points) is fitted on it
+//   limit     limitHits per deal                games driven to the action cap  (harness probe)
+//   events    events per game                   game length; the stalling hypothesis
+// `win` is the incumbent objective and stays the default.
+enum class TuneKpi { Win, DeclErr, Forced, AskSupp, DeclSupp, SetDiff, Limit, Events };
+
+inline TuneKpi kpiFromName(const std::string& n) {
+  if (n == "declerr")  return TuneKpi::DeclErr;
+  if (n == "forced")   return TuneKpi::Forced;
+  if (n == "asksupp")  return TuneKpi::AskSupp;
+  if (n == "declsupp") return TuneKpi::DeclSupp;
+  if (n == "setdiff")  return TuneKpi::SetDiff;
+  if (n == "limit")    return TuneKpi::Limit;
+  if (n == "events")   return TuneKpi::Events;
+  return TuneKpi::Win;
+}
+inline const char* kpiName(TuneKpi k) {
+  switch (k) {
+    case TuneKpi::DeclErr:  return "declerr";
+    case TuneKpi::Forced:   return "forced";
+    case TuneKpi::AskSupp:  return "asksupp";
+    case TuneKpi::DeclSupp: return "declsupp";
+    case TuneKpi::SetDiff:  return "setdiff";
+    case TuneKpi::Limit:    return "limit";
+    case TuneKpi::Events:   return "events";
+    default:                return "win";
+  }
+}
+
+// All KPIs are stated so that LARGER IS BETTER FOR THE ADVERSARY, and all are
+// scaled into roughly the unit interval so that one `beta` and one sigma ladder
+// work across them without retuning the CEM per objective.
+inline double kpiValue(TuneKpi kpi, const MatchStats& st, int rotations) {
+  const double n = double(std::max(1, st.games * std::max(1, rotations)));
+  auto rate = [](long long a, long long b) { return b ? double(a) / double(b) : 0.0; };
+  switch (kpi) {
+    case TuneKpi::DeclErr:  return 1.0 - rate(st.declCorrect[1], st.decl[1]);
+    case TuneKpi::Forced:   return double(st.fdecl[1]) / n;
+    case TuneKpi::AskSupp:  return 1.0 - rate(st.hits[1], st.asks[1]);
+    case TuneKpi::DeclSupp: return 1.0 - (double(st.decl[1]) / n) / 4.5;
+    case TuneKpi::SetDiff:  return (double(st.sets[0]) - double(st.sets[1])) / n;
+    case TuneKpi::Limit:    return double(st.limitHits) / double(std::max(1, st.games));
+    case TuneKpi::Events:   return (double(st.events) / n) / 400.0;
+    default:                return double(st.winsA) / n;
+  }
+}
+
 struct TuneSpec {
   std::vector<std::string> panel;
   int gamesPerOpponent = 250;
@@ -59,8 +127,18 @@ struct TuneSpec {
   Rules rules;
   int threads = 0;
   std::string baseSpec = "v04";
+  std::string partners = "";    // v0.7 P2: the other two seats of the adversary team.
+                                // Empty = three copies (k = 3, the headline seat
+                                // count).  Set to the TARGET's spec to fit the
+                                // one-seat deviation column (k = 1) that
+                                // THREAT-MODEL.md T2 makes mandatory alongside it.
+  bool correlated = false;      // v0.7 P2: draw the A2 ex-ante correlation signal
+                                // during fitting, so a responder reading it with
+                                // corr=K is fitted in the regime it will be
+                                // measured in rather than transplanted into it.
   std::string pairSpec = "";    // incumbent for the paired objective; "" = the CEM mean
   TuneObjective objective = TuneObjective::SoftMin;
+  TuneKpi kpi = TuneKpi::Win;
   bool paired = false;
   std::vector<double> lo, hi;
 };
@@ -68,7 +146,17 @@ struct TuneSpec {
 inline std::string weightSpec(const std::string& base, const std::vector<double>& w) {
   // Derive the switch from NFEAT.  Hard-coding 18 here is the same class of
   // defect that cost v0.4 a whole fitting round when NFEAT grew to 20.
-  std::string s = base + (w.size() > size_t(NFEAT) ? ":allparams=" : ":weights=");
+  //
+  // v0.7 P2.  A base that ALREADY carries options -- `v07:dead7=1`, `v07:corr=3`
+  // -- has to continue the option list with a comma, not open a second one with
+  // a colon.  `parseOpts` splits at the FIRST colon, so `v07:dead7=1:allparams=..`
+  // parses as the single option `dead7 = "1:allparams=.."`: the fit would run
+  // with the whole weight vector silently swallowed into an unread string and
+  // every candidate would be the default vector.  The base is the natural place
+  // to express a structural switch that the fit must be conditioned ON rather
+  // than fit, so this had to work.
+  const char* sep = base.find(':') == std::string::npos ? ":" : ",";
+  std::string s = base + sep + (w.size() > size_t(NFEAT) ? "allparams=" : "weights=");
   char buf[32];
   for (size_t i = 0; i < w.size(); i++) {
     snprintf(buf, sizeof(buf), "%.5f", w[i]);
@@ -116,6 +204,8 @@ inline Evaluation evaluateCandidate(const TuneSpec& sp, const std::vector<double
   for (size_t i = 0; i < sp.panel.size(); i++) {
     MatchConfig mc;
     mc.specA = spec; mc.specB = sp.panel[i];
+    mc.partnersA = sp.partners;
+    mc.correlated = sp.correlated;
     mc.games = sp.gamesPerOpponent;
     mc.rotations = sp.rotations;
     mc.seed = mixSeed(genSeed, i * 7919 + 13);   // common random numbers
@@ -124,9 +214,14 @@ inline Evaluation evaluateCandidate(const TuneSpec& sp, const std::vector<double
     MatchStats st = runMatch(mc);
     // games * rotations, not games * 2: fitting at --rotations=6 silently
     // reported a third of the true win rate.
-    double wr = double(st.winsA) / double(std::max(1, st.games * std::max(1, mc.rotations)));
+    double wr = kpiValue(sp.kpi, st, mc.rotations);
     e.winRates.push_back(wr);
-    if (sp.paired) e.paired.push_back(st.paired);
+    // The per-deal paired vector records A-WINS and nothing else, so the
+    // deal-level pairing below is defined for the win objective only.  Under a
+    // mechanism objective the candidate is instead differenced against the
+    // incumbent at the aggregate, on the same common random numbers (see
+    // `tune`), which removes the bank's contribution but not the deal's.
+    if (sp.paired && sp.kpi == TuneKpi::Win) e.paired.push_back(st.paired);
   }
   e.score = combine(sp, e.winRates, nullptr);
   return e;
@@ -145,9 +240,10 @@ inline std::vector<double> tune(TuneSpec sp, std::vector<double> mu, FILE* out) 
   // Header record.  build_tables reads the fit's configuration from this line
   // instead of from prose, which is how the v0.5 study ended up sourcing beta
   // from a markdown file.
-  fprintf(out, "{\"header\":1,\"base\":\"%s\",\"objective\":%d,\"beta\":%.4f,\"paired\":%d,"
+  fprintf(out, "{\"header\":1,\"kpi\":\"%s\",\"partners\":\"%s\",\"correlated\":%d,\"base\":\"%s\",\"objective\":%d,\"beta\":%.4f,\"paired\":%d,"
                "\"pop\":%d,\"elite\":%d,\"gens\":%d,\"deals\":%d,\"rotations\":%d,\"seed\":%llu,"
                "\"sigmaRel\":%.4f,\"panel\":[",
+          kpiName(sp.kpi), sp.partners.c_str(), sp.correlated ? 1 : 0,
           sp.baseSpec.c_str(), int(sp.objective), sp.beta, sp.paired ? 1 : 0,
           sp.population, sp.elite, sp.generations, sp.gamesPerOpponent, sp.rotations,
           (unsigned long long)sp.seed, sp.sigmaRel);
@@ -182,7 +278,14 @@ inline std::vector<double> tune(TuneSpec sp, std::vector<double> mu, FILE* out) 
     // Paired rescoring.  The incumbent is candidate 0 and was played on the very
     // same deals, so the per-deal margin over it is available for free and
     // removes the deal-level variance that dominates an absolute win rate.
-    if (sp.paired) {
+    if (sp.paired && sp.kpi != TuneKpi::Win) {
+      // Aggregate pairing for a mechanism objective: candidate 0 IS the
+      // incumbent and was played on the very same deals, so the difference is
+      // the cleanest estimator available without a per-deal KPI vector.
+      for (int i = sp.population - 1; i >= 0; i--)
+        for (size_t o = 0; o < evals[i].winRates.size(); o++)
+          evals[i].winRates[o] -= (o < evals[0].winRates.size() ? evals[0].winRates[o] : 0.0);
+    } else if (sp.paired) {
       for (int i = 0; i < sp.population; i++) {
         std::vector<double> rel(sp.panel.size(), 0.0);
         for (size_t o = 0; o < sp.panel.size(); o++) {

@@ -220,7 +220,7 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
   DecSummary S;
   S.rows = (long long)rows.size();
   S.deals = deals;
-  const int NM = 10;
+  const int NM = 17;
   static const char* names[NM] = {
     "askHitRate",            // asks that landed
     "ownLockedAskRate",      // asks into a half-suit this team ALREADY owns outright (ledger L3)
@@ -231,7 +231,20 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
     "searchChangeRate",      // ... and at which it moved the choice (E14's deviation rate)
     "declAccuracy",          // voluntary declarations that were correct
     "declAllocErrorShare",   // wrong declarations where the TEAM held all six (ledger L1)
-    "forcedDeclAccuracy"
+    "forcedDeclAccuracy",
+    // v0.7 phase 2.  The urgency predicate is a public, frozen threshold in a
+    // white-box target, and two of its four inputs are under an opponent's
+    // control.  Splitting declaration accuracy by it is what separates "the
+    // adversary made the target declare badly" from "the adversary is stronger".
+    "declUrgentShare",       // voluntary declarations taken under urgency
+    "declAccUrgent",         // ... and how many of those were right
+    "declAccCalm",           // ... against the ones taken with time in hand
+    // which urgency clause fired, as a share of all voluntary declarations.
+    // They are not exclusive -- a declaration can fire two clauses at once.
+    "urgWhyPatience",        // unresolvedCount <= patiencePool
+    "urgWhyOppCards",        // oppCards <= oppCardFloor      <- the adversary's own hand count
+    "urgWhyEvents",          // pub.nEvents >= forceDeclareEvents  <- the length of the game
+    "urgWhyAskFloor"         // bestAskProbability < askFloor  <- a starved posterior
   };
   S.m.resize(NM);
   for (int i = 0; i < NM; i++) { S.m[i].name = names[i];
@@ -258,6 +271,10 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
       // (SUBOPTIMALITY-LEDGER.md L1), and the share is only visible per
       // declaration.
       add(8, r.deal, (!r.hit && r.ownLocked) ? 1 : 0, r.hit ? 0 : 1);
+      add(10, r.deal, r.urgent ? 1 : 0, 1);
+      add(11, r.deal, (r.urgent && r.hit) ? 1 : 0, r.urgent ? 1 : 0);
+      add(12, r.deal, (!r.urgent && r.hit) ? 1 : 0, r.urgent ? 0 : 1);
+      for (int b = 0; b < 4; b++) add(13 + b, r.deal, (r.urgWhy >> b) & 1, 1);
     } else {
       add(9, r.deal, r.hit ? 1 : 0, 1);
     }

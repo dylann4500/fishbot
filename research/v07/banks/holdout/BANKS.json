@@ -1,0 +1,79 @@
+{
+ "kind": "fishbot-v07-bank-manifest",
+ "half": "holdout",
+ "commit": "f4581da58ff0a4408cd222d3313e26a43ad0101a",
+ "written": "phase 2",
+ "unsealPhase": 5,
+ "banks": [
+  {
+   "seed": 7090001,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "896dbc89be124d85",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "phase-5 holdout bank 1",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7090002,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "0b6e40d834ac0ca1",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "phase-5 holdout bank 2",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7090003,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "863bea69baf6e73c",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "phase-5 holdout bank 3",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7090004,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "54f257c3f8ae9fab",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "phase-5 fresh adversary search against the frozen v0.7",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7090005,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "268a1dae71a31713",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "phase-5 negative controls / planted-edge recovery",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7091001,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "958ada042cc26900",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "sealed adversary half: evaluation bank",
+   "unsealPhase": 5
+  },
+  {
+   "seed": 7091002,
+   "deals": 24000,
+   "deckSets": 9,
+   "digest": "5c39af3b5e0bd9a0",
+   "rotations": 2,
+   "role": "holdout",
+   "note": "sealed adversary half: fitting bank for the phase-5 fresh search",
+   "unsealPhase": 5
+  }
+ ]
+}

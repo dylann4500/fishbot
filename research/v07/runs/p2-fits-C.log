@@ -1,0 +1,7 @@
+=== X05  C1 base=v06 target=Ffast kpi=declerr seed=7040005 budget=8x12x150 - ===
+  X05 fitted in 642s
+=== X13  C2 base=v07:dead7=1 target=Ffast kpi=win seed=7040013 budget=8x12x150 - ===
+  X13 fitted in 777s
+=== X14  C2 base=v07:corr=3 target=Ffast kpi=win seed=7040014 budget=8x12x150 --correlated ===
+  X14 fitted in 835s
+=== X17  C1 base=v06 target=Ffast kpi=win seed=7040017 budget=8x12x150 --partners=v06 ===
