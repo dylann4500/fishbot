@@ -26,9 +26,17 @@ K3KEYS="${RTIE},${URGOFF},${STALL}"
 K3STACK="v06:${K3KEYS}"
 K3SEARCH="v06:${K3KEYS},${SEARCH}"
 
-# The leading v0.7 candidate: K3's keys laid on top of the phase-2 composite.
-# CANDIDATES.md section 10 fact 1 names replicating this the first job of phase 4.
-V07CAND="v07:m2=0,r12=25,${K3KEYS},${SEARCH}"
+# THE FROZEN v0.7 CONFIGURATION.  Phase 4's leading candidate going in was
+# `v07:m2=0,r12=25,${K3KEYS},${SEARCH}` -- K3's keys on top of the phase-2
+# composite.  `m2=0` is dropped from the freeze because its leave-one-out drop is
+# +0.00 with win rates identical to six decimals on both banks at 24,000 games:
+# ADVERSARIES section 4C's "M2 is the same defect and is bit-identical inert once
+# urgency is off", confirmed at thirty times the sample.  A key that provably does
+# nothing is surface without benefit.  See engine/fishbot_v07.json.
+V07CAND="v07:r12=25,${K3KEYS},${SEARCH}"
+# The pre-freeze candidate, kept because the replication cell and the attribution
+# lattice were run on it and the cross-play architecture was fitted from it.
+V07CAND_M2="v07:m2=0,r12=25,${K3KEYS},${SEARCH}"
 
 # The configuration the commit gate must reject -- a negative control, not a
 # proposal.  ADVERSARIES.md section 4H: +2.68 over v06 and unsound.

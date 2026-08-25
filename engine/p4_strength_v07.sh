@@ -58,9 +58,9 @@ if [ "$PART" = "repl" ] || [ "$PART" = "all" ]; then
   cell "cand_vs_p2comp"  "$V07CAND" "$P2COMP" 12000 "$F"
   # The same claim from the other end: the candidate against the deployed policy,
   # and against the cheap search, so the three numbers can be read together.
-  cell "cand_vs_v06"     "$V07CAND" "$V06"    12000 "$F"
-  cell "cand_vs_fcheap"  "$V07CAND" "$FCHEAP" 12000 "$F"
-  cell "p2comp_vs_v06"   "$P2COMP"  "$V06"    12000 "$F"
+  cell "cand_vs_v06"     "$V07CAND" "$V06"     6000 "$F"
+  cell "cand_vs_fcheap"  "$V07CAND" "$FCHEAP"  6000 "$F"
+  cell "p2comp_vs_v06"   "$P2COMP"  "$V06"     6000 "$F"
 fi
 
 # ----------------------------------------------------------------- attribution
@@ -69,25 +69,26 @@ if [ "$PART" = "lattice" ] || [ "$PART" = "all" ]; then
   echo "########## ATTRIBUTION: leave-one-out from the candidate, and add-one-in from v06" >&2
   # Reference opponent is `v06` throughout, because the headline claim is over the
   # deployed policy and a common reference is what makes the pieces additive-checkable.
-  # 12,000 deals x 2 x 2 banks = 48,000 games a cell, pooled half-width 0.63 --
-  # which is the size at which a 1.5-point piece is resolved and a 0.5-point piece is not.
+  # 6,000 deals x 2 rotations x 2 banks = 24,000 games a cell, pooled half-width
+  # 98/sqrt(24000) = 0.63.  The cells share banks and deal indices, so a DIFFERENCE
+  # between two arms is better resolved than 0.63*sqrt(2) would suggest.
 
   # add-one-in: each mechanism alone on top of v06
-  cell "add_none"     "$V06"                                   "$V06" 12000 "$F"
-  cell "add_search"   "v06:${SEARCH}"                          "$V06" 12000 "$F"
-  cell "add_rtie"     "v06:${RTIE}"                            "$V06" 12000 "$F"
-  cell "add_urgoff"   "v06:${URGOFF}"                          "$V06" 12000 "$F"
-  cell "add_stall"    "v06:${STALL}"                           "$V06" 12000 "$F"
-  cell "add_r12"      "v07:r12=25"                             "$V06" 12000 "$F"
-  cell "add_m2"       "v07:m2=0"                               "$V06" 12000 "$F"
+  cell "add_none"     "$V06"                                   "$V06"  6000 "$F"
+  cell "add_search"   "v06:${SEARCH}"                          "$V06"  6000 "$F"
+  cell "add_rtie"     "v06:${RTIE}"                            "$V06"  6000 "$F"
+  cell "add_urgoff"   "v06:${URGOFF}"                          "$V06"  6000 "$F"
+  cell "add_stall"    "v06:${STALL}"                           "$V06"  6000 "$F"
+  cell "add_r12"      "v07:r12=25"                             "$V06"  6000 "$F"
+  cell "add_m2"       "v07:m2=0"                               "$V06"  6000 "$F"
 
   # leave-one-out: the candidate minus each mechanism
-  cell "full"         "$V07CAND"                                                     "$V06" 12000 "$F"
-  cell "no_search"    "v07:m2=0,r12=25,${K3KEYS}"                                    "$V06" 12000 "$F"
-  cell "no_rtie"      "v07:m2=0,r12=25,${URGOFF},${STALL},${SEARCH}"                 "$V06" 12000 "$F"
-  cell "no_urgoff"    "v07:m2=0,r12=25,${RTIE},${STALL},${SEARCH}"                   "$V06" 12000 "$F"
-  cell "no_stall"     "v07:m2=0,r12=25,${RTIE},${URGOFF},${SEARCH}"                  "$V06" 12000 "$F"
-  cell "no_r12"       "v07:m2=0,${K3KEYS},${SEARCH}"                                 "$V06" 12000 "$F"
-  cell "no_m2"        "v07:r12=25,${K3KEYS},${SEARCH}"                               "$V06" 12000 "$F"
+  cell "full"         "$V07CAND"                                                     "$V06"  6000 "$F"
+  cell "no_search"    "v07:m2=0,r12=25,${K3KEYS}"                                    "$V06"  6000 "$F"
+  cell "no_rtie"      "v07:m2=0,r12=25,${URGOFF},${STALL},${SEARCH}"                 "$V06"  6000 "$F"
+  cell "no_urgoff"    "v07:m2=0,r12=25,${RTIE},${STALL},${SEARCH}"                   "$V06"  6000 "$F"
+  cell "no_stall"     "v07:m2=0,r12=25,${RTIE},${URGOFF},${SEARCH}"                  "$V06"  6000 "$F"
+  cell "no_r12"       "v07:m2=0,${K3KEYS},${SEARCH}"                                 "$V06"  6000 "$F"
+  cell "no_m2"        "v07:r12=25,${K3KEYS},${SEARCH}"                               "$V06"  6000 "$F"
 fi
 echo "== strength battery complete ==" >&2

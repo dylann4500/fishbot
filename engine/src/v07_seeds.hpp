@@ -141,6 +141,28 @@ inline const std::vector<SeedEntry>& seedRegistry() {
     {7040029, SeedRole::Fit, "v07", "P2 adversary fit bank 29", 0, ""},
     {7040030, SeedRole::Fit, "v07", "P2 adversary fit bank 30", 0, ""},
     {7040031, SeedRole::Fit, "v07", "P2 adversary fit bank 31", 0, ""},
+    // ---- phase 4 --------------------------------------------------------
+    // Phase 4 fitting banks.  Two uses, and both need one bank per search for
+    // the same reason phase 2 gives above -- a shared fitting bank is a shared
+    // bias.  7060001-7060006 fit INDEPENDENTLY-TRAINED RUNS of the v0.7
+    // architecture, which is what a cross-play table has to be built from and
+    // which does not otherwise exist, because the shipped candidate is a
+    // configuration on top of v0.6's frozen vector rather than a fit.
+    // 7060011-7060018 fit the adversary re-search against the IMPROVED policy.
+    {7060001, SeedRole::Fit, "v07", "P4 cross-play run 1 (architecture refit, v06 basin)", 0, ""},
+    {7060002, SeedRole::Fit, "v07", "P4 cross-play run 2 (architecture refit, v06 basin)", 0, ""},
+    {7060003, SeedRole::Fit, "v07", "P4 cross-play run 3 (architecture refit, v05 basin)", 0, ""},
+    {7060004, SeedRole::Fit, "v07", "P4 cross-play run 4 (spare)", 0, ""},
+    {7060005, SeedRole::Fit, "v07", "P4 cross-play run 5 (spare)", 0, ""},
+    {7060006, SeedRole::Fit, "v07", "P4 cross-play run 6 (spare)", 0, ""},
+    {7060011, SeedRole::Fit, "v07", "P4 adversary re-search Y01 (C1 in-class, win)", 0, ""},
+    {7060012, SeedRole::Fit, "v07", "P4 adversary re-search Y02 (C2 extended, win)", 0, ""},
+    {7060013, SeedRole::Fit, "v07", "P4 adversary re-search Y03 (C1, declerr)", 0, ""},
+    {7060014, SeedRole::Fit, "v07", "P4 adversary re-search Y04 (C1, events)", 0, ""},
+    {7060015, SeedRole::Fit, "v07", "P4 adversary re-search Y05 (C1, forced)", 0, ""},
+    {7060016, SeedRole::Fit, "v07", "P4 adversary re-search Y06 (C2, wide sigma)", 0, ""},
+    {7060017, SeedRole::Fit, "v07", "P4 adversary re-search Y07 (C1, v05 basin)", 0, ""},
+    {7060018, SeedRole::Fit, "v07", "P4 adversary re-search Y08 (C2, asksupp)", 0, ""},
     // Characterisation banks: the per-decision channel pointed at the TARGET
     // arm while an exploiter plays it.  Diagnostic, never a strength claim.
     {7050001, SeedRole::Diagnostic, "v07", "P2 mechanism characterisation (v7decide --capture=b)", 0, ""},

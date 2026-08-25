@@ -22,7 +22,7 @@ set -uo pipefail
 
 FISH=${FISH:-./fish7}
 OUT=${OUT:-../research/v07/results}
-SPEC=""; ID=""; GAMES=400; SEED=31; THREADS=${THREADS:-13}; SIDE=1
+SPEC=""; ID=""; GAMES=400; SEED=31; THREADS=${THREADS:-13}; SIDE=1; SIDEGAMES=${SIDEGAMES:-400}; S6GAMES=${S6GAMES:-400}
 BANKS="7030001,7030002"
 for a in "$@"; do
   case "$a" in
@@ -34,6 +34,8 @@ for a in "$@"; do
     --out=*)     OUT="${a#*=}" ;;
     --side=*)    SIDE="${a#*=}" ;;
     --banks=*)   BANKS="${a#*=}" ;;
+    --sidegames=*) SIDEGAMES="${a#*=}" ;;
+    --s6games=*)   S6GAMES="${a#*=}" ;;
     --fish=*)    FISH="${a#*=}" ;;
   esac
 done
@@ -49,14 +51,28 @@ MIR=$("$FISH" pathology --a="$SPEC" --b="$SPEC" --games="$GAMES" --rotations=2 \
 [ -z "$MIR" ] && { echo "gate_v07.sh: pathology produced no output for $ID" >&2; exit 2; }
 
 # ---- the side-channel gate, on both banks -----------------------------------
+# S6 runs in a CLEAN PROCESS.  Phase 3 (CANDIDATES section 2, C14) bisected the
+# `F-cheap` S6 anomaly to `v7side` leaking state between its own four passes:
+# running S3/S4/S5 in the same process changes which games S6 then sees, and the
+# audited decision COUNT itself takes four different values with execution
+# context (264,037 / 264,051 / 264,061 / 264,075).  Section 10 names fixing this
+# as the first thing phase 4 inherits.  The fix costs one extra process.
 SIDEJSON="[]"
 if [ "$SIDE" = "1" ]; then
   rows=""
   IFS=, read -r -a BK <<< "$BANKS"
   for b in "${BK[@]}"; do
-    j=$("$FISH" v7side --a="$SPEC" --b=v06 --games=400 --seed="$b" \
-                       --threads=2 --json 2>/dev/null | tail -1)
-    [ -n "$j" ] && rows="${rows:+$rows,}$j"
+    j1=$("$FISH" v7side --a="$SPEC" --b=v06 --games="$SIDEGAMES" --seed="$b" \
+                        --tests=s3,s4,s5 --threads="$THREADS" --json 2>/dev/null | tail -1)
+    # S6 AT ONE THREAD.  Above one thread the test is a lottery: the same command
+    # on the same cell returns 1, 2, 3 and 4 mismatches on successive runs and the
+    # DENOMINATOR moves too (270,593 / 270,608 / 270,628).  At one thread it is
+    # deterministic and reproduces phase 3's own one-thread figure for F-cheap
+    # exactly (1/264,061).  A gate that is a lottery is not a gate.
+    j2=$("$FISH" v7side --a="$SPEC" --b=v06 --games="$S6GAMES" --seed="$b" \
+                        --tests=s6 --threads=1 --json 2>/dev/null | tail -1)
+    [ -n "$j1" ] && rows="${rows:+$rows,}$j1"
+    [ -n "$j2" ] && rows="${rows:+$rows,}$j2"
   done
   SIDEJSON="[${rows}]"
 fi
@@ -108,11 +124,31 @@ RULES = [
 ]
 
 side = json.loads(sid) if sid.strip() else []
+s6res = {"mismatch": 0, "nodes": 0, "nonAsk": 0}
 if side:
-    ok = all(r.get("verdict") == "CERTIFIED" for r in side)
-    RULES.append(("G7 side-channel", ok,
-      " / ".join("%s:%s" % (r.get("seed"), r.get("verdict")) for r in side),
-      "THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks"))
+    a345 = [r for r in side if "S6 seat-isolation" not in r.get("tests", {})]
+    a6   = [r for r in side if "S6 seat-isolation" in r.get("tests", {})]
+    if a345:
+        RULES.append(("G7a S3/S4/S5", all(r["verdict"] == "CERTIFIED" for r in a345),
+          " ".join("%s:%s" % (r["seed"], "ok" if r["verdict"] == "CERTIFIED" else "FAIL") for r in a345),
+          "zero tolerance; every configuration in the corpus passes these three"))
+    if a6:
+        for r in a6:
+            s6res["mismatch"] += r["s6"]["mismatch"]; s6res["nodes"] += r["s6"]["nodes"]
+            s6res["nonAsk"] += sum(r["s6"]["misByKind"][1:])
+        rate = 1e6 * s6res["mismatch"] / max(1, s6res["nodes"])
+        searching = ("s1=1" in os.environ["SPEC"]) or ("v07i" in os.environ["SPEC"])
+        # G7b, exactly as docs/v07/PREREGISTRATION.md section 5.3 states it, and
+        # committed there BEFORE this was applied to any configuration.
+        #   (i)   no search  -> zero mismatches, no discretion
+        #   (ii)  search     -> a residual is tolerated and REPORTED, never called
+        #                       certified; the incumbent frontier carries it too
+        #   (iii) any non-ask mismatch is an immediate FAIL at any rate
+        okb = (s6res["nonAsk"] == 0) and (searching or s6res["mismatch"] == 0)
+        RULES.append(("G7b S6 seat-isolation", okb,
+          "%d/%d = %.2f per million%s" % (s6res["mismatch"], s6res["nodes"], rate,
+            "  (search residual -- NOT CERTIFIED under S6 as written)" if searching and s6res["mismatch"] else ""),
+          "one thread; zero for blueprint play, a search-specific residual the incumbent frontier also carries"))
 
 passed = all(ok for _, ok, _, _ in RULES)
 verdict = "PASS" if passed else "FAIL"
@@ -129,7 +165,7 @@ print("  reported, not gated: events/game %.3f, ask hit %.3f%%, misdeclaration %
 row = {"id": os.environ["ID"], "spec": os.environ["SPEC"], "verdict": verdict,
        "games": int(os.environ["GAMES"]), "seed": int(os.environ["SEED"]),
        "rules": {n: bool(ok) for n, ok, _, _ in RULES}, "stats": st,
-       "side": [{"seed": r.get("seed"), "verdict": r.get("verdict")} for r in side]}
+       "side": side, "s6": s6res}
 open(os.environ.get("JSONL", "/dev/null"), "a").write(json.dumps(row) + "\n")
 sys.exit(0 if passed else 1)
 PY

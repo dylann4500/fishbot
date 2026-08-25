@@ -1,0 +1,43 @@
+###### STAGE 1b: replication  Tue Aug 25 05:15:20 PDT 2026
+########## REPLICATION: the candidate against the phase-2 composite
+  cand_vs_p2comp bank 7030001  (12000 deals x2)
+  cand_vs_p2comp bank 7030002  (12000 deals x2)
+  cand_vs_v06 bank 7030001  (6000 deals x2)
+  cand_vs_v06 bank 7030002  (6000 deals x2)
+  cand_vs_fcheap bank 7030001  (6000 deals x2)
+  cand_vs_fcheap bank 7030002  (6000 deals x2)
+  p2comp_vs_v06 bank 7030001  (6000 deals x2)
+  p2comp_vs_v06 bank 7030002  (6000 deals x2)
+== strength battery complete ==
+###### STAGE 1c: attribution lattice  Tue Aug 25 05:44:03 PDT 2026
+########## ATTRIBUTION: leave-one-out from the candidate, and add-one-in from v06
+  add_none bank 7030001  (6000 deals x2)
+  add_none bank 7030002  (6000 deals x2)
+  add_search bank 7030001  (6000 deals x2)
+  add_search bank 7030002  (6000 deals x2)
+  add_rtie bank 7030001  (6000 deals x2)
+  add_rtie bank 7030002  (6000 deals x2)
+  add_urgoff bank 7030001  (6000 deals x2)
+  add_urgoff bank 7030002  (6000 deals x2)
+  add_stall bank 7030001  (6000 deals x2)
+  add_stall bank 7030002  (6000 deals x2)
+  add_r12 bank 7030001  (6000 deals x2)
+  add_r12 bank 7030002  (6000 deals x2)
+  add_m2 bank 7030001  (6000 deals x2)
+  add_m2 bank 7030002  (6000 deals x2)
+  full bank 7030001  (6000 deals x2)
+  full bank 7030002  (6000 deals x2)
+  no_search bank 7030001  (6000 deals x2)
+  no_search bank 7030002  (6000 deals x2)
+  no_rtie bank 7030001  (6000 deals x2)
+  no_rtie bank 7030002  (6000 deals x2)
+  no_urgoff bank 7030001  (6000 deals x2)
+  no_urgoff bank 7030002  (6000 deals x2)
+  no_stall bank 7030001  (6000 deals x2)
+  no_stall bank 7030002  (6000 deals x2)
+  no_r12 bank 7030001  (6000 deals x2)
+  no_r12 bank 7030002  (6000 deals x2)
+  no_m2 bank 7030001  (6000 deals x2)
+  no_m2 bank 7030002  (6000 deals x2)
+== strength battery complete ==
+###### STAGE 1 STRENGTH COMPLETE  Tue Aug 25 06:23:09 PDT 2026

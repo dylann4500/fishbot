@@ -1,0 +1,8 @@
+det=1   bank=7030001  1/394531  rate 2.53 per million
+det=1   bank=7030002  2/395836  rate 5.05 per million
+det=4   bank=7030001  0/395821  rate 0.00 per million
+det=4   bank=7030002  1/396613  rate 2.52 per million
+det=12  bank=7030001  0/394451  rate 0.00 per million
+det=12  bank=7030002  2/397462  rate 5.03 per million
+det=24  bank=7030001  0/394817  rate 0.00 per million
+det=24  bank=7030002  0/397734  rate 0.00 per million

@@ -1,0 +1,73 @@
+==============================================================================
+COMMIT GATE  FAIL  ::  v07cand
+  spec   v07:m2=0,r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.05820% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 134 < 220 and p99 130 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [XX] G7 side-channel        7030001[S3+S4+S5]:ok 7030001[S6]:NOT_CERTIFIED 7030002[S3+S4+S5]:ok 7030002[S6]:NOT_CERTIFIED  (THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks, S6 in a clean process)
+  reported, not gated: events/game 99.805, ask hit 50.716%, misdeclaration 2.55556%
+==============================================================================
+COMMIT GATE  FAIL  ::  P2-composite
+  spec   v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.01108% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 142 < 220 and p99 124 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [XX] G7 side-channel        7030001[S3+S4+S5]:ok 7030001[S6]:ok 7030002[S3+S4+S5]:ok 7030002[S6]:NOT_CERTIFIED  (THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks, S6 in a clean process)
+  reported, not gated: events/game 99.880, ask hit 50.631%, misdeclaration 2.83333%
+==============================================================================
+COMMIT GATE  PASS  ::  F-cheap
+  spec   v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.00589% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 131 < 220 and p99 124 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7 side-channel        7030001[S3+S4+S5]:ok 7030001[S6]:ok 7030002[S3+S4+S5]:ok 7030002[S6]:ok  (THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks, S6 in a clean process)
+  reported, not gated: events/game 94.225, ask hit 53.249%, misdeclaration 2.25000%
+==============================================================================
+COMMIT GATE  PASS  ::  K3-search
+  spec   v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.00878% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 125 < 220 and p99 122 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7 side-channel        7030001[S3+S4+S5]:ok 7030001[S6]:ok 7030002[S3+S4+S5]:ok 7030002[S6]:ok  (THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks, S6 in a clean process)
+  reported, not gated: events/game 94.802, ask hit 53.385%, misdeclaration 1.25000%
+==============================================================================
+COMMIT GATE  FAIL  ::  NEGCTL-m1off
+  spec   v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+  mirror 400 games, seed 31
+  [XX] G1 dead asks           2.59217% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [XX] G2 longest dead run    326 <= 5                                        (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [XX] G3 games w/ run>=6     2 == 0                                          (zero for every configuration the corpus has shipped)
+  [XX] G4 action-limit        2 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [XX] G5 mirror tail         max 405 < 220 and p99 132 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7 side-channel        7030001[S3+S4+S5]:ok 7030001[S6]:ok 7030002[S3+S4+S5]:ok 7030002[S6]:ok  (THREAT-MODEL S3/S4/S5/S6 by fish7 v7side, both training banks, S6 in a clean process)
+  reported, not gated: events/game 96.812, ask hit 52.955%, misdeclaration 1.05673%
+==============================================================================
+COMMIT GATE  PASS  ::  FROZEN-v07
+  spec   v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.05820% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 134 < 220 and p99 130 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance; every configuration in the corpus passes these three)
+  [ok] G7b S6 seat-isolation  1/542448 = 1.84 per million  (search residual -- NOT CERTIFIED under S6 as written)  (one thread; zero for blueprint play, a search-specific residual the incumbent frontier also carries)
+  reported, not gated: events/game 99.805, ask hit 50.716%, misdeclaration 2.55556%

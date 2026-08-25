@@ -1,0 +1,10 @@
+v06          bank=7030002  0/789575  rate 0.00e-6  games-with 0
+v06          bank=7030001  0/789279  rate 0.00e-6  games-with 0
+F-cheap      bank=7030002  4/791922  rate 5.05e-6  games-with 4
+F-cheap      bank=7030001  0/790983  rate 0.00e-6  games-with 0
+K3-search    bank=7030002  3/792477  rate 3.79e-6  games-with 2
+K3-search    bank=7030001  0/793254  rate 0.00e-6  games-with 0
+v07cand      bank=7030001  2/814292  rate 2.46e-6  games-with 2
+v07cand      bank=7030002  0/816534  rate 0.00e-6  games-with 0
+K3-stack    bank=7030001  0/791101  rate 0.00e-6  games-with 0
+K3-stack    bank=7030002  0/793641  rate 0.00e-6  games-with 0
