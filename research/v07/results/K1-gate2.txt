@@ -1,0 +1,21 @@
+# K1 gate part 2
+
+===== S6-only repeat #1 : E-mat bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S6 seat-isolation
+        0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   167.994s on 2 threads
+
+===== S6-only repeat #2 : E-mat bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S6 seat-isolation
+        0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   163.352s on 2 threads
+
+===== S6-only, 1 thread : E-mat bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  FAIL  S6 seat-isolation
+        1/264061 decisions irreproducible (0.0004%);  by kind ask 1/34651, declare 0/229185, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 1/800
+  VERDICT  NOT CERTIFIED   274.242s on 1 threads
+
+===== S6-only : F-mat bank 7030002

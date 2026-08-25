@@ -22,3 +22,66 @@ v7decide  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 vs v06
   urgWhyAskFloor            0.46556  [0.4533, 0.4779]             5415       1.332
 
 ===== E-fit  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
+v7decide  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0 vs v06  seed 7030001  600 deals x 2  -> 57111 decision records  (4.4 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.54087  [0.5352, 0.5467]            51630       0.431
+  ownLockedAskRate          0.10602  [0.0998, 0.1124]            51630       0.431
+  tieShare                  0.59960  [0.5958, 0.6032]            51082       0.434
+  gateBindRate              0.00905  [0.0079, 0.0101]            51630       0.431
+  deadAskRate               0.00008  [0.0000, 0.0002]            51630       0.431
+  searchRate                0.51821  [0.5131, 0.5234]            51630       0.431
+  searchChangeRate          0.32173  [0.3167, 0.3268]            26755       0.599
+  declAccuracy              0.98046  [0.9767, 0.9841]             5477       1.324
+  declAllocErrorShare       0.81308  [0.7333, 0.8866]              107       9.474
+  forcedDeclAccuracy        0.00000  [0.0000, 0.0000]                4      49.000
+  declUrgentShare           0.50356  [0.4914, 0.5163]             5477       1.324
+  declAccUrgent             0.97244  [0.9659, 0.9786]             2758       1.866
+  declAccCalm               0.98860  [0.9843, 0.9924]             2719       1.879
+  urgWhyPatience            0.18569  [0.1780, 0.1932]             5477       1.324
+  urgWhyOppCards            0.15483  [0.1478, 0.1619]             5477       1.324
+  urgWhyEvents              0.00000  [0.0000, 0.0000]             5477       1.324
+  urgWhyAskFloor            0.46960  [0.4571, 0.4827]             5477       1.324
+
+===== E-lam013  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13
+v7decide  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13 vs v06  seed 7030001  600 deals x 2  -> 57426 decision records  (3.6 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.54270  [0.5367, 0.5486]            51887       0.430
+  ownLockedAskRate          0.10639  [0.1002, 0.1130]            51887       0.430
+  tieShare                  0.60144  [0.5978, 0.6051]            51315       0.433
+  gateBindRate              0.00848  [0.0074, 0.0096]            51887       0.430
+  deadAskRate               0.00006  [0.0000, 0.0002]            51887       0.430
+  searchRate                0.52013  [0.5152, 0.5253]            51887       0.430
+  searchChangeRate          0.32366  [0.3184, 0.3291]            26988       0.597
+  declAccuracy              0.98211  [0.9784, 0.9856]             5535       1.317
+  declAllocErrorShare       0.85859  [0.7872, 0.9263]               99       9.849
+  forcedDeclAccuracy        0.50000  [0.0000, 1.0000]                4      49.000
+  declUrgentShare           0.51075  [0.4986, 0.5240]             5535       1.317
+  declAccUrgent             0.97453  [0.9685, 0.9802]             2827       1.843
+  declAccCalm               0.99003  [0.9858, 0.9937]             2708       1.883
+  urgWhyPatience            0.19277  [0.1848, 0.2007]             5535       1.317
+  urgWhyOppCards            0.15447  [0.1473, 0.1618]             5535       1.317
+  urgWhyEvents              0.00000  [0.0000, 0.0000]             5535       1.317
+  urgWhyAskFloor            0.47498  [0.4622, 0.4878]             5535       1.317
+
+===== E-lam000  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.0
+v7decide  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.0 vs v06  seed 7030001  600 deals x 2  -> 57073 decision records  (4.2 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.53951  [0.5337, 0.5452]            51597       0.431
+  ownLockedAskRate          0.10828  [0.1021, 0.1149]            51597       0.431
+  tieShare                  0.60099  [0.5973, 0.6047]            51077       0.434
+  gateBindRate              0.00905  [0.0080, 0.0102]            51597       0.431
+  deadAskRate               0.00006  [0.0000, 0.0002]            51597       0.431
+  searchRate                0.51832  [0.5133, 0.5235]            51597       0.431
+  searchChangeRate          0.29367  [0.2886, 0.2988]            26744       0.599
+  declAccuracy              0.98026  [0.9767, 0.9839]             5471       1.325
+  declAllocErrorShare       0.84259  [0.7712, 0.9100]              108       9.430
+  forcedDeclAccuracy        0.60000  [0.0000, 1.0000]                5      43.827
+  declUrgentShare           0.50174  [0.4889, 0.5144]             5471       1.325
+  declAccUrgent             0.97341  [0.9672, 0.9796]             2745       1.870
+  declAccCalm               0.98716  [0.9827, 0.9912]             2726       1.877
+  urgWhyPatience            0.18132  [0.1735, 0.1891]             5471       1.325
+  urgWhyOppCards            0.14549  [0.1383, 0.1528]             5471       1.325
+  urgWhyEvents              0.00000  [0.0000, 0.0000]             5471       1.325
+  urgWhyAskFloor            0.46445  [0.4514, 0.4769]             5471       1.325
+
+===== F-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12
