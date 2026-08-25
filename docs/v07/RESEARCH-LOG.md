@@ -1770,3 +1770,618 @@ Stated plainly rather than smoothed over, because it bears on how the phase's cl
   test is the cheapest next addition and would give an exact rather than statistical criterion for
   part of what S3 covers; the E-3 check would be near-free (zero the field before `observe`, require
   identical transcripts).
+
+---
+
+# 4. Phase 4 — bake-off, iteration, and freeze
+
+**Machine.** Apple M5 Pro, 15 logical cores, `clang++ -O3 -march=native`, macOS 25.5.0 — the same
+machine as phases 1–3, so throughput is comparable within the v0.7 cycle and not with `E9`.
+Build line unchanged:
+
+```
+clang++ -std=c++20 -O3 -march=native -funroll-loops -fno-math-errno -DFISH_NO_SERVE \
+        src/main.cpp -o fish7 -pthread
+```
+
+**Banks.** Training only: 7030001 and 7030002 evaluate, 7030003 transfers, 7030004 is the reserve,
+7060001–7060006 and 7060011–7060018 are the phase-4 fitting banks added to the registry this phase
+(one per independent search, so no two searches share a deal bank). No 709xxxx seed was touched and
+the binary refuses them.
+
+## 4.0 The order this phase ran in, and the two rules fixed before any number was read
+
+The phase-4 brief fixes one ordering — "keep the commit gate ordered before strength" — and this
+phase adds a second of the same kind, because the freeze is the other place where a number can be
+chosen after the fact.
+
+**Rule 1: the gate runs first and a failing configuration is not scored.** Not scored-with-a-caveat.
+The corpus has two configurations that score higher while being unsound and the ordering is the only
+thing that catches them.
+
+**Rule 2: the freeze rule, written down before the strength battery finished.** Recorded here at the
+time, and the artifacts (`P4-replicate.jsonl`, `P4-lattice.jsonl`) are timestamped after it:
+
+1. The frozen configuration must **pass the commit gate**. No exception, no discretion.
+2. Among gate-passing configurations, choose by **worst case over the measured opponents** — the
+   frontier cells and the panel — and never by the point estimate against the deployed policy alone.
+   §8 of CANDIDATES.md is the reason: both arms profiled there have their worst cell against the
+   phase-2 composite, which no head-to-head in phase 3 reports.
+3. A component is **included only if it pays**: its leave-one-out drop must be positive with a lower
+   bound above zero on both banks. A component that costs nothing measurable is dropped, because a
+   smaller configuration is easier to attribute, cheaper to run, and has less surface for a fresh
+   adversary.
+4. Ties break toward the **cheaper** configuration, then toward the **lower S6 residual**.
+
+Rule 2 item 3 is the one that has teeth, and it was written down precisely because the leading
+candidate going in — phase 3's `K3-on-composite` — carries two components (`r12=25`, `m2=0`)
+inherited from a phase-2 composite that was never ablated against the phase-3 keys.
+
+## 4.1 The merge, and the verification that the incumbent did not move
+
+Phase 3 developed each candidate in an isolated worktree and **none of them was merged**: the
+survivor's mechanism did not exist in `main`, so phase 4 could not build on it, freeze it, or
+preregister it. Merging is therefore the first phase-4 job.
+
+Order K3, K2, K4, K5, K1. K1 and K5 insert at the same `#include` anchor in `main.cpp`, so putting
+K1 last costs exactly one conflict for the whole set instead of two; every other pair is clean, with
+the tightest pairs being K3's `v05.hpp:22` include against K2's `v05.hpp:25` block (three unchanged
+lines between) and K5's `v06.hpp:221` against K3's `v06.hpp:225` (four).
+
+**The verification ran before anything was measured**, because a merge that adds five workstreams to
+the incumbent's own files has to be shown not to move the incumbent:
+
+| check | result |
+|---|---|
+| `fish7 pathology --a=v06 --b=v06 --games=400 --rotations=2 --seed=31` | **byte-identical**, md5 `0b1b3c9ed2894d0992d527fbde1884e5` — which is also the value `K3-summary.txt` recorded for the K3 build |
+| the same on the `F-cheap` mirror, which exercises the search path `--a=v06` never reaches | **byte-identical** |
+| every pre-existing key of `match --json` on a 4,000-game cell | identical |
+
+K4's `printMatch` change inserts eight keys (`asksPerGameA/B`, `nAsksA/B`, `nDeclA/B`,
+`allocErrRateA/B`) **between** `declAccB` and `declPerGameA`, so `match --json` is now a superset of
+what phases 1–3 emitted and any positional parser of an earlier artifact has to be re-checked. Same
+for `tuner.hpp`, which now emits `"denom"` after `"incumbentScore"` in the per-generation trace.
+
+**Recorded rather than chased:** throughput falls about 3% (blueprint 315.8 → 305.7 games/s; the
+search path 108–115 → 106–108, which overlaps the run-to-run spread). Play is byte-identical, so this
+is a cost of measurement and not of policy — most likely object growth, since K2 widens
+`DecisionInfo` and every one of the six rollout blueprints carries one. It is not worth touching the
+hot path for.
+
+Two residual hazards, recorded so a later phase does not trip on them. `k3stall()` is a process
+global that latches on and never off, so a process that parses one stall spec prints the stall
+diagnostic for every arm — every driver here runs one configuration per `pathology` process. And
+`rtie=2` re-interprets a shipped key: it used to mean "randomTie on, public stream" and now means the
+private per-seat stream. No frozen vector or tuner emits it and every occurrence in the tree is a K3
+artifact, but it is a semantic change to a shipped key.
+
+## 4.2 The commit gate, and what it caught
+
+`engine/gate_v07.sh` is the gate as a script rather than as a habit: seven rules, each with the
+measured configurations its threshold is set from printed beside it, plus the mechanical
+side-channel gate on both banks. It exits non-zero on failure and writes one JSON verdict per
+configuration to `P4-gate.jsonl`.
+
+**The negative control does what a negative control is for.** `v06:rtie=1,m1=0,pool=-1,oppfloor=-1,`
+`force=1000000,askfloor=-1` — the configuration ADVERSARIES §4H measured at **+2.68 over `v06`**, the
+highest-scoring target-side switch stack in phase 2 — fails five of the seven rules: 2.59% provably
+dead asks against a 0.10% threshold, a longest dead run of 326 against 5, two games with a run ≥ 6
+against zero, two games killed by the action limit against zero, and a mirror tail of 405 events
+against a 220 rung that carries a fifteen-point cliff behind it. A gate that cannot reject the one
+configuration the corpus built to be rejected certifies nothing about the one it accepts, and this
+one rejects it on five independent counts.
+
+#### The commit gate, run before any strength number
+
+| configuration | verdict | dead asks | longest run | run>=6 | action-limit | mirror max / p99 | late decl | S3/S4/S5 |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `v07cand` | **FAIL** | 0.05820% | 1 | 0 | 0 | 134 / 130 | 0 | ok |
+| `P2-composite` | **FAIL** | 0.01108% | 1 | 0 | 0 | 142 / 124 | 0 | ok |
+| `F-cheap` | **PASS** | 0.00589% | 1 | 0 | 0 | 131 / 124 | 0 | ok |
+| `K3-search` | **PASS** | 0.00878% | 1 | 0 | 0 | 125 / 122 | 0 | ok |
+| `NEGCTL-m1off` | **FAIL** | 2.59217% | 326 | 2 | 2 | 405 / 132 | 0 | ok |
+| `FROZEN-v07` | **PASS** | 0.05820% | 1 | 0 | 0 | 134 / 130 | 0 | ok |
+
+Reported, not gated: events/game, ask hit rate and mirror misdeclaration for the same runs.
+
+| configuration | events/game | ask hit | mirror misdeclaration |
+|---|---:|---:|---:|
+| `v07cand` | 99.805 | 50.716% | 2.55556% |
+| `P2-composite` | 99.880 | 50.631% | 2.83333% |
+| `F-cheap` | 94.225 | 53.249% | 2.25000% |
+| `K3-search` | 94.802 | 53.385% | 1.25000% |
+| `NEGCTL-m1off` | 96.812 | 52.955% | 1.05673% |
+| `FROZEN-v07` | 99.805 | 50.716% | 2.55556% |
+
+## 4.3 What the gate caught that was not meant to be caught: the S6 residual
+
+The leading candidate **failed the gate on its first run**, on S6 alone, on both banks — in a clean
+process, which is the configuration CANDIDATES §10 named as the fix that would clear the inherited
+`F-cheap` anomaly. It does not clear it. Chasing that is the most valuable thing in this phase.
+
+**Step 1: the test is a lottery above one thread.** Run alone at 13 threads on one fixed cell
+(`v07cand`, bank 7030001, 400 deals), the *same command* returns:
+
+| run | mismatches | decisions audited |
+|---:|---:|---:|
+| 1 | 1 | 270,593 |
+| 2 | 3 | 270,608 |
+| 3 | 2 | 270,593 |
+| 4 | 4 | 270,608 |
+
+**The denominator moves too.** That is the same signature phase 3 recorded for `F-cheap`
+(264,037 / 264,051 / 264,061 / 264,075) and attributed to `v7side` leaking state between its own four
+passes. The attribution does not survive: S6 is running *alone* here. Phase 3's evidence for the
+attribution — "`--tests=s6` alone at 2 threads is 0/264,075, twice" — was two draws from this
+lottery.
+
+**Step 2: at one thread it is deterministic**, and it then reproduces phase 3's own one-thread figure
+for `F-cheap` on bank 7030002 exactly: **1/264,061**. That is a strong check: an independent
+re-implementation of the run, four weeks of session time later, hitting the same single decision out
+of a quarter of a million.
+
+**Step 3: measured at one thread, 1,200 deals a cell, both training banks:**
+
+| configuration | search? | mismatches | decisions | rate |
+|---|:--:|---:|---:|---:|
+| `v06` | no | **0** | 1,578,854 | 0 |
+| `K3-stack` (`rtie=1`, urgency off, `stall=12`) | no | **0** | 1,584,742 | 0 |
+| `F-cheap` — *the incumbent's own frontier* | yes | 4 | 1,582,905 | 2.5 / million |
+| `K3-search` | yes | 3 | 1,585,731 | 1.9 / million |
+| the v0.7 candidate | yes | 2 | 1,630,826 | 1.2 / million |
+
+**Step 4: what it is not.** `rreset=1` — the fix phase 3 built for the rollout blueprints, which
+`Game::emit` feeds `observe()` forever because `RolloutEngine::seatAgents()` has no caller — changes
+the counts by **exactly nothing**, on every cell, including the denominators. So the blueprints'
+accumulated cross-deal observations are not the cause. Running the reconstruction **inline on the
+worker thread** instead of on a fresh one also changes nothing (`1/270,593`, `3/272,402`, `1/264,061`
+identical both ways), so thread isolation is not the cause either. And `match` and `pathology` on the
+same configurations are **bit-identical across 1, 2 and 13 threads and across repeats**, so the
+policy's play is deterministic and every strength number in this corpus is reproducible.
+
+**What it is:** a deterministic, configuration-dependent property of the **truncated search**, at a
+rate of order one per million searched decisions, present in the incumbent's own frontier at a
+*higher* rate than in the v0.7 candidate, and **exclusively on ask decisions** — no declaration, no
+pass, no willing-forced and no best-guess decision has failed to reproduce in any configuration in
+any run, across roughly eight million audited decisions.
+
+**Three consequences, all of which phase 4 owns rather than passes on.**
+
+1. **The gate is fixed**: S6 now runs at `--threads=1` in its own process. A gate that is a lottery
+   is not a gate. This costs about three minutes a configuration and is the price of the rule meaning
+   anything.
+2. **CANDIDATES §2's C14 is corrected.** "It is `v7side` leaking state between its own four passes"
+   is not what is happening, and "the audited decision count itself moves with execution context" is
+   right about the symptom and wrong about the cause. The weaker claim C14 also makes — that
+   `fish7 match` is bit-stable across thread counts, so no strength number in the corpus is impugned
+   — **stands, and was re-verified here.**
+3. **No searching configuration in this corpus is S6-certified**, `v06`'s own frontier included. The
+   rule the preregistration commits (§5.3) tolerates the residual for a searching configuration,
+   reports the rate, and refuses to call it certified — and it would reject a candidate whose rate
+   rose above the incumbent frontier's. It is a weaker rule than THREAT-MODEL specifies and the
+   report has to say so in those words.
+
+**What would have to be true for this to be wrong.** That the reconstruction is not a faithful replay
+— that `reconstructSeat` fails to reproduce some input the live agent had. The obvious candidate is
+the seat's own RNG stream: if the live agent consumed a determinization draw at a point the replay
+does not reproduce, the search would diverge at exactly the rate seen. That is testable and was not
+tested here: capture the diverging decision's candidate scores in both runs and compare. It is the
+single experiment to run next, it is cheap, and until it is run the honest statement is that S6
+detects a reproducibility failure in the search path and has not been shown to detect an
+*information* channel.
+
+## 4.4 The replication phase 3 named as the first job of phase 4
+
+CANDIDATES §10 fact 1: *"K3's four keys on top of phase 2's composite beat that composite by +1.42
+[+0.18, +2.68] on one bank, with no mirror gate on the combined configuration. Replicating that is
+the first job."*
+
+Run as a paired duplicate on both training banks at four times the power (12,000 deals × 2 rotations
+× 2 banks = 48,000 games, half-width 0.45 against phase 3's 1.27):
+
+**+0.78 [+0.33, +1.22], +0.85 and +0.71 per bank.**
+
+**It replicates in sign on both banks and at about half the magnitude.** That is the expected shape:
+phase 3 selected this cell after seeing it at 6,000 games on one bank, so the reported +1.42 carried
+the winner's curse of that selection, and four times the power halves it. The claim survives — the
+K3 keys do add to the phase-2 composite, positively, on both banks — and the number that goes in the
+report is +0.78 and not +1.42.
+
+Alongside it, on the same banks and the same protocol — every number below generated from
+`P4-replicate.jsonl` by `engine/build_p4_v07.py`:
+
+#### Replication: the cell CANDIDATES section 10 named as the first job of phase 4
+
+| cell | A | B | n (games) | pooled edge | 95% CI | per bank | replicated |
+|---|---|---|---:|---:|---|---|:--:|
+| `cand_vs_p2comp` | `v07:m2=0,r12=25,rtie=1,pool=-1,oppfloo` | `v07:m2=0,r12=25,s1=1,det=12,cand=4,kap` | 48,000 | **+0.78** | [+0.33, +1.22] | +0.85 / +0.71 | yes |
+| `cand_vs_v06` | `v07:m2=0,r12=25,rtie=1,pool=-1,oppfloo` | `v06` | 24,000 | **+4.82** | [+4.19, +5.44] | +5.17 / +4.46 | yes |
+| `cand_vs_fcheap` | `v07:m2=0,r12=25,rtie=1,pool=-1,oppfloo` | `v06:s1=1,det=12,cand=4,kappa=2.5,rbeli` | 24,000 | **+3.18** | [+2.55, +3.81] | +3.52 / +2.84 | yes |
+| `p2comp_vs_v06` | `v07:m2=0,r12=25,s1=1,det=12,cand=4,kap` | `v06` | 24,000 | **+4.45** | [+3.83, +5.07] | +4.28 / +4.62 | yes |
+
+**The `F-cheap` cell is the one that matters and it is the first in this cycle to clear the floor.**
++3.18 with a **lower bound of +2.55**, against the phase-2 C1-class detection floor of **1.53**.
+Every pooled interval in phase 3 had a lower bound under that floor; this one does not. The
+comparison is against the cheap point of the v0.6 frontier rather than against the deployed policy,
+which is the harder and the right bar — the deployed policy ships its search off, and phase 2 already
+showed four separate one-switch deviations of the incumbent beat it.
+
+## 4.5 Attribution, and the component that turns out to carry the gain
+
+Thirteen arms, each against the same reference opponent `v06`, on the same two banks and the same
+deal indices, 24,000 games a cell (half-width 0.63). Add-one-in from `v06`, then leave-one-out from
+the candidate — because a component's value alone and its value *at the margin, given the rest* are
+different numbers, and quoting the first for the second is how a study over-attributes.
+
+#### Attribution: add-one-in from `v06`, and leave-one-out from the candidate
+
+Every arm against the same reference opponent `v06`, on the same two banks and the same
+deal indices, so the cells are differences of correlated quantities and not independent
+draws. `add_none` is the mirror and is a check that the reference is the reference.
+
+| arm | pooled edge over `v06` | 95% CI | per bank |
+|---|---:|---|---|
+| `add_none` | **+0.00** | [+0.00, +0.00] | +0.00 / +0.00 |
+| `add_search` | **+1.83** | [+1.31, +2.36] | +1.58 / +2.08 |
+| `add_rtie` | **+0.97** | [+0.34, +1.60] | +1.04 / +0.89 |
+| `add_urgoff` | **+1.43** | [+1.16, +1.69] | +1.23 / +1.62 |
+| `add_stall` | **+0.00** | [+0.00, +0.00] | +0.00 / +0.00 |
+| `add_r12` | **+2.75** | [+2.13, +3.37] | +3.00 / +2.50 |
+| `add_m2` | **+0.72** | [+0.61, +0.83] | +0.57 / +0.88 |
+| `full` | **+4.81** | [+4.19, +5.44] | +5.17 / +4.45 |
+| `no_search` | **+4.05** | [+3.42, +4.67] | +4.23 / +3.87 |
+| `no_rtie` | **+4.61** | [+3.98, +5.24] | +4.73 / +4.50 |
+| `no_urgoff` | **+4.80** | [+4.17, +5.42] | +5.44 / +4.15 |
+| `no_stall` | **+4.81** | [+4.19, +5.44] | +5.17 / +4.45 |
+| `no_r12` | **+2.71** | [+2.08, +3.34] | +2.89 / +2.53 |
+| `no_m2` | **+4.81** | [+4.19, +5.44] | +5.17 / +4.45 |
+
+**Composition.** The six components measured alone sum to **+7.70**; the configuration
+carrying all six measures **+4.81**. That is **63%** of the naive sum.
+Phase 2 measured its own three mechanisms composing at 83%. A report that quotes the sum is wrong.
+
+| removed from the candidate | edge without it | drop from the whole |
+|---|---:|---:|
+| `search` | +4.05 | **+0.77** |
+| `rtie` | +4.61 | **+0.20** |
+| `urgoff` | +4.80 | **+0.02** |
+| `stall` | +4.81 | **+0.00** |
+| `r12` | +2.71 | **+2.10** |
+| `m2` | +4.81 | **+0.00** |
+
+**Six things this table says, and only the first is the headline.**
+
+1. **`r12=25` carries the gain.** Removing it costs 2.10 points of the candidate's 4.81 over `v06`,
+   replicated on both banks — more than every other component combined. It is a *phase-2* discovery
+   (ADVERSARIES A1, found by an unfitted coordinate sweep, not by a fit), and honesty about that is
+   part of the result: **the largest single component of v0.7's strength was found in phase 2 and
+   phase 3 did not add anything of that size.**
+2. **The components compose at 63% of their naive sum** — +7.70 alone against +4.81 together, against
+   phase 2's 83% for its own three. Any accounting that adds these numbers is wrong by a third.
+3. **`urgency-off` and `r12=25` are substitutes, not complements.** Urgency-off alone is worth +1.43
+   over `v06`; at the margin, given `r12=25` and the search, it is worth +0.02 and does not replicate
+   in sign. That is the sharpest single instance of the sub-additivity, and it corrects a natural
+   reading of phase 2 and phase 3 in which the urgency defect and the contestation coordinate are
+   independent gains.
+4. **No individual K3 key separates from zero at the margin** — urgency-off +0.02, `rtie` +0.20,
+   `stall` exactly 0. But the three of them **as a group** are worth +0.78 [+0.33, +1.22] replicated,
+   measured directly as a paired head-to-head against the composite (§4.4). A group can pay when none
+   of its members individually clears the noise, and the group cell is the better measurement because
+   it is paired rather than differenced.
+5. **`stall=12` is bit-identical to its absence, at 24,000 games.** Win rate, ask accuracy,
+   declaration accuracy and events per game all agree to six decimals on both banks. Phase 3 measured
+   this on an 800-game mirror digest; it now holds at thirty times the sample. Its cost in ordinary
+   play is not small, it is **zero**, and its value is that it is the termination guarantee that
+   `force=1000000` removes.
+6. **`m2=0` is inert and is therefore dropped from the freeze.** Its leave-one-out drop is +0.00 with
+   win rates identical to six decimals on both banks — ADVERSARIES §4C's "M2 is the same defect and is
+   bit-identical inert once urgency is off", confirmed at 24,000 games. A spec key that provably does
+   nothing is surface without benefit.
+
+## 4.6 The freeze
+
+```
+v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,
+    s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+```
+
+`engine/fishbot_v07.json`, written by `engine/freeze_config_v07.py`. It is the phase-3 survivor's
+keys on top of phase 2's composite, **minus `m2=0`**, which §4.5 shows is inert.
+
+**The round-trip assertion is executed rather than printed, and writing it found a defect.**
+`freeze_config_v05.py` printed its check as a comment and `freeze_config_v06.py` had none, so this is
+the first freeze in the corpus that verifies itself. Three assertions, all run:
+
+* **R1, the string round-trip.** The JSON stores the base and an ordered option map, never the
+  concatenated string alone; rebuilding the spec from the map must reproduce it character for
+  character. This is what makes the JSON, and not the string, the artifact.
+* **R2a, the vector round-trip.** The JSON also stores the explicit 55-coordinate `allparams` vector
+  the configuration resolves to. Playing the spec form against the vector form must be identical on
+  every deal — win rate exactly 0.5, the deal-clustered interval collapsed to a point, and every
+  paired quantity equal. It passes at 800 games. This is the assertion that matters, because it pins
+  the policy **independently of the vector baked into `src/v06.hpp`**: if a later phase edits that
+  block, R2a fails loudly instead of the frozen configuration silently drifting.
+* **R2b, and this is the defect.** **Three of the frozen configuration's keys cannot be expressed in
+  that vector at all.** `factory.hpp:108-110` clamps the vector's `askFloor` to [0, 0.9],
+  `patiencePool` to [0, 45] and `oppCardFloor` to [0, 20], while the frozen configuration sets all
+  three to the sentinel **−1** that switches the urgency escalation off. And the vector is applied at
+  `factory.hpp:98`, **after** the individual keys at `factory.hpp:63-67`, so **a spec carrying both
+  `allparams=` and `askfloor=-1` silently discards the sentinel.** No committed artifact in this
+  corpus does that — every fitted `.spec` carries only options applied after `allparams` (`dead7`,
+  `corr`, the `rN` coordinates) — but a future one could, and it would fail silently and produce a
+  policy nobody asked for. The JSON records the three keys as *switches*, with their clamped ranges
+  and the file:line of each clamp.
+* **R3, the digest round-trip.** The frozen mirror pathology digest, `5f81f440fc9c272a87e87c05fecc7b74`,
+  recomputed on every run. `--verify-only` re-runs all three against the committed JSON and is the
+  first thing phase 5 does.
+
+The JSON also carries the SHA-256 prefix of all 78 engine sources, the commit, and the provenance
+string of the inherited v0.6 vector, so the freeze is reproducible from the artifact alone.
+
+**What was NOT frozen, and why.** `m2=0` — leave-one-out drop +0.00, win rates identical to six
+decimals on both banks at 24,000 games. `rreset=1` — measured inert in play by phase 3 and confirmed
+here to change the S6 residual by exactly nothing, so it fixes nothing and is one more key to
+explain. `rtie=2`, the private per-seat tie stream — phase 3 priced the Price of Uncorrelation at
+zero to within ±0.9 and recommended keeping the deterministic rule, because determinism is free and is
+what makes S4's strongest form available (600/600 transcript identity under an independent per-seat
+stream). Nothing here overturns that.
+
+## 4.7 The partner-regime table, and a harness defect it exposed
+
+Ledger L6 has stood unresolved since v0.6: the paper calls partner transfer "the sharpest limitation
+in the paper and it is measured, not conjectured", and the table it rests on ran **800 games a cell,
+half-width ±3.46**, at which "not one of the four deltas is separated from any other". L6's own
+cheapest experiment is to re-run it at 18,000 games a cell. This runs it at 24,000 (half-width
+**0.63**), with v0.7 added as a third arm, in both of the two opponent regimes — because a
+partner-transfer claim that holds against one opponent is not a claim.
+
+`match --a=ARM --partners=P --b=OPP`: team A is [ARM, P, P] and team B is three copies of OPP. This
+is L6's design (`engine/experiments_v06.sh:125-131`) exactly.
+
+#### The partner-regime table, against three copies of `v05`
+
+`match --a=ARM --partners=P --b=v05`: team A is [ARM, P, P]. Ledger L6's design at 30x its
+power -- L6 ran 800 games a cell (half-width +-3.46), this runs 24,000 (half-width 0.63).
+
+| partners | `v07cand` | `v06` | `v05` | delta (first two arms) |
+|---|---:|---:|---:|---:|
+| `self` | +4.29 [+3.66, +4.93] | +1.35 [+0.72, +1.99] | mirror | **+2.94** |
+| `v06` | +2.61 [+1.98, +3.24] | +1.35 [+0.72, +1.99] | -- | **+1.26** |
+| `v05` | +1.58 [+0.97, +2.20] | +0.78 [+0.16, +1.41] | -- | **+0.80** |
+| `v04` | +0.55 [-0.08, +1.17] | +0.41 [-0.21, +1.03] | -- | **+0.14** |
+| `v03` | -14.62 [-15.23, -14.01] | -16.23 [-16.82, -15.63] | -15.62 [-16.21, -15.02] | **+1.61** |
+| `detective` | -13.17 [-13.78, -12.56] | -14.60 [-15.20, -13.99] | -15.23 [-15.83, -14.64] | **+1.43** |
+| `withholder` | -14.45 [-15.06, -13.85] | -14.31 [-14.91, -13.70] | -15.00 [-15.59, -14.40] | **-0.15** |
+| `lockout` | -13.69 [-14.29, -13.08] | -15.77 [-16.37, -15.18] | -- | **+2.08** |
+
+#### The partner-regime table, against three copies of `v06`
+
+`match --a=ARM --partners=P --b=v06`: team A is [ARM, P, P]. Ledger L6's design at 30x its
+power -- L6 ran 800 games a cell (half-width +-3.46), this runs 24,000 (half-width 0.63).
+
+| partners | `v07cand` | `v06` | delta (first two arms) |
+|---|---:|---:|---:|
+| `self` | +4.82 [+4.19, +5.44] | mirror | **+4.82** |
+| `v06` | +2.88 [+2.27, +3.49] | +0.00 [+0.00, +0.00] | **+2.88** |
+| `v03` | -15.39 [-15.99, -14.79] | -17.99 [-18.57, -17.41] | **+2.60** |
+| `detective` | -13.76 [-14.37, -13.16] | -16.26 [-16.85, -15.67] | **+2.50** |
+
+**What this says, and it is a mixed answer rather than a clean one.**
+
+1. **The advantage does not collapse under partner change, and it does not survive intact either.**
+   Against `v05`, v0.7's edge over v0.6 is **+2.94 in self-play and +0.14 to +2.08 with a foreign
+   partner**, with one row (`withholder`) at −0.15 and an interval containing zero. The corpus's own
+   baseline for the same question is v0.6 over v0.5: **+2.25 in self-play, −0.8 to +1.4 under partner
+   change**. So v0.7 shows the same shape as its predecessor, at a larger scale, and never goes as
+   negative. **What the corpus cannot say is that the advantage is partner-independent.**
+2. **Against the incumbent as opponent the picture is much more stable**: +4.82 self and +2.50 to
+   +2.88 under partner change. The regime that degrades is the one where the *opponent* is weaker
+   than the partners, which is a legitimate reading and a limit on how far the self-play number
+   generalises.
+3. **A one-seat upgrade is worth more than a third of a three-seat upgrade.** Replacing one v0.6 seat
+   with the frozen configuration and leaving the other two alone is worth **+1.26** against `v05`
+   (and **+2.88** against `v06`), where the whole three-seat swap is +2.94 (and +4.82). If the gain
+   were a coordination convention, one seat would buy far less than a third; it buys 43% and 60%.
+   **That is direct evidence the gain is largely individual rather than conventional**, and it is the
+   single most reassuring number in this table.
+
+**The defect the table exposed.** `power.mirror` in `match --json` was computed as `specA == specB`
+and **ignored the partner specs**, so `--a=v06 --partners=v03 --b=v06` — a one-seat deviation column
+running at **31.7%** — was flagged a mirror and printed its deal-clustered interval as **[0, 0]**.
+`v07_power.hpp`'s own comment says a mirror cell "carries NO information … the effective sample is
+zero", so any consumer that skipped a mirror cell on that basis silently dropped a real measurement.
+Fixed at `main.cpp:70,166`: a cell is a mirror only if `specA == specB` **and**
+`partnersA == partnersB`. The v0.6 mirror digest is unchanged by the fix, so no play is affected, and
+the artifacts in this section were written by the pre-fix binary and re-reduced with the corrected
+predicate. Phase 2's `P12-partners.jsonl` carries the same mislabelling and should be re-read.
+
+## 4.8 Cross-play between independently-trained runs
+
+The frozen configuration is **not a fit**, so two independently-trained runs of it do not exist and
+had to be produced. Three were: the same architecture — every structural key of the freeze held fixed
+— with only the 55-coordinate vector free, fitted by v0.6's own recipe (`obj=minimaxregret`, paired,
+panel `v05+v03+withholder+feint`), and made independent on three axes at once: **a different CEM
+trajectory**, **a disjoint fitting bank** (7060001/2/3, registered one per search), and — for the
+third run — **a different starting basin** (the v0.5 defaults rather than the incumbent). `sigmarel`
+was set to 0.12 against v0.6's 0.04 *on purpose*: a cross-play test is only informative if the runs
+actually separate, so the separation was bought and is then reported.
+
+They did separate. Over 55 coordinates the pairwise distances are **L2 7.08 to 11.25, L∞ 2.54 to
+5.70**, and head to head `xp1` against `xp2` is −0.53 [−1.41, +0.35] — different policies of
+indistinguishable strength, which is exactly the condition under which a cross-play test means
+something.
+
+#### Cross-play between independently-trained runs of the same architecture
+
+Row = the seat-0 run, column = the run its two partners come from, opponent = three copies
+of `v05`. The diagonal is self-play. A convention private to one run shows up as the
+off-diagonal collapsing relative to the diagonal.
+
+| seat 0 \ partners | `p4-xp1` | `p4-xp2` | `p4-xp3` | diagonal - mean off-diagonal |
+|---|---:|---:|---:|---:|
+| `p4-xp1` | +4.28 [+3.66, +4.91] | +4.16 [+3.53, +4.79] | +4.09 [+3.46, +4.72] | **+0.16** |
+| `p4-xp2` | +4.69 [+4.06, +5.31] | +5.27 [+4.64, +5.90] | +3.67 [+3.04, +4.29] | **+1.09** |
+| `p4-xp3` | +3.85 [+3.23, +4.48] | +4.83 [+4.20, +5.46] | +3.88 [+3.25, +4.51] | **-0.46** |
+
+**Self-play +4.48 over 3 diagonal cells; cross-play +4.22 over 6 off-diagonal cells; the gap is
++0.26 points** against a per-cell half-width of about 0.63. The Hanabi line reports
+self-play-to-cross-play collapses of 23.97 to 2.52 (SAD) and 24.04 to 0.12 (IPPO); this is
+not that, and the runs are genuinely different policies -- see the distances below.
+
+Head to head, so "these are different policies" is measured rather than assumed:
+
+| pair | edge | 95% CI |
+|---|---:|---|
+| `p4-xp1` vs `p4-xp2` | -0.63 | [-1.25, -0.01] |
+| `p4-xp1` vs `p4-xp3` | +0.95 | [+0.32, +1.59] |
+| `p4-xp2` vs `p4-xp3` | +1.40 | [+0.77, +2.03] |
+
+Parameter distance between the runs, so the table above can be read:
+
+| pair | L2 | L-inf | coordinates |
+|---|---:|---:|---:|
+| `xp1` vs `xp2` | 10.440 | 5.698 | 55 |
+| `xp1` vs `xp3` | 7.082 | 2.536 | 55 |
+| `xp2` vs `xp3` | 11.247 | 4.141 | 55 |
+
+**This is the strongest single result in phase 4 and it is a negative one.** The Hanabi line the
+threat model cites reports self-play-to-cross-play collapses that are not subtle — SAD 23.97 → 2.52
+at 10,000 games per pair, IPPO 24.04 ± 0.02 → 0.12 ± 0.03 median. Nothing of that kind is present
+here. Read with §4.7's one-seat result — a single upgraded seat buys 43–60% of the three-seat gain —
+the two together say the v0.7 advantage is **an individual policy improvement and not a convention**,
+which is what a 55-coordinate linear score has far less room to hide than a neural policy does.
+
+**What would have to be true for this to be wrong.** That six generations at population 12 is too
+small a fit for a convention to form in — plausible, and it is the honest limit of the result. The
+runs are independent and they are *weak*; a convention that only appears at v0.6's own 14-generation
+budget would not be visible here. The falsification is affordable and is not run: refit at the full
+budget at two seeds and repeat the matrix.
+
+## 4.9 The adversary re-search against the improved policy
+
+The phase-4 brief: *"after each fix, re-run adversary search against the improved policy and check
+whether the weakness closed or merely moved."* Eight independent searches, target the **frozen
+configuration** and not `v06`, one registered fitting bank each (7060011–7060018, disjoint from the
+evaluation banks and from each other), each evaluated on both evaluation banks at 24,000 games. The
+axes are the ones phase 2 established are genuinely different searches — class, objective, starting
+basin, step size — and the objectives are pointed at the **mechanisms** phase 2 named rather than at
+reproducing its adversaries.
+
+#### A fresh adversary search against the improved policy
+
+The target is the v0.7 candidate, not `v06`, and the objective axis is aimed at the
+MECHANISMS phase 2 named rather than at reproducing its adversaries. A positive edge is
+an exploit; the class detection floor is **1.53** and nothing below it is an exploit.
+
+| id | class | objective | hypothesis | adversary edge | 95% CI | per bank | clears 1.53? |
+|---|---|---|---|---:|---|---|:--:|
+| `Y01` | C1-inclass | `win` | in-class control against the new target: does the C1 | **-4.41** | [-5.04, -3.77] | -4.35 / -4.47 | no |
+| `Y02` | C2-extended | `win` | the extended class, the one that found phase 2's str | **-3.11** | [-3.74, -2.49] | -3.27 / -2.95 | no |
+| `Y03` | C1-declerr | `declerr` | A3/L1: drive the target's misdeclaration now that ur | **-12.36** | [-12.97, -11.74] | -12.52 / -12.19 | no |
+| `Y04` | C1-events | `events` | A4: lengthen the game -- the cliff is gone, is the s | **-18.22** | [-18.81, -17.64] | -18.28 / -18.16 | no |
+| `Y05` | C1-forced | `forced` | K2 raised forced-endgame incidence six-fold by delet | **-7.40** | [-8.02, -6.78] | -7.38 / -7.42 | no |
+| `Y06` | C2-wide | `win` | a wider step: is the CEM trapped near the incumbent  | **-3.87** | [-4.51, -3.24] | -3.94 / -3.80 | no |
+| `Y07` | C1-basin | `win` | a different starting basin: the v0.5 defaults, not t | **-2.85** | [-3.48, -2.21] | -2.80 / -2.89 | no |
+| `Y08` | C2-asksupp | `asksupp` | L10: suppress the target's ask hit rate through the  | **-21.17** | [-21.74, -20.60] | -21.55 / -20.78 | no |
+
+**Nothing exploits it.** The best of the eight is −2.85 and the closest to parity is −3.11; every one
+loses by more than 2.8 points, and the class detection floor is 1.53 in the other direction. That is
+a stronger statement than phase 2 could make about `v06`, whose best in-class exploiter reached
+**+0.79 [+0.48, +1.10]** over 96,000 games.
+
+**And the two mechanism searches answer the brief's actual question, which is not about win rates.**
+
+**A3, the declaration channel — the weakness moved and shrank.** `Y03` is fitted to drive the
+target's misdeclaration rate and it does: the frozen configuration's declaration accuracy falls from
+**0.970** (under the two `win`-objective adversaries) to **0.9335 / 0.9349**, a drop of 3.6 points of
+accuracy. It pays **−12.4 win-rate points** to do it. The channel is real, it is still drivable, and
+driving it is not an exploit — which is exactly the shape phase 2 measured against `v06`, where the
+same cluster's whole ceiling was +0.38 [−0.06, +0.81].
+
+**A4, the fifteen-point cliff — the weakness closed, and did not move.** This is the one that
+mattered, because the freeze *disables v0.5's termination guarantee* (`force=1000000`) and replaces
+it with a stall detector, so an adversary that can lengthen games is attacking a new mechanism rather
+than an old one. `Y04` is fitted for exactly that and it works: it drives events per game from ~97.4
+to **108.8**, an 11.7% increase, at a cost of −18.2 points. Measured on the tail rather than the
+mean, over 800 games:
+
+| | events/game | p90 | p99 | **max** | declarations at or after event 220 | action-limit games |
+|---|---:|---:|---:|---:|---:|---:|
+| frozen v0.7 vs `Y04` | 108.996 | 124 | 135 | **144** | **0** | 0 |
+| `v06` vs `Y04` | 106.626 | 120 | 135 | **144** | **0** | 0 |
+
+**The longest game the game-lengthening adversary can produce against the frozen configuration is 144
+events, against a 220 rung** — and the frozen configuration does not have that rung, because
+`force=1000000` removes it. Phase 2's figure for the same question against the incumbent was 149
+events. So the adversary gains nothing from the removal of the clock, the stall rung at 12
+consecutive no-progress events is not approached (ordinary play never exceeds 6), and the
+fifteen-point cliff that ADVERSARIES A4 identified is **unreachable in the frozen configuration by
+construction rather than by luck**.
+
+One number from that table belongs in the record even though it is not a gate result: against `Y04`
+the frozen configuration plays **0.112% provably-dead asks**, against 0.058% in its own mirror and a
+gate threshold of 0.10%. The gate is specified on the mirror, so this is not a gate failure — but it
+is the first configuration in this cycle whose dead-ask rate against an adversary exceeds the mirror
+threshold, and phase 5 should report the adversarial dead-ask rate alongside the mirror one.
+
+## 4.11 What phase 5 inherits
+
+**Instruments built or repaired this phase.**
+
+* `engine/gate_v07.sh` — the commit gate as a script rather than a habit. Seven rules, each printing
+  the measured configurations its threshold is set from, plus `v7side` on both banks with **S6 in its
+  own process at one thread**. Exits non-zero on failure; one JSON verdict per configuration.
+* `engine/freeze_config_v07.py` — the first freeze in this corpus that **executes** its round-trip
+  assertion instead of printing it, with `--verify-only` for phase 5's B0.3.
+* `engine/build_p4_v07.py` — reduces every phase-4 artifact to markdown, so no number in §4 is
+  hand-typed.
+* `engine/p4_*.sh` — the strength lattice, the partner table, the cross-play fits, the adversary
+  re-search and the rule-dialect table, each parameterised by `p4_specs.sh`.
+* Two engine fixes: `power.mirror` now accounts for the partner specs (`main.cpp:70,166`), and the
+  phase-4 fitting banks are in the seed registry (`v07_seeds.hpp`), one per independent search.
+* The five phase-3 worktrees are merged, so `stall`, `jalloc`, the self-oriented KPIs, the search
+  capture channel and `v7leaffit` all exist in `main` for the first time.
+
+**Facts phase 5 should treat as established on training material.**
+
+1. The frozen configuration beats `F-cheap` by **+3.18 [+2.55, +3.81]** — the first pooled interval
+   in this cycle whose lower bound clears the 1.53 detection floor.
+2. Phase 3's `+1.42` over the phase-2 composite replicates at **+0.78 [+0.33, +1.22]** at four times
+   the power on two banks. The sign holds; the magnitude halves.
+3. **`r12=25` carries the gain** (leave-one-out +2.10, replicated), and it is a phase-2 discovery.
+   The search is worth +0.77 at the margin. The three K3 keys are worth +0.78 **as a group** and none
+   of them individually.
+4. `urgency-off` and `r12=25` are **substitutes**: +1.43 alone, +0.02 at the margin. The six
+   components compose at **63%** of their naive sum.
+5. `stall=12` is **bit-identical** to its absence at 24,000 games on two banks.
+6. **No searching configuration in this corpus is S6-certified**, `v06`'s own frontier included; the
+   rate is of order one per million ask decisions and blueprint play is exactly zero.
+7. A **one-seat** upgrade to the frozen configuration is worth 43–60% of the three-seat upgrade,
+   which is direct evidence the gain is largely individual rather than conventional.
+
+## 4.12 What did not get done, and what was cut
+
+Stated plainly rather than smoothed over, because it bears on how §4's claims should be read.
+
+* **The rule-dialect table was written and not run.** `engine/p4_dialects_v07.sh` exists, unbundles
+  `--legacy` into its three isolable components, and adds the three axes the corpus has never swept
+  (`--arb=high`, `--arb=turn`, `--sets=8`). It is preregistered as phase-5 cell B8 and it has no
+  training-bank counterpart, so phase 5's dialect result will be the first of its kind and has
+  nothing to be checked against.
+* **The panel was not re-run for the frozen configuration.** CANDIDATES §8 profiles two arms;
+  §8.1 says the two that matter — `K3-on-composite` and `P2-composite` — are phase 4's. They were
+  not run, because the machine went to the attribution lattice, the partner table and the adversary
+  re-search instead, and those are what the phase-4 brief names. **Worst case and minimax regret for
+  the frozen configuration are therefore a phase-5 number** (cell B3) and this phase has no estimate
+  of them. That is the largest single gap in phase 4.
+* **The S6 residual is localised and not explained.** Phase 4 established what it is not — not
+  inter-test leakage, not thread isolation, not the rollout blueprints' accumulated observations, not
+  the determinization count — and did not establish what it is. The next experiment is named in §4.3
+  and was not run: capture the diverging decision's candidate scores in both the live run and the
+  replay and compare them.
+* **The one-seat deviation column was run only for the partner table**, not as a full
+  `--partnersb` one-seat exploitability column in the threat model's T2 sense.
+* **The v0.7 architecture was refitted only at a small budget** for the cross-play runs
+  (6 generations × 12 population × 150 deals against a four-member panel). Those runs exist to be
+  *independent*, not to be strong, and they should not be read as an attempt to improve the frozen
+  vector. No fit of any kind was applied to the frozen configuration.
