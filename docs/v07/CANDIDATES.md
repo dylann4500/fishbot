@@ -58,6 +58,7 @@ The phase-5 holdout was not touched and the binary refuses it.
 | **C12** | **The inherited conditional is discharged by re-measurement, not by a new evaluator.** INSTRUMENT I4 records full-game truncated search at +0.08, which is one n=4,000 cell at 50.08% [48.52, 51.62]. Re-measured, `depth=12` with no `maxq` is **+1.52 pooled** with v0.6's own leaf, and the corpus's `depth=24` cell re-runs at +1.02 [−0.55, +2.62]. The interval always contained +1.5. **Full-game truncated search already works with the leaf the conclusion said could not support it.** | §3 |
 | **C13** | **The cost premise of the whole search question was mis-sized by two orders of magnitude.** INSTRUMENT's 242× (and the v0.6 paper's "three orders of magnitude") is **F-search**, the unrestricted configuration. `F-cheap` — the endgame-restricted operating point that is actually on the frontier — is **~3.2×** the blueprint on a common basis, which agrees with this session's independent 2-thread calibration of 2.95×. | §7, §9 |
 | **C14** | **The `F-cheap` S6 anomaly is a defect in the gate, not in the search, and no strength number in the corpus is impugned.** Three candidates reproduced and bisected it independently: it is `v7side` leaking state between its own four passes, the audited decision *count* itself moves with execution context (264,037 / 264,051 / 264,061 / 264,075), and `fish7 match` is **bit-stable across thread counts** for both search and non-search play. | §2, §10 |
+| **C15** | **On a shared 31-cell panel scored identically for both arms, the survivor's worst case is −2.10 and its minimax regret is +0.02.** `K3-stack` is negative on two cells — the phase-2 composite at −2.10, and `X01xC3` at −0.22 with an interval containing zero — and positive on the other 29. The deployed policy is negative on **twelve**, nine of them members of the phase-2 adversary bank, with a minimax regret of **+4.57**. The worst cell for both arms is the phase-2 composite, which no head-to-head in §3–§7 reports: **a configuration chosen on its `v06` cell alone is chosen on a number that is not its worst.** | §8 |
 
 ---
 
@@ -564,10 +565,122 @@ who runs it should capture from **F-mid**, fit the **value** not the **choice**,
 
 ## 8. The common profile: worst case and minimax regret over the panel
 
-*Pending — the battery is running as this section is written. See `research/v07/results/P3-profile-*.jsonl`
-and `RESEARCH-LOG.md` §3 for the completed cells.*
+> **The two numbers, and the aggregate is not one of them.**
+>
+> Over the shared 31-cell panel, `A0-v06`'s **worst cell is -3.69 against `P2-composite`**, and its
+> **minimax regret is +4.57**, incurred against `X05`. It is behind the better of the two
+> arms on **30 of 31** cells.
+>
+> Over the shared 31-cell panel, `K3-stack`'s **worst cell is -2.10 against `P2-composite`**, and its
+> **minimax regret is +0.02**, incurred against `random`. It is behind the better of the two
+> arms on **1 of 31** cells.
+>
+> `K3-stack` is the minimax-regret choice at **+0.02**.
 
----
+### 8.1 The panel, and how it is scored
+
+`engine/candidates_v07.sh` scores every arm against the **same** opponent panel on the **same**
+two training banks (7030001, 7030002) with the same protocol, because minimax regret is only
+defined over a shared panel — which is why `v06` appears here as an *arm* and not only as an
+opponent. `engine/build_profile_v07.py` reduces the cells; no number below is hand-typed.
+
+2 arms completed the full panel: **`A0-v06`, `K3-stack`**. The script defines four more
+(`K3-search`, `K3-on-composite`, `P2-composite`, `K1-fullgame`); the battery was stopped after
+the two above finished, and their three completed cells were deleted rather than reported. So
+**the regret below is regret within a 2-arm set** and is a lower bound on regret against a
+wider one. That is a real limitation and it is stated rather than smoothed: the number answers
+"how much does choosing this arm cost me, against the worst opponent, relative to the best of
+these 2?" and nothing larger. `K3-on-composite` and `P2-composite` are the two that matter and
+they are phase 4's, where the leading candidate has to be profiled anyway.
+
+Cell sizes are allocated per class and printed with the cell (deals x 2 rotations = games):
+cheap arm x near-parity 12,000 games/bank (hw 0.89); x `F-cheap` 5,000 (1.39); x `F-mid` and
+x the phase-2 composite 2,400 (2.00); x an opponent already beaten by more than fifteen points
+3,000 (1.79). Pooled over two banks each half-width divides by sqrt(2).
+
+### 8.2 Worst case and minimax regret — the two headline numbers
+
+| arm | worst cell over the panel | its edge | max regret | where the regret is | cells negative |
+|---|---|---:|---:|---|---:|
+| `A0-v06` | `P2-composite` | **-3.69** | **+4.57** | `X05` | 12 / 31 |
+| `K3-stack` | `P2-composite` | **-2.10** | **+0.02** | `random` | 2 / 31 |
+
+### 8.3 Every cell, so the reader can take the worst one
+
+**The frontier**
+
+| opponent | `A0-v06` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|
+| `F-fast` | mirror | +1.68 [+1.06, +2.31] | 1.68 |
+| `F-cheap` | -1.59 [-2.42, -0.76] | +1.04 [+0.06, +2.02] | 2.63 |
+| `F-mid` | -3.27 [-4.48, -2.06] | +0.98 [-0.46, +2.42] | 4.25 |
+| `P2-composite` | -3.69 [-5.12, -2.25] | -2.10 [-3.53, -0.68] | 1.58 |
+
+**The archetype panel**
+
+| opponent | `A0-v06` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|
+| `v05` | +1.35 [+0.72, +1.99] | +1.91 [+1.28, +2.54] | 0.55 |
+| `v04` | +1.28 [+0.64, +1.91] | +3.01 [+2.39, +3.64] | 1.74 |
+| `v03` | +26.21 [+25.68, +26.74] | +26.30 [+25.76, +26.84] | 0.09 |
+| `lockout` | +28.56 [+28.04, +29.07] | +29.73 [+29.22, +30.24] | 1.17 |
+| `detective` | +27.29 [+26.76, +27.82] | +28.52 [+28.00, +29.04] | 1.23 |
+| `feint` | +3.47 [+2.84, +4.11] | +5.04 [+4.41, +5.67] | 1.57 |
+| `v02` | +31.15 [+30.17, +32.13] | +32.98 [+32.03, +33.94] | 1.83 |
+| `hunter` | +48.25 [+47.91, +48.59] | +48.67 [+48.38, +48.96] | 0.42 |
+| `diversifier` | +45.23 [+44.70, +45.77] | +45.73 [+45.23, +46.24] | 0.50 |
+| `bluffer` | +49.97 [+49.92, +50.01] | +49.98 [+49.96, +50.01] | 0.02 |
+| `silent` | +33.53 [+32.60, +34.47] | +35.67 [+34.78, +36.55] | 2.13 |
+| `withholder` | +29.52 [+28.50, +30.53] | +32.25 [+31.30, +33.20] | 2.73 |
+| `random` | +50.00 [+50.00, +50.00] | +49.98 [+49.96, +50.01] | 0.02 |
+
+**The phase-2 adversary bank, train half**
+
+| opponent | `A0-v06` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|
+| `MC1` | -1.58 [-2.20, -0.96] | +1.48 [+0.85, +2.10] | 3.06 |
+| `R-v05` | +1.35 [+0.72, +1.99] | +1.91 [+1.28, +2.54] | 0.55 |
+| `S-ask-0` | -0.86 [-1.49, -0.22] | +1.80 [+1.17, +2.43] | 2.66 |
+| `S-ask-2` | -0.97 [-1.60, -0.34] | +1.25 [+0.95, +1.54] | 2.21 |
+| `S-belief-0` | +8.02 [+7.41, +8.63] | +11.86 [+11.25, +12.47] | 3.84 |
+| `S-decl-1` | -0.02 [-0.11, +0.06] | +1.71 [+1.09, +2.34] | 1.74 |
+| `S-prior-0` | +0.76 [+0.18, +1.34] | +2.36 [+1.73, +3.00] | 1.60 |
+| `S-search-0` | -2.75 [-3.83, -1.67] | +1.22 [-0.08, +2.51] | 3.97 |
+| `S-search-2` | -0.87 [-1.92, +0.19] | +1.45 [+0.18, +2.72] | 2.32 |
+| `X01xC3` | -3.50 [-4.71, -2.29] | -0.22 [-1.44, +1.01] | 3.28 |
+| `X01xC5` | -3.23 [-4.46, -2.01] | +0.88 [-0.37, +2.13] | 4.12 |
+| `X05` | +8.11 [+7.50, +8.72] | +12.68 [+12.06, +13.29] | 4.57 |
+| `X14` | -0.65 [-1.27, -0.03] | +1.94 [+1.31, +2.57] | 2.59 |
+| `X19` | +0.63 [+0.01, +1.25] | +2.07 [+1.44, +2.70] | 1.44 |
+
+### 8.4 Four things the panel says that the head-to-head cells did not
+
+* **The survivor is negative on 2 of 31 cells and the incumbent on 12.** `K3-stack` loses only to `P2-composite` (-2.10) and `X01xC3` (-0.22);
+  the second of those has an interval containing zero, so the phase-2 composite is the only cell
+  where it is behind by more than noise. `A0-v06` is negative on `F-cheap`, `F-mid`, `P2-composite`, `MC1`, `S-ask-0`, `S-ask-2`, `S-decl-1`, `S-search-0`, `S-search-2`, `X01xC3`, `X01xC5`, `X14` — 9 of them members of the
+  phase-2 adversary bank. That is the panel restating phase 2's finding in the panel's own
+  currency: the deployed policy is *behind* several unfitted deviations of itself.
+* **The survivor's own tie-break is on the panel, and beating it is what the rest of the stack is worth.** `S-ask-2` *is* `v06:rtie=1`. `K3-stack` scores +1.25 against it, so the urgency-off keys plus
+  the stall rule are worth that much on top of the tie-break alone, measured against the
+  tie-break rather than against `v06` — which section 9 says is the only admissible control
+  for anything touching the tie group.
+* **An internal consistency check passes.** `R-v05` and the archetype `v05` are the same policy
+  entered on the panel twice by two different routes. They agree to the digit for both arms
+  (+1.35 / +1.35 and +1.91 / +1.91), which is the panel's own determinism check.
+* **The worst cell is not where the strength table looks.** Both arms' worst cell is the phase-2
+  composite, which no head-to-head in sections 3-7 reports for the survivor. A configuration
+  chosen on its `v06` cell alone would be chosen on a number that is not its worst.
+
+### 8.5 The aggregate, printed last and labelled as a diagnostic
+
+| arm | mean edge over the panel | cells | games |
+|---|---:|---:|---:|
+| `A0-v06` | +11.99 | 31 | 493,600 |
+| `K3-stack` | +13.99 | 31 | 493,600 |
+
+The mean is not a summary of this arm's quality. It is dominated by how many far-from-parity
+archetypes the panel happens to contain, and the panel's composition was fixed for comparability
+across arms, not to represent any population of opponents.
 
 ## 9. What composes, what competes, and what must never be added
 
@@ -620,6 +733,14 @@ Phase 2 measured its own three mechanisms composing **sub-additively at 83% of t
    be.
 7. Full-game truncated search works with v0.6's own leaf (+1.52 pooled), at a dominated operating
    point.
+
+8. **The common profile is scored and reduced** (§8). `engine/candidates_v07.sh` runs it,
+   `engine/build_profile_v07.py` reduces it to worst case and minimax regret, and
+   `engine/assemble_candidates_v07.py` splices the result back into this document. Two arms are
+   scored; the panel is defined for six. **Phase 4's first measurement should be the same panel for
+   `K3-on-composite` and `P2-composite`**, because with those two the regret is computed against the
+   bar rather than against the incumbent, and because the survivor's worst cell is already known to
+   be the phase-2 composite.
 
 **The partner-regime table the phase-4 brief requires has not been run** and nothing here substitutes
 for it. Every strength number in this document is self-play or against a fixed opponent; the brief's

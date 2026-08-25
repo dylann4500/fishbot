@@ -1756,6 +1756,14 @@ Stated plainly rather than smoothed over, because it bears on how the phase's cl
 * **K1 never reached the control-variate variance reduction**, which was item 4 of its brief.
 * **K2 cancelled its `F-cheap` screen cells** and did not instrument `feasibleAllocation`'s other
   callers directly; both are recorded as not-run rather than as zeros.
+* **The common profile battery ran two of its six arms.** `engine/candidates_v07.sh` scores every
+  arm against the same 31-member opponent panel on the same two banks, so that worst case and
+  minimax regret are comparable across arms. `A0-v06` and `K3-stack` completed all 62 cells
+  (493,600 games each); the battery was stopped after them, and the three cells of a third arm
+  (`K3-search`) were deleted rather than reported. §8 of CANDIDATES.md is generated from the two
+  completed arms by `engine/build_profile_v07.py`, and it states in the section itself that a
+  two-arm regret is a lower bound on regret against a wider set. `K3-on-composite` and
+  `P2-composite` are the two arms worth adding and they are phase 4's.
 * **The partner-regime table the phase-4 brief requires has not been run** and nothing in this phase
   substitutes for it.
 * **The I-2 relabelling test, S1, S2 and the E-3 confidence check are not built.** The relabelling
