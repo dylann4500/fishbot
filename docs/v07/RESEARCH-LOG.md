@@ -2340,35 +2340,22 @@ per search), and — for the third run — **a different starting basin** (the v
 the incumbent). `sigmarel` was set to 0.12 against v0.6's 0.04 *on purpose*: a cross-play test is only
 informative if the runs actually separate, so the separation was bought and is then reported.
 
-**And the architecture they were fitted in is not quite the frozen one, which is a defect in this
-phase's own work and is stated before the result rather than after it.** The fitter emits a spec of
-the form `<base>,allparams=<vector>`, and the base carries the freeze's three sentinel switches
+**This table is the second attempt, and the first is why the engine changed.** The fitter emits a spec
+of the form `<base>,allparams=<vector>`, and the base carries the freeze's three sentinel switches
 `pool=-1,oppfloor=-1,askfloor=-1`. Under the engine as it stood, `allparams` was applied *after* the
-individual keys and clamps those three coordinates to non-negative ranges, so **the sentinels were
-silently discarded and all three runs carry the urgency escalation ON**, at whatever value their own
-vector fitted. This was not inferred from the code: playing `p4-xp1.spec` against the same spec with
-the three sentinels deleted is an **exact mirror**, which is the direct proof that they were doing
-nothing. §4.6 records the engine fix.
+individual keys and clamps those coordinates to non-negative ranges, so **the sentinels were silently
+discarded and the first three runs carried the urgency escalation ON** — they were not runs of the
+frozen architecture at all. That was not inferred from the code: playing the emitted spec against the
+same spec with the three sentinels deleted was an **exact mirror**, which is the direct proof they
+were doing nothing. §4.6 records the engine fix; the first set is preserved under
+`research/v07/runs/pre-fix/` as the evidence, and the table below is the **re-fit after the fix**, on
+the actual frozen architecture.
 
-So the table below is a cross-play test of **a v0.7-family architecture — search, `r12=25`,
-`rtie=1`, `stall=12`, urgency on — and not of the frozen configuration**. What it can still answer is
-the question the phase brief actually poses, because the three runs share whatever architecture they
-have: does a policy of this class, fitted independently three times, form a convention private to its
-own run? What it cannot answer is that question *about the frozen configuration specifically*. The
-difference between the two architectures is measurably small — urgency-off's leave-one-out drop in
-§4.5 is +0.02, indistinguishable from zero — but "measurably small" is not "the same", and the
-preregistration's B7 re-runs this on the frozen configuration with the fixed engine.
-
-They did separate. Over 55 coordinates the pairwise distances are **L2 7.08 to 11.25, L∞ 2.54 to
-5.70**, and head to head they are **not** of equal strength: `xp1` − `xp2` = −0.63 [−1.25, −0.01],
-`xp1` − `xp3` = +0.95 [+0.32, +1.59], `xp2` − `xp3` = +1.40 [+0.77, +2.03] — all three intervals
-exclude zero, spanning about two points end to end. They are therefore genuinely different policies,
-which is the condition a cross-play test needs, but the reader should not carry away "three
-equivalent fits": `xp2` is the strongest and `xp3`, the one started from the v0.5 basin, the weakest.
-Because the runs differ in strength, an off-diagonal cell mixes a partner effect with a strength
-effect, and the diagonal-minus-off-diagonal gap below is the *sum* of the two rather than a clean
-convention measurement. That works in the conservative direction here — the gap is small — but it
-would not if the gap were large.
+They separated. Over 55 coordinates the pairwise distances are **L2 6.34 to 9.64, L∞ 2.65 to 4.85**,
+and head to head all three pairs are indistinguishable in strength — `xp1`−`xp2` −0.34 [−0.97, +0.29],
+`xp1`−`xp3` +0.45 [−0.18, +1.09], `xp2`−`xp3` +0.37 [−0.26, +0.99]. Different policies, equal
+strength: exactly the condition under which an off-diagonal cell measures a partner effect and not a
+strength difference.
 
 #### Cross-play between independently-trained runs of the same architecture
 
@@ -2376,15 +2363,24 @@ Row = the seat-0 run, column = the run its two partners come from, opponent = th
 of `v05`. The diagonal is self-play. A convention private to one run shows up as the
 off-diagonal collapsing relative to the diagonal.
 
-| seat 0 \ partners | `p4-xp1` | `p4-xp2` | diagonal - mean off-diagonal |
-|---|---:|---:|---:|
-| `p4-xp1` | +4.69 [+4.07, +5.32] | +4.60 [+3.97, +5.23] | **+0.10** |
-| `p4-xp2` | +4.26 [+3.64, +4.89] | +4.73 [+4.10, +5.36] | **+0.47** |
+| seat 0 \ partners | `p4-xp1` | `p4-xp2` | `p4-xp3` | diagonal - mean off-diagonal |
+|---|---:|---:|---:|---:|
+| `p4-xp1` | +4.69 [+4.07, +5.32] | +4.60 [+3.97, +5.23] | +4.27 [+3.65, +4.90] | **+0.26** |
+| `p4-xp2` | +4.26 [+3.64, +4.89] | +4.73 [+4.10, +5.36] | +4.50 [+3.87, +5.13] | **+0.35** |
+| `p4-xp3` | +4.67 [+4.04, +5.29] | +4.61 [+3.98, +5.23] | +4.10 [+3.47, +4.72] | **-0.54** |
 
-**Self-play +4.71 over 2 diagonal cells; cross-play +4.43 over 2 off-diagonal cells; the gap is
-+0.28 points** against a per-cell half-width of about 0.63. The Hanabi line reports
+**Self-play +4.51 over 3 diagonal cells; cross-play +4.48 over 6 off-diagonal cells; the gap is
++0.02 points** against a per-cell half-width of about 0.63. The Hanabi line reports
 self-play-to-cross-play collapses of 23.97 to 2.52 (SAD) and 24.04 to 0.12 (IPPO); this is
 not that, and the runs are genuinely different policies -- see the distances below.
+
+Head to head, so "these are different policies" is measured rather than assumed:
+
+| pair | edge | 95% CI |
+|---|---:|---|
+| `p4-xp1` vs `p4-xp2` | -0.34 | [-0.97, +0.29] |
+| `p4-xp1` vs `p4-xp3` | +0.45 | [-0.18, +1.09] |
+| `p4-xp2` vs `p4-xp3` | +0.37 | [-0.26, +0.99] |
 
 Parameter distance between the runs, so the table above can be read:
 
@@ -2396,16 +2392,22 @@ Parameter distance between the runs, so the table above can be read:
 
 **This is the strongest single result in phase 4 and it is a negative one.** The Hanabi line the
 threat model cites reports self-play-to-cross-play collapses that are not subtle — SAD 23.97 → 2.52
-at 10,000 games per pair, IPPO 24.04 ± 0.02 → 0.12 ± 0.03 median. Nothing of that kind is present
-here. Read with §4.7's one-seat result — a single upgraded seat buys 43–60% of the three-seat gain —
-the two together say the v0.7 advantage is **an individual policy improvement and not a convention**,
-which is what a 55-coordinate linear score has far less room to hide than a neural policy does.
+at 10,000 games per pair, IPPO 24.04 ± 0.02 → 0.12 ± 0.03 median. **The gap here is +0.02 points
+against a per-cell half-width of 0.63**, and one row's gap is negative. Read with §4.7's one-seat
+result — a single upgraded seat buys 43–60% of the three-seat gain — the two together say the v0.7
+advantage is **an individual policy improvement and not a convention**, which is what a 55-coordinate
+linear score has far less room to hide than a neural policy does.
 
 **What would have to be true for this to be wrong.** That six generations at population 12 is too
 small a fit for a convention to form in — plausible, and it is the honest limit of the result. The
 runs are independent and they are *weak*; a convention that only appears at v0.6's own 14-generation
 budget would not be visible here. The falsification is affordable and is not run: refit at the full
-budget at two seeds and repeat the matrix.
+budget at two seeds and repeat the matrix. **And one thing this table cannot do at all**: the frozen
+configuration is not a fit, so these three runs are cousins of it rather than instances of it. They
+share its architecture and its structural keys; they do not share its vector, which is v0.6's. What
+the table rules out is a convention formed *by fitting this architecture*. It cannot rule out a
+convention inherited from v0.6's own fit, because every run here starts from or near that vector —
+and neither can any experiment that holds the architecture fixed.
 
 ## 4.9 The adversary re-search against the improved policy
 
@@ -2723,10 +2725,11 @@ Stated plainly rather than smoothed over, because it bears on how §4's claims s
   the freeze is the one thing the freeze exists to prevent. It is the first maintenance item after
   phase 5. **What is still not known is which field inside the engine**; the object is named, the
   member is not.
-* **The cross-play runs were fitted in the wrong architecture** and the table was not re-run after
-  the engine fix. §4.8 states exactly what they do and do not answer. Re-running is ~50 minutes of
-  fitting and ~50 of cells, and it is preregistered as phase-5 cell B7 on the frozen configuration
-  with the fixed engine rather than repeated here on training banks.
+* **The cross-play table was run twice.** The first three runs were fitted before the `factory.hpp`
+  precedence fix and silently carried the urgency escalation on; they are preserved under
+  `research/v07/runs/pre-fix/` as the evidence for that defect, and §4.8 reports the re-fit. What the
+  table still cannot answer is whether a convention is inherited from v0.6's *own* fit, since every
+  run starts from or near that vector.
 * **The one-seat deviation column was run only for the partner table**, not as a full
   `--partnersb` one-seat exploitability column in the threat model's T2 sense.
 * **The v0.7 architecture was refitted only at a small budget** for the cross-play runs

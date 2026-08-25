@@ -82,11 +82,12 @@ finding.**
    **+1.26** against `v05` and **+2.88** against `v06`, i.e. 43% and 60% of the three-seat gain,
    which is the single strongest piece of evidence that the gain is individual rather than
    conventional.
-5. **Cross-play should not collapse.** Three independently-trained runs of the architecture
+5. **Cross-play should not collapse.** Three independently-trained runs of the frozen architecture
    (disjoint fitting banks, different CEM trajectories, one different starting basin, pairwise L2
-   distance 7.1–11.2 over 55 coordinates) score **+4.48 self-play and +4.22 cross-play — a gap of
-   0.26 against a per-cell half-width of 0.63.** If phase 5's B7 shows a gap of more than 1.5, that
-   is a finding and it contradicts phase 4.
+   distance 6.3–9.6 over 55 coordinates, and all three head-to-head pairs indistinguishable in
+   strength) score **+4.51 self-play and +4.48 cross-play — a gap of 0.02 against a per-cell
+   half-width of 0.63.** If phase 5's B7 shows a gap of more than 1.5, that is a finding and it
+   contradicts phase 4.
 
 **Cost.** The configuration runs at roughly **3.2× the blueprint** — phase 3's correction to the
 corpus's own record, which had it at 242× because that figure was `F-search`, the unrestricted
