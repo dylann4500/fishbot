@@ -80,18 +80,27 @@ inline const char* colName(int j) {
 // The weight vector is applied to a REDUCED row: the deployed model may not
 // read a payoff-irrelevant label (THREAT-MODEL.md I-2), so `cardIdxInSet` and
 // `card` are hard-excluded here rather than merely left unfitted.
+// The DEPLOY row is the capture row plus five columns the fit derives and the
+// engine must be able to reproduce: rank indicators and "same target as the
+// blueprint's own pick".  Indices 0..50 are the capture layout exactly (50, the
+// label, is never read); 51..55 are the derived block.
+static const int V7L_DEPW = 56;
+static const int V7L_ISR1 = 51, V7L_SAMETGT = 55;
+
 struct LearnModel {
   bool   on = false;
   double bias = 0.0;                     // added to every non-blueprint candidate
-  double w[V7L_FEATW] = {};              // indices 34, 35, 47..50 are never used
-  double margin = 0.0;                   // deviate only if learned score beats
-                                         // candidate 0 by this much
+  double w[V7L_DEPW] = {};               // indices 34, 35, 47..50 are never used
+  double margin = 0.0;                   // deviate only if learned advantage
+                                         // beats candidate 0 by this much
   bool   tieOnly = false;                // restrict deviations to the tie group
   int    maxQ = 0;                       // act only when |unresolved| <= maxQ
 };
 
 inline bool excludedColumn(int j) {
-  return j == 34 || j == 35 || j >= 47;   // I-2 labels, and the search's own verdict
+  // 34/35 are payoff-irrelevant labels (THREAT-MODEL I-2); 47..50 are the
+  // search's own verdict and the label, which no deployed policy may read.
+  return j == 34 || j == 35 || (j >= 47 && j <= 50);
 }
 
 inline bool parseModel(const std::string& s, LearnModel& m) {
@@ -104,7 +113,7 @@ inline bool parseModel(const std::string& s, LearnModel& m) {
     size_t c = tok.find(':');
     if (c == std::string::npos) return false;
     int idx = atoi(tok.substr(0, c).c_str());
-    if (idx < 0 || idx >= V7L_FEATW || excludedColumn(idx)) return false;
+    if (idx < 0 || idx >= V7L_DEPW || excludedColumn(idx)) return false;
     m.w[idx] = atof(tok.substr(c + 1).c_str());
   }
   m.on = true;
@@ -117,22 +126,22 @@ inline bool parseModel(const std::string& s, LearnModel& m) {
 // ships keeps its meaning; `x.search` stays OFF, so no rollout ever runs and
 // the cost is the blueprint's.
 struct V07LAgent : V06Agent {
+  static const int V7L_DEPW = v07learn::V7L_DEPW;
+  static const int V7L_ISR1 = v07learn::V7L_ISR1;
+  static const int V7L_SAMETGT = v07learn::V7L_SAMETGT;
   v07learn::LearnModel lm;
   long long lDecisions = 0, lChanged = 0;
   const char* name() const override { return "v07l"; }
   bool wantV6Path() const override { return true; }
 
-  // Score one candidate under the learned model, on the same reduced row the
-  // fit saw.  Candidate 0 scores exactly 0 by construction, so the model is a
-  // learned ADVANTAGE over the blueprint's own choice and an all-zero weight
-  // vector reproduces v0.6 exactly.
-  double learnedAdv(const PublicState& pub, const AskMove& mv, int r, int tie,
-                    double du, double p, int n, int K, int myCards, int ourCards,
-                    int theirCards, int lead) {
-    if (r == 0) return 0.0;
+  // Build one candidate's DEPLOY row, in exactly the capture layout so that a
+  // weight index means the same thing in the fit and in the engine.
+  void buildRow(const PublicState& pub, const AskMove& mv, int r, int tie,
+                double du, double p, int n, int K, int myCards, int ourCards,
+                int theirCards, int lead, int refTargetRel, double* row) {
+    for (int j = 0; j < V7L_DEPW; j++) row[j] = 0.0;
     double f[NFEAT];
     features(pub, mv.card, mv.target, f);
-    double row[V7L_FEATW] = {};
     row[0] = r; row[1] = (r < tie) ? 1 : 0; row[2] = du; row[3] = p;
     for (int j = 0; j < NFEAT; j++) row[4 + j] = f[j];
     { int slot = 0;
@@ -152,8 +161,21 @@ struct V07LAgent : V06Agent {
     row[41] = double(lead);
     row[42] = double(n); row[43] = double(tie); row[44] = double(K);
     row[45] = double(K); row[46] = 0.0;
+    // derived block, indices 51..55
+    for (int kk = 1; kk <= 4; kk++) row[V7L_ISR1 + kk - 1] = (r == kk) ? 1.0 : 0.0;
+    row[V7L_SAMETGT] = (int(row[30]) == refTargetRel) ? 1.0 : 0.0;
+  }
+
+  // The learned ADVANTAGE of candidate r over the blueprint's own choice.  The
+  // fit is a conditional logit whose reference category is candidate 0, so the
+  // deployed score must be w . (row_r - row_0) + bias, not w . row_r: the
+  // difference is what the training objective actually scored.  With an all-zero
+  // weight vector and zero bias the advantage is 0 for every r and the argmax is
+  // candidate 0, i.e. v0.6 exactly.
+  double learnedAdv(const double* row, const double* ref) const {
     double a = lm.bias;
-    for (int j = 0; j < V7L_FEATW; j++) if (!v07learn::excludedColumn(j)) a += lm.w[j] * row[j];
+    for (int j = 0; j < V7L_DEPW; j++)
+      if (lm.w[j] != 0.0 && !v07learn::excludedColumn(j)) a += lm.w[j] * (row[j] - ref[j]);
     return a;
   }
 
@@ -198,11 +220,16 @@ struct V07LAgent : V06Agent {
         if (teamMask & (1 << q)) ourCards += pub.handCount[q]; else theirCards += pub.handCount[q];
       }
       const int lead = int(pub.score[team]) - int(pub.score[1 - team]);
+      const int refRel = (int(buf[ord[0]].target) - seat + NPLAY) % NPLAY;
+      double ref[V7L_DEPW], row[V7L_DEPW];
+      buildRow(pub, buf[ord[0]], 0, tie, 0.0, pp[ord[0]], n, K,
+               myCards, ourCards, theirCards, lead, refRel, ref);
       int hi = lm.tieOnly ? std::min(tie, K) : K;
       double best = lm.margin;
       for (int r = 1; r < hi; r++) {
-        double a = learnedAdv(pub, buf[ord[r]], r, tie, u[ord[r]] - u[ord[0]], pp[ord[r]],
-                              n, K, myCards, ourCards, theirCards, lead);
+        buildRow(pub, buf[ord[r]], r, tie, u[ord[r]] - u[ord[0]], pp[ord[r]], n, K,
+                 myCards, ourCards, theirCards, lead, refRel, row);
+        double a = learnedAdv(row, ref);
         if (a > best) { best = a; pick = r; }
       }
       if (pick != 0) lChanged++;
