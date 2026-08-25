@@ -147,7 +147,8 @@ int main(int argc, char** argv) {
     mc.partnersB = argVal(argc, argv, "partnersb", "");
     mc.games = atoi(argVal(argc, argv, "games", "1000").c_str());
     mc.seed = strtoull(argVal(argc, argv, "seed", "20260821").c_str(), nullptr, 10);
-    mc.rules = rulesFrom(argc, argv);
+mc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see MatchConfig
+        mc.rules = rulesFrom(argc, argv);
     mc.audit = argFlag(argc, argv, "audit");
     mc.threads = threads;
     mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
@@ -1137,6 +1138,7 @@ int main(int argc, char** argv) {
     sc.s5nodes = atoi(argVal(argc, argv, "s5nodes", "6").c_str());
     sc.s5draws = atoi(argVal(argc, argv, "s5draws", "8").c_str());
     sc.reconInline = argFlag(argc, argv, "reconinline");   // diagnostic, see SideConfig
+    sc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see SideConfig
     { std::string t = argVal(argc, argv, "tests", "");
       if (!t.empty()) {
         sc.s3 = t.find("s3") != std::string::npos;

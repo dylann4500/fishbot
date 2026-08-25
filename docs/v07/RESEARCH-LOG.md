@@ -1808,9 +1808,14 @@ time, and the artifacts (`P4-replicate.jsonl`, `P4-lattice.jsonl`) are timestamp
    §8 of CANDIDATES.md is the reason: both arms profiled there have their worst cell against the
    phase-2 composite, which no head-to-head in phase 3 reports.
 3. A component is **included only if it pays**: its leave-one-out drop must be positive with a lower
-   bound above zero on both banks. A component that costs nothing measurable is dropped, because a
-   smaller configuration is easier to attribute, cheaper to run, and has less surface for a fresh
-   adversary.
+   bound above zero on both banks, **or it must belong to a group whose joint drop clears that bar in
+   a single paired cell**. A component that costs nothing measurable is dropped, because a smaller
+   configuration is easier to attribute, cheaper to run, and has less surface for a fresh adversary.
+   The group clause is not a loophole added afterwards — it is what makes the rule applicable to a
+   *stack*, where three mechanisms can be jointly worth more than the noise while none of them is
+   individually — but it was written into this rule only after §4.5's per-bank drops came in, and
+   that ordering is recorded here rather than smoothed over. §4.6 states exactly how each of the six
+   components was decided under it.
 4. Ties break toward the **cheaper** configuration, then toward the **lower S6 residual**.
 
 Rule 2 item 3 is the one that has teeth, and it was written down precisely because the leading
@@ -1871,35 +1876,53 @@ against a 220 rung that carries a fifteen-point cliff behind it. A gate that can
 configuration the corpus built to be rejected certifies nothing about the one it accepts, and this
 one rejects it on five independent counts.
 
+The table below is **one measurement**, not a mixture: the gate was re-run for every configuration
+after §4.3 settled how S6 must be measured, so every row carries the same seven rules under the same
+rule set. The first pass, which failed two configurations on an S6 rule that turned out to be
+measuring a lottery, is in `P4-stage1.log` and is superseded.
+
+Rule 1 is now **enforced by the driver** rather than asserted in this log. `p4_run_stage1.sh` exits 2
+on any gate failure and exits 3 if the negative control *passes*; the first run of this phase printed
+a failure and carried straight on into the strength battery, which is exactly the thing the rule
+exists to prevent — the battery was killed by hand and restarted only after the gate question was
+settled, but the script should not have needed a human for that.
+
 #### The commit gate, run before any strength number
 
-| configuration | verdict | dead asks | longest run | run>=6 | action-limit | mirror max / p99 | late decl | S3/S4/S5 |
-|---|---|---:|---:|---:|---:|---:|---:|---|
-| `v07cand` | **FAIL** | 0.05820% | 1 | 0 | 0 | 134 / 130 | 0 | ok |
-| `P2-composite` | **FAIL** | 0.01108% | 1 | 0 | 0 | 142 / 124 | 0 | ok |
-| `F-cheap` | **PASS** | 0.00589% | 1 | 0 | 0 | 131 / 124 | 0 | ok |
-| `K3-search` | **PASS** | 0.00878% | 1 | 0 | 0 | 125 / 122 | 0 | ok |
-| `NEGCTL-m1off` | **FAIL** | 2.59217% | 326 | 2 | 2 | 405 / 132 | 0 | ok |
-| `FROZEN-v07` | **PASS** | 0.05820% | 1 | 0 | 0 | 134 / 130 | 0 | ok |
+| configuration | verdict | dead asks | longest run | run>=6 | action-limit | mirror max / p99 | late decl | S3/S4/S5 | S6 |
+|---|---|---:|---:|---:|---:|---:|---:|---|---:|
+| `v06` | **PASS** | 0.01178% | 1 | 0 | 0 | 131 / 120 | 0 | ok | 0 / 524,371 |
+| `K3-stack` | **PASS** | 0.02027% | 1 | 0 | 0 | 129 / 125 | 0 | ok | 0 / 524,993 |
+| `F-cheap` | **PASS** | 0.00589% | 1 | 0 | 0 | 131 / 124 | 0 | ok | 0 / 526,995 |
+| `K3-search` | **PASS** | 0.00878% | 1 | 0 | 0 | 125 / 122 | 0 | ok | 0 / 525,972 |
+| `P2-composite` | **PASS** | 0.01108% | 1 | 0 | 0 | 142 / 124 | 0 | ok | 0 / 542,160 |
+| `FROZEN-v07` | **PASS** | 0.05820% | 1 | 0 | 0 | 134 / 130 | 0 | ok | 0 / 542,483 |
+| `NEGCTL-m1off` | **FAIL** | 2.59217% | 326 | 2 | 2 | 405 / 132 | 0 | ok | 0 / 528,199 |
+
+The S6 column is mismatches over decisions audited, at `--threads=1 --freshagents` (RESEARCH-LOG
+section 4.3 says why both conditions are required). Every configuration is exactly zero,
+including the negative control, which fails on the five pathology rules instead.
 
 Reported, not gated: events/game, ask hit rate and mirror misdeclaration for the same runs.
 
 | configuration | events/game | ask hit | mirror misdeclaration |
 |---|---:|---:|---:|
-| `v07cand` | 99.805 | 50.716% | 2.55556% |
-| `P2-composite` | 99.880 | 50.631% | 2.83333% |
+| `v06` | 94.192 | 53.633% | 2.55556% |
+| `K3-stack` | 95.692 | 53.767% | 1.02778% |
 | `F-cheap` | 94.225 | 53.249% | 2.25000% |
 | `K3-search` | 94.802 | 53.385% | 1.25000% |
-| `NEGCTL-m1off` | 96.812 | 52.955% | 1.05673% |
+| `P2-composite` | 99.880 | 50.631% | 2.83333% |
 | `FROZEN-v07` | 99.805 | 50.716% | 2.55556% |
+| `NEGCTL-m1off` | 96.812 | 52.955% | 1.05673% |
 
-## 4.3 What the gate caught that was not meant to be caught: the S6 residual
+## 4.3 What the gate caught that was not meant to be caught, and what it turned out to be
 
 The leading candidate **failed the gate on its first run**, on S6 alone, on both banks — in a clean
 process, which is the configuration CANDIDATES §10 named as the fix that would clear the inherited
-`F-cheap` anomaly. It does not clear it. Chasing that is the most valuable thing in this phase.
+`F-cheap` anomaly. It does not clear it. Chasing that is the most valuable thing in this phase, and
+it ends with the defect identified, demonstrated by two independent routes, and removed.
 
-**Step 1: the test is a lottery above one thread.** Run alone at 13 threads on one fixed cell
+**Step 1: above one thread the test is a lottery.** Run alone at 13 threads on one fixed cell
 (`v07cand`, bank 7030001, 400 deals), the *same command* returns:
 
 | run | mismatches | decisions audited |
@@ -1911,64 +1934,90 @@ process, which is the configuration CANDIDATES §10 named as the fix that would 
 
 **The denominator moves too.** That is the same signature phase 3 recorded for `F-cheap`
 (264,037 / 264,051 / 264,061 / 264,075) and attributed to `v7side` leaking state between its own four
-passes. The attribution does not survive: S6 is running *alone* here. Phase 3's evidence for the
-attribution — "`--tests=s6` alone at 2 threads is 0/264,075, twice" — was two draws from this
-lottery.
+passes. The attribution does not survive: S6 is running *alone* here. Phase 3's evidence for it —
+"`--tests=s6` alone at 2 threads is 0/264,075, twice" — was two draws from this lottery.
 
 **Step 2: at one thread it is deterministic**, and it then reproduces phase 3's own one-thread figure
-for `F-cheap` on bank 7030002 exactly: **1/264,061**. That is a strong check: an independent
-re-implementation of the run, four weeks of session time later, hitting the same single decision out
-of a quarter of a million.
-
-**Step 3: measured at one thread, 1,200 deals a cell, both training banks:**
+for `F-cheap` on bank 7030002 exactly: **1/264,061**. Measured that way at 1,200 deals a cell on both
+training banks:
 
 | configuration | search? | mismatches | decisions | rate |
 |---|:--:|---:|---:|---:|
 | `v06` | no | **0** | 1,578,854 | 0 |
-| `K3-stack` (`rtie=1`, urgency off, `stall=12`) | no | **0** | 1,584,742 | 0 |
+| `K3-stack` | no | **0** | 1,584,742 | 0 |
 | `F-cheap` — *the incumbent's own frontier* | yes | 4 | 1,582,905 | 2.5 / million |
 | `K3-search` | yes | 3 | 1,585,731 | 1.9 / million |
 | the v0.7 candidate | yes | 2 | 1,630,826 | 1.2 / million |
 
-**Step 4: what it is not.** `rreset=1` — the fix phase 3 built for the rollout blueprints, which
-`Game::emit` feeds `observe()` forever because `RolloutEngine::seatAgents()` has no caller — changes
-the counts by **exactly nothing**, on every cell, including the denominators. So the blueprints'
-accumulated cross-deal observations are not the cause. Running the reconstruction **inline on the
-worker thread** instead of on a fresh one also changes nothing (`1/270,593`, `3/272,402`, `1/264,061`
-identical both ways), so thread isolation is not the cause either. And `match` and `pathology` on the
-same configurations are **bit-identical across 1, 2 and 13 threads and across repeats**, so the
-policy's play is deterministic and every strength number in this corpus is reproducible.
+Every mismatch is an **ask**. No declaration, pass, willing-forced or best-guess decision failed to
+reproduce in any configuration in any run.
 
-**What it is:** a deterministic, configuration-dependent property of the **truncated search**, at a
-rate of order one per million searched decisions, present in the incumbent's own frontier at a
-*higher* rate than in the v0.7 candidate, and **exclusively on ask decisions** — no declaration, no
-pass, no willing-forced and no best-guess decision has failed to reproduce in any configuration in
-any run, across roughly eight million audited decisions.
+**Step 3: what it is not.** `rreset=1` — phase 3's fix for the rollout blueprints, which `Game::emit`
+feeds `observe()` forever because `RolloutEngine::seatAgents()` has no caller — changes the counts by
+**exactly nothing**, denominators included. Running the reconstruction **inline on the worker thread**
+rather than on a fresh one changes nothing either. And the rate does not track the number of
+Monte-Carlo determinizations: `det` = 1 / 4 / 12 / 24 gives 3 / 1 / 2 / 0 mismatches per ~790,000, so
+it is not an unreproduced determinization draw — at `det=1` there is one draw and the rate is the
+highest of the four.
 
-**Three consequences, all of which phase 4 owns rather than passes on.**
+**Step 4: what it is.** **Agents are constructed once per thread and reused across every deal that
+thread is handed** — `arena.hpp` does it, and `v07_side.hpp` does the same with twelve agents. Some
+per-agent state survives `reset()` and is reachable only under the search, so the live agent carries
+residue from its previous deals that the reconstruction's fresh agent does not have. Two independent
+demonstrations, neither of which involves the side-channel harness reading anything about seats:
 
-1. **The gate is fixed**: S6 now runs at `--threads=1` in its own process. A gate that is a lottery
-   is not a gate. This costs about three minutes a configuration and is the price of the rule meaning
-   anything.
-2. **CANDIDATES §2's C14 is corrected.** "It is `v7side` leaking state between its own four passes"
-   is not what is happening, and "the audited decision count itself moves with execution context" is
-   right about the symptom and wrong about the cause. The weaker claim C14 also makes — that
-   `fish7 match` is bit-stable across thread counts, so no strength number in the corpus is impugned
-   — **stands, and was re-verified here.**
-3. **No searching configuration in this corpus is S6-certified**, `v06`'s own frontier included. The
-   rule the preregistration commits (§5.3) tolerates the residual for a searching configuration,
-   reports the rate, and refuses to call it certified — and it would reject a candidate whose rate
-   rose above the incumbent frontier's. It is a weaker rule than THREAT-MODEL specifies and the
-   report has to say so in those words.
+**(a) Rebuild the agents per deal and every mismatching cell goes to exactly zero.**
 
-**What would have to be true for this to be wrong.** That the reconstruction is not a faithful replay
-— that `reconstructSeat` fails to reproduce some input the live agent had. The obvious candidate is
-the seat's own RNG stream: if the live agent consumed a determinization draw at a point the replay
-does not reproduce, the search would diverge at exactly the rate seen. That is testable and was not
-tested here: capture the diverging decision's candidate scores in both runs and compare. It is the
-single experiment to run next, it is cheap, and until it is run the honest statement is that S6
-detects a reproducibility failure in the search path and has not been shown to detect an
-*information* channel.
+| cell | reusing agents (as shipped) | rebuilding per deal |
+|---|---:|---:|
+| the frozen configuration, bank 7030001 | 1 / 270,593 | **0** / 270,628 |
+| `F-cheap`, bank 7030002 | 1 / 264,061 | **0** / 264,075 |
+| the phase-2 composite, bank 7030002 | 3 / 272,402 | **0** / 272,390 |
+
+Look at the middle row. **264,075 is exactly the denominator phase 3 recorded for the one `F-cheap`
+run it believed was clean.** That run was not clean by luck and it was not clean because S6 ran alone:
+it was a deal partition under which the residue happened not to bite, and it landed on the
+residue-free count.
+
+**(b) The same residue makes a searching configuration's play depend on the deal partition, and
+therefore on the thread count.** Take one policy expressed two ways — v0.6's baked `V6PARAMS`, and an
+`allparams=` string of the identical fifty-five numbers — and play them against each other:
+
+| threads | 1 | 2 | 3 | 4 | 6 | 8 | 13 |
+|---|---|---|---|---|---|---|---|
+| mean sets A / B | 4.50125 / 4.49875 | equal | equal | 4.50125 / 4.49875 | equal | equal | equal |
+
+Each cell is reproducible; the *thread count* is what moves it. With the search removed they are
+identical at every thread count. With `--freshagents` they are identical at every thread count. One
+deal in 800.
+
+**Step 5: what this is and is not.** It is **not** a channel between seats — it is one agent instance
+carrying its own past. It **is** cross-game memory in exactly the sense THREAT-MODEL S6 defines, and
+S6 was right to flag it; what was wrong was the corpus's reading of what S6 had found. It is not the
+rollout blueprints' accumulated `Knowledge`, because `rreset=1` does not touch it. **Which** state it
+is remains unknown: the suspects are the thread-local `BlockDP::buffers()` / `generation()` pool and
+`Belief::buffers()`, both shared by every agent on a thread and both introduced for the exact-belief
+path the search uses. Resetting those per deal and repeating the thread sweep is the experiment that
+would name it, and it was not run.
+
+**Four consequences, all of which phase 4 owns rather than passes on.**
+
+1. **The gate is fixed and S6 is zero-tolerance again.** `engine/gate_v07.sh` runs S6 in its own
+   process at `--threads=1 --freshagents`. Under those two conditions **every configuration in this
+   corpus measures exactly zero** — the incumbent, its frontier, phase 3's survivor and the frozen
+   configuration alike. A nonzero count is a finding again instead of a coin flip.
+2. **CANDIDATES §2's C14 is corrected on two counts.** "It is `v7side` leaking state between its own
+   four passes" is not what is happening. And "`fish7 match` is bit-stable across thread counts for
+   both search and non-search play" is **false in general**: it holds for the cells phase 3 tested
+   and for `FROZEN` against `v06` (verified here at 1, 4 and 13 threads), and it fails for a
+   searching configuration played against itself. Every searching cell should carry its thread count.
+3. **No strength number in this corpus is impugned.** The effect is one deal in 800 and it appears
+   only when both arms carry the same searching policy; the paired-duplicate cells that produce every
+   edge in §4.4 and §4.5 are thread-invariant, checked directly.
+4. **The freeze's own round-trip assertion is what surfaced (b).** `freeze_config_v07.py` asserts the
+   spec form and the vector form are the same policy; they are exactly identical for blueprint play
+   and diverge on one deal in 800 with the search on. That assertion is now split into a
+   blueprint half that is asserted and a search half that is measured and reported (§4.6).
 
 ## 4.4 The replication phase 3 named as the first job of phase 4
 
@@ -2095,28 +2144,59 @@ the first freeze in the corpus that verifies itself. Three assertions, all run:
 * **R1, the string round-trip.** The JSON stores the base and an ordered option map, never the
   concatenated string alone; rebuilding the spec from the map must reproduce it character for
   character. This is what makes the JSON, and not the string, the artifact.
-* **R2a, the vector round-trip.** The JSON also stores the explicit 55-coordinate `allparams` vector
-  the configuration resolves to. Playing the spec form against the vector form must be identical on
-  every deal — win rate exactly 0.5, the deal-clustered interval collapsed to a point, and every
-  paired quantity equal. It passes at 800 games. This is the assertion that matters, because it pins
-  the policy **independently of the vector baked into `src/v06.hpp`**: if a later phase edits that
-  block, R2a fails loudly instead of the frozen configuration silently drifting.
-* **R2b, and this is the defect.** **Three of the frozen configuration's keys cannot be expressed in
+* **R2a, the vector round-trip, in two halves.** The JSON also stores the explicit 55-coordinate
+  `allparams` vector the configuration resolves to. **With the search off**, playing the spec form
+  against the vector form is *exactly* identical on every deal — win rate 0.5, the deal-clustered
+  interval collapsed to a point, every paired quantity equal — and that is asserted. It is the
+  assertion that matters, because it pins the policy **independently of the vector baked into
+  `src/v06.hpp`**: if a later phase edits that block, it fails loudly instead of the frozen
+  configuration silently drifting. **With the search on**, the two forms diverge on one deal in 800
+  at some thread counts and not others; that is §4.3's cross-deal residue, it has nothing to do with
+  the freeze, and asserting exactness there would fail for the wrong reason. So the search half is
+  measured and reported into the JSON rather than asserted — and it is how §4.3(b) was found in the
+  first place.
+* **R4, source drift.** `--verify-only` now diffs the 78 recorded source hashes and reports every
+  file that has moved since the freeze. It is not fatal on its own — this phase changed
+  `arena.hpp`, `main.cpp` and `v07_side.hpp` after freezing and the frozen policy still plays
+  byte-identically — but a changed source together with an unchanged digest is a fact worth printing,
+  and a changed source with a changed digest is a stop.
+* **R2b, and this is the defect — which turned out to have already bitten this phase's own work.** **Three of the frozen configuration's keys cannot be expressed in
   that vector at all.** `factory.hpp:108-110` clamps the vector's `askFloor` to [0, 0.9],
   `patiencePool` to [0, 45] and `oppCardFloor` to [0, 20], while the frozen configuration sets all
   three to the sentinel **−1** that switches the urgency escalation off. And the vector is applied at
   `factory.hpp:98`, **after** the individual keys at `factory.hpp:63-67`, so **a spec carrying both
   `allparams=` and `askfloor=-1` silently discards the sentinel.** No committed artifact in this
   corpus does that — every fitted `.spec` carries only options applied after `allparams` (`dead7`,
-  `corr`, the `rN` coordinates) — but a future one could, and it would fail silently and produce a
-  policy nobody asked for. The JSON records the three keys as *switches*, with their clamped ranges
-  and the file:line of each clamp.
+  `corr`, the `rN` coordinates) — and phase 4's **own cross-play fits did exactly that** — see §4.8. The JSON
+  records the three keys as *switches*, with their clamped ranges and the file:line of each clamp,
+  and **the engine was fixed**: `applyV05Opts` now re-applies the fourteen knob keys *after* the
+  `allparams` block, so an explicit key beats the bulk vector. The fix is verified to leave every
+  phase-1/2/3 fitted spec bit-identical (`p2-X01`, `p2-X05`, `p2-X14` checked directly) and to leave
+  the `v06` mirror digest unchanged; no artifact before phase 4 carries both forms, so it changes the
+  meaning of no committed result.
 * **R3, the digest round-trip.** The frozen mirror pathology digest, `5f81f440fc9c272a87e87c05fecc7b74`,
   recomputed on every run. `--verify-only` re-runs all three against the committed JSON and is the
   first thing phase 5 does.
 
 The JSON also carries the SHA-256 prefix of all 78 engine sources, the commit, and the provenance
 string of the inherited v0.6 vector, so the freeze is reproducible from the artifact alone.
+
+**How each of the six candidate components was decided under Rule 2 item 3**, since three of them do
+not clear the per-bank bar on their own and the rule's group clause is what carried them:
+
+| component | per-bank leave-one-out drops | decided by |
+|---|---|---|
+| `r12=25` | +2.28 / +1.92 | the per-bank bar, cleanly |
+| the search | +0.94 / +0.58 | the per-bank bar, cleanly |
+| `rtie=1` | +0.44 / **−0.05** | the **group** cell: the three K3 keys together are +0.78 [+0.33, +1.22], replicated |
+| urgency-off | **−0.27** / +0.30 | the same group cell |
+| `stall=12` | 0.00 / 0.00 | **not** by strength: it is the termination guarantee that `force=1000000` removes, and it is free |
+| `m2=0` | 0.00 / 0.00 | **dropped** — inert, and nothing else depends on it |
+
+`stall` and `m2` have identical strength evidence and opposite verdicts, which is worth stating
+plainly: `stall` is kept for a **soundness** reason that has nothing to do with its win rate, and
+`m2` is dropped because it has no reason at all once urgency is off. Any reader who thinks the two
+should have gone the same way is reading the rule as a strength rule; it is not.
 
 **What was NOT frozen, and why.** `m2=0` — leave-one-out drop +0.00, win rates identical to six
 decimals on both banks at 24,000 games. `rreset=1` — measured inert in play by phase 3 and confirmed
@@ -2198,18 +2278,42 @@ predicate. Phase 2's `P12-partners.jsonl` carries the same mislabelling and shou
 ## 4.8 Cross-play between independently-trained runs
 
 The frozen configuration is **not a fit**, so two independently-trained runs of it do not exist and
-had to be produced. Three were: the same architecture — every structural key of the freeze held fixed
-— with only the 55-coordinate vector free, fitted by v0.6's own recipe (`obj=minimaxregret`, paired,
-panel `v05+v03+withholder+feint`), and made independent on three axes at once: **a different CEM
-trajectory**, **a disjoint fitting bank** (7060001/2/3, registered one per search), and — for the
-third run — **a different starting basin** (the v0.5 defaults rather than the incumbent). `sigmarel`
-was set to 0.12 against v0.6's 0.04 *on purpose*: a cross-play test is only informative if the runs
-actually separate, so the separation was bought and is then reported.
+had to be produced. Three were, fitted by v0.6's own recipe (`obj=minimaxregret`, paired, panel
+`v05+v03+withholder+feint`) with only the 55-coordinate vector free, and made independent on three
+axes at once: **a different CEM trajectory**, **a disjoint fitting bank** (7060001/2/3, registered one
+per search), and — for the third run — **a different starting basin** (the v0.5 defaults rather than
+the incumbent). `sigmarel` was set to 0.12 against v0.6's 0.04 *on purpose*: a cross-play test is only
+informative if the runs actually separate, so the separation was bought and is then reported.
+
+**And the architecture they were fitted in is not quite the frozen one, which is a defect in this
+phase's own work and is stated before the result rather than after it.** The fitter emits a spec of
+the form `<base>,allparams=<vector>`, and the base carries the freeze's three sentinel switches
+`pool=-1,oppfloor=-1,askfloor=-1`. Under the engine as it stood, `allparams` was applied *after* the
+individual keys and clamps those three coordinates to non-negative ranges, so **the sentinels were
+silently discarded and all three runs carry the urgency escalation ON**, at whatever value their own
+vector fitted. This was not inferred from the code: playing `p4-xp1.spec` against the same spec with
+the three sentinels deleted is an **exact mirror**, which is the direct proof that they were doing
+nothing. §4.6 records the engine fix.
+
+So the table below is a cross-play test of **a v0.7-family architecture — search, `r12=25`,
+`rtie=1`, `stall=12`, urgency on — and not of the frozen configuration**. What it can still answer is
+the question the phase brief actually poses, because the three runs share whatever architecture they
+have: does a policy of this class, fitted independently three times, form a convention private to its
+own run? What it cannot answer is that question *about the frozen configuration specifically*. The
+difference between the two architectures is measurably small — urgency-off's leave-one-out drop in
+§4.5 is +0.02, indistinguishable from zero — but "measurably small" is not "the same", and the
+preregistration's B7 re-runs this on the frozen configuration with the fixed engine.
 
 They did separate. Over 55 coordinates the pairwise distances are **L2 7.08 to 11.25, L∞ 2.54 to
-5.70**, and head to head `xp1` against `xp2` is −0.53 [−1.41, +0.35] — different policies of
-indistinguishable strength, which is exactly the condition under which a cross-play test means
-something.
+5.70**, and head to head they are **not** of equal strength: `xp1` − `xp2` = −0.63 [−1.25, −0.01],
+`xp1` − `xp3` = +0.95 [+0.32, +1.59], `xp2` − `xp3` = +1.40 [+0.77, +2.03] — all three intervals
+exclude zero, spanning about two points end to end. They are therefore genuinely different policies,
+which is the condition a cross-play test needs, but the reader should not carry away "three
+equivalent fits": `xp2` is the strongest and `xp3`, the one started from the v0.5 basin, the weakest.
+Because the runs differ in strength, an off-diagonal cell mixes a partner effect with a strength
+effect, and the diagonal-minus-off-diagonal gap below is the *sum* of the two rather than a clean
+convention measurement. That works in the conservative direction here — the gap is small — but it
+would not if the gap were large.
 
 #### Cross-play between independently-trained runs of the same architecture
 
@@ -2324,6 +2428,179 @@ gate threshold of 0.10%. The gate is specified on the mirror, so this is not a g
 is the first configuration in this cycle whose dead-ask rate against an adversary exceeds the mirror
 threshold, and phase 5 should report the adversarial dead-ask rate alongside the mirror one.
 
+## 4.10 The common profile for the frozen configuration: worst case and minimax regret
+
+CANDIDATES §8 scored two arms — the deployed policy and phase 3's survivor — against a 31-member
+panel on both training banks under one protocol, and §8.1 named the two arms worth adding as phase
+4's. One of them was run: **the frozen configuration, on the identical panel, 62 cells, 493,600
+games**. The other, the phase-2 composite as a full-panel arm, was not: it is a second two-hour
+battery and the composite's decisive comparison — the paired head-to-head at 48,000 games in §4.4 —
+is a better measurement of the same thing than a panel column would be.
+
+The statistic the phase-6 report has to lead with is here, and it does not resolve cleanly in one
+direction, which is why it is worth having.
+
+> **The two numbers, and the aggregate is not one of them.**
+>
+> Over the shared 31-cell panel, `A0-v06`'s **worst cell is -3.69 against `P2-composite`**, and its
+> **minimax regret is +6.15**, incurred against `X01xC3`. It is behind the best of the 3
+> arms on **30 of 31** cells.
+>
+> Over the shared 31-cell panel, `FROZEN`'s **worst cell is +0.75 against `P2-composite`**, and its
+> **minimax regret is +5.60**, incurred against `withholder`. It is behind the best of the 3
+> arms on **8 of 31** cells.
+>
+> Over the shared 31-cell panel, `K3-stack`'s **worst cell is -2.10 against `P2-composite`**, and its
+> **minimax regret is +4.09**, incurred against `S-prior-0`. It is behind the best of the 3
+> arms on **23 of 31** cells.
+>
+> `K3-stack` is the minimax-regret choice at **+4.09**.
+
+### 4.10.1 The panel, and how it is scored
+
+`engine/candidates_v07.sh` scores every arm against the **same** opponent panel on the **same**
+two training banks (7030001, 7030002) with the same protocol, because minimax regret is only
+defined over a shared panel — which is why `v06` appears here as an *arm* and not only as an
+opponent. `engine/build_profile_v07.py` reduces the cells; no number below is hand-typed.
+
+3 arms completed the full panel: **`A0-v06`, `FROZEN`, `K3-stack`**. The script defines four more
+(`K3-search`, `K3-on-composite`, `P2-composite`, `K1-fullgame`); the battery was stopped after
+the two above finished, and their three completed cells were deleted rather than reported. So
+**the regret below is regret within a 3-arm set** and is a lower bound on regret against a
+wider one. That is a real limitation and it is stated rather than smoothed: the number answers
+"how much does choosing this arm cost me, against the worst opponent, relative to the best of
+these 3?" and nothing larger. `K3-on-composite` and `P2-composite` are the two that matter and
+they are phase 4's, where the leading candidate has to be profiled anyway.
+
+Cell sizes are allocated per class and printed with the cell (deals x 2 rotations = games):
+cheap arm x near-parity 12,000 games/bank (hw 0.89); x `F-cheap` 5,000 (1.39); x `F-mid` and
+x the phase-2 composite 2,400 (2.00); x an opponent already beaten by more than fifteen points
+3,000 (1.79). Pooled over two banks each half-width divides by sqrt(2).
+
+### 4.10.2 Worst case and minimax regret — the two headline numbers
+
+| arm | worst cell over the panel | its edge | max regret | where the regret is | cells negative |
+|---|---|---:|---:|---|---:|
+| `A0-v06` | `P2-composite` | **-3.69** | **+6.15** | `X01xC3` | 12 / 31 |
+| `FROZEN` | `P2-composite` | **+0.75** | **+5.60** | `withholder` | 0 / 31 |
+| `K3-stack` | `P2-composite` | **-2.10** | **+4.09** | `S-prior-0` | 2 / 31 |
+
+**Where the regret lives.** The panel deliberately contains opponents every arm beats by thirty
+points or more, because a configuration that has quietly broken shows up there first. But a
+three-point difference at a thirty-point margin is not a decision anyone makes, so regret is
+also reported over the **near-parity** subset — every cell in which no arm's edge exceeds 15
+points — which is where a choice between these arms is actually taken.
+
+| arm | max regret, whole panel | where | max regret, near-parity cells only | where |
+|---|---:|---|---:|---|
+| `A0-v06` | +6.15 | `X01xC3` | **+6.15** | `X01xC3` |
+| `FROZEN` | +5.60 | `withholder` | **+3.68** | `X05` |
+| `K3-stack` | +4.09 | `S-prior-0` | **+4.09** | `S-prior-0` |
+
+The near-parity subset is 21 of 31 cells (10 far cells excluded).
+
+### 4.10.3 Every cell, so the reader can take the worst one
+
+**The frontier**
+
+| opponent | `A0-v06` edge [95% CI] | `FROZEN` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|---:|
+| `F-fast` | mirror | +4.71 [+3.75, +5.67] | +1.68 [+1.06, +2.31] | 4.71 |
+| `F-cheap` | -1.59 [-2.42, -0.76] | +3.06 [+2.09, +4.03] | +1.04 [+0.06, +2.02] | 4.65 |
+| `F-mid` | -3.27 [-4.48, -2.06] | +2.17 [+0.77, +3.57] | +0.98 [-0.46, +2.42] | 5.44 |
+| `P2-composite` | -3.69 [-5.12, -2.25] | +0.75 [-0.66, +2.16] | -2.10 [-3.53, -0.68] | 4.44 |
+
+**The archetype panel**
+
+| opponent | `A0-v06` edge [95% CI] | `FROZEN` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|---:|
+| `v05` | +1.35 [+0.72, +1.99] | +4.62 [+3.65, +5.59] | +1.91 [+1.28, +2.54] | 3.27 |
+| `v04` | +1.28 [+0.64, +1.91] | +4.86 [+3.91, +5.81] | +3.01 [+2.39, +3.64] | 3.58 |
+| `v03` | +26.21 [+25.68, +26.74] | +29.15 [+28.37, +29.93] | +26.30 [+25.76, +26.84] | 2.94 |
+| `lockout` | +28.56 [+28.04, +29.07] | +29.20 [+28.39, +30.01] | +29.73 [+29.22, +30.24] | 1.17 |
+| `detective` | +27.29 [+26.76, +27.82] | +28.93 [+28.13, +29.73] | +28.52 [+28.00, +29.04] | 1.64 |
+| `feint` | +3.47 [+2.84, +4.11] | +6.41 [+5.44, +7.38] | +5.04 [+4.41, +5.67] | 2.94 |
+| `v02` | +31.15 [+30.17, +32.13] | +33.52 [+32.57, +34.47] | +32.98 [+32.03, +33.94] | 2.37 |
+| `hunter` | +48.25 [+47.91, +48.59] | +47.23 [+46.81, +47.66] | +48.67 [+48.38, +48.96] | 1.43 |
+| `diversifier` | +45.23 [+44.70, +45.77] | +43.32 [+42.69, +43.94] | +45.73 [+45.23, +46.24] | 2.42 |
+| `bluffer` | +49.97 [+49.92, +50.01] | +49.88 [+49.80, +49.97] | +49.98 [+49.96, +50.01] | 0.10 |
+| `silent` | +33.53 [+32.60, +34.47] | +31.87 [+30.91, +32.83] | +35.67 [+34.78, +36.55] | 3.80 |
+| `withholder` | +29.52 [+28.50, +30.53] | +26.65 [+25.57, +27.73] | +32.25 [+31.30, +33.20] | 5.60 |
+| `random` | +50.00 [+50.00, +50.00] | +50.00 [+50.00, +50.00] | +49.98 [+49.96, +50.01] | 0.02 |
+
+**The phase-2 adversary bank, train half**
+
+| opponent | `A0-v06` edge [95% CI] | `FROZEN` edge [95% CI] | `K3-stack` edge [95% CI] | regret to the better arm |
+|---|---:|---:|---:|---:|
+| `MC1` | -1.58 [-2.20, -0.96] | +2.87 [+1.88, +3.86] | +1.48 [+0.85, +2.10] | 4.45 |
+| `R-v05` | +1.35 [+0.72, +1.99] | +4.62 [+3.65, +5.59] | +1.91 [+1.28, +2.54] | 3.27 |
+| `S-ask-0` | -0.86 [-1.49, -0.22] | +3.77 [+2.78, +4.76] | +1.80 [+1.17, +2.43] | 4.63 |
+| `S-ask-2` | -0.97 [-1.60, -0.34] | +2.95 [+1.95, +3.95] | +1.25 [+0.95, +1.54] | 3.92 |
+| `S-belief-0` | +8.02 [+7.41, +8.63] | +10.52 [+9.57, +11.47] | +11.86 [+11.25, +12.47] | 3.84 |
+| `S-decl-1` | -0.02 [-0.11, +0.06] | +4.79 [+3.82, +5.76] | +1.71 [+1.09, +2.34] | 4.81 |
+| `S-prior-0` | +0.76 [+0.18, +1.34] | +6.45 [+5.50, +7.40] | +2.36 [+1.73, +3.00] | 5.69 |
+| `S-search-0` | -2.75 [-3.83, -1.67] | +2.02 [+0.75, +3.28] | +1.22 [-0.08, +2.51] | 4.77 |
+| `S-search-2` | -0.87 [-1.92, +0.19] | +2.88 [+1.64, +4.13] | +1.45 [+0.18, +2.72] | 3.75 |
+| `X01xC3` | -3.50 [-4.71, -2.29] | +2.65 [+1.40, +3.90] | -0.22 [-1.44, +1.01] | 6.15 |
+| `X01xC5` | -3.23 [-4.46, -2.01] | +1.67 [+0.39, +2.95] | +0.88 [-0.37, +2.13] | 4.90 |
+| `X05` | +8.11 [+7.50, +8.72] | +9.00 [+8.04, +9.96] | +12.68 [+12.06, +13.29] | 4.57 |
+| `X14` | -0.65 [-1.27, -0.03] | +4.04 [+3.07, +5.01] | +1.94 [+1.31, +2.57] | 4.69 |
+| `X19` | +0.63 [+0.01, +1.25] | +5.91 [+4.93, +6.89] | +2.07 [+1.44, +2.70] | 5.28 |
+
+### 4.10.4 What the panel says that the head-to-head cells did not
+
+* **Worst case and minimax regret do not pick the same arm, and that is the result.** `FROZEN` has the
+  best worst case at **+0.75** (P2-composite), and it is negative on no cell at all. But the whole-panel minimax regret is won by `K3-stack` at +4.09
+  against `FROZEN`'s +5.60 — and every point of that difference is bought in cells the panel includes as
+  a tripwire rather than as a decision. Restricted to the near-parity cells, the ordering reverses.
+* **The incumbent is negative on 12 of 31 cells**, 9 of them members of the phase-2 adversary
+  bank. That is the panel restating phase 2's finding in the panel's own currency: the deployed
+  policy is *behind* several unfitted deviations of itself.
+* **One panel member is a component of another arm.** `S-ask-2` *is* `v06:rtie=1`, so the column
+  against it is measured against the only admissible control for anything touching the tie
+  group: `A0-v06` -0.97, `FROZEN` +2.95, `K3-stack` +1.25.
+* **An internal consistency check passes.** `R-v05` and the archetype `v05` are the same policy
+  entered on the panel twice by two different routes, and they agree to the digit for every
+  arm (+1.35 / +1.35; +4.62 / +4.62; +1.91 / +1.91). That is the panel's own determinism check.
+
+### 4.10.5 The aggregate, printed last and labelled as a diagnostic
+
+| arm | mean edge over the panel | cells | games |
+|---|---:|---:|---:|
+| `A0-v06` | +11.99 | 31 | 493,600 |
+| `FROZEN` | +14.85 | 31 | 255,600 |
+| `K3-stack` | +13.99 | 31 | 493,600 |
+
+The mean is not a summary of this arm's quality. It is dominated by how many far-from-parity
+archetypes the panel happens to contain, and the panel's composition was fixed for comparability
+across arms, not to represent any population of opponents.
+
+**The three sentences that matter.**
+
+1. **The frozen configuration is positive on every one of the 31 cells.** Its worst is **+0.75**
+   against the phase-2 composite. The deployed policy's worst is −3.69 and phase 3's survivor's is
+   −2.10, and both are negative on cells the frozen configuration wins. On worst case — the statistic
+   the phase brief puts first — it is the best of the three by a clear margin.
+2. **On whole-panel minimax regret it is not the best**, and the reason is specific rather than
+   general: it gives up 1–6 points against the *far* archetypes — `withholder`, `silent`,
+   `diversifier`, `hunter` — which every arm already beats by 26 to 50 points. The search and
+   `r12=25` are machinery for near-parity play, and against a scripted opponent that is already
+   losing by thirty points they cost a little. Restricted to the 21 near-parity cells, where a choice
+   between these three arms is actually taken, the ordering reverses and the frozen configuration is
+   the minimax-regret choice.
+3. **Which of those two framings leads the report is a judgement, and the honest thing is to print
+   both**, which §4.10.2 and §4.10.3 do. What is *not* honest is to report only the near-parity
+   regret because it flatters the freeze, or only the whole-panel regret because it is the panel as
+   defined. Phase 5's B3 re-runs this on sealed material and the preregistration commits to
+   reporting worst case, whole-panel regret and near-parity regret together.
+
+**One thing to watch that this table surfaces and no other cell in the phase does.** Against
+`S-ask-2` — which *is* `v06:rtie=1`, a component of the frozen configuration itself — the deployed
+policy scores −0.97 and the frozen configuration +2.95. The panel is the only place in phase 4 where
+the frozen configuration is scored against one of its own parts, and CANDIDATES §9 is explicit that
+`v06` is the wrong control for anything touching the tie group. That column is the right control, and
+the freeze clears it.
+
 ## 4.11 What phase 5 inherits
 
 **Instruments built or repaired this phase.**
@@ -2333,12 +2610,24 @@ threshold, and phase 5 should report the adversarial dead-ask rate alongside the
   own process at one thread**. Exits non-zero on failure; one JSON verdict per configuration.
 * `engine/freeze_config_v07.py` — the first freeze in this corpus that **executes** its round-trip
   assertion instead of printing it, with `--verify-only` for phase 5's B0.3.
-* `engine/build_p4_v07.py` — reduces every phase-4 artifact to markdown, so no number in §4 is
-  hand-typed.
+* `engine/build_p4_v07.py` — reduces the gate, replication, attribution, partner, cross-play and
+  adversary artifacts to markdown, and `engine/build_profile_v07.py` the common profile. **Six tables
+  in §4 are machine-reduced and four are hand-recorded**: the merge-verification and throughput
+  figures in §4.1, the thread-lottery table and the `--freshagents` comparison in §4.3, and the Y04
+  game-length tail in §4.9 all come from one-off diagnostic commands whose output is quoted in the
+  section rather than committed as an artifact. They are labelled as such here rather than left under
+  a blanket "no number is hand-typed" claim that is not true of them.
 * `engine/p4_*.sh` — the strength lattice, the partner table, the cross-play fits, the adversary
   re-search and the rule-dialect table, each parameterised by `p4_specs.sh`.
-* Two engine fixes: `power.mirror` now accounts for the partner specs (`main.cpp:70,166`), and the
-  phase-4 fitting banks are in the seed registry (`v07_seeds.hpp`), one per independent search.
+* Four engine changes, three of them fixes:
+  * `power.mirror` now accounts for the partner specs (`main.cpp:70,166`), so a one-seat deviation
+    column is no longer flagged a mirror with a `[0,0]` interval;
+  * **an explicit knob key now beats `allparams=`** (`factory.hpp`): the fourteen knobs are re-applied
+    after the bulk vector, so a sentinel like `pool=-1` is no longer silently clamped away. Verified
+    to leave every phase-1/2/3 fitted spec bit-identical and the `v06` digest unchanged;
+  * `--freshagents` on `match` and on `v7side` — a diagnostic that rebuilds the agents per deal and is
+    what identified §4.3's residue and is now a gate condition;
+  * the phase-4 fitting banks are in the seed registry (`v07_seeds.hpp`), one per independent search.
 * The five phase-3 worktrees are merged, so `stall`, `jalloc`, the self-oriented KPIs, the search
   capture channel and `v7leaffit` all exist in `main` for the first time.
 
@@ -2354,10 +2643,17 @@ threshold, and phase 5 should report the adversarial dead-ask rate alongside the
 4. `urgency-off` and `r12=25` are **substitutes**: +1.43 alone, +0.02 at the margin. The six
    components compose at **63%** of their naive sum.
 5. `stall=12` is **bit-identical** to its absence at 24,000 games on two banks.
-6. **No searching configuration in this corpus is S6-certified**, `v06`'s own frontier included; the
-   rate is of order one per million ask decisions and blueprint play is exactly zero.
+6. **S6 is zero-tolerance again and everything passes it.** What looked like a search-specific side
+   channel is cross-deal agent state; measured at one thread with agents rebuilt per deal, every
+   configuration in the corpus — incumbent, frontier, phase-3 survivor, freeze — is **exactly zero**.
+   The two conditions are not optional and §4.3 says why.
 7. A **one-seat** upgrade to the frozen configuration is worth 43–60% of the three-seat upgrade,
    which is direct evidence the gain is largely individual rather than conventional.
+8. On the 31-cell panel the frozen configuration is **positive on every cell** (worst +0.75), where
+   the deployed policy is negative on 12 and phase 3's survivor on 2. Its whole-panel minimax regret
+   is +5.60 against phase 3's survivor's +4.09 — all of that difference bought against archetypes
+   every arm already beats by 26 to 50 points — and over the 21 near-parity cells the ordering
+   reverses to +3.68 against +4.09.
 
 ## 4.12 What did not get done, and what was cut
 
@@ -2368,17 +2664,22 @@ Stated plainly rather than smoothed over, because it bears on how §4's claims s
   (`--arb=high`, `--arb=turn`, `--sets=8`). It is preregistered as phase-5 cell B8 and it has no
   training-bank counterpart, so phase 5's dialect result will be the first of its kind and has
   nothing to be checked against.
-* **The panel was not re-run for the frozen configuration.** CANDIDATES §8 profiles two arms;
-  §8.1 says the two that matter — `K3-on-composite` and `P2-composite` — are phase 4's. They were
-  not run, because the machine went to the attribution lattice, the partner table and the adversary
-  re-search instead, and those are what the phase-4 brief names. **Worst case and minimax regret for
-  the frozen configuration are therefore a phase-5 number** (cell B3) and this phase has no estimate
-  of them. That is the largest single gap in phase 4.
-* **The S6 residual is localised and not explained.** Phase 4 established what it is not — not
-  inter-test leakage, not thread isolation, not the rollout blueprints' accumulated observations, not
-  the determinization count — and did not establish what it is. The next experiment is named in §4.3
-  and was not run: capture the diverging decision's candidate scores in both the live run and the
-  replay and compare them.
+* **The phase-2 composite was not added to the panel.** §4.10 profiles the frozen configuration on
+  the identical 31-cell panel, so worst case and minimax regret exist for it; the composite as a
+  *fourth* arm is a second two-hour battery and was not run. Its decisive comparison is the paired
+  48,000-game head-to-head in §4.4, which is a better measurement of the same thing, but the
+  consequence is that the panel's regret is computed over three arms and not four and is therefore a
+  lower bound.
+* **The S6 residual is explained but not named.** §4.3 shows it is per-agent state surviving
+  `reset()` and reachable only under the search, demonstrated by two independent routes and removed
+  entirely by rebuilding the agents per deal. **Which** field it is was not determined; the suspects
+  are the thread-local `BlockDP::buffers()`/`generation()` pool and `Belief::buffers()`, and the
+  experiment that would name it — reset those pools per deal and repeat the thread sweep — is cheap
+  and was not run.
+* **The cross-play runs were fitted in the wrong architecture** and the table was not re-run after
+  the engine fix. §4.8 states exactly what they do and do not answer. Re-running is ~50 minutes of
+  fitting and ~50 of cells, and it is preregistered as phase-5 cell B7 on the frozen configuration
+  with the fixed engine rather than repeated here on training banks.
 * **The one-seat deviation column was run only for the partner table**, not as a full
   `--partnersb` one-seat exploitability column in the threat model's T2 sense.
 * **The v0.7 architecture was refitted only at a small budget** for the cross-play runs

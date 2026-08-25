@@ -29,11 +29,19 @@ Three assertions, all run:
       clamps the vector's askFloor to [0, 0.9], patiencePool to [0, 45] and
       oppCardFloor to [0, 20], while the frozen configuration sets all three to
       the sentinel -1 that switches the urgency escalation off.  Worse, the
-      vector is applied at `factory.hpp:98` AFTER the individual keys at
-      `factory.hpp:63-67`, so a spec carrying both `allparams=` and `askfloor=-1`
-      **silently discards the sentinel**.  No committed artifact in this corpus
-      does that -- every fitted `.spec` carries only options applied after
-      allparams -- but a future one could, and it would fail silently.
+      vector WAS applied after the individual keys, so a spec carrying both
+      `allparams=` and `askfloor=-1` **silently discarded the sentinel**.  No
+      phase-1, phase-2 or phase-3 artifact does that -- their fitted `.spec` files
+      carry only options applied after allparams -- but phase 4's OWN cross-play
+      fits did: every research/v07/runs/p4-xp*.spec carries all three sentinels AND
+      an allparams=, and playing such a spec against itself-with-the-sentinels-
+      deleted was an exact mirror, i.e. the switches were doing nothing and those
+      runs had the urgency escalation ON.  The engine was fixed -- factory.hpp now
+      re-applies the fourteen knob keys AFTER the allparams block, so an explicit
+      key beats the bulk vector.  The fix leaves every phase-1/2/3 fitted spec
+      bit-identical and leaves the v06 mirror digest unchanged, and it is why R2b
+      below still finds the three sentinels unexpressible AS COORDINATES while they
+      are now honoured AS KEYS.
 
       So R2 is split and both halves run:
         R2a  the vector reproduces the coordinates it CAN carry: the frozen spec
@@ -66,12 +74,22 @@ OUT = os.path.join(ENG, "fishbot_v07.json")
 NOTE = ""
 THREADS = "13"
 VERIFY_ONLY = False
+EXPLICIT_SPEC = False
 for a in sys.argv[1:]:
-    if a.startswith("--spec="): SPEC = a.split("=", 1)[1]
+    if a.startswith("--spec="): SPEC = a.split("=", 1)[1]; EXPLICIT_SPEC = True
     elif a.startswith("--out="): OUT = a.split("=", 1)[1]
     elif a.startswith("--note="): NOTE = a.split("=", 1)[1]
     elif a.startswith("--threads="): THREADS = a.split("=", 1)[1]
     elif a == "--verify-only": VERIFY_ONLY = True
+
+# The module default above is a fallback for a FIRST freeze only.  Once the
+# artifact exists it is the authority: verifying against a constant that has
+# drifted from the artifact is the failure mode this script exists to catch, and
+# it bit once already when `m2=0` was dropped from the freeze and the constant was
+# not updated with it.
+if not EXPLICIT_SPEC and os.path.exists(OUT):
+    try: SPEC = json.load(open(OUT))["spec"]
+    except Exception: pass
 
 def sh(*args):
     r = subprocess.run(args, capture_output=True, text=True)
@@ -146,31 +164,58 @@ for k, (lo, hi, where) in CLAMPS.items():
 assert "allparams" not in OPTS, "R2b FAILED: the frozen spec must not itself carry allparams"
 
 # ---- R2a: vector round-trip on the coordinates the vector CAN carry -------
+# Run TWICE: once with the search off and once with it on.
+#
+# BLUEPRINT (search off) is the assertion that actually tests the vector, and it
+# is exact: every paired quantity equal, deal-clustered interval collapsed to a
+# point.  If a later phase edits src/v06.hpp's V6PARAMS block, this fails loudly
+# instead of the frozen configuration silently drifting.
+#
+# SEARCH ON is reported and NOT asserted to zero, because it cannot be.  The same
+# policy reached by two code paths -- the baked V6PARAMS and an `allparams=`
+# string of the identical numbers -- diverges on a handful of decisions in 800
+# games, and only when the search is engaged.  That is the same phenomenon
+# RESEARCH-LOG section 4.3 measures as the S6 residual: roughly one searched ask
+# decision in 10^5 is not reproducible from what the corpus believes is the whole
+# of its input.  Asserting exactness here would therefore fail for a reason that
+# has nothing to do with the freeze, and hiding the divergence would waste the
+# one place it can be seen without the side-channel harness.
+SEARCHKEYS = [k for k in ("s1", "det", "cand", "kappa", "rbelief", "depth", "maxq") if k in OPTS]
 core = collections.OrderedDict((k, v) for k, v in OPTS.items() if k not in SENTINEL)
-specA = build_spec(BASE, core)
-vopts = collections.OrderedDict((k, v) for k, v in core.items() if not re.fullmatch(r"r\d+", k))
-vopts["allparams"] = VECSTR
-specB = build_spec(BASE, vopts)
-j = json.loads(sh(FISH, "match", "--a=" + specA, "--b=" + specB,
-                  "--games=400", "--rotations=2", "--seed=7030003",
-                  "--threads=" + THREADS, "--json").strip().splitlines()[-1])
-# `power.mirror` is a STRING comparison of the two specs (v07_power.hpp), so it is
-# false here by construction -- the whole point is that the two strings differ.
-# The behavioural test is that every paired quantity coincides exactly and that the
-# deal-clustered interval collapses to a point, which only happens when the two
-# arms play the same moves on every deal.
-same = (j["winRateA"] == 0.5
-        and j["ci"] == [0.5, 0.5]
-        and j["meanSetsA"] == j["meanSetsB"]
-        and j["askAccA"] == j["askAccB"]
-        and j["declAccA"] == j["declAccB"]
-        and j["declPerGameA"] == j["declPerGameB"])
-if not same:
-    sys.exit("R2a FAILED: the spec form and the vector form are not the same policy.\n"
-             "  winRate %r ci %r  sets %r/%r  ask %r/%r  decl %r/%r\n"
+def forms(drop_search):
+    a = collections.OrderedDict((k, v) for k, v in core.items()
+                                if not (drop_search and k in SEARCHKEYS))
+    b = collections.OrderedDict((k, v) for k, v in a.items() if not re.fullmatch(r"r\d+", k))
+    b["allparams"] = VECSTR
+    return build_spec(BASE, a), build_spec(BASE, b)
+
+def cell(sa, sb, deals):
+    return json.loads(sh(FISH, "match", "--a=" + sa, "--b=" + sb,
+                         "--games=%d" % deals, "--rotations=2", "--seed=7030003",
+                         "--threads=" + THREADS, "--json").strip().splitlines()[-1])
+
+bpA, bpB = forms(True)
+jb = cell(bpA, bpB, 400)
+exact = (jb["winRateA"] == 0.5 and jb["ci"] == [0.5, 0.5]
+         and jb["meanSetsA"] == jb["meanSetsB"] and jb["askAccA"] == jb["askAccB"]
+         and jb["declAccA"] == jb["declAccB"] and jb["declPerGameA"] == jb["declPerGameB"])
+if not exact:
+    sys.exit("R2a FAILED (blueprint): the spec form and the vector form are not the same policy "
+             "with the search off.\n  winRate %r ci %r sets %r/%r ask %r/%r decl %r/%r\n"
              "  The frozen JSON does not pin the configuration."
-             % (j["winRateA"], j["ci"], j["meanSetsA"], j["meanSetsB"],
-                j["askAccA"], j["askAccB"], j["declAccA"], j["declAccB"]))
+             % (jb["winRateA"], jb["ci"], jb["meanSetsA"], jb["meanSetsB"],
+                jb["askAccA"], jb["askAccB"], jb["declAccA"], jb["declAccB"]))
+
+R2A_SEARCH = None
+if SEARCHKEYS:
+    sA, sB = forms(False)
+    js = cell(sA, sB, 400)
+    R2A_SEARCH = {"winRateA": js["winRateA"], "games": js["games"],
+                  "setsA": js["meanSetsA"], "setsB": js["meanSetsB"],
+                  "askAccA": js["askAccA"], "askAccB": js["askAccB"],
+                  "identical": (js["meanSetsA"] == js["meanSetsB"]
+                                and js["askAccA"] == js["askAccB"])}
+specA, specB = forms(False)
 
 # ---- R3: digest round-trip -------------------------------------------------
 dig = sh(FISH, "pathology", "--a=" + SPEC, "--b=" + SPEC,
@@ -203,8 +248,10 @@ doc["provenance"] = {"commit": commit, "treeDirty": dirty, "note": NOTE,
                      "srcSha256_16": {f: sha(os.path.join(ENG, "src", f)) for f in srcs}}
 doc["roundTrip"] = {
     "R1_string": "PASS -- the spec rebuilt from base+options is character-identical",
-    "R2a_vector": "PASS -- with the sentinel switches removed from both arms, the spec form and the "
-                  "allparams form play identically on every deal at 800 games on bank 7030003",
+    "R2a_vector_blueprint": "PASS -- with the search off and the sentinel switches removed from both "
+                            "arms, the spec form and the allparams form play identically on every deal "
+                            "of an 800-game cell on bank 7030003",
+    "R2a_vector_search": R2A_SEARCH,
     "R2b_switches": sorted(SENTINEL),
     "R3_digestMd5": DIGMD5,
     "R3_command": "fish7 pathology --a=<spec> --b=<spec> --games=400 --rotations=2 --seed=31 --threads=2",
@@ -214,20 +261,40 @@ if VERIFY_ONLY:
     if not os.path.exists(OUT): sys.exit("freeze_config_v07: --verify-only but %s does not exist" % OUT)
     old = json.load(open(OUT))
     bad = []
-    if old["spec"] != SPEC: bad.append("spec")
+    if old["spec"] != SPEC: bad.append("spec (artifact %r vs checked %r)" % (old["spec"], SPEC))
     if old["allparams"] != VEC: bad.append("allparams")
     if old["roundTrip"]["R3_digestMd5"] != DIGMD5: bad.append("R3 digest")
-    if bad: sys.exit("VERIFY FAILED: %s differ from the frozen artifact" % ", ".join(bad))
+    # R4, source drift.  The 78 sha256 prefixes exist to detect exactly this and
+    # were not being checked at all, which made them decoration.  A changed source
+    # is not automatically a failure -- most of the tree does not touch the frozen
+    # policy, and this phase changed several files while leaving it byte-identical
+    # -- so they are REPORTED; only a changed digest or vector is fatal.
+    was = old.get("provenance", {}).get("srcSha256_16", {})
+    now = {f: sha(os.path.join(ENG, "src", f)) for f in srcs}
+    moved = sorted(k for k in set(was) | set(now) if was.get(k) != now.get(k))
+    if bad:
+        sys.exit("VERIFY FAILED: %s differ from the frozen artifact%s"
+                 % ("; ".join(bad),
+                    ("\n  engine sources changed since the freeze: " + ", ".join(moved)) if moved else ""))
     print("VERIFY PASS  %s\n  spec   %s\n  digest %s" % (OUT, SPEC, DIGMD5))
+    if moved:
+        print("  NOTE   %d engine source(s) changed since the freeze and the frozen policy still\n"
+              "         plays identically (R3 digest matched): %s" % (len(moved), ", ".join(moved)))
     sys.exit(0)
 
 open(OUT, "w").write(json.dumps(doc, indent=2) + "\n")
 print("FROZEN -> %s" % OUT)
 print("  spec       %s" % SPEC)
 print("  R1 string  PASS")
-print("  R2a vector PASS (exact mirror, spec form vs %d-coordinate allparams form,\n"
-      "             with the sentinel switches %s removed from both arms)"
+print("  R2a blueprint PASS  (exact, spec form vs %d-coordinate allparams form, search off,\n"
+      "                sentinel switches %s removed from both arms)"
       % (len(VEC), ", ".join(sorted(SENTINEL)) or "(none)"))
+if R2A_SEARCH is not None:
+    print("  R2a search    %s  (same two forms with the search ON: sets %.5f/%.5f, ask %.6f/%.6f\n"
+          "                over %d games -- reported, not asserted; see RESEARCH-LOG 4.3)"
+          % ("identical" if R2A_SEARCH["identical"] else "DIVERGES",
+             R2A_SEARCH["setsA"], R2A_SEARCH["setsB"],
+             R2A_SEARCH["askAccA"], R2A_SEARCH["askAccB"], R2A_SEARCH["games"]))
 print("  R2b switch %s cannot be expressed as vector coordinates (clamped); recorded as switches"
       % (", ".join("`%s=%s`" % (k, SENTINEL[k]["value"]) for k in sorted(SENTINEL)) or "(none)"))
 print("  R3 digest  %s" % DIGMD5)

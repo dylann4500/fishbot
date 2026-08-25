@@ -26,6 +26,15 @@ def gen(part):
 body = "".join(open(f).read() for f in sorted(glob.glob(os.path.join(PARTS, "*.md"))))
 body = re.sub(r"\{\{GEN:([a-z]+)\}\}", lambda m: gen(m.group(1)), body)
 
+# The common-profile block comes from a different reducer, and it is generated with
+# the section number it will live under so its subheadings do not collide with the
+# ones in CANDIDATES section 8.
+def profile():
+    return subprocess.run([sys.executable, os.path.join(ROOT, "engine/build_profile_v07.py"),
+                           "--dir=" + os.path.join(ROOT, "research/v07/results"),
+                           "--sec=4.10"], capture_output=True, text=True, check=True).stdout.rstrip()
+body = body.replace("{{PROFILE}}", profile())
+
 src = open(LOG).read()
 marker = "\n---\n\n# 4. Phase 4 — bake-off, iteration, and freeze"
 i = src.find(marker)

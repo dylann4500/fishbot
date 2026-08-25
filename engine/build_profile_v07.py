@@ -19,10 +19,12 @@ headline; it is printed last, as a diagnostic, and labelled as one.
 import glob, json, math, os, sys
 from collections import defaultdict
 
-d_dir, out_path = "research/v07/results", "-"
+d_dir, out_path, arms_sel, sec = "research/v07/results", "-", None, "8"
 for a in sys.argv[1:]:
     if a.startswith("--dir="): d_dir = a.split("=", 1)[1]
     elif a.startswith("--out="): out_path = a.split("=", 1)[1]
+    elif a.startswith("--arms="): arms_sel = a.split("=", 1)[1].split(",")
+    elif a.startswith("--sec="): sec = a.split("=", 1)[1]
 
 # ---- load ------------------------------------------------------------------
 cells = []
@@ -38,6 +40,7 @@ for p in sorted(glob.glob(os.path.join(d_dir, "P3-profile-*.jsonl"))):
 
 errs = [c for c in cells if "err" in c]
 cells = [c for c in cells if "err" not in c]
+if arms_sel: cells = [c for c in cells if c["arm"] in arms_sel]
 
 # ---- pool banks ------------------------------------------------------------
 by = defaultdict(list)
@@ -99,13 +102,13 @@ w(">")
 for r in W:
     w("> Over the shared %d-cell panel, `%s`'s **worst cell is %s against `%s`**, and its"
       % (len(panel), r["arm"], f(r["worst"]), r["worstOpp"]))
-    w("> **minimax regret is %s**, incurred against `%s`. It is behind the better of the two"
-      % (f(r["reg"]), r["regOpp"]))
+    w("> **minimax regret is %s**, incurred against `%s`. It is behind the best of the %d"
+      % (f(r["reg"]), r["regOpp"], len(arms)))
     w("> arms on **%d of %d** cells." % (r["behind"], len(panel)))
     w(">")
 w("> `%s` is the minimax-regret choice at **%s**." % (best["arm"], f(best["reg"])))
 w("")
-w("### 8.1 The panel, and how it is scored")
+w("### " + sec + ".1 The panel, and how it is scored")
 w("")
 w("`engine/candidates_v07.sh` scores every arm against the **same** opponent panel on the **same**")
 w("two training banks (7030001, 7030002) with the same protocol, because minimax regret is only")
@@ -116,6 +119,11 @@ w("%d arms completed the full panel: **%s**. The script defines four more" % (le
 w("(`K3-search`, `K3-on-composite`, `P2-composite`, `K1-fullgame`); the battery was stopped after")
 w("the two above finished, and their three completed cells were deleted rather than reported. So")
 w("**the regret below is regret within a %d-arm set** and is a lower bound on regret against a" % len(arms))
+if arms_sel and "FROZEN" not in arms_sel:
+    w("(Phase 4 scored a third arm — the frozen v0.7 configuration — against this identical panel;")
+    w("the three-arm table is `RESEARCH-LOG.md` §4.10, and it is reported there rather than here")
+    w("because section 8 is phase 3's deliverable.)")
+    w("")
 w("wider one. That is a real limitation and it is stated rather than smoothed: the number answers")
 w("\"how much does choosing this arm cost me, against the worst opponent, relative to the best of")
 w("these %d?\" and nothing larger. `K3-on-composite` and `P2-composite` are the two that matter and" % len(arms))
@@ -133,7 +141,7 @@ if errs:
     w("Cells that failed to produce output: %s." % ", ".join("`%s` vs `%s` bank %s" % (e["arm"], e["opp"], e["bank"]) for e in errs))
     w("")
 
-w("### 8.2 Worst case and minimax regret — the two headline numbers")
+w("### " + sec + ".2 Worst case and minimax regret — the two headline numbers")
 w("")
 w("| arm | worst cell over the panel | its edge | max regret | where the regret is | cells negative |")
 w("|---|---|---:|---:|---|---:|")
@@ -142,7 +150,24 @@ for r in W:
         r["arm"], r["worstOpp"], f(r["worst"]), f(r["reg"]), r["regOpp"], r["neg"], len(panel)))
 w("")
 
-w("### 8.3 Every cell, so the reader can take the worst one")
+NEAR = [o for o in panel if max(abs(pooled[(a, o)]["edge"]) for a in arms) <= 15.0]
+FAR = [o for o in panel if o not in NEAR]
+w("**Where the regret lives.** The panel deliberately contains opponents every arm beats by thirty")
+w("points or more, because a configuration that has quietly broken shows up there first. But a")
+w("three-point difference at a thirty-point margin is not a decision anyone makes, so regret is")
+w("also reported over the **near-parity** subset — every cell in which no arm's edge exceeds 15")
+w("points — which is where a choice between these arms is actually taken.")
+w("")
+w("| arm | max regret, whole panel | where | max regret, near-parity cells only | where |")
+w("|---|---:|---|---:|---|")
+for a in arms:
+    rn = max(((o, best_on(o) - pooled[(a, o)]["edge"]) for o in NEAR), key=lambda t: t[1])
+    rw = max(((o, best_on(o) - pooled[(a, o)]["edge"]) for o in panel), key=lambda t: t[1])
+    w("| `%s` | %s | `%s` | **%s** | `%s` |" % (a, f(rw[1]), rw[0], f(rn[1]), rn[0]))
+w("")
+w("The near-parity subset is %d of %d cells (%s far cells excluded)." % (len(NEAR), len(panel), len(FAR)))
+w("")
+w("### " + sec + ".3 Every cell, so the reader can take the worst one")
 w("")
 for g in ["frontier", "archetype", "adversary"]:
     gopps = [o for o in panel if groups[o] == g]
@@ -162,36 +187,37 @@ for g in ["frontier", "archetype", "adversary"]:
         w("| " + " | ".join(row) + " |")
     w("")
 
-w("### 8.4 Four things the panel says that the head-to-head cells did not")
+w("### " + sec + ".4 What the panel says that the head-to-head cells did not")
 w("")
+FOCUS = max(W, key=lambda r: r["worst"])["arm"]        # the arm with the best worst case
 neg = {a: [o for o in panel if pooled[(a, o)]["edge"] < 0] for a in arms}
-w("* **The survivor is negative on %d of %d cells and the incumbent on %d.** `%s` loses only to %s;"
-  % (len(neg[arms[-1]]), len(panel), len(neg[arms[0]]), arms[-1],
-     " and ".join("`%s` (%s)" % (o, f(pooled[(arms[-1], o)]["edge"])) for o in neg[arms[-1]])))
-w("  the second of those has an interval containing zero, so the phase-2 composite is the only cell")
-w("  where it is behind by more than noise. `%s` is negative on %s — %d of them members of the"
-  % (arms[0], ", ".join("`%s`" % o for o in neg[arms[0]]),
-     sum(1 for o in neg[arms[0]] if groups[o] == "adversary")))
-w("  phase-2 adversary bank. That is the panel restating phase 2's finding in the panel's own")
-w("  currency: the deployed policy is *behind* several unfitted deviations of itself.")
-if ("A0-v06", "S-ask-2") in pooled and (arms[-1], "S-ask-2") in pooled:
-    w("* **The survivor's own tie-break is on the panel, and beating it is what the rest of the stack is"
-      " worth.** `S-ask-2` *is* `v06:rtie=1`. `%s` scores %s against it, so the urgency-off keys plus"
-      % (arms[-1], f(pooled[(arms[-1], "S-ask-2")]["edge"])))
-    w("  the stall rule are worth that much on top of the tie-break alone, measured against the")
-    w("  tie-break rather than against `v06` — which section 9 says is the only admissible control")
-    w("  for anything touching the tie group.")
+w("* **Worst case and minimax regret do not pick the same arm, and that is the result.** `%s` has the"
+  % FOCUS)
+w("  best worst case at **%s** (%s), and %s. But the whole-panel minimax regret is won by `%s` at %s"
+  % (f(worstv[FOCUS]["worst"]), worstv[FOCUS]["worstOpp"],
+     ("it is negative on no cell at all" if not neg[FOCUS]
+      else "it is negative on " + ", ".join("`%s`" % o for o in neg[FOCUS])),
+     min(W, key=lambda r: r["reg"])["arm"], f(min(W, key=lambda r: r["reg"])["reg"])))
+w("  against `%s`'s %s — and every point of that difference is bought in cells the panel includes as"
+  % (FOCUS, f(worstv[FOCUS]["reg"])))
+w("  a tripwire rather than as a decision. Restricted to the near-parity cells, the ordering reverses.")
+w("* **The incumbent is negative on %d of %d cells**, %d of them members of the phase-2 adversary"
+  % (len(neg[arms[0]]), len(panel), sum(1 for o in neg[arms[0]] if groups[o] == "adversary")))
+w("  bank. That is the panel restating phase 2's finding in the panel's own currency: the deployed")
+w("  policy is *behind* several unfitted deviations of itself.")
+if ("A0-v06", "S-ask-2") in pooled:
+    w("* **One panel member is a component of another arm.** `S-ask-2` *is* `v06:rtie=1`, so the column")
+    w("  against it is measured against the only admissible control for anything touching the tie")
+    w("  group: %s." % ", ".join("`%s` %s" % (a, f(pooled[(a, "S-ask-2")]["edge"])) for a in arms))
 if ("A0-v06", "R-v05") in pooled and ("A0-v06", "v05") in pooled:
-    w("* **An internal consistency check passes.** `R-v05` and the archetype `v05` are the same policy")
-    w("  entered on the panel twice by two different routes. They agree to the digit for both arms")
-    w("  (%s / %s and %s / %s), which is the panel's own determinism check."
-      % (f(pooled[("A0-v06", "R-v05")]["edge"]), f(pooled[("A0-v06", "v05")]["edge"]),
-         f(pooled[(arms[-1], "R-v05")]["edge"]), f(pooled[(arms[-1], "v05")]["edge"])))
-w("* **The worst cell is not where the strength table looks.** Both arms' worst cell is the phase-2")
-w("  composite, which no head-to-head in sections 3-7 reports for the survivor. A configuration")
-w("  chosen on its `v06` cell alone would be chosen on a number that is not its worst.")
+    ok = all(abs(pooled[(a, "R-v05")]["edge"] - pooled[(a, "v05")]["edge"]) < 1e-9 for a in arms)
+    w("* **An internal consistency check %s.** `R-v05` and the archetype `v05` are the same policy"
+      % ("passes" if ok else "FAILS"))
+    w("  entered on the panel twice by two different routes, and they agree to the digit for every")
+    w("  arm (%s). That is the panel's own determinism check." %
+      "; ".join("%s / %s" % (f(pooled[(a, "R-v05")]["edge"]), f(pooled[(a, "v05")]["edge"])) for a in arms))
 w("")
-w("### 8.5 The aggregate, printed last and labelled as a diagnostic")
+w("### " + sec + ".5 The aggregate, printed last and labelled as a diagnostic")
 w("")
 w("| arm | mean edge over the panel | cells | games |")
 w("|---|---:|---:|---:|")

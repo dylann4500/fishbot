@@ -117,6 +117,34 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
       c.searchTopK        = std::max(0, std::min(24, int(std::lround(get(K + 11, c.searchTopK)))));
       c.chainWeight       = std::max(0.0, get(K + 12, c.chainWeight));
       c.threatWeight      = std::max(0.0, get(K + 13, c.threatWeight));
+      // v0.7 phase 4.  AN EXPLICIT KEY MUST BEAT THE BULK VECTOR.  The fourteen
+      // knobs above are also settable individually, and until now those keys were
+      // applied BEFORE this block, so `allparams=` silently overwrote them.  Three
+      // of them are worse than overwritten: `askfloor`, `pool` and `oppfloor` are
+      // set to the SENTINEL -1 to switch the urgency escalation off, and the clamps
+      // three lines up ([0,0.9], [0,45], [0,20]) cannot express -1 at all, so the
+      // switch was silently discarded and the escalation came back on.
+      //
+      // Found by re-reading engine/p4_crossfit_v07.sh's own output: every
+      // research/v07/runs/p4-xp*.spec carries `pool=-1,oppfloor=-1,askfloor=-1`
+      // AND `allparams=`, and playing such a spec against itself-with-the-sentinels-
+      // deleted is an exact mirror -- the sentinels were doing nothing.  No phase
+      // 1, 2 or 3 artifact carries both (checked over the whole tree), so this
+      // changes the meaning of no committed result before phase 4.
+      c.declThreshold     = optD(o, "decl",     c.declThreshold);
+      c.lockedAllocThresh = optD(o, "lockthr",  c.lockedAllocThresh);
+      c.askFloor          = optD(o, "askfloor", c.askFloor);
+      c.patiencePool      = optI(o, "pool",     c.patiencePool);
+      c.oppCardFloor      = optD(o, "oppfloor", c.oppCardFloor);
+      c.valueWeight       = optD(o, "vweight",  c.valueWeight);
+      c.linearWeight      = optD(o, "lweight",  c.linearWeight);
+      c.minTeamProb       = optD(o, "minteam",  c.minTeamProb);
+      c.declareMargin     = optD(o, "vmargin",  c.declareMargin);
+      c.priorTheta        = optD(o, "ptheta",   c.priorTheta);
+      c.priorPhi          = optD(o, "pphi",     c.priorPhi);
+      c.searchTopK        = optI(o, "topk",     c.searchTopK);
+      c.chainWeight       = optD(o, "chain",    c.chainWeight);
+      c.threatWeight      = optD(o, "threat",   c.threatWeight);
     }
     // v0.5 mechanism switches, for the ablation table.
     c.liveAskGate       = optI(o, "m1", c.liveAskGate ? 1 : 0) != 0;

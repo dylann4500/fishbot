@@ -82,6 +82,14 @@ struct MatchConfig {
   // every strength battery and on only in the per-decision batteries.
   bool captureDecisions = false;
   bool captureTeamAOnly = true;
+  // v0.7 phase 4, DIAGNOSTIC ONLY.  Agents are constructed once per thread and
+  // reused across every deal that thread is handed, exactly as v7side does.  If
+  // any per-agent state survives `reset()`, play then depends on WHICH deals a
+  // thread got -- i.e. on the thread count -- and a searching configuration was
+  // measured doing exactly that (RESEARCH-LOG 4.3).  With this set, the six
+  // agents are rebuilt for every deal, which removes cross-deal state by
+  // construction.  It is slow and it is never used for a reported cell.
+  bool freshAgents = false;
   // v0.7 phase 2.  Which arm's decisions are recorded.  0 = the A arm (the
   // adversary), 1 = the B arm (the TARGET), 2 = both.  Characterising an
   // exploiter means asking what the TARGET does wrong against it, and the
@@ -146,10 +154,13 @@ inline MatchStats runMatch(const MatchConfig& mc) {
   for (int t = 0; t < nThreads; t++) {
     pool.emplace_back([&, t]() {
       std::unique_ptr<Agent> A[3], B[3];
-      for (int i = 0; i < 3; i++) {
-        A[i] = makeAgent((i == 0 || mc.partnersA.empty()) ? mc.specA : mc.partnersA);
-        B[i] = makeAgent((i == 0 || mc.partnersB.empty()) ? mc.specB : mc.partnersB);
-      }
+      auto buildAgents = [&] {
+        for (int i = 0; i < 3; i++) {
+          A[i] = makeAgent((i == 0 || mc.partnersA.empty()) ? mc.specA : mc.partnersA);
+          B[i] = makeAgent((i == 0 || mc.partnersB.empty()) ? mc.specB : mc.partnersB);
+        }
+      };
+      buildAgents();
       MatchStats& st = local[t];
       Game game;
       DecisionSink sink;
@@ -161,6 +172,7 @@ inline MatchStats runMatch(const MatchConfig& mc) {
         int i = next.fetch_add(1, std::memory_order_relaxed);
         if (i >= mc.games) break;
         if (mc.shards > 1 && (i % mc.shards) != mc.shard) continue;
+        if (mc.freshAgents) buildAgents();   // diagnostic; see MatchConfig::freshAgents
         uint64_t s = mixSeed(mc.seed, uint64_t(i) * 2654435761ull + 1);
         int aWins = 0;
         // Duplicate blocks.  With 2 rotations we simply swap which team A holds.

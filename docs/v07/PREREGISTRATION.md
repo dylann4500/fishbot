@@ -75,9 +75,10 @@ finding.**
 3. **`m2=0` was dropped from the freeze** because its leave-one-out drop is exactly zero. Phase 5 does
    not need to re-test it, and should not add it back.
 4. **The partner-regime table will shrink and should not collapse.** On training banks the `FROZEN` −
-   `INCUMBENT` delta is **+2.94 in self-play against a `v05` opponent and +0.14 to +2.08 with a
-   foreign partner**, with one row (`withholder`) at −0.15. Against a `v06` opponent it is far more
-   stable: +4.82 self and +2.50 to +2.88 under partner change. A **one-seat** upgrade is worth
+   `INCUMBENT` delta is **+2.94 in self-play against a `v05` opponent and −0.15 to +2.08 with a
+   foreign partner** (median +1.26; four of the seven changed-partner rows clear zero under the
+   conservative interval of §5.2). Against a `v06` opponent it is far more stable: +4.82 self and
+   +2.50 to +2.88 under partner change, all three clearing zero. A **one-seat** upgrade is worth
    **+1.26** against `v05` and **+2.88** against `v06`, i.e. 43% and 60% of the three-seat gain,
    which is the single strongest piece of evidence that the gain is individual rather than
    conventional.
@@ -100,7 +101,7 @@ with the frontier table so the cost claim is checked rather than repeated.
 Every bank is a **seed plus a size**; the deals are generated from the deal index
 (`arena.hpp:165`, `mixSeed(S, i·2654435761 + 1)`) and are never stored, so a bank is cheap to
 reproduce and impossible to hide. Sealing therefore means a *commitment*, not secrecy, and phase 5
-verifies it: `fish7 bankdigest --seed=S --games=N` folds the six dealt hands and the dealer of every
+verifies it: `fish7 bankdigest --seed=S --deals=N` folds the six dealt hands and the dealer of every
 deal into a 64-bit rolling hash without constructing a policy or playing a game.
 
 **B0 is the first command phase 5 runs, before anything else.** Every digest below must match. A
@@ -147,7 +148,19 @@ sealed; it is included because minimax regret is only defined over a shared pane
 archetypes are where a configuration that has quietly broken shows up first.
 
 The frontier — `v06`, `F-cheap`, `F-mid`, and the phase-2 composite — is included as the *bar*. The
-v0.7 case rests on beating the frontier, not on beating the deployed policy.
+v0.7 case rests on beating the frontier, not on beating the deployed policy. **These are not engine
+policy names and `makeAgent` will exit 2 on them**, so the four spec strings are written out here and
+phase 5 uses these and not the labels:
+
+| label | spec |
+|---|---|
+| `INCUMBENT` | `v06` |
+| `F-cheap` | `v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26` |
+| `F-mid` | `v06:s1=1,det=16,cand=6,kappa=2.0,maxq=26` |
+| the phase-2 composite | `v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26` |
+
+The scripted archetypes and the sealed adversaries are engine policy names and spec strings
+respectively and need no translation.
 ---
 
 ## 3. Sample sizes, with the arithmetic shown
@@ -178,12 +191,24 @@ two of them is 100/√N. `v07_power.hpp` computes it and `match --json` emits it
    3.41 on the ask hit rate. The win-rate channel is already scored per deal by the duplicate design,
    so 98/√(games) is the right figure there and the design effect matters only for the per-decision
    channels.
-3. **The detection floor does not buy down with evaluation games.** Phase 2 measured this directly:
+3. **The 1.53 floor is a reference bar here, not a detection floor, and that is stated because the
+   two are different objects.** `ADVERSARIES.md` defines 1.53 as the smallest planted handicap a
+   *fitted C1 responder* can recover in an exploitability search at 48,000 evaluation games a bank.
+   §5.1 then uses it as the bar a **directly measured paired duplicate win-rate difference** must
+   clear — a quantity that involves no responder, no fit and no maximisation. Nothing in the corpus
+   shows that a responder-recovery floor bounds a directly measured difference, and this document
+   does not claim it does. What 1.53 is being used for is a **fixed, pre-committed reference** at a
+   size the corpus has already shown is meaningful, so that "certified" means the same thing in phase
+   5 as it did in phases 2 and 3. Where it is applied to an *exploitability* number — B4, S3, B9.2,
+   B9.3 — it is a detection floor in its original sense and no caveat is needed.
+4. **The detection floor does not buy down with evaluation games.** Phase 2 measured this directly:
    four times the power moved the C1-class floor from 1.68 to **1.53**, not to the 0.78 the scaling
    law predicts, and the +0.88 planted rung resolves *to* zero (−0.01 [−0.45, +0.42]) rather than
    sharpening. So an interval half-width below 1.53 does **not** license a sub-1.53 exploitability
-   claim. The declaration family's floor is **2.13**. These two numbers are the thresholds §6 uses,
-   and they are not renegotiable by buying more games.
+   claim. The **declaration-family** floor is **2.13**, and it applies to exactly one thing in this
+   battery: any claim phase 5 makes about an adversary driving the target's *declaration* channel
+   (B4's `Z03`, and the declaration-accuracy column of B2) is read against 2.13 and not against 1.53.
+   Neither number is renegotiable by buying more games.
 
 **The paired design.** Every comparison in §4 is run as a paired duplicate: the same deal bank, the
 same deal indices, `--rotations=2` so each deal is played with the teams swapped. The two arms
@@ -215,7 +240,7 @@ that file rather than typed, and **`INCUMBENT`** means `v06`.
 
 | # | command | pass condition |
 |---|---|---|
-| B0.1 | `fish7 bankdigest` on all seven sealed seeds at their recorded sizes | all seven digests match §2.1 |
+| B0.1 | `fish7 bankdigest --seed=S --deals=24000` on all seven sealed seeds (`--deals`, **not** `--games`, which `bankdigest` silently ignores) | all seven digests match §2.1 |
 | B0.2 | decode `adversaries-holdout.sealed`, SHA-256 it | matches `SEAL.json` |
 | B0.3 | `engine/freeze_config_v07.py --verify-only` | R1 string, R2 vector and R3 digest round-trips all pass |
 | B0.4 | `fish7 seeds --require=<the seven seeds>` | all registered; the report of any R1/R2 registry violation is recorded |
@@ -243,7 +268,7 @@ For `FROZEN`, `INCUMBENT`, `F-cheap`, and the **negative control** below, on the
 | G5 mirror tail | max < 220 **and** p99 ≤ 150 | 220 is v0.5's pressure rung and a 15.18-point cliff; `v06` max 131 |
 | G6 declarations at or after event 220 | 0 | such declarations are taken under the collapsed 0.25 floor |
 | G7a S3, S4, S5 | CERTIFIED, zero tolerance | every configuration in the corpus passes |
-| G7b S6 | see §5.3 | a search-specific residual the incumbent frontier also carries |
+| G7b S6 | **0** mismatches, at `--threads=1 --freshagents` | zero for every configuration in the corpus once §5.3's confound is removed |
 
 **The negative control is part of B1, not an appendix.** `v06:rtie=1,m1=0,pool=-1,oppfloor=-1,`
 `force=1000000,askfloor=-1` **must FAIL** G1, G2, G3, G4 and G5. If it passes, the gate is broken and
@@ -277,11 +302,19 @@ why `INCUMBENT` is an *arm* here and not only an opponent.
 Arms: `FROZEN`, `INCUMBENT`, `F-cheap`, the phase-2 composite.
 Panel: the 14 **sealed** adversaries, the 13 scripted archetypes, and the four frontier points.
 
-| cell class | deals/bank | games/bank | games/cell (2 banks) | 98/√N |
-|---|---:|---:|---:|---:|
-| near-parity opponent (within 15 points) | 6,000 | 12,000 | 24,000 | 0.63 |
-| far opponent (already beaten by > 15 points) | 1,500 | 3,000 | 6,000 | 1.26 |
-| `F-mid` and the phase-2 composite | 1,200 | 2,400 | 4,800 | 1.41 |
+**The near/far assignment is fixed here, by name, from phase-2 and phase-4 material** — it cannot be
+decided from the holdout margins, because those are the numbers the cells exist to measure, and 14 of
+the 31 panel members are sealed adversaries for which no margin exists at all.
+
+| class | members | deals/bank | games/bank | games/cell (2 banks) | 98/√N |
+|---|---|---:|---:|---:|---:|
+| **near** | `F-fast`(=`v06`), `F-cheap`, `v05`, `v04`, `feint`, and **all 14 sealed adversaries** | 6,000 | 12,000 | 24,000 | 0.63 |
+| **far** | `v03`, `v02`, `lockout`, `detective`, `hunter`, `diversifier`, `bluffer`, `silent`, `withholder`, `random` | 1,500 | 3,000 | 6,000 | 1.26 |
+| **expensive** | `F-mid`, the phase-2 composite | 1,200 | 2,400 | 4,800 | 1.41 |
+
+The sealed adversaries are all assigned to **near** without looking at them: every member of the
+training half sits within 15 points of the incumbent (phase 4's panel: −3.50 to +8.11 for `v06`), the
+split rule was alternating by id, and giving them the larger size is the conservative choice.
 
 Reported as: **worst cell per arm**, **minimax regret per arm**, then every cell. The mean over the
 panel is printed last and labelled a diagnostic. It is never the headline, and phase 5 is not
@@ -289,10 +322,36 @@ permitted to lead with it even if it flatters the frozen configuration.
 
 ### B4 — a fresh adversary search against the frozen configuration
 
-Eight independent searches, one registered fitting bank each (`7091002` and `7090004` shard the
-fitting; the split is by search id, fixed here). The axes are the ones phase 2 established are
-genuinely different searches — class, objective, starting basin, step size — and the objectives are
-aimed at *mechanisms* rather than at reproducing phase 2's adversaries.
+Eight independent searches. Only two sealed banks are available for fitting, so they are **sharded**,
+and the mapping is fixed here rather than left to be chosen: `--shard=s/4` partitions a bank by deal
+index exactly (`arena.hpp`), so eight disjoint fitting sets exist.
+
+| id | fitting bank | shard | id | fitting bank | shard |
+|---|---|---|---|---|---|
+| Z01 | 7091002 | `0/4` | Z05 | 7090004 | `0/4` |
+| Z02 | 7091002 | `1/4` | Z06 | 7090004 | `1/4` |
+| Z03 | 7091002 | `2/4` | Z07 | 7090004 | `2/4` |
+| Z04 | 7091002 | `3/4` | Z08 | 7090004 | `3/4` |
+
+The command template, literally, with the objective column below supplying `--kpi=` — **not
+`--obj=`**, which takes `{softmin,min,mean,regret,minimaxregret}` and falls through to `softmin`
+silently on an unknown value:
+
+```
+fish7 tune --panel="<FROZEN spec with commas rewritten to +>" --base=<v06|v07|v07i> --full --fromv6 \
+           --kpi=<win|declerr|events|forced|asksupp> --obj=min --paired --beta=1 --sigmarel=0.08 \
+           --games=120 --pop=12 --elite=5 --gens=8 --seed=<bank> --shard=<s/4> --threads=13 \
+           --out=research/v07/results/P5-Z<NN>.jsonl
+```
+
+Two rows deviate from the template and the deviation is written into the row: **Z06** replaces
+`--sigmarel=0.08` with `--sigmarel=0.30`, and **Z07** drops `--fromv6` so the CEM starts from the
+v0.5 defaults instead of the incumbent. **Z08**, the white-box class, uses `--base=v07i` and additionally
+`idet=48,imodel=v06` in the base, which is how phase 1's C5 responder is specified.
+
+The axes are the ones phase 2 established are genuinely different searches — class, objective,
+starting basin, step size — and the objectives are aimed at *mechanisms* rather than at reproducing
+phase 2's adversaries.
 
 | id | class | base | objective | why this one |
 |---|---|---|---|---|
@@ -321,10 +380,12 @@ Reference opponent `INCUMBENT` throughout, so the pieces are comparable and chec
 *Add-one-in from `v06`*: the search alone; `rtie=1` alone; the urgency-off keys alone; `stall=12`
 alone; `r12=25` alone; `m2=0` alone.
 *Leave-one-out from `FROZEN`*: minus the search; minus `rtie`; minus urgency-off; minus `stall`;
-minus `r12`; minus `m2`.
+minus `r12`. (There is no "minus `m2`" cell: the freeze carries no `m2` key, so that cell would be
+`FROZEN` itself and would measure zero by construction. Phase 4 measured it and it is +0.00, which is
+why the key was dropped.)
 
-6,000 deals × 2 rotations × 2 banks = 24,000 games a cell, half-width 0.63. Thirteen cells,
-**312,000 games**.
+6,000 deals × 2 rotations × 2 banks = 24,000 games a cell, half-width 0.63. Eleven cells,
+**264,000 games**.
 
 Reported as: each component's add-one-in edge, each leave-one-out drop, the naive sum of the
 components against the measured whole, and the **sub-additivity ratio**. Phase 2 measured its own
@@ -381,31 +442,44 @@ three isolable components) is reported as the ladder's contribution.
 | # | control | what it must show |
 |---|---|---|
 | B9.1 | **a configuration the gate must reject**: `v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1` | FAILS G1–G5 (run in B1) |
-| B9.2 | **planted-weakness recovery**: `FROZEN` with a planted handicap of known size (`hcap=decl` at the rungs phase 1 calibrated), attacked by the C1 responder on `7090005` | the responder recovers each planted edge at or above 1.53 points, and the recovered size tracks the planted size |
-| B9.3 | **a planted edge below the floor**: the +0.88 rung | is **not** recovered. Phase 2 measured this resolving *to* zero; if phase 5 now "detects" it, the instrument has changed and every other number in this battery is suspect |
+| B9.2 | **planted-weakness recovery**: `FROZEN,hcap=decl,hstr=H` for **H ∈ {0.08, 0.11, 0.15}** — phase 1's calibrated rungs — attacked by a C1 responder fitted on `7090005` at **8 × 12 × 120 deals = 23,040 games**, evaluated against the handicapped target on `7090001` and `7090002` at **6,000 deals × 2 rotations × 2 banks = 24,000 games** (half-width 0.63) | the responder recovers each planted edge at or above 1.53 points, and the recovered size tracks the planted size across the three rungs |
+| B9.3 | **a planted edge below the floor**: `hstr=0.05`, the rung phase 2 measured at **+0.88** | is **not** recovered — same fit budget and the same 24,000-game evaluation. Phase 2 measured this excess resolving *to* zero at −0.01 [−0.45, +0.42]; if phase 5 now "detects" it, the instrument has changed and every other number in this battery is suspect |
 | B9.4 | **the identity control**: `FROZEN` against itself | exactly 50.000%, `power.mirror` true, zero variance |
-| B9.5 | **the side-channel positive controls**: `v07x:cheat=seed`, `cheat=shared`, `cheat=conv` | each fails **exactly one** of S4, S6, S3 and passes the other three, on both banks |
+| B9.5 | **the side-channel positive controls**: `v07x:cheat=seed`, `cheat=shared`, `cheat=conv` | `cheat=seed` fails **S4 and S5** and passes S3 and S6; `cheat=shared` fails **S6 only**; `cheat=conv` fails **S3 only** — on both banks |
 
 B9.3 is the control that makes the rest of the battery interpretable, and it is the one most likely
 to be quietly skipped. It is not optional.
 
 ### B10 — the S6 residual
 
-Phase 4 found, and this document records in advance so that phase 5 cannot be accused of finding it
-afterwards, that **every configuration carrying the truncated search fails THREAT-MODEL's S6 at a
-rate of order one per million decisions, including the incumbent's own frontier, while blueprint play
-is exactly zero.** §5.3 states the measurement and the gate rule. Phase 5 re-measures it on holdout
-material at `--threads=1`, 1,200 deals per cell, both banks, for `FROZEN`, `INCUMBENT`, `F-cheap` and
-the phase-2 composite, and reports the four rates with their Poisson intervals.
+Phase 4 found — and this document records it in advance so that phase 5 cannot be accused of finding
+it afterwards — that the apparent S6 failure of every searching configuration is **cross-deal agent
+state, not a side channel**, and that removing it takes every cell to exactly zero. §5.3 gives the
+measurement and the two conditions the gate now carries.
+
+Phase 5 re-measures on holdout material, 1,200 deals per cell, both banks, for `FROZEN`,
+`INCUMBENT`, `F-cheap` and the phase-2 composite, in **both** conditions:
+
+| arm | `--threads=1` alone | `--threads=1 --freshagents` |
+|---|---|---|
+| what phase 4 measured on training banks | 0–3 mismatches per ~270,000 for searching arms, 0 for blueprint | **0 everywhere** |
+| what phase 5 must find | a nonzero, ask-only residue for searching arms | **0**; anything else is a finding |
+
+Reporting both is the point: the first column is the reproduction of phase 4's defect and the second
+is the gate condition. If the second column is nonzero for any arm, S6 has caught something phase 4
+did not, and it is the headline.
 
 ### B11 — the selection-bias check
 
 Phase 4 evaluated a bounded number of candidate configurations and selected the best. Under the null
 that none of them differs from the incumbent, the maximum of *K* independent cells each with standard
-error σ has expectation approximately σ·√(2 ln K). Phase 5 states *K* — the number of distinct
-configurations phase 4 scored against `v06`, which is recorded in `research/v07/results/P4-*.jsonl`
-and is **19** — computes σ from the actual cell sizes, and reports **how much of the measured holdout
-gain would be expected from selection alone**. The holdout banks were never available for selection,
+error σ has expectation approximately σ·√(2 ln K). *K* is fixed here rather than counted
+later: **14** distinct configurations were scored against `v06` in phase 4, enumerable from
+`P4-lattice.jsonl` and `P4-replicate.jsonl`, and one more (`K3-stack`) in phase 3's panel, so
+**K = 15**. At the 24,000-game cell size used for the lattice, σ = 98/2/√24000 = 0.316 points, and
+σ·√(2 ln 15) = **0.74 points** is the expected maximum under the null. Phase 5 reports that figure
+beside its measured holdout gain and states **how much of the gain would be expected from selection
+alone**. The holdout banks were never available for selection,
 so the correct expectation is that this term is zero on holdout; the check exists to confirm that the
 holdout estimate is not systematically smaller than the training estimate by about that amount.
 ---
@@ -435,85 +509,106 @@ one-switch deviations of the incumbent do it. The v0.7 case has to be against th
 
 | # | claim | passes if | fails if |
 |---|---|---|---|
-| S1 | **the advantage is not a self-play convention** | the `FROZEN` − `INCUMBENT` delta is positive with a lower bound above zero in **at least five of the seven** changed-partner rows of B6, and no row is negative by more than one cell half-width (0.63) | the delta goes negative by more than 0.63 in any row, or fails to clear zero in three or more rows |
+| S1 | **the advantage is not a self-play convention** | v0.7's partner-transfer profile is **no worse than the incumbent's own, measured the same way on the same material**: `min` over the changed-partner rows of the `FROZEN` − `INCUMBENT` delta is at least the `min` of the `INCUMBENT` − `v05` delta, **and** the ratio (median changed-partner delta) / (self-play delta) is at least the same ratio for `INCUMBENT` − `v05` | either comparison goes the wrong way — v0.7 then transfers *worse* than the policy it replaces |
 | S2 | **the advantage is not a private convention between identical fits** | in B7, the off-diagonal (run *i* with run *j*'s partners) is within 1.5 points of the diagonal | the off-diagonal collapses |
 | S3 | **no fresh adversary exploits it** | every B4 arm's edge over `FROZEN` has an upper bound below 1.53 | any arm clears 1.53 with a replicated sign |
 | S4 | **the gain is attributable** | in B5, no single leave-one-out drop accounts for more than the whole, and the components' naive sum exceeds the measured whole (sub-additive, as phase 2's did at 83%) | the measured whole exceeds the naive sum of its parts, which would mean the attribution is wrong |
 | S5 | **it survives the rule dialect** | every B8 row's edge keeps its sign, and no row's edge is more than 2 points below the `default` row | a dialect flips the sign |
 | S6 | **the worst case is not catastrophic** | in B3, `FROZEN`'s worst cell over the panel is no worse than `INCUMBENT`'s worst cell | `FROZEN`'s worst cell is worse than the incumbent's |
-| S7 | **the instrument is intact** | B9.2 recovers the planted edges, B9.3 does **not** recover the sub-floor rung, B9.5's three cheats each fail exactly one test | any control misbehaves — in which case nothing else in the battery is interpretable |
+| S7 | **the instrument is intact** | B9.2 recovers the planted edges, B9.3 does **not** recover the sub-floor rung, and B9.5's three cheats fail exactly the tests B9.5 names | any control misbehaves — in which case nothing else in the battery is interpretable |
 
 A failure of S1, S2 or S6 is a **substantive** failure and the report says v0.7 is brittle in that
 named way. A failure of S7 is a **procedural** failure and phase 5 stops.
 
-**S1's threshold is calibrated on training data and that is stated rather than hidden.** The first
-draft of this document, written before phase 4's partner table had run, set S1 as "the changed-partner
-delta is within 1.5 points of the self-play delta". Phase 4 then measured the table on training banks
-and **neither v0.7 nor v0.6 would pass that**: v0.7's delta over v0.6 is +2.94 in self-play and +0.14
-to +2.08 with a foreign partner, and the corpus's own baseline for the same question — v0.6 over v0.5
-— is +2.25 in self-play and **−0.8 to +1.4** under partner change. A threshold that fails the
-incumbent as well as the candidate is not measuring brittleness, it is measuring the fact that a
-three-seat upgrade is worth more than a one-seat upgrade, which is arithmetic and not a defect.
+**S1 has no free constant, and getting there took two failed attempts that are recorded rather than
+hidden.** The first draft, written before phase 4's partner table had run, set S1 as "the
+changed-partner delta is within 1.5 points of the self-play delta". Phase 4 then measured the table
+and **neither v0.7 nor v0.6 passes that** — a three-seat upgrade is simply worth more than a one-seat
+upgrade, which is arithmetic and not brittleness. The second draft asked for five of seven
+changed-partner deltas to clear zero; recomputing the delta intervals properly (each arm's pooled
+half-width combined in quadrature, which is *conservative* because the two arms are paired on deals
+and the harness gives no paired delta across two separate cells) gives **four of seven**, so v0.7
+would have failed its own test while v0.6 has never been measured against it at all.
 
-So S1 was rewritten to test what the brief actually asks — *"a convention that collapses in cross-play
-is brittleness"* — as **collapse** rather than as **shrinkage**: the advantage must survive the
-partner change with the right sign, not survive it at the same size. Calibrating a threshold on
-training data is what training data is for; calibrating it on holdout is what the seal prevents, and
-no holdout bank has been played at the time this is written. Phase 5 applies S1 as it now stands.
+Two failed thresholds in a row is the signal that the constant was the problem. **S1 now has no
+constant: it uses the incumbent as its own control**, which is this corpus's standing habit
+everywhere else. B6 already runs the `v05` arm needed to compute the baseline, so both profiles come
+out of the same battery on the same deals.
 
-Under the rewritten S1, phase 4's own training measurement passes: six of seven changed-partner rows
-are positive with a lower bound above zero, and the single negative row (`withholder`, −0.15) is
-inside one half-width of zero.
+For the record, phase 4's training measurement of the v0.7 side (deltas of `FROZEN` − `INCUMBENT`
+against a `v05` opponent, conservative intervals):
 
-### 5.3 The S6 side-channel rule, and why it is not zero-tolerance for a searching configuration
+| partners | itself | `v06` | `v05` | `v04` | `v03` | `detective` | `withholder` | `lockout` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| delta | +2.94 | +1.26 | +0.80 | +0.14 | +1.61 | +1.43 | −0.15 | +2.08 |
+| clears zero | yes | yes | no | no | yes | yes | no | yes |
 
-This is the one threshold in this document that is *not* the obvious one, so the reasoning is set out
-in full and the measurement that forced it is committed here rather than produced later.
+min = −0.15, median of the seven changed-partner rows = +1.26, ratio to the self-play row = 0.43.
+The corpus's baseline for the same quantity — v0.6 over v0.5, `paper/tables_v06/partners.tex` — is
+self-play +2.25 with changed-partner deltas spanning **−0.8 to +1.4**, i.e. min −0.8 and a ratio well
+under 0.43, but measured at ±3.46 and therefore not usable as a threshold. **That is exactly why B6
+re-measures it at 24,000 games a cell rather than quoting it**, and why S1 compares the two profiles
+produced by the same battery instead of comparing v0.7 to a published number.
+
+### 5.3 The S6 side-channel rule, and the confound phase 4 removed from it
 
 THREAT-MODEL §6.4 specifies S6 as zero-tolerance: any decision the reconstruction cannot reproduce
-from (own hand, public event stream, rules, reset seed) is an offence. Phase 3 ran it, found a single
-irreproducible ask on one `F-cheap` cell, and attributed it to the gate leaking state between its own
-four passes — recording that `--tests=s6` run alone at 2 threads gives `0/264,075`, twice.
+from (own hand, public event stream, rules, reset seed) is an offence. **Phase 5 applies it at zero
+tolerance.** Getting back to that took most of phase 4's diagnostic effort and the route is set out
+here, because the two conditions the rule now carries are not obvious and a phase-5 reader who drops
+either of them will measure something else.
 
-**Phase 4 re-examined that and the attribution does not survive.** Run alone at 13 threads on one
-fixed cell, the same command returns 1, 2, 3 and 4 mismatches on successive invocations, and the
-*denominator* moves too (270,593 / 270,608 / 270,628). The 2-thread zeros were draws from that
-lottery. At **`--threads=1` the test is deterministic**, and it then reproduces phase 3's own
-one-thread figure for `F-cheap` on bank 7030002 exactly: `1/264,061`.
+**Condition 1: one thread.** Above one thread the test is a lottery. Run alone at 13 threads on one
+fixed cell, the same command returns 1, 2, 3 and 4 mismatches on successive invocations and the
+*denominator* moves too (270,593 / 270,608 / 270,628). Phase 3 attributed this to `v7side` leaking
+state between its own four passes and recorded `--tests=s6` alone at 2 threads as `0/264,075`, twice.
+That attribution does not survive — S6 was running alone. At `--threads=1` the test is deterministic.
 
-Measured that way at 1,200 deals a cell on both training banks:
+**Condition 2: fresh agents per deal (`--freshagents`).** With condition 1 alone, every configuration
+carrying the truncated search still shows 1–3 irreproducible **ask** decisions per ~270,000, and no
+configuration without the search shows any. Phase 4 traced it: **agents are constructed once per
+thread and reused across every deal that thread is handed** (`arena.hpp`, `v07_side.hpp`), and some
+per-agent state survives `reset()` and is reachable only under the search. The live agent therefore
+carries residue from its previous deals that the reconstruction's fresh agent does not.
 
-| configuration | search? | mismatches / decisions | rate |
-|---|---|---:|---:|
-| `v06` | no | **0 / 1,578,854** | 0 |
-| `F-cheap` | yes | 4 / 1,582,905 | 2.5 per million |
-| the v0.7 candidate | yes | 2 / 1,630,826 | 1.2 per million |
+Two independent demonstrations, neither of which involves the side-channel harness reading anything
+about seats:
 
-Every mismatch is an **ask**; no declaration, pass, willing-forced or best-guess decision has ever
-failed to reproduce, in any configuration, in any run. `rreset=1` — the fix built in phase 3 for the
-rollout blueprints' accumulated observations — changes the counts by exactly nothing, so that is not
-the cause. Running the reconstruction inline on the worker thread rather than on a fresh one changes
-nothing either, so thread isolation is not the cause. **The residual is a property of the truncated
-search, it is deterministic, it predates every v0.7 key, and the incumbent's own frontier carries it
-at a higher rate than the candidate does.**
+* **Rebuilding the agents per deal takes every mismatching cell to exactly zero**, on every cell
+  tested: the frozen configuration 1/270,593 → **0**/270,628; `F-cheap` 1/264,061 → **0**/264,075;
+  the phase-2 composite 3/272,402 → **0**/272,390. Note the middle one: **264,075 is exactly the
+  denominator phase 3 recorded for the one `F-cheap` run it believed was clean.** That run was not
+  clean by luck; it was a deal partition under which the residue happened not to bite.
+* **The same residue makes a searching configuration's play depend on the deal partition, and hence
+  on the thread count.** Two spec forms of one identical policy — the baked `V6PARAMS` and an
+  `allparams=` string of the same numbers — play identically at 2, 3, 6, 8 and 13 threads and differ
+  on one deal in 800 at 1 and 4 threads. With `--freshagents` they are identical at every thread
+  count. With the search removed they are identical at every thread count without it.
 
-So the rule phase 5 applies is:
+**What this is and is not.** It is **not** a channel between seats: it is one agent instance carrying
+its own past. It is **not** the rollout blueprints' accumulated `Knowledge` — `rreset=1`, phase 3's
+fix for exactly that, changes the counts by nothing. It **is** cross-game memory in the sense S6
+defines, and it is a real defect in the engine's reuse of agents, of a size that moves one deal in
+800 for a searching configuration and nothing at all for a blueprint.
 
-* **G7b(i)** — a configuration **without** the search must be `0` mismatches. Zero tolerance, no
-  discretion.
-* **G7b(ii)** — a configuration **with** the search must have an S6 rate whose 95% Poisson upper
-  bound does not exceed `F-cheap`'s rate measured in the same battery at the same size. It is
-  reported as **NOT CERTIFIED under S6 as written**, with the rate, and it is not called certified.
-* **G7b(iii)** — a single **declaration**, pass, willing or bestGuess mismatch is an immediate FAIL
-  at any rate. Those decision classes have never produced one, so any occurrence is a new phenomenon
-  and not this one.
+**Two consequences phase 5 must carry.**
 
-This is a weaker rule than THREAT-MODEL specifies and the report must say so in those words. What it
-is not is a rule chosen to let the candidate through: it lets `F-cheap` through on the same terms,
-and it would reject the candidate if the candidate's rate rose above the incumbent frontier's.
-**The honest summary phase 6 has to carry is that no searching configuration in this corpus — v0.6's
-frontier included — is S6-certified, and that this is an open engine defect that phase 4 localised
-and did not fix.**
+1. **The gate rule is zero tolerance again**, and `engine/gate_v07.sh` measures S6 at `--threads=1
+   --freshagents`. Under those conditions every configuration in this corpus — the incumbent, the
+   incumbent's frontier, phase 3's survivor and the frozen configuration — measures **exactly zero**.
+   A nonzero count in phase 5 is therefore a genuine finding and not the residue.
+2. **It corrects `CANDIDATES.md` C14 on two counts.** "It is `v7side` leaking state between its own
+   four passes" is not what is happening, and "`fish7 match` is bit-stable across thread counts for
+   both search and non-search play" is **false in general** — it holds for the cells phase 3 tested
+   and fails for a searching configuration played against itself. Phase 5 reports every searching
+   cell's thread count with the cell, and the preregistered batteries fix it at 13.
+
+**What is still unknown**, and phase 5 is not asked to find it: *which* state survives `reset()`. The
+remaining suspects are the thread-local `BlockDP::buffers()` / `generation()` pool and
+`Belief::buffers()`, both shared by every agent on a thread. The decisive experiment is to reset those
+pools per deal and re-run the thread sweep; it is cheap and it is phase 6's or a maintenance task's,
+not phase 5's.
+
 ---
 
 ## 6. What result would mean v0.7 is not an advancement

@@ -1,3 +1,4 @@
+###### STAGE 4: the gate table, re-run under the final rule  Tue Aug 25 12:02:49 PDT 2026
 ==============================================================================
 COMMIT GATE  PASS  ::  v06
   spec   v06
@@ -89,3 +90,5 @@ COMMIT GATE  FAIL  ::  NEGCTL-m1off
   [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance, per TEST and not per roll-up: a skipped test is not a pass)
   [ok] G7b S6 seat-isolation  0/528199 = 0.00 per million                     (zero tolerance; one thread and fresh agents per deal, so the audit is deterministic and the cross-deal residue of section 4.3 is not miscounted as a side channel)
   reported, not gated: events/game 96.812, ask hit 52.955%, misdeclaration 1.05673%
+  ^^ NEGCTL-m1off FAILED THE GATE
+###### STAGE 4 COMPLETE  Tue Aug 25 12:29:30 PDT 2026

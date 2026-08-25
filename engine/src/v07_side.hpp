@@ -236,6 +236,10 @@ struct SideConfig {
   // BlockDP shared per-thread pool.  A mismatch present in both is cross-seat or
   // cross-game state on the same thread.  Never used for certification.
   bool reconInline = false;
+  // v0.7 phase 4, DIAGNOSTIC.  Rebuild the twelve agents for every deal instead
+  // of reusing one set per thread.  If the S6 residual is cross-deal state that
+  // `reset()` does not clear, this removes it by construction.
+  bool freshAgents = false;
 };
 
 struct SideStats {
@@ -464,15 +468,19 @@ inline SideStats runSide(const SideConfig& cfg) {
       // Constructed ONCE and reused across deals, as arena.hpp does.
       std::vector<std::unique_ptr<Agent>> aA(NPLAY), aB(NPLAY);
       std::vector<std::unique_ptr<SideAgent>> W(NPLAY);
-      for (int p = 0; p < NPLAY; p++) {
-        aA[p] = makeAgent(cfg.specA);
-        aB[p] = makeAgent(cfg.specB);
-        W[p] = std::make_unique<SideAgent>();
-      }
+      auto buildAgents = [&] {
+        for (int p = 0; p < NPLAY; p++) {
+          aA[p] = makeAgent(cfg.specA);
+          aB[p] = makeAgent(cfg.specB);
+          if (!W[p]) W[p] = std::make_unique<SideAgent>();
+        }
+      };
+      buildAgents();
       Game game;
       while (true) {
         int i = next.fetch_add(1);
         if (i >= cfg.games) break;
+        if (cfg.freshAgents) buildAgents();   // diagnostic; see SideConfig::freshAgents
         uint64_t s = mixSeed(cfg.seed, uint64_t(i) * 2654435761ull + 1);
         // v0.7 T1 (a), applied to this instrument.  The node sampler is keyed off
         // the DEAL INDEX, not off the thread, so which nodes S3 and S5 visit is a

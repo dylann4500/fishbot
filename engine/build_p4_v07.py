@@ -50,15 +50,24 @@ if PART in ("gate", "all"):
         for r in rows: seen[r["id"]] = r          # last run of each id wins
         w("#### The commit gate, run before any strength number")
         w("")
-        w("| configuration | verdict | dead asks | longest run | run>=6 | action-limit | mirror max / p99 | late decl | S3/S4/S5 |")
-        w("|---|---|---:|---:|---:|---:|---:|---:|---|")
+        w("| configuration | verdict | dead asks | longest run | run>=6 | action-limit | mirror max / p99 | late decl | S3/S4/S5 | S6 |")
+        w("|---|---|---:|---:|---:|---:|---:|---:|---|---:|")
         for id_, r in seen.items():
             s = r["stats"]
             s345 = [x for x in r.get("side", []) if "S6 seat-isolation" not in x.get("tests", {})]
-            ok345 = "ok" if s345 and all(x["verdict"] == "CERTIFIED" for x in s345) else ("--" if not s345 else "FAIL")
-            w("| `%s` | **%s** | %.5f%% | %d | %d | %d | %d / %d | %d | %s |" % (
+            def ok3(x):
+                t = x.get("tests", {})
+                return len(t) == 3 and all(v.get("status") == "PASS" for v in t.values())
+            ok345 = "ok" if s345 and all(ok3(x) for x in s345) else ("--" if not s345 else "FAIL")
+            s6 = r.get("s6") or {}
+            s6txt = ("%d / %s" % (s6["mismatch"], format(s6["nodes"], ",d"))) if s6.get("nodes") else "--"
+            w("| `%s` | **%s** | %.5f%% | %d | %d | %d | %d / %d | %d | %s | %s |" % (
                 id_, r["verdict"], s["deadAskPct"], s["longestDead"], s["gamesRun6"],
-                s["limitGames"], s["eventsMax"], s["eventsP99"], s["declsLate"], ok345))
+                s["limitGames"], s["eventsMax"], s["eventsP99"], s["declsLate"], ok345, s6txt))
+        w("")
+        w("The S6 column is mismatches over decisions audited, at `--threads=1 --freshagents` (RESEARCH-LOG")
+        w("section 4.3 says why both conditions are required). Every configuration is exactly zero,")
+        w("including the negative control, which fails on the five pathology rules instead.")
         w("")
         w("Reported, not gated: events/game, ask hit rate and mirror misdeclaration for the same runs.")
         w("")

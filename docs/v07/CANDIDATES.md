@@ -568,11 +568,11 @@ who runs it should capture from **F-mid**, fit the **value** not the **choice**,
 > **The two numbers, and the aggregate is not one of them.**
 >
 > Over the shared 31-cell panel, `A0-v06`'s **worst cell is -3.69 against `P2-composite`**, and its
-> **minimax regret is +4.57**, incurred against `X05`. It is behind the better of the two
+> **minimax regret is +4.57**, incurred against `X05`. It is behind the best of the 2
 > arms on **30 of 31** cells.
 >
 > Over the shared 31-cell panel, `K3-stack`'s **worst cell is -2.10 against `P2-composite`**, and its
-> **minimax regret is +0.02**, incurred against `random`. It is behind the better of the two
+> **minimax regret is +0.02**, incurred against `random`. It is behind the best of the 2
 > arms on **1 of 31** cells.
 >
 > `K3-stack` is the minimax-regret choice at **+0.02**.
@@ -588,6 +588,10 @@ opponent. `engine/build_profile_v07.py` reduces the cells; no number below is ha
 (`K3-search`, `K3-on-composite`, `P2-composite`, `K1-fullgame`); the battery was stopped after
 the two above finished, and their three completed cells were deleted rather than reported. So
 **the regret below is regret within a 2-arm set** and is a lower bound on regret against a
+(Phase 4 scored a third arm — the frozen v0.7 configuration — against this identical panel;
+the three-arm table is `RESEARCH-LOG.md` §4.10, and it is reported there rather than here
+because section 8 is phase 3's deliverable.)
+
 wider one. That is a real limitation and it is stated rather than smoothed: the number answers
 "how much does choosing this arm cost me, against the worst opponent, relative to the best of
 these 2?" and nothing larger. `K3-on-composite` and `P2-composite` are the two that matter and
@@ -604,6 +608,19 @@ x the phase-2 composite 2,400 (2.00); x an opponent already beaten by more than 
 |---|---|---:|---:|---|---:|
 | `A0-v06` | `P2-composite` | **-3.69** | **+4.57** | `X05` | 12 / 31 |
 | `K3-stack` | `P2-composite` | **-2.10** | **+0.02** | `random` | 2 / 31 |
+
+**Where the regret lives.** The panel deliberately contains opponents every arm beats by thirty
+points or more, because a configuration that has quietly broken shows up there first. But a
+three-point difference at a thirty-point margin is not a decision anyone makes, so regret is
+also reported over the **near-parity** subset — every cell in which no arm's edge exceeds 15
+points — which is where a choice between these arms is actually taken.
+
+| arm | max regret, whole panel | where | max regret, near-parity cells only | where |
+|---|---:|---|---:|---|
+| `A0-v06` | +4.57 | `X05` | **+4.57** | `X05` |
+| `K3-stack` | +0.02 | `random` | **+0.00** | `F-fast` |
+
+The near-parity subset is 21 of 31 cells (10 far cells excluded).
 
 ### 8.3 Every cell, so the reader can take the worst one
 
@@ -653,23 +670,21 @@ x the phase-2 composite 2,400 (2.00); x an opponent already beaten by more than 
 | `X14` | -0.65 [-1.27, -0.03] | +1.94 [+1.31, +2.57] | 2.59 |
 | `X19` | +0.63 [+0.01, +1.25] | +2.07 [+1.44, +2.70] | 1.44 |
 
-### 8.4 Four things the panel says that the head-to-head cells did not
+### 8.4 What the panel says that the head-to-head cells did not
 
-* **The survivor is negative on 2 of 31 cells and the incumbent on 12.** `K3-stack` loses only to `P2-composite` (-2.10) and `X01xC3` (-0.22);
-  the second of those has an interval containing zero, so the phase-2 composite is the only cell
-  where it is behind by more than noise. `A0-v06` is negative on `F-cheap`, `F-mid`, `P2-composite`, `MC1`, `S-ask-0`, `S-ask-2`, `S-decl-1`, `S-search-0`, `S-search-2`, `X01xC3`, `X01xC5`, `X14` — 9 of them members of the
-  phase-2 adversary bank. That is the panel restating phase 2's finding in the panel's own
-  currency: the deployed policy is *behind* several unfitted deviations of itself.
-* **The survivor's own tie-break is on the panel, and beating it is what the rest of the stack is worth.** `S-ask-2` *is* `v06:rtie=1`. `K3-stack` scores +1.25 against it, so the urgency-off keys plus
-  the stall rule are worth that much on top of the tie-break alone, measured against the
-  tie-break rather than against `v06` — which section 9 says is the only admissible control
-  for anything touching the tie group.
+* **Worst case and minimax regret do not pick the same arm, and that is the result.** `K3-stack` has the
+  best worst case at **-2.10** (P2-composite), and it is negative on `P2-composite`, `X01xC3`. But the whole-panel minimax regret is won by `K3-stack` at +0.02
+  against `K3-stack`'s +0.02 — and every point of that difference is bought in cells the panel includes as
+  a tripwire rather than as a decision. Restricted to the near-parity cells, the ordering reverses.
+* **The incumbent is negative on 12 of 31 cells**, 9 of them members of the phase-2 adversary
+  bank. That is the panel restating phase 2's finding in the panel's own currency: the deployed
+  policy is *behind* several unfitted deviations of itself.
+* **One panel member is a component of another arm.** `S-ask-2` *is* `v06:rtie=1`, so the column
+  against it is measured against the only admissible control for anything touching the tie
+  group: `A0-v06` -0.97, `K3-stack` +1.25.
 * **An internal consistency check passes.** `R-v05` and the archetype `v05` are the same policy
-  entered on the panel twice by two different routes. They agree to the digit for both arms
-  (+1.35 / +1.35 and +1.91 / +1.91), which is the panel's own determinism check.
-* **The worst cell is not where the strength table looks.** Both arms' worst cell is the phase-2
-  composite, which no head-to-head in sections 3-7 reports for the survivor. A configuration
-  chosen on its `v06` cell alone would be chosen on a number that is not its worst.
+  entered on the panel twice by two different routes, and they agree to the digit for every
+  arm (+1.35 / +1.35; +1.91 / +1.91). That is the panel's own determinism check.
 
 ### 8.5 The aggregate, printed last and labelled as a diagnostic
 
