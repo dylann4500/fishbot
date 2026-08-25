@@ -92,3 +92,36 @@
 == partner battery complete ==
 ###### STAGE 2c: adversary re-search against the improved policy  Tue Aug 25 08:58:32 PDT 2026
 === Y01  C1-inclass base=v06 kpi=win seed=7060011 budget=8x12x120  ===
+  Y01 fitted in 249s
+=== Y02  C2-extended base=v07 kpi=win seed=7060012 budget=8x12x120  ===
+  Y02 fitted in 251s
+=== Y03  C1-declerr base=v06 kpi=declerr seed=7060013 budget=8x12x120  ===
+  Y03 fitted in 255s
+=== Y04  C1-events base=v06 kpi=events seed=7060014 budget=8x12x120  ===
+  Y04 fitted in 253s
+=== Y05  C1-forced base=v06 kpi=forced seed=7060015 budget=8x12x120  ===
+  Y05 fitted in 251s
+=== Y06  C2-wide base=v07 kpi=win seed=7060016 budget=8x12x120 --sigmarel=0.30 ===
+  Y06 fitted in 246s
+=== Y07  C1-basin base=v06 kpi=win seed=7060017 budget=8x12x120  ===
+  Y07 fitted in 243s
+=== Y08  C2-asksupp base=v07 kpi=asksupp seed=7060018 budget=8x12x120  ===
+  Y08 fitted in 250s
+  eval Y01 bank 7030001
+  eval Y01 bank 7030002
+  eval Y02 bank 7030001
+  eval Y02 bank 7030002
+  eval Y03 bank 7030001
+  eval Y03 bank 7030002
+  eval Y04 bank 7030001
+  eval Y04 bank 7030002
+  eval Y05 bank 7030001
+  eval Y05 bank 7030002
+  eval Y06 bank 7030001
+  eval Y06 bank 7030002
+  eval Y07 bank 7030001
+  eval Y07 bank 7030002
+  eval Y08 bank 7030001
+  eval Y08 bank 7030002
+== adversary battery complete ==
+###### STAGE 2 COMPLETE  Tue Aug 25 10:04:48 PDT 2026
