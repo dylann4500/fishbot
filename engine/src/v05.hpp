@@ -24,6 +24,26 @@
 
 namespace fish {
 
+// ---- v0.7 phase 3 (K2) ----------------------------------------------------
+// A fixed-size descending top-M over the feasible allocations of one half-suit,
+// ties going to whatever arrived first.  That tie rule is load-bearing: it is
+// what makes slot 0 the allocation the shipped marginal-product rule names, so
+// `jalloc=0` and `jalloc=1` differ only where the joint score actually differs.
+static constexpr int K2_JMAX = 64;
+inline void k2InsertTop(double* score, int (*picks)[SETSZ], int& n, int cap,
+                        double s, const int* pick, int nFree) {
+  if (n == cap && !(s > score[n - 1])) return;
+  int at = n < cap ? n : cap - 1;
+  while (at > 0 && s > score[at - 1]) {
+    score[at] = score[at - 1];
+    for (int i = 0; i < nFree; i++) picks[at][i] = picks[at - 1][i];
+    at--;
+  }
+  score[at] = s;
+  for (int i = 0; i < nFree; i++) picks[at][i] = pick[i];
+  if (n < cap) n++;
+}
+
 struct V05Config {
   BeliefMode belief = BeliefMode::Fast;
   int sinkOuter = 4, sinkInner = 8;
@@ -161,6 +181,20 @@ struct V05Config {
   //     guaranteed-miss asks M1 exists to delete, at a controlled rate.
   int    plantKind          = 0;
   double plantStr           = 0.0;
+
+  // ---- v0.7 phase 3 (K2): joint-posterior declaration allocation ----------
+  // Ledger L1.  The shipped voluntary declaration picks the six-card assignment
+  // by maximising a PRODUCT OF INDEPENDENT MARGINALS subject to capacity and
+  // certificate feasibility, and only afterwards prices the winner jointly.
+  // `jalloc=1` selects by the joint score instead, restricted to the top
+  // `jtopm` survivors by marginal product (0 = every survivor), with ties broken
+  // in favour of the marginal-product winner so that `jalloc=0` is exactly
+  // today's code and today's bits.  DEFAULT OFF.
+  bool   jalloc             = false;
+  int    jallocTopM         = 8;
+  // Capture-only: how many survivors the L1 REPLAY rescores jointly.  Not a
+  // policy knob -- it never runs unless decisionCapture() is set.
+  int    l1ReplayTopM       = 32;
 };
 
 struct V05Agent : Agent {
@@ -799,6 +833,12 @@ struct V05Agent : Agent {
 
     int best[SETSZ]; double bestScore = -1; bool found = false;
     int pick[SETSZ];
+    // K2 (jalloc).  When the joint rule is armed we keep the top-M survivors by
+    // marginal product in DESCENDING order, first-encountered winning ties, so
+    // slot 0 is bit-for-bit the allocation the shipped rule names.  With
+    // cfg.jalloc off, JM is 0 and not one instruction of this runs.
+    const int JM = cfg.jalloc ? (cfg.jallocTopM > 0 ? std::min(cfg.jallocTopM, K2_JMAX) : K2_JMAX) : 0;
+    double topScore[K2_JMAX]; int topPick[K2_JMAX][SETSZ]; int nTop = 0;
     int total = 1;
     for (int i = 0; i < nFree; i++) total *= nm;
     for (int code = 0; code < total; code++) {
@@ -815,6 +855,7 @@ struct V05Agent : Agent {
       }
       if (!ok) continue;
       lastFeasibleCount++;
+      if (JM) k2InsertTop(topScore, topPick, nTop, JM, score, pick, nFree);
       if (score <= bestScore) continue;
       bestScore = score; found = true;
       for (int i = 0; i < nFree; i++) best[free_[i]] = pick[i];
@@ -824,9 +865,125 @@ struct V05Agent : Agent {
 
     int cards[SETSZ];
     for (int i = 0; i < SETSZ; i++) cards[i] = cardOf(set, i);
+    if (JM && nTop > 1) {
+      // The joint rescoring.  `jointSequential` conditions card by card, so it
+      // prices the assignment as a joint object rather than as a product of
+      // unconditioned marginals -- which is the whole of ledger L1's mechanism
+      // claim.  Slot 0 is scored first and the comparison is STRICT, so a tie
+      // keeps the marginal-product winner and jalloc is a minimal change.
+      int cand[SETSZ]; double bestJ = -1; int bestT = -1;
+      for (int t2 = 0; t2 < nTop; t2++) {
+        for (int i = 0; i < SETSZ; i++) cand[i] = owners[i];
+        for (int i = 0; i < nFree; i++) cand[free_[i]] = topPick[t2][i];
+        double pj = bel.jointSequential(k, cards, cand, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+                                        cfg.priorTheta, cfg.priorPhi);
+        if (pj > bestJ) { bestJ = pj; bestT = t2; }
+      }
+      if (bestT >= 0) {
+        for (int i = 0; i < nFree; i++) owners[free_[i]] = topPick[bestT][i];
+        prob = bestJ;
+        return true;
+      }
+    }
     prob = bel.jointSequential(k, cards, owners, SETSZ, cfg.sinkOuter, cfg.sinkInner,
                                cfg.priorTheta, cfg.priorPhi);
     return true;
+  }
+
+  // ---- v0.7 phase 3 (K2): ledger L1's replay ------------------------------
+  //
+  // "The cheapest decisive experiment in this document ... a pure replay."  At
+  // an actual voluntary declaration, and only when the harness has asked for
+  // records, re-derive the same half-suit three ways and hand all three to the
+  // driver, which is the only thing that can see the deal:
+  //   (a) the allocation the shipped marginal-product rule named  -- `d` itself;
+  //   (b) the allocation a JOINT argmax names;
+  //   (c) the EXACT posterior's shape over the feasible set, from the block DP:
+  //       how many assignments survive, how many count vectors they span, and
+  //       -- decisively -- whether the exact posterior is FLAT over them, in
+  //       which case no belief-based rule under the uniform-deal prior can do
+  //       better than 1/nAlloc and the entry closes as an information limit.
+  // This runs no games of any new policy and changes no decision.
+  void l1Replay(int set, const Declaration& d) {
+    lastDec.l1have = 0;
+    int mates[3], nm = 0;
+    for (int p = 0; p < NPLAY; p++) if (teamMask & (1 << p)) mates[nm++] = p;
+    uint8_t q[NPLAY]; k.capacities(q);
+    int free_[SETSZ], nFree = 0, owners[SETSZ];
+    int used[NPLAY] = {0,0,0,0,0,0};
+    bool feasible = true;
+    for (int i = 0; i < SETSZ; i++) {
+      int c = cardOf(set, i);
+      if (k.myHand & bit(c)) { owners[i] = seat; continue; }
+      if (k.owner[c] < NPLAY) {
+        if (!(teamMask & (1u << k.owner[c]))) { feasible = false; break; }
+        owners[i] = k.owner[c]; continue;
+      }
+      if (k.owner[c] == OUT_OF_PLAY) { feasible = false; break; }
+      if (!(k.mask[c] & teamMask)) { feasible = false; break; }
+      free_[nFree++] = i; owners[i] = -1;
+    }
+    if (!feasible) return;
+    int cards[SETSZ];
+    for (int i = 0; i < SETSZ; i++) cards[i] = cardOf(set, i);
+
+    // (a)+(b): enumerate, keep the top-M by marginal product, rescore jointly.
+    const int JM = std::min(std::max(1, cfg.l1ReplayTopM), K2_JMAX);
+    double topScore[K2_JMAX]; int topPick[K2_JMAX][SETSZ]; int nTop = 0;
+    int nFeas = 0, pick[SETSZ];
+    int total = 1;
+    for (int i = 0; i < nFree; i++) total *= nm;
+    for (int code = 0; code < total; code++) {
+      int t = code;
+      for (int i = 0; i < nFree; i++) { pick[i] = mates[t % nm]; t /= nm; }
+      int cnt[NPLAY] = {0,0,0,0,0,0};
+      bool ok = true; double score = 1;
+      for (int i = 0; i < nFree && ok; i++) {
+        int idx = free_[i], c = cardOf(set, idx), p = pick[i];
+        if (!(k.mask[c] & (1u << p))) { ok = false; break; }
+        if (++cnt[p] > int(q[p]) + used[p]) { ok = false; break; }
+        score *= bel.marg[c][p];
+      }
+      if (!ok) continue;
+      nFeas++;
+      k2InsertTop(topScore, topPick, nTop, JM, score, pick, nFree);
+    }
+    lastDec.l1n = nFeas;
+    if (!nTop) return;
+    int cand[SETSZ]; double bestJ = -1, secondJ = -1; int bestT = -1;
+    for (int t2 = 0; t2 < nTop; t2++) {
+      for (int i = 0; i < SETSZ; i++) cand[i] = owners[i];
+      for (int i = 0; i < nFree; i++) cand[free_[i]] = topPick[t2][i];
+      double pj = bel.jointSequential(k, cards, cand, SETSZ, cfg.sinkOuter, cfg.sinkInner,
+                                      cfg.priorTheta, cfg.priorPhi);
+      if (pj > bestJ) { secondJ = bestJ; bestJ = pj; bestT = t2; }
+      else if (pj > secondJ) secondJ = pj;
+    }
+    for (int i = 0; i < SETSZ; i++) lastDec.l1jointOwner[i] = int8_t(owners[i]);
+    for (int i = 0; i < nFree; i++) lastDec.l1jointOwner[free_[i]] = int8_t(topPick[bestT][i]);
+    lastDec.l1jTop = bestJ; lastDec.l1jSecond = secondJ;
+    lastDec.l1jRescored = nTop;
+    bool same = true;
+    for (int i = 0; i < SETSZ; i++) if (lastDec.l1jointOwner[i] != int8_t(d.owner[i])) { same = false; break; }
+    lastDec.l1jSame = same ? 1 : 0;
+    lastDec.l1have |= 1;
+
+    // (c): the exact shape.  A scratch DP, not the agent's own -- the aliasing
+    // guard (blockdp.hpp) makes a second instance on this thread safe.
+    static thread_local BlockDP scratch;
+    if (!scratch.build(k)) return;
+    BlockDP::AllocShape sh = scratch.allocShape(set, teamMask);
+    if (!sh.ok) return;
+    lastDec.l1nCV = sh.nCV; lastDec.l1nAlloc = sh.nAlloc;
+    lastDec.l1pMap = sh.pMap; lastDec.l1flat = sh.flat ? 1 : 0;
+    for (int i = 0; i < SETSZ; i++) lastDec.l1exactOwner[i] = int8_t(owners[i]);
+    for (int i = 0; i < sh.nCards; i++) {
+      int idx = -1;
+      for (int j = 0; j < SETSZ; j++) if (cards[j] == sh.cards[i]) { idx = j; break; }
+      if (idx >= 0) lastDec.l1exactOwner[idx] = int8_t(sh.seats[i]);
+    }
+    for (int i = 0; i < SETSZ; i++) if (lastDec.l1exactOwner[i] < 0) return;
+    lastDec.l1have |= 2;
   }
 
   // Theorem 1 makes patience correct, and two patient policies can therefore
@@ -1065,6 +1222,9 @@ struct V05Agent : Agent {
       lastDec.urgent = urgent;
       lastDec.pressure = press;
       lastDec.urgWhy = urgWhyBits;
+      // K2.  The replay runs on the half-suit actually declared, not on
+      // whichever one evaluateSet happened to touch last.
+      if (found) l1Replay(d.set, d);
     }
     return found;
   }

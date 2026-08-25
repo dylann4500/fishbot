@@ -220,7 +220,7 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
   DecSummary S;
   S.rows = (long long)rows.size();
   S.deals = deals;
-  const int NM = 17;
+  const int NM = 37;
   static const char* names[NM] = {
     "askHitRate",            // asks that landed
     "ownLockedAskRate",      // asks into a half-suit this team ALREADY owns outright (ledger L3)
@@ -244,7 +244,41 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
     "urgWhyPatience",        // unresolvedCount <= patiencePool
     "urgWhyOppCards",        // oppCards <= oppCardFloor      <- the adversary's own hand count
     "urgWhyEvents",          // pub.nEvents >= forceDeclareEvents  <- the length of the game
-    "urgWhyAskFloor"         // bestAskProbability < askFloor  <- a starved posterior
+    "urgWhyAskFloor",        // bestAskProbability < askFloor  <- a starved posterior
+    // ---- v0.7 phase 3 (K2): ledger L1's replay -----------------------------
+    // Every row below is a rate over VOLUNTARY DECLARATIONS with the replay
+    // valid, or over the subset named.  Nothing here changed a decision.
+    "l1Coverage",            // declarations at which the joint replay ran
+    "l1ExactCoverage",       // ... and at which the exact shape was built
+    "declJointAccuracy",     // the JOINT rule's allocation, scored on truth
+    "declExactAccuracy",     // the EXACT MAP allocation, scored on truth
+    "declShipAccuracy",      // the shipped rule on the SAME rows (the comparator)
+    "jointFixRate",          // shipped wrong -> joint right
+    "jointBreakRate",        // shipped right -> joint wrong
+    "exactFixRate",          // shipped wrong -> exact right
+    "exactBreakRate",        // shipped right -> exact wrong
+    "jointDiffersRate",      // joint argmax != marginal-product argmax
+    // The ceiling itself.  `l1FlatShare` is the share of decisions whose exact
+    // posterior is uniform over every feasible allocation -- states in which NO
+    // belief-based rule under the uniform-deal prior can prefer one allocation
+    // to another.  `l1FlatShareErr` restricts to the wrong declarations, which
+    // is the number ledger L1 asks for: if it is high the entry closes as an
+    // information limit rather than as a mechanism defect.
+    "l1FlatShare",
+    "l1FlatShareErr",
+    "l1CeilingMean",         // mean exact P(MAP | team owns), over declarations
+    "l1CeilingMeanErr",      // ... over the wrong ones
+    // Most declarations are not ambiguous at all -- one allocation survives and
+    // there is nothing to choose.  The entry is only about the AMBIGUOUS ones,
+    // so every ceiling number is repeated on the subset with >= 2 surviving
+    // assignments, and again on the L1 error class itself (wrong AND the team
+    // physically held all six).
+    "l1AmbigShare",          // declarations with >= 2 surviving allocations
+    "l1FlatShareAmbig",      // ... of those, exact posterior uniform over all
+    "l1CeilingMeanAmbig",    // ... mean exact P(MAP | team owns)
+    "l1AllocErrShare",       // declarations that are L1 allocation errors
+    "l1AllocErrFlatShare",   // ... of those, exact posterior flat
+    "l1AllocErrCeiling"      // ... mean exact P(MAP | team owns)
   };
   S.m.resize(NM);
   for (int i = 0; i < NM; i++) { S.m[i].name = names[i];
@@ -275,6 +309,35 @@ inline DecSummary summariseDecisions(const std::vector<DecisionRecord>& rows, in
       add(11, r.deal, (r.urgent && r.hit) ? 1 : 0, r.urgent ? 1 : 0);
       add(12, r.deal, (!r.urgent && r.hit) ? 1 : 0, r.urgent ? 0 : 1);
       for (int b = 0; b < 4; b++) add(13 + b, r.deal, (r.urgWhy >> b) & 1, 1);
+      // ---- K2 -------------------------------------------------------------
+      add(17, r.deal, (r.l1have & 1) ? 1 : 0, 1);
+      add(18, r.deal, (r.l1have & 2) ? 1 : 0, 1);
+      if (r.l1have & 1) {
+        int sh = r.hit ? 1 : 0, jt = r.jointHit > 0 ? 1 : 0;
+        add(19, r.deal, jt, 1);
+        add(21, r.deal, sh, 1);
+        add(22, r.deal, (!sh && jt) ? 1 : 0, sh ? 0 : 1);
+        add(23, r.deal, (sh && !jt) ? 1 : 0, sh ? 1 : 0);
+        add(26, r.deal, r.l1jSame == 0 ? 1 : 0, 1);
+      }
+      if (r.l1have & 2) {
+        int sh = r.hit ? 1 : 0, ex = r.exactHit > 0 ? 1 : 0;
+        add(20, r.deal, ex, 1);
+        add(24, r.deal, (!sh && ex) ? 1 : 0, sh ? 0 : 1);
+        add(25, r.deal, (sh && !ex) ? 1 : 0, sh ? 1 : 0);
+        add(27, r.deal, r.l1flat > 0 ? 1 : 0, 1);
+        add(28, r.deal, (!r.hit && r.l1flat > 0) ? 1 : 0, r.hit ? 0 : 1);
+        add(29, r.deal, r.l1pMap, 1);
+        add(30, r.deal, r.hit ? 0 : r.l1pMap, r.hit ? 0 : 1);
+        bool amb = r.l1nAlloc >= 2;
+        bool ae  = (!r.hit && r.ownLocked);
+        add(31, r.deal, amb ? 1 : 0, 1);
+        add(32, r.deal, (amb && r.l1flat > 0) ? 1 : 0, amb ? 1 : 0);
+        add(33, r.deal, amb ? r.l1pMap : 0, amb ? 1 : 0);
+        add(34, r.deal, ae ? 1 : 0, 1);
+        add(35, r.deal, (ae && r.l1flat > 0) ? 1 : 0, ae ? 1 : 0);
+        add(36, r.deal, ae ? r.l1pMap : 0, ae ? 1 : 0);
+      }
     } else {
       add(9, r.deal, r.hit ? 1 : 0, 1);
     }

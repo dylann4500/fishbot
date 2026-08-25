@@ -121,6 +121,10 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     c.liveAskGate       = optI(o, "m1", c.liveAskGate ? 1 : 0) != 0;
     c.ownershipByP      = optI(o, "m1p", c.ownershipByP ? 1 : 0) != 0;
     c.feasibleDecl      = optI(o, "m2", c.feasibleDecl ? 1 : 0) != 0;
+    // v0.7 phase 3 (K2), ledger L1.  Default OFF; `jalloc=0` is today's code.
+    c.jalloc            = optI(o, "jalloc", c.jalloc ? 1 : 0) != 0;
+    c.jallocTopM        = optI(o, "jtopm", c.jallocTopM);
+    c.l1ReplayTopM      = optI(o, "l1topm", c.l1ReplayTopM);
     // ---- v0.7 planted weakness ---------------------------------------------
     // `hcap` names the family and `hstr` its size.  hit/decl/prior are pure
     // config transforms (no policy code runs for them); leak/tell/gate set

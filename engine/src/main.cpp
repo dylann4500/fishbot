@@ -786,13 +786,17 @@ int main(int argc, char** argv) {
       FILE* f = fopen(dump.c_str(), "w");
       if (f) {
         fprintf(f, "deal,rot,event,seat,team,kind,card,target,set,hit,ownLocked,oppLocked,"
-                   "truthHolder,dead,gateBound,searched,changed,nCand,nTie,nFeasible,p,margin,score,pAlloc,unresolved,urgent,pressure,urgWhy\n");
+                   "truthHolder,dead,gateBound,searched,changed,nCand,nTie,nFeasible,p,margin,score,pAlloc,unresolved,urgent,pressure,urgWhy,"
+                   "l1have,l1flat,l1jSame,jointHit,exactHit,l1n,l1nCV,l1nAlloc,l1pMap,l1jTop,l1jSecond\n");
         for (const auto& r : st.decisions)
-          fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d,%d,%d,%d\n",
+          fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%d,%d,%d,%d,"
+                     "%d,%d,%d,%d,%d,%d,%d,%.1f,%.9f,%.9f,%.9f\n",
                   r.deal, r.rot, r.event, r.seat, r.team, r.kind, r.card, r.target, r.set, r.hit,
                   r.ownLocked, r.oppLocked, r.truthHolder, r.dead, r.gateBound, r.searched, r.changed,
                   r.nCand, r.nTie, r.nFeasible, r.p, r.margin, r.score, r.pAlloc, r.unresolved,
-                  r.urgent, r.pressure, r.urgWhy);
+                  r.urgent, r.pressure, r.urgWhy,
+                  r.l1have, r.l1flat, r.l1jSame, r.jointHit, r.exactHit, r.l1n, r.l1nCV,
+                  r.l1nAlloc, r.l1pMap, r.l1jTop, r.l1jSecond);
         fclose(f);
       }
     }
