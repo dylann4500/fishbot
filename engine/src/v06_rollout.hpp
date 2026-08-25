@@ -219,11 +219,35 @@ struct RolloutEngine {
       if (!success) { sim.g.turn = target; sim.g.pub.turn = target; }
       asks++;
     }
+    // v0.7 K1.  `cutDone` exists only for the fitting sink: with sampling ON the
+    // rollout records the leaf row, then keeps playing to the end so the sample's
+    // target is the value the truncated rollout WOULD have returned.  The value
+    // handed back is still `cutRet`, the leaf value, so the policy is unchanged.
+    bool cutDone = false;
+    double cutRet = 0.0;
+    LeafSample smp{}; bool smpOn = false;
     while (true) {
-      if (cfg.maxDepth > 0 && sim.g.pub.nEvents - startEv >= cfg.maxDepth) {
+      if (cfg.maxDepth > 0 && !cutDone && sim.g.pub.nEvents - startEv >= cfg.maxDepth) {
         rollouts++; truncations++; rolloutEvents += sim.g.pub.nEvents - startEv;
-        if (leafFeat) { leafFeatures(sim.g, team, cfg.leafLambda, leafFeat); if (truncated) *truncated = true; return 0.0; }
-        return leafValue(sim.g, team);
+        if (leafFeat) { leafFeatures(sim.g, team, cfg.leafLambda, leafFeat); if (truncated) *truncated = true; cutRet = 0.0; }
+        else cutRet = leafValue(sim.g, team);
+        if (!g_leafSampling) return cutRet;
+        // Stride at the DECISION, not at the leaf: the between-candidate score
+        // needs every candidate of a sampled (decision, determinization) group,
+        // and a leaf-level stride would shred the groups.  Only the rollouts
+        // whose sample is kept pay for the continuation, so --stride buys
+        // throughput as well as memory.
+        g_leafSeen++;
+        if (g_leafStride > 1 && (g_leafCtx.did % int32_t(g_leafStride)) != 0) return cutRet;
+        cutDone = true;
+        {
+          smpOn = true;
+          if (leafFeat) { for (int i = 0; i < NLEAF; i++) smp.f[i] = leafFeat[i]; }
+          else leafFeatures(sim.g, team, cfg.leafLambda, smp.f);
+          smp.did = g_leafCtx.did; smp.det = g_leafCtx.det; smp.cand = g_leafCtx.cand;
+          smp.unresolved = g_leafCtx.unresolved;
+          smp.evAtCut = int16_t(sim.g.pub.nEvents - startEv);
+        }
       }
       sim.declarationRound();
       if (!sim.g.pub.activeSets()) break;
@@ -269,8 +293,10 @@ struct RolloutEngine {
       if (!success) { sim.g.turn = target; sim.g.pub.turn = target; }
       if (++asks >= cfg.askCap) { sim.adjudicateRemaining(); break; }
     }
-    rollouts++; rolloutEvents += sim.g.pub.nEvents - startEv;
-    return double(sim.g.pub.score[team]) - double(sim.g.pub.score[1 - team]);
+    if (!cutDone) { rollouts++; rolloutEvents += sim.g.pub.nEvents - startEv; }
+    double fin = double(sim.g.pub.score[team]) - double(sim.g.pub.score[1 - team]);
+    if (smpOn) { smp.y = fin; leafStore().v.push_back(smp); }
+    return cutDone ? cutRet : fin;
   }
 
   // Seat the six blueprint agents at their information sets under one

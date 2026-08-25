@@ -28,6 +28,8 @@
 #include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
 #include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
 #include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
+#include "v07_side.hpp"             // v0.7 phase-3 mechanical side-channel gate
+#include "v07_leaffit.hpp"          // v0.7 phase-3 K1: fitting the search leaf
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -660,6 +662,140 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  // ------------------------------------------------------------------ v0.7 K1
+  // Sample the states the truncated search's own depth cut produces, record the
+  // realised continuation value under blueprint continuation, and fit a linear
+  // leaf on them.  See engine/src/v07_leaffit.hpp for why the between-candidate
+  // score is the one that decides and the overall score is a distraction.
+  if (cmd == "v7leaffit") {
+    if (argFlag(argc, argv, "help")) {
+      std::cout <<
+        "usage: fish7 v7leaffit --a=<search spec> [--b=v06] --games=N --seed=<FIT bank>\n"
+        "                       [--oos=<eval bank> --oosgames=M] [--stride=K] [--ridge=L]\n"
+        "                       [--threads=T] [--rotations=2] [--json] [--out=FILE]\n"
+        "\n"
+        "Runs --a against --b with the leaf sampler armed.  Every depth cut writes its\n"
+        "13-feature row; the rollout then keeps playing to the end under blueprint\n"
+        "continuation and the final signed half-suit differential is the target.  The\n"
+        "policy is NOT perturbed: playOut still returns the leaf value it would have\n"
+        "returned, and the determinization RNG is untouched.\n"
+        "Fit on the reserve bank (7030004); evaluate out of sample with --oos.\n";
+      return 0;
+    }
+    auto sample = [&](uint64_t bank, int games, std::vector<fish::LeafSample>& out) {
+      fish::leafResetStores();
+      fish::g_leafSampling = true;
+      fish::g_leafStride = atoi(argVal(argc, argv, "stride", "1").c_str());
+      MatchConfig mc;
+      mc.specA = argVal(argc, argv, "a", "v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26");
+      mc.specB = argVal(argc, argv, "b", "v06");
+      mc.games = games;
+      mc.seed = bank;
+      mc.rules = rulesFrom(argc, argv);
+      mc.threads = threads;
+      mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+      MatchStats st = runMatch(mc);
+      (void)st;
+      fish::g_leafSampling = false;
+      fish::leafDrain(out);
+      fish::leafResetStores();
+    };
+    std::vector<fish::LeafSample> fitS, oosS;
+    uint64_t fitBank = strtoull(argVal(argc, argv, "seed", "7030004").c_str(), nullptr, 10);
+    int fitGames = atoi(argVal(argc, argv, "games", "300").c_str());
+    sample(fitBank, fitGames, fitS);
+    uint64_t oosBank = strtoull(argVal(argc, argv, "oos", "0").c_str(), nullptr, 10);
+    if (oosBank) sample(oosBank, atoi(argVal(argc, argv, "oosgames", "150").c_str()), oosS);
+
+    using namespace fish::leaffit;
+    double lam = atof(argVal(argc, argv, "ridge", "1e-4").c_str());
+    auto XofS = [](const std::vector<fish::LeafSample>& S, std::vector<const double*>& X, std::vector<double>& y) {
+      X.clear(); y.clear(); X.reserve(S.size()); y.reserve(S.size());
+      for (const auto& s : S) { X.push_back(s.f); y.push_back(s.y); }
+    };
+    std::vector<const double*> Xf, Xo; std::vector<double> yf, yo;
+    XofS(fitS, Xf, yf); XofS(oosS, Xo, yo);
+    Grouped gf = groupByDecisionDet(fitS), go = groupByDecisionDet(oosS);
+
+    // The three reference weight vectors, expressed in the same 13-slot basis.
+    double wMat[fish::NLEAF] = {0,0,0,0,0,0,0,0,0,0,0,0,1};   // MaterialLeaf: f[12]
+    double wScr[fish::NLEAF] = {0,1,0,0,0,0,0,0,0,0,0,0,0};   // ScoreLeaf: f[1]
+    bool allCols[fish::NLEAF]; for (int j = 0; j < fish::NLEAF; j++) allCols[j] = true;
+    allCols[12] = false;   // f12 = f1 + lambda*f2 exactly; admitting it is collinear
+    bool sc2[fish::NLEAF] = {false,true,true,false,false,false,false,false,false,false,false,false,false};
+
+    Fit lvl = ridgeFit(Xf, yf, lam, true, allCols);  lvl.tag = "level";
+    Fit dff = diffFit(fitS, gf, lam, allCols);
+    Fit sc  = ridgeFit(Xf, yf, lam, true, sc2);      sc.tag  = "sc2";   // free ratio of f1:f2
+    // Calibrate the difference-optimal direction to the terminal-return scale.
+    { R2 r = scoreLevel(Xf, yf, dff.w);
+      double a = r.slope;
+      if (std::isfinite(a) && std::fabs(a) > 1e-9) {
+        double mp = 0, my = 0;
+        for (size_t i = 0; i < Xf.size(); i++) { mp += predict(dff.w, Xf[i]); my += yf[i]; }
+        mp /= double(Xf.size()); my /= double(Xf.size());
+        for (int j = 1; j < fish::NLEAF; j++) dff.w[j] *= a;
+        dff.w[0] = my - a * mp;
+      } }
+
+    struct Row { const char* name; const double* w; };
+    Row rows[] = { {"material(f12)", wMat}, {"score(f1)", wScr}, {"sc2(f1,f2 free)", sc.w},
+                   {"linear-level", lvl.w}, {"linear-diff", dff.w} };
+    double cf[fish::NLEAF]; constancy(fitS, gf, cf);
+
+    bool json = argFlag(argc, argv, "json");
+    std::ostringstream J;
+    J << "{\"cmd\":\"v7leaffit\",\"a\":\"" << argVal(argc, argv, "a", "") << "\""
+      << ",\"fitBank\":" << fitBank << ",\"fitGames\":" << fitGames
+      << ",\"oosBank\":" << oosBank
+      << ",\"nFit\":" << fitS.size() << ",\"nFitGroups\":" << gf.spans.size()
+      << ",\"nOos\":" << oosS.size() << ",\"nOosGroups\":" << go.spans.size()
+      << ",\"ridge\":" << lam << ",\"rows\":[";
+    if (!json) {
+      printf("v7leaffit  a=%s  fit bank %llu (%d games)  n=%zu leaves, %zu (decision,det) groups\n",
+             argVal(argc, argv, "a", "").c_str(), (unsigned long long)fitBank, fitGames,
+             fitS.size(), gf.spans.size());
+      if (oosBank) printf("           oos bank %llu  n=%zu leaves, %zu groups\n",
+                          (unsigned long long)oosBank, oosS.size(), go.spans.size());
+      printf("\nconstancy across candidates within a (decision,determinization) group:\n");
+      for (int j = 0; j < fish::NLEAF; j++)
+        printf("   f%-2d %-16s constant in %6.2f%% of groups\n", j, fish::leafFeatureName(j), 100 * cf[j]);
+      printf("\n%-18s %8s %8s %8s | %8s %8s %8s | oos %8s %8s\n",
+             "evaluator", "R2.lvl", "corr2.l", "slope", "R2.btw", "corr2.b", "slope.b", "corr2.l", "corr2.b");
+    }
+    bool first = true;
+    for (const Row& rw : rows) {
+      R2 L = scoreLevel(Xf, yf, rw.w), B = scoreBetween(fitS, gf, rw.w);
+      R2 OL{}, OB{};
+      if (oosBank) { OL = scoreLevel(Xo, yo, rw.w); OB = scoreBetween(oosS, go, rw.w); }
+      if (!json)
+        printf("%-18s %8.5f %8.5f %8.4f | %8.5f %8.5f %8.4f | %12.5f %8.5f\n",
+               rw.name, L.r2, L.corr2, L.slope, B.r2, B.corr2, B.slope, OL.corr2, OB.corr2);
+      J << (first ? "" : ",") << "{\"name\":\"" << rw.name << "\""
+        << ",\"r2Level\":" << L.r2 << ",\"corr2Level\":" << L.corr2 << ",\"slopeLevel\":" << L.slope
+        << ",\"r2Between\":" << B.r2 << ",\"corr2Between\":" << B.corr2 << ",\"slopeBetween\":" << B.slope
+        << ",\"oosCorr2Level\":" << OL.corr2 << ",\"oosCorr2Between\":" << OB.corr2
+        << ",\"oosR2Between\":" << OB.r2
+        << ",\"w\":\"" << specOf(rw.w) << "\"}";
+      first = false;
+    }
+    J << "],\"constancy\":[";
+    for (int j = 0; j < fish::NLEAF; j++) J << (j ? "," : "") << cf[j];
+    J << "],\"linearLevel\":\"linear@" << specOf(lvl.w) << "\""
+      << ",\"linearDiff\":\"linear@" << specOf(dff.w) << "\""
+      << ",\"sc2\":\"linear@" << specOf(sc.w) << "\"}";
+    if (!json) {
+      printf("\nleafeval=linear@%s        (level fit)\n", specOf(lvl.w).c_str());
+      printf("leafeval=linear@%s        (diff fit, level-calibrated)\n", specOf(dff.w).c_str());
+      printf("leafeval=linear@%s        (f1,f2 free ratio)\n", specOf(sc.w).c_str());
+    } else {
+      std::cout << J.str() << "\n";
+    }
+    std::string out = argVal(argc, argv, "out", "");
+    if (!out.empty()) { std::ofstream f(out, std::ios::app); f << J.str() << "\n"; }
+    return 0;
+  }
+
   if (cmd == "bench") {
     MatchConfig mc; mc.specA = argVal(argc, argv, "a", "v04"); mc.specB = argVal(argc, argv, "b", "v04");
     mc.games = atoi(argVal(argc, argv, "games", "200").c_str());
@@ -935,6 +1071,76 @@ int main(int argc, char** argv) {
   // lets phase 2 compute the digest of a SEALED bank without learning anything
   // about how any policy performs on it -- the only phase-2 contact with the
   // holdout, recorded as such in RESEARCH-LOG.md.
+  // ---------------------------------------------------------------- v0.7 K0
+  // The mechanical side-channel certification gate.  THREAT-MODEL.md 6.4
+  // specifies S1-S6 and records that none of them reads only existing
+  // artifacts; this is the harness for the four pass/fail ones.  See
+  // engine/src/v07_side.hpp for what each test does and, more importantly, for
+  // what each cannot see.
+  if (cmd == "v7side") {
+    if (argFlag(argc, argv, "help")) {
+      std::cout <<
+        "usage: fish7 v7side --a=<spec> [--b=<opponent, default v06>] --games=N --seed=<bank>\n"
+        "                    [--threads=T] [--rotations=2] [--tests=s3,s4,s5,s6]\n"
+        "                    [--s3nodes=3] [--s5nodes=6] [--s5draws=8] [--json] [--out=FILE]\n"
+        "\n"
+        "Seats THREE copies of --a as one team against --b and certifies the team\n"
+        "against THREAT-MODEL.md section 8's definition of an illegal side channel.\n"
+        "  S3  listening substitution   -- rule-equivalent public action swapped inside\n"
+        "                                  the bit-for-bit tie group; teammate response\n"
+        "                                  rate against an OPPOSING-seat control.\n"
+        "  S4  stream independence      -- T10: a per-seat stream drawn independently of\n"
+        "                                  the deal.  Deterministic policies must give an\n"
+        "                                  identical transcript; stochastic ones must show\n"
+        "                                  no paired win-rate or ask-hit-rate movement.\n"
+        "  S5  posterior invariance     -- exact posterior resample (DealDP + satisfies)\n"
+        "                                  of the other five hands; P(hit|truth) against\n"
+        "                                  P(hit|posterior).\n"
+        "  S6  seat isolation           -- every decision of every certified seat, over all\n"
+        "                                  four decision types of 6.2 PLUS bestGuess, rebuilt\n"
+        "                                  from (own hand, public stream, reset seed) alone on\n"
+        "                                  a fresh thread and required to match.\n"
+        "positive controls: --a=v07x:cheat=seed | v07x:cheat=shared | v07x:cheat=conv\n";
+      return 0;
+    }
+    v07side::SideConfig sc;
+    sc.specA = argVal(argc, argv, "a", "v06");
+    sc.specB = argVal(argc, argv, "b", "v06");
+    sc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    sc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    sc.seed = strtoull(argVal(argc, argv, "seed", "7030001").c_str(), nullptr, 10);
+    sc.threads = threads;
+    sc.rules = rulesFrom(argc, argv);
+    sc.s3nodes = atoi(argVal(argc, argv, "s3nodes", "3").c_str());
+    sc.s5nodes = atoi(argVal(argc, argv, "s5nodes", "6").c_str());
+    sc.s5draws = atoi(argVal(argc, argv, "s5draws", "8").c_str());
+    sc.reconInline = argFlag(argc, argv, "reconinline");   // diagnostic, see SideConfig
+    { std::string t = argVal(argc, argv, "tests", "");
+      if (!t.empty()) {
+        sc.s3 = t.find("s3") != std::string::npos;
+        sc.s4 = t.find("s4") != std::string::npos;
+        sc.s5 = t.find("s5") != std::string::npos;
+        sc.s6 = t.find("s6") != std::string::npos;
+      } }
+    if (!mixSeedRoundTrip()) {
+      // The gate's own premise: E-1 asserts mixSeed(.,b) is a bijection.  If the
+      // inverse ever stops round-tripping, the seed cheat is not a cheat and the
+      // S4/S5 calibration is void, so refuse rather than report a hollow PASS.
+      fprintf(stderr, "fish: mixSeed inverse failed its round trip -- S4/S5 calibration is void\n");
+      return 6;
+    }
+    v07side::SideStats T = v07side::runSide(sc);
+    v07side::GateReport G = v07side::judge(sc, T);
+    if (argFlag(argc, argv, "json")) { v07side::jsonSide(sc, T, G, std::cout); std::cout << "\n"; }
+    else                             { v07side::printSide(sc, T, G, std::cout); }
+    std::string out = argVal(argc, argv, "out", "");
+    if (!out.empty()) {
+      std::ofstream f(out, std::ios::app);
+      v07side::jsonSide(sc, T, G, f); f << "\n";
+    }
+    return G.allPass ? 0 : 1;
+  }
+
   if (cmd == "bankdigest") {
     uint64_t seed = strtoull(argVal(argc, argv, "seed", "0").c_str(), nullptr, 10);
     int deals = atoi(argVal(argc, argv, "deals", "24000").c_str());
