@@ -1,0 +1,24 @@
+# v7decide: does a better leaf change what the search PLAYS?  seed 7030001, 600 deals x 2
+
+===== E-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+v7decide  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 vs v06  seed 7030001  600 deals x 2  -> 56969 decision records  (4.1 games/s)
+  metric                       rate  95% CI (deal-clustered)  decisions   98/sqrt(n)
+  askHitRate                0.53756  [0.5313, 0.5434]            51546       0.432
+  ownLockedAskRate          0.10717  [0.1009, 0.1137]            51546       0.432
+  tieShare                  0.59836  [0.5946, 0.6022]            50996       0.434
+  gateBindRate              0.00898  [0.0079, 0.0101]            51546       0.432
+  deadAskRate               0.00006  [0.0000, 0.0002]            51546       0.432
+  searchRate                0.51744  [0.5124, 0.5225]            51546       0.432
+  searchChangeRate          0.32052  [0.3151, 0.3260]            26672       0.600
+  declAccuracy              0.98283  [0.9794, 0.9863]             5415       1.332
+  declAllocErrorShare       0.80645  [0.7159, 0.8916]               93      10.162
+  forcedDeclAccuracy        0.25000  [0.0000, 0.6000]                8      34.648
+  declUrgentShare           0.49751  [0.4856, 0.5098]             5415       1.332
+  declAccUrgent             0.97661  [0.9706, 0.9824]             2694       1.888
+  declAccCalm               0.98897  [0.9848, 0.9928]             2721       1.879
+  urgWhyPatience            0.18430  [0.1764, 0.1919]             5415       1.332
+  urgWhyOppCards            0.15143  [0.1443, 0.1585]             5415       1.332
+  urgWhyEvents              0.00000  [0.0000, 0.0000]             5415       1.332
+  urgWhyAskFloor            0.46556  [0.4533, 0.4779]             5415       1.332
+
+===== E-fit  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
