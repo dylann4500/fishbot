@@ -68,7 +68,7 @@ static Rules rulesFrom(int argc, char** argv) {
 }
 
 static void printMatch(const MatchStats& st, const std::string& a, const std::string& b, bool json, std::ostream& os,
-                       int rotations = 2) {
+                       int rotations = 2, bool mirror = false) {
   int n = st.games * rotations;
   double lo, hi; wilson(st.winsA, n, lo, hi);
   double wr = n ? double(st.winsA) / n : 0;
@@ -115,7 +115,7 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
        << ",\"seconds\":" << st.seconds
        << ",\"gamesPerSec\":" << st.gamesPerSec(rotations)
        << ",\"threads\":" << st.threadsUsed
-       << "," << powerJson(powerLine(n, st.games, rotations, a == b)) << "}";
+       << "," << powerJson(powerLine(n, st.games, rotations, mirror)) << "}";
   } else {
     os << a << " vs " << b << "\n";
     os << "  win rate      " << 100 * wr << "%  [" << 100 * lo << ", " << 100 * hi << "]  n=" << n << "\n";
@@ -131,7 +131,7 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
     if (st.auditChecks) os << "  audit         " << st.auditViolations << " violations in " << st.auditChecks << " checks\n";
     os << "  elapsed       " << st.seconds << "s  (" << (n / std::max(1e-9, st.seconds))
        << " games/s on " << st.threadsUsed << " threads)\n";
-    os << powerText(powerLine(n, st.games, rotations, a == b)) << "\n";
+    os << powerText(powerLine(n, st.games, rotations, mirror)) << "\n";
   }
 }
 
@@ -158,7 +158,13 @@ int main(int argc, char** argv) {
     mc.correlated = argFlag(argc, argv, "correlated");
     MatchStats st = runMatch(mc);
     bool json = argFlag(argc, argv, "json");
-    printMatch(st, mc.specA, mc.specB, json, std::cout, mc.rotations);
+    // v0.7 phase 4.  A cell is a mirror only if BOTH TEAMS are the same three
+    // policies.  `specA == specB` alone flagged `--a=v06 --partners=v03 --b=v06`
+    // -- a one-seat deviation column running at 31.7% -- as a mirror, and printed
+    // its interval as [0,0].  Any consumer that skips a "mirror" cell as carrying
+    // no information silently dropped a real measurement.
+    printMatch(st, mc.specA, mc.specB, json, std::cout, mc.rotations,
+               mc.specA == mc.specB && mc.partnersA == mc.partnersB);
     double m, lo, hi;
     clusterBootstrap(st.paired, mc.rotations, m, lo, hi);
     if (!json) std::cout << "  cluster boot  " << 100 * m << "% [" << 100 * lo << ", " << 100 * hi << "]\n";
@@ -214,7 +220,7 @@ int main(int argc, char** argv) {
       MatchStats st = runMatch(mc);
       if (!first) std::cout << ",";
       first = false;
-      printMatch(st, ps[i], ps[j], true, std::cout, mc.rotations);
+      printMatch(st, ps[i], ps[j], true, std::cout, mc.rotations, ps[i] == ps[j]);
       std::cout.flush();
     }
     std::cout << "]}" << std::endl;

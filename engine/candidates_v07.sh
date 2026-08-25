@@ -55,13 +55,18 @@ K3KEYS='rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12'
 P2COMP="v07:m2=0,r12=25,${SEARCHKEYS}"
 
 # ---- the arms -------------------------------------------------------------
-# id | tier ("full" = whole panel, "frontier" = frontier cells only) | spec
+# id | tier ("full" = whole panel, "frontier" = frontier cells only)
+# v0.7 phase 4 appended FROZEN -- engine/fishbot_v07.json -- and promoted
+# P2-composite to the full panel, because worst case and minimax regret are only
+# defined over a SHARED panel and the frozen configuration has to be compared
+# against the bar on every cell, not only on the frontier ones. | spec
 ARMS=(
 "A0-v06|full|v06"
 "K3-stack|full|v06:${K3KEYS}"
 "K3-search|full|v06:${K3KEYS},${SEARCHKEYS}"
 "K3-on-composite|full|v07:m2=0,r12=25,${K3KEYS},${SEARCHKEYS}"
-"P2-composite|frontier|${P2COMP}"
+"FROZEN|full|v07:r12=25,${K3KEYS},${SEARCHKEYS}"
+"P2-composite|full|${P2COMP}"
 "K1-fullgame|frontier|v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12"
 )
 

@@ -147,7 +147,13 @@ if PART in ("partners", "all"):
                 if not sub: cells.append("--"); continue
                 e, hw, n = pool(sub)
                 vals[a] = e
-                cells.append("mirror" if all(r.get("mirror") for r in sub) else "%s [%s, %s]" % (f(e), f(e - hw), f(e + hw)))
+                # v0.7 phase 4: `power.mirror` is `specA == specB` and ignores the
+                # PARTNER specs, so `--a=v06 --partners=v03 --b=v06` -- a one-seat
+                # deviation column running at 31.7% -- was flagged a mirror with an
+                # interval of [0,0].  Fixed in the engine (main.cpp:70,166); recomputed
+                # here so artifacts written by the pre-fix binary read correctly.
+                truemirror = all(r.get("mirror") and not r.get("partnerSpec") for r in sub)
+                cells.append("mirror" if truemirror else "%s [%s, %s]" % (f(e), f(e - hw), f(e + hw)))
             d = "%s" % f(vals[arms[0]] - vals[arms[1]]) if len(arms) > 1 and arms[0] in vals and arms[1] in vals else "--"
             w("| `%s` | %s | **%s** |" % (p, " | ".join(cells), d))
         w("")
@@ -176,6 +182,22 @@ if PART in ("cross", "all"):
             off = [vals[b] for b in runs if b != a and b in vals]
             gap = f(vals[a] - sum(off) / len(off)) if off and a in vals else "--"
             w("| `%s` | %s | **%s** |" % (a, " | ".join(cells), gap))
+        w("")
+    diag, offd = [], []
+    for a in runs:
+        for b in runs:
+            sub = [r for r in xs if r["arm"] == a and r["partner"] == b]
+            if not sub: continue
+            e = pool(sub)[0]
+            (diag if a == b else offd).append(e)
+    if diag and offd:
+        dm, om = sum(diag) / len(diag), sum(offd) / len(offd)
+        w("**Self-play %s over %d diagonal cells; cross-play %s over %d off-diagonal cells; the gap is"
+          % (f(dm), len(diag), f(om), len(offd)))
+        w("%s points** against a per-cell half-width of about 0.63. The Hanabi line reports"
+          % f(dm - om))
+        w("self-play-to-cross-play collapses of 23.97 to 2.52 (SAD) and 24.04 to 0.12 (IPPO); this is")
+        w("not that, and the runs are genuinely different policies -- see the distances below.")
         w("")
     h2h = [r for r in rows if r["label"] == "h2h"]
     if h2h:

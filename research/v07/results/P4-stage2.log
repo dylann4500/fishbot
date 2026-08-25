@@ -1,0 +1,94 @@
+###### STAGE 2a: three independently-trained runs of the architecture  Tue Aug 25 06:23:18 PDT 2026
+=== crossfit xp1  seed=7060001 basin=v06-incumbent budget=6x12x150 sigmarel=0.12 ===
+  xp1 fitted in 938s
+=== crossfit xp2  seed=7060002 basin=v06-incumbent budget=6x12x150 sigmarel=0.12 ===
+  xp2 fitted in 938s
+=== crossfit xp3  seed=7060003 basin=v05-defaults budget=6x12x150 sigmarel=0.12 ===
+  xp3 fitted in 930s
+== crossfit complete -> ../research/v07/results/P4-crossfit.jsonl ==
+###### STAGE 2b: the partner-regime table and cross-play  Tue Aug 25 07:10:05 PDT 2026
+########## PARTNER REGIME  (a=ARM, partners=P, b=v05; L6's design at 30x its power)
+  partner  v07cand x self  bank 7030001
+  partner  v07cand x self  bank 7030002
+  partner  v06 x self  bank 7030001
+  partner  v06 x self  bank 7030002
+  partner  v07cand x v06  bank 7030001
+  partner  v07cand x v06  bank 7030002
+  partner  v06 x v06  bank 7030001
+  partner  v06 x v06  bank 7030002
+  partner  v07cand x v05  bank 7030001
+  partner  v07cand x v05  bank 7030002
+  partner  v06 x v05  bank 7030001
+  partner  v06 x v05  bank 7030002
+  partner  v07cand x v04  bank 7030001
+  partner  v07cand x v04  bank 7030002
+  partner  v06 x v04  bank 7030001
+  partner  v06 x v04  bank 7030002
+  partner  v07cand x v03  bank 7030001
+  partner  v07cand x v03  bank 7030002
+  partner  v06 x v03  bank 7030001
+  partner  v06 x v03  bank 7030002
+  partner  v07cand x detective  bank 7030001
+  partner  v07cand x detective  bank 7030002
+  partner  v06 x detective  bank 7030001
+  partner  v06 x detective  bank 7030002
+  partner  v07cand x withholder  bank 7030001
+  partner  v07cand x withholder  bank 7030002
+  partner  v06 x withholder  bank 7030001
+  partner  v06 x withholder  bank 7030002
+  partner  v07cand x lockout  bank 7030001
+  partner  v07cand x lockout  bank 7030002
+  partner  v06 x lockout  bank 7030001
+  partner  v06 x lockout  bank 7030002
+  partner  v05 x self  bank 7030001
+  partner  v05 x self  bank 7030002
+  partner  v05 x v03  bank 7030001
+  partner  v05 x v03  bank 7030002
+  partner  v05 x detective  bank 7030001
+  partner  v05 x detective  bank 7030002
+  partner  v05 x withholder  bank 7030001
+  partner  v05 x withholder  bank 7030002
+  partner_vs_v06  v07cand x self  bank 7030001
+  partner_vs_v06  v07cand x self  bank 7030002
+  partner_vs_v06  v06 x self  bank 7030001
+  partner_vs_v06  v06 x self  bank 7030002
+  partner_vs_v06  v07cand x v06  bank 7030001
+  partner_vs_v06  v07cand x v06  bank 7030002
+  partner_vs_v06  v06 x v06  bank 7030001
+  partner_vs_v06  v06 x v06  bank 7030002
+  partner_vs_v06  v07cand x v03  bank 7030001
+  partner_vs_v06  v07cand x v03  bank 7030002
+  partner_vs_v06  v06 x v03  bank 7030001
+  partner_vs_v06  v06 x v03  bank 7030002
+  partner_vs_v06  v07cand x detective  bank 7030001
+  partner_vs_v06  v07cand x detective  bank 7030002
+  partner_vs_v06  v06 x detective  bank 7030001
+  partner_vs_v06  v06 x detective  bank 7030002
+########## CROSS-PLAY between independently-trained runs of the architecture
+  cross  p4-xp1 x p4-xp1  bank 7030001
+  cross  p4-xp1 x p4-xp1  bank 7030002
+  cross  p4-xp1 x p4-xp2  bank 7030001
+  cross  p4-xp1 x p4-xp2  bank 7030002
+  cross  p4-xp1 x p4-xp3  bank 7030001
+  cross  p4-xp1 x p4-xp3  bank 7030002
+  cross  p4-xp2 x p4-xp1  bank 7030001
+  cross  p4-xp2 x p4-xp1  bank 7030002
+  cross  p4-xp2 x p4-xp2  bank 7030001
+  cross  p4-xp2 x p4-xp2  bank 7030002
+  cross  p4-xp2 x p4-xp3  bank 7030001
+  cross  p4-xp2 x p4-xp3  bank 7030002
+  cross  p4-xp3 x p4-xp1  bank 7030001
+  cross  p4-xp3 x p4-xp1  bank 7030002
+  cross  p4-xp3 x p4-xp2  bank 7030001
+  cross  p4-xp3 x p4-xp2  bank 7030002
+  cross  p4-xp3 x p4-xp3  bank 7030001
+  cross  p4-xp3 x p4-xp3  bank 7030002
+  h2h  p4-xp1 x p4-xp2  bank 7030001
+  h2h  p4-xp1 x p4-xp2  bank 7030002
+  h2h  p4-xp1 x p4-xp3  bank 7030001
+  h2h  p4-xp1 x p4-xp3  bank 7030002
+  h2h  p4-xp2 x p4-xp3  bank 7030001
+  h2h  p4-xp2 x p4-xp3  bank 7030002
+== partner battery complete ==
+###### STAGE 2c: adversary re-search against the improved policy  Tue Aug 25 08:58:32 PDT 2026
+=== Y01  C1-inclass base=v06 kpi=win seed=7060011 budget=8x12x120  ===
