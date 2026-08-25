@@ -1,0 +1,54 @@
+############ COMMIT GATE: mirror pathology, 400 deals / 800 games, seed 31
+
+===== E-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+games              800
+events/game        94.225   median 94  p90 109  p99 124  max 131
+asks/game          84.9225   hit rate 53.2486%
+DEAD asks          4  (0.00588772% of asks)   -- actor could PROVE the target lacks the card
+dead runs          4  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      4  (0.00588772% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1524  (2.24322%)
+repeat (a,suit,t)  31814  (46.828%)
+asks in own-locked 7652  (11.2632% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 162 (2.25%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   4   wrong 4 (100%)
+action-limit games 0 (0%)
+
+===== E-fit  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
+games              800
+events/game        94.9575   median 94  p90 110  p99 122  max 125
+asks/game          85.62   hit rate 53.2615%
+DEAD asks          6  (0.00875964% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.00875964% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1580  (2.3067%)
+repeat (a,suit,t)  32346  (47.2232%)
+asks in own-locked 7498  (10.9466% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 170 (2.36111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   12   wrong 12 (100%)
+action-limit games 0 (0%)
+
+===== E-lam013  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13
+games              800
+events/game        94.5075   median 94  p90 109  p99 123  max 126
+asks/game          85.1525   hit rate 53.2926%
+DEAD asks          2  (0.00293591% of asks)   -- actor could PROVE the target lacks the card
+dead runs          2  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      2  (0.00293591% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1574  (2.31056%)
+repeat (a,suit,t)  31892  (46.816%)
+asks in own-locked 7508  (11.0214% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 170 (2.36111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   10   wrong 4 (40%)
+action-limit games 0 (0%)
+
+===== F-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12
