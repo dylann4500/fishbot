@@ -20,6 +20,7 @@
 // from 10.9% to 1.9% at no cost in win rate.
 #pragma once
 #include "v04.hpp"
+#include "v07_stall.hpp"
 
 namespace fish {
 
@@ -116,6 +117,14 @@ struct V05Config {
   // deadlock is gone and the guillotine has almost nothing left to do, so the
   // structural backstop is a repetition guard instead of an event count.
   bool   forceStage2        = false;
+  // ---- v0.7 phase 3, candidate K3: termination by stall, not by clock ------
+  // See v07_stall.hpp for the rule and the termination argument.  Default 0 is
+  // OFF and the binary is bit-identical to the reference with it off.
+  int    stallEvents        = 0;      // 0 = off; else escalate to press 1 after
+                                      // K public events with no new certificate
+  int    stallStage2        = 0;      // 0 = 2*stallEvents
+  bool   stallSoft          = false;  // count a NEW DISTINCT disjunction as
+                                      // progress as well as a hard certificate
   // Designed and rejected.  Forbidding a (card, target) pair this seat has
   // already asked looks like a free structural backstop, but cards MOVE: if the
   // target has since won the card from somebody else in a public transfer, the
@@ -168,6 +177,14 @@ struct V05Agent : Agent {
   // A structural backstop -- with M1 in place a repeat is almost always already
   // provably dead, so this only catches the residue.
   bool asked[NCARD][NPLAY] = {};
+  // K3 stall detector.  `evSeen` tracks pub.nEvents (every seat observes every
+  // event, game.hpp:260), `lastProgressEv` the last event at which THIS seat's
+  // certificate set changed.  Untouched, and never even hashed, when
+  // cfg.stallEvents == 0.
+  int      evSeen = 0, lastProgressEv = 0;
+  uint64_t stallSig = 0;
+  std::vector<uint64_t> disjSeen;   // only when cfg.stallSoft
+  size_t   disjScanned = 0;
   const char* label = "fishbot_v05";
   // v0.7 D1: the per-decision channel.  Filled only when decisionCapture() is
   // set by the harness, so the shipped hot path pays one thread-local load.
@@ -183,6 +200,7 @@ struct V05Agent : Agent {
     memset(asked, 0, sizeof(asked));
     teamMask = 0; oppMask = 0;
     for (int p = 0; p < NPLAY; p++) { if (teamOf(p) == teamOf(s)) teamMask |= 1 << p; else oppMask |= 1 << p; }
+    stallReset();
   }
   void resetWithKnowledge(int s, uint64_t hand, const Rules& r, uint64_t seed,
                           const Knowledge& k0) override {
@@ -192,11 +210,41 @@ struct V05Agent : Agent {
     memset(asked, 0, sizeof(asked));
     teamMask = 0; oppMask = 0;
     for (int p = 0; p < NPLAY; p++) { if (teamOf(p) == teamOf(s)) teamMask |= 1 << p; else oppMask |= 1 << p; }
+    stallReset();
   }
   void observe(const Event& e) override {
     Agent::observe(e);
     if (e.kind == Kind::Ask && int(e.actor) == seat) asked[e.card][e.target] = true;
     dirty = true;
+    if (cfg.stallEvents > 0) stallStep();
+  }
+
+  // One step of the K3 stall detector.  Costs one 54-card hash per observed
+  // event and nothing at all when the key is off.
+  void stallStep() {
+    evSeen++;
+    bool progress = false;
+    uint64_t s = k3HardSig(k);
+    if (s != stallSig) { stallSig = s; progress = true; }
+    if (cfg.stallSoft) {
+      for (; disjScanned < k.disj.size(); disjScanned++) {
+        uint64_t h = k3DisjSig(k.disj[disjScanned]);
+        bool seen = false;
+        for (uint64_t v : disjSeen) if (v == h) { seen = true; break; }
+        if (!seen) { disjSeen.push_back(h); progress = true; }
+      }
+    }
+    if (progress) lastProgressEv = evSeen;
+    else {
+      long long run = evSeen - lastProgressEv;
+      auto& S = k3stall();
+      long long cur = S.maxStall.load(std::memory_order_relaxed);
+      while (run > cur && !S.maxStall.compare_exchange_weak(cur, run)) {}
+    }
+  }
+  void stallReset() {
+    evSeen = 0; lastProgressEv = 0; disjSeen.clear(); disjScanned = 0;
+    stallSig = cfg.stallEvents > 0 ? k3HardSig(k) : 0;
   }
 
   void refresh() {
@@ -802,6 +850,17 @@ struct V05Agent : Agent {
     // pure strong-opponent tax.  With M1 the deadlock it existed to break is
     // gone, so stage 2 is off by default and stage 1 (better than a coin flip)
     // is the only escalation left.
+    // v0.7 K3.  The stall detector replaces the clock with the condition the
+    // clock is a proxy for.  It sits ABOVE the clock rungs rather than instead
+    // of them, so that `stall=K` alone is a strictly-added backstop and
+    // `stall=K,force=1000000` is the clock-free configuration.  See
+    // v07_stall.hpp.
+    if (cfg.stallEvents > 0) {
+      const int stalled = evSeen - lastProgressEv;
+      const int s2 = cfg.stallStage2 > 0 ? cfg.stallStage2 : 2 * cfg.stallEvents;
+      if (stalled >= s2) return 2;
+      if (stalled >= cfg.stallEvents) return 1;
+    }
     if (cfg.forceStage2 && pub.nEvents >= (7 * cfg.forceDeclareEvents) / 5) return 2;
     if (pub.nEvents >= cfg.forceDeclareEvents) return 1;
     return 0;
@@ -927,6 +986,16 @@ struct V05Agent : Agent {
     // plausibly be wholly ours can never clear the declaration bar.
     int unresolvedCount = __builtin_popcountll(k.unresolved);
     int press = pressure(pub);
+    if (cfg.stallEvents > 0) {
+      // Attribution.  Which rung fired, and was it the stall rule or the clock?
+      auto& S = k3stall();
+      S.declOpps.fetch_add(1, std::memory_order_relaxed);
+      const int stalled = evSeen - lastProgressEv;
+      const int s2 = cfg.stallStage2 > 0 ? cfg.stallStage2 : 2 * cfg.stallEvents;
+      if (stalled >= s2) S.stage2.fetch_add(1, std::memory_order_relaxed);
+      else if (stalled >= cfg.stallEvents) S.stage1.fetch_add(1, std::memory_order_relaxed);
+      else if (press >= 1) S.clockStage1.fetch_add(1, std::memory_order_relaxed);
+    }
     bool bypass = unresolvedCount <= 8 || press >= 1;
     if (cfg.useValue) computeAggregates(pub);
     bool candidate = bypass;

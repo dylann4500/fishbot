@@ -63,6 +63,18 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     c.patiencePool      = optI(o, "pool", c.patiencePool);
     c.forceDeclareEvents= optI(o, "force", c.forceDeclareEvents);
     c.oppCardFloor      = optD(o, "oppfloor", c.oppCardFloor);
+    // v0.7 phase 3 (K3).  Default 0 = off; with it off nothing in v07_stall.hpp
+    // is ever called and the binary is bit-identical to the reference.
+    c.stallEvents       = optI(o, "stall",     c.stallEvents);
+    c.stallStage2       = optI(o, "stall2",    c.stallStage2);
+    c.stallSoft         = optI(o, "stallsoft", c.stallSoft ? 1 : 0) != 0;
+    if (c.stallEvents > 0) {
+      auto& S = k3stall();
+      S.on.store(true, std::memory_order_relaxed);
+      S.K.store(c.stallEvents, std::memory_order_relaxed);
+      S.K2.store(c.stallStage2 > 0 ? c.stallStage2 : 2 * c.stallEvents, std::memory_order_relaxed);
+      S.soft.store(c.stallSoft ? 1 : 0, std::memory_order_relaxed);
+    }
     c.gateTeamProb      = optD(o, "gate", c.gateTeamProb);
     c.marginalGate      = optD(o, "mgate", c.marginalGate);
     c.sinkOuter         = optI(o, "souter", c.sinkOuter);
@@ -186,7 +198,9 @@ inline void applyV06Opts(V06Agent* a, const std::map<std::string, std::string>& 
     a->x.wVoid       = optD(o, "wvoid", a->x.wVoid);
     a->x.wTeamHas    = optD(o, "wteam", a->x.wTeamHas);
     a->x.wLastLive   = optD(o, "wlast", a->x.wLastLive);
-    a->x.randomTie   = optI(o, "rtie", a->x.randomTie ? 1 : 0) != 0;
+    { int rt = optI(o, "rtie", a->x.randomTie ? (a->x.tieIndep ? 2 : 1) : 0);
+      a->x.randomTie = rt != 0;
+      a->x.tieIndep  = rt >= 2; }   // K3: rtie=2 is the private per-seat stream
     a->x.chainPass   = optI(o, "chain2", a->x.chainPass ? 1 : 0) != 0;
     a->x.deadAsk     = optI(o, "dead", a->x.deadAsk ? 1 : 0) != 0;
     a->x.deadMargin  = optD(o, "deadmargin", a->x.deadMargin);
@@ -206,6 +220,8 @@ inline void applyV06Opts(V06Agent* a, const std::map<std::string, std::string>& 
     a->x.rollOuter = optI(o, "rsouter", a->x.rollOuter);
     a->x.rollInner = optI(o, "rsinner", a->x.rollInner);
     a->x.rollValue = optI(o, "rvalue", a->x.rollValue ? 1 : 0) != 0;
+    // K3: rollout-agent hygiene.  Default 0 == the shipped, measured behaviour.
+    a->x.rollReset = optI(o, "rreset", a->x.rollReset ? 1 : 0) != 0;
 }
 
 inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
