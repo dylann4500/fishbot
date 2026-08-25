@@ -1,0 +1,5 @@
+--- win vs Fcheap bank 7030001 ---
+   edge -0.60  ci [-1.85, +0.65]  n=6000  21.0 g/s
+--- win vs Fcheap bank 7030002 ---
+   edge -0.25  ci [-1.47, +0.98]  n=6000  20.8 g/s
+FCHEAPDONE
