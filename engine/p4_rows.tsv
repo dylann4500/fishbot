@@ -1,0 +1,13 @@
+# FishBot v0.7 phase 4 -- the adversary re-search against the IMPROVED policy.
+# One independent search per row; one fitting bank per row, so no two searches
+# share a deal bank.  Columns: id, class, base, kpi, seed, gens, pop, deals, extra, hypothesis
+# The axes are the ones phase 2 established as genuinely different searches:
+# responder class, objective, starting basin, and step size.
+Y01	C1-inclass	v06	win	7060011	8	12	120	-	in-class control against the new target: does the C1 channel reopen
+Y02	C2-extended	v07	win	7060012	8	12	120	-	the extended class, the one that found phase 2's strongest arm
+Y03	C1-declerr	v06	declerr	7060013	8	12	120	-	A3/L1: drive the target's misdeclaration now that urgency is off
+Y04	C1-events	v06	events	7060014	8	12	120	-	A4: lengthen the game -- the cliff is gone, is the stall rung reachable
+Y05	C1-forced	v06	forced	7060015	8	12	120	-	K2 raised forced-endgame incidence six-fold by deleting urgency: did the weakness move here
+Y06	C2-wide	v07	win	7060016	8	12	120	--sigmarel=0.30	a wider step: is the CEM trapped near the incumbent against this target
+Y07	C1-basin	v06	win	7060017	8	12	120	NOFROMV6	a different starting basin: the v0.5 defaults, not the incumbent
+Y08	C2-asksupp	v07	asksupp	7060018	8	12	120	-	L10: suppress the target's ask hit rate through the extended class
