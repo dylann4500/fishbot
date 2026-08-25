@@ -253,6 +253,10 @@ inline Evaluation evaluateCandidate(const TuneSpec& sp, const std::vector<double
     // reported a third of the true win rate.
     double wr = kpiValue(sp.kpi, st, mc.rotations);
     e.winRates.push_back(wr);
+    // v0.7 K4: the effective-sample denominator of ledger L5, accumulated so a
+    // fit's log states how many DECISIONS its objective actually scored rather
+    // than leaving the reader to infer it from decisions-per-game folklore.
+    e.denom += kpiDenominator(sp.kpi, st, mc.rotations);
     // The per-deal paired vector records A-WINS and nothing else, so the
     // deal-level pairing below is defined for the win objective only.  Under a
     // mechanism objective the candidate is instead differenced against the
@@ -361,7 +365,7 @@ inline std::vector<double> tune(TuneSpec sp, std::vector<double> mu, FILE* out) 
       sigma[d] = std::max(sp.sigmaFloor, sp.smoothing * std::sqrt(newSigma[d]) + (1 - sp.smoothing) * sigma[d]);
     }
     if (evals[order[0]].score > bestScore) { bestScore = evals[order[0]].score; best = cand[order[0]]; }
-    fprintf(out, "{\"gen\":%d,\"bestScore\":%.4f,\"incumbentScore\":%.4f,\"winRates\":[", g, evals[order[0]].score, evals[0].score);
+    fprintf(out, "{\"gen\":%d,\"bestScore\":%.4f,\"incumbentScore\":%.4f,\"denom\":%lld,\"winRates\":[", g, evals[order[0]].score, evals[0].score, (long long)evals[order[0]].denom);
     for (size_t i = 0; i < evals[order[0]].winRates.size(); i++)
       fprintf(out, "%s%.4f", i ? "," : "", evals[order[0]].winRates[i]);
     fprintf(out, "],\"mu\":[");
