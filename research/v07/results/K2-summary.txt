@@ -121,7 +121,7 @@ SIDE-CHANNEL GATE  ./fish7 v7side --a=v06:jalloc=1 --b=v06 --games=400
   bank 7030001  CERTIFIED   S3 asym 3.280 +/- 1.158   S4 deterministic 400/400
                             S5 gap 6.325 (thr 20)     S6 0/260,607 irreproducible
   bank 7030002  CERTIFIED   S3 asym 4.427 +/- 1.188   S4 deterministic 400/400
-                            S5 within threshold       S6 0/263,707 irreproducible
+                            S5 gap 6.556 (thr 20)     S6 0/263,707 irreproducible
   (v06's own S3 is +3.83 +/- 0.95 / +4.48 +/- 0.97 -- indistinguishable.)
 
 STRENGTH, paired duplicate blocks, --rotations=2
