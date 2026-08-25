@@ -36,7 +36,7 @@ for opp in ("Ffast", "Fcheap"):
         r = x["r"]
         e = 100 * r["winRateA"] - 50
         ci = (100 * r["ci"][0] - 50, 100 * r["ci"][1] - 50)
-        by.setdefault(x["kpi"], []).append(e)
+        by.setdefault(x["kpi"], []).append((e, r["games"]))
         print(f"{x['kpi']:<11} {x['bank']:<9} {e:>+7.2f} "
               f"{'[%+.2f, %+.2f]' % ci:>18} {r['games']:>7} "
               f"{100*(r['askAccA']-REF['ask']):>+9.2f} "
@@ -45,7 +45,8 @@ for opp in ("Ffast", "Fcheap"):
     print()
     print(f"{'objective':<11} {'pooled edge':>12} {'n':>8}  replicated-in-sign  clears-1.53-floor")
     for k, v in by.items():
-        p = sum(v) / len(v)
-        rep = all(x > 0 for x in v) or all(x < 0 for x in v)
-        print(f"{k:<11} {p:>+12.2f} {24000:>8}  {str(rep):<19} {str(abs(p) >= 1.53):<5}")
+        p = sum(e for e, _ in v) / len(v)
+        n = sum(g for _, g in v)
+        rep = all(e > 0 for e, _ in v) or all(e < 0 for e, _ in v)
+        print(f"{k:<11} {p:>+12.2f} {n:>8}  {str(rep):<19} {str(abs(p) >= 1.53):<5}")
     print()
