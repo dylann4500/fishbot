@@ -7,6 +7,7 @@
 #pragma once
 #include "factory.hpp"
 #include "arena.hpp"
+#include "v07_stall.hpp"
 #include <thread>
 #include <mutex>
 
@@ -28,6 +29,16 @@ struct PathologyStats {
   long long limitHits = 0;
   long long lockedInfoAsks = 0;    // legal asks inside a half-suit our team already owns outright
   long long gamesWithDeadRun = 0;  // games containing a dead run of >= 6
+  // ---- v0.7 phase 3 (K3): the stall detector, RECONSTRUCTED from the trace ---
+  // These are computed by the replay from (each seat's opening hand + the public
+  // event stream), independently of the agent, which is a mechanical check that
+  // the detector is a function of exactly that and of nothing else.
+  long long stallDecls = 0, stallDeclWrong = 0;   // declarations made while the
+                                                  // declarer was stalled >= K
+  long long stall2Decls = 0, stall2DeclWrong = 0; // ... stalled >= K2
+  long long stallEvents = 0;                      // (seat, event) pairs at press>=1
+  int       longestStall = 0;                     // longest no-progress run, any seat
+  std::vector<int> stallHist;                     // per game: longest stall run
   std::vector<int> eventHist;      // events per game
   std::vector<int> deadRunHist;
 
@@ -44,6 +55,11 @@ struct PathologyStats {
     limitHits += o.limitHits;
     lockedInfoAsks += o.lockedInfoAsks;
     gamesWithDeadRun += o.gamesWithDeadRun;
+    stallDecls += o.stallDecls; stallDeclWrong += o.stallDeclWrong;
+    stall2Decls += o.stall2Decls; stall2DeclWrong += o.stall2DeclWrong;
+    stallEvents += o.stallEvents;
+    longestStall = std::max(longestStall, o.longestStall);
+    stallHist.insert(stallHist.end(), o.stallHist.begin(), o.stallHist.end());
     eventHist.insert(eventHist.end(), o.eventHist.begin(), o.eventHist.end());
     deadRunHist.insert(deadRunHist.end(), o.deadRunHist.begin(), o.deadRunHist.end());
   }
@@ -68,6 +84,13 @@ inline void analyseTrace(const std::vector<Event>& ev, const uint64_t dealt[NPLA
 
   int run = 0, longest = 0;
   int nEvents = 0;
+  // K3: per-seat stall reconstruction.  Mirrors V05Agent::stallStep exactly.
+  const int K3K  = k3stall().K.load(std::memory_order_relaxed);
+  const int K3K2 = k3stall().K2.load(std::memory_order_relaxed);
+  int      k3last[NPLAY];
+  uint64_t k3sig[NPLAY];
+  int      k3longest = 0;
+  for (int p = 0; p < NPLAY; p++) { k3last[p] = 0; k3sig[p] = k3HardSig(k[p]); }
   st.games++;
   if (hitLimit) st.limitHits++;
 
@@ -122,6 +145,11 @@ inline void analyseTrace(const std::vector<Event>& ev, const uint64_t dealt[NPLA
       if (!e.success) st.declWrong++;
       if (e.kind == Kind::ForcedDeclare) { st.declsForced++; if (!e.success) st.declWrongForced++; }
       if (nEvents >= 220) { st.declsLate++; if (!e.success) st.declWrongLate++; }
+      if (K3K > 0) {
+        int stalled = nEvents - k3last[e.actor];
+        if (stalled >= K3K2) { st.stall2Decls++; if (!e.success) st.stall2DeclWrong++; }
+        if (stalled >= K3K)  { st.stallDecls++;  if (!e.success) st.stallDeclWrong++; }
+      }
     }
 
     // Apply the event to the true hands and to every observer.
@@ -136,7 +164,20 @@ inline void analyseTrace(const std::vector<Event>& ev, const uint64_t dealt[NPLA
     for (int p = 0; p < NPLAY; p++) pub.handCount[p] = e.handCount[p];
     for (int p = 0; p < NPLAY; p++) k[p].onEvent(e);
     nEvents++;
+    if (K3K > 0) {
+      for (int p = 0; p < NPLAY; p++) {
+        uint64_t sg = k3HardSig(k[p]);
+        if (sg != k3sig[p]) { k3sig[p] = sg; k3last[p] = nEvents; }
+        else {
+          int stalled = nEvents - k3last[p];
+          if (stalled >= K3K) st.stallEvents++;
+          k3longest = std::max(k3longest, stalled);
+        }
+      }
+    }
   }
+  if (K3K > 0) { st.longestStall = std::max(st.longestStall, k3longest);
+                 st.stallHist.push_back(k3longest); }
   if (run) { st.deadRuns++; st.deadRunTotal += run; st.deadRunHist.push_back(run); }
   st.longestDeadRun = std::max(st.longestDeadRun, longest);
   if (longest >= 6) st.gamesWithDeadRun++;
@@ -213,6 +254,27 @@ inline void printPathology(const PathologyStats& s, std::ostream& os) {
   os << "  at/after ev>=220 " << s.declsLate << "   wrong " << s.declWrongLate << " (" << pct(s.declWrongLate, s.declsLate) << "%)\n";
   os << "  forced endgame   " << s.declsForced << "   wrong " << s.declWrongForced << " (" << pct(s.declWrongForced, s.declsForced) << "%)\n";
   os << "action-limit games " << s.limitHits << " (" << pct(s.limitHits, s.games) << "%)\n";
+  // K3.  Printed only when a stall key was parsed, so the reference output of
+  // `pathology --a=v06 --b=v06` is byte-identical to the unmodified binary.
+  if (k3stall().on.load(std::memory_order_relaxed)) {
+    auto& S = k3stall();
+    std::vector<int> sh = s.stallHist;
+    std::sort(sh.begin(), sh.end());
+    auto sq = [&](double f) { return sh.empty() ? 0 : sh[std::min(sh.size() - 1, size_t(f * sh.size()))]; };
+    os << "-- K3 stall detector (K=" << S.K.load() << ", K2=" << S.K2.load()
+       << ", soft=" << S.soft.load() << ") --\n";
+    os << "longest no-progress run per game   median " << sq(0.5) << "  p99 " << sq(0.99)
+       << "  max " << s.longestStall << "\n";
+    os << "(seat,event) pairs at press>=1     " << s.stallEvents
+       << "  (" << pct(s.stallEvents, s.events * NPLAY) << "% of seat-events)\n";
+    os << "declarations while stalled>=K      " << s.stallDecls << "   wrong "
+       << s.stallDeclWrong << " (" << pct(s.stallDeclWrong, s.stallDecls) << "%)\n";
+    os << "declarations while stalled>=K2     " << s.stall2Decls << "   wrong "
+       << s.stall2DeclWrong << " (" << pct(s.stall2DeclWrong, s.stall2Decls) << "%)\n";
+    os << "agent-side: declOpps " << S.declOpps.load() << "  stage1 " << S.stage1.load()
+       << "  stage2 " << S.stage2.load() << "  clockStage1 " << S.clockStage1.load()
+       << "  maxStall " << S.maxStall.load() << "\n";
+  }
 }
 
 } // namespace fish

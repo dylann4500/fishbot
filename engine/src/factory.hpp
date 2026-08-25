@@ -6,6 +6,7 @@
 #include "v06.hpp"
 #include "v07_responder.hpp"
 #include "v07_adapt.hpp"
+#include "v07_cheat.hpp"    // phase 3: planted side-channel cheats (probe-only specs)
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
@@ -62,6 +63,18 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     c.patiencePool      = optI(o, "pool", c.patiencePool);
     c.forceDeclareEvents= optI(o, "force", c.forceDeclareEvents);
     c.oppCardFloor      = optD(o, "oppfloor", c.oppCardFloor);
+    // v0.7 phase 3 (K3).  Default 0 = off; with it off nothing in v07_stall.hpp
+    // is ever called and the binary is bit-identical to the reference.
+    c.stallEvents       = optI(o, "stall",     c.stallEvents);
+    c.stallStage2       = optI(o, "stall2",    c.stallStage2);
+    c.stallSoft         = optI(o, "stallsoft", c.stallSoft ? 1 : 0) != 0;
+    if (c.stallEvents > 0) {
+      auto& S = k3stall();
+      S.on.store(true, std::memory_order_relaxed);
+      S.K.store(c.stallEvents, std::memory_order_relaxed);
+      S.K2.store(c.stallStage2 > 0 ? c.stallStage2 : 2 * c.stallEvents, std::memory_order_relaxed);
+      S.soft.store(c.stallSoft ? 1 : 0, std::memory_order_relaxed);
+    }
     c.gateTeamProb      = optD(o, "gate", c.gateTeamProb);
     c.marginalGate      = optD(o, "mgate", c.marginalGate);
     c.sinkOuter         = optI(o, "souter", c.sinkOuter);
@@ -185,7 +198,9 @@ inline void applyV06Opts(V06Agent* a, const std::map<std::string, std::string>& 
     a->x.wVoid       = optD(o, "wvoid", a->x.wVoid);
     a->x.wTeamHas    = optD(o, "wteam", a->x.wTeamHas);
     a->x.wLastLive   = optD(o, "wlast", a->x.wLastLive);
-    a->x.randomTie   = optI(o, "rtie", a->x.randomTie ? 1 : 0) != 0;
+    { int rt = optI(o, "rtie", a->x.randomTie ? (a->x.tieIndep ? 2 : 1) : 0);
+      a->x.randomTie = rt != 0;
+      a->x.tieIndep  = rt >= 2; }   // K3: rtie=2 is the private per-seat stream
     a->x.chainPass   = optI(o, "chain2", a->x.chainPass ? 1 : 0) != 0;
     a->x.deadAsk     = optI(o, "dead", a->x.deadAsk ? 1 : 0) != 0;
     a->x.deadMargin  = optD(o, "deadmargin", a->x.deadMargin);
@@ -270,6 +285,28 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
       for (auto& ch : t) if (ch == '+') ch = ',';
       a->inv.oracle.spec = t; }
     return a;
+  }
+  // ---- v0.7 phase 3: PROBE-ONLY cheats -----------------------------------
+  // Positive controls for `fish7 v7side`.  These deliberately violate T8 and
+  // exist so the side-channel gate can be shown to FAIL something.  The `v07x`
+  // base is produced by no tuner, battery or frozen vector in the corpus, so it
+  // is unreachable from an ordinary spec string.
+  if (base == "v07x") {
+    std::string ck = "none";
+    { auto it = o.find("cheat"); if (it != o.end()) ck = it->second; }
+    if (ck == "seed") {
+      auto a = std::make_unique<CheatSeedAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "shared") {
+      auto a = std::make_unique<CheatSharedAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "conv") {
+      auto a = std::make_unique<CheatConvAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "none") {   // the identity arm: v0.6 exactly, under the probe name
+      auto a = std::make_unique<V06Agent>(); applyV06Opts(a.get(), o); return a;
+    }
+    fprintf(stderr, "fish: unknown cheat '%s'\n", ck.c_str()); std::exit(2);
   }
   if (base == "v06" || base == "fishbot_v06") {
     auto a = std::make_unique<V06Agent>();

@@ -125,6 +125,15 @@ struct V06Extra {
   // reproduce the draw exactly.  A policy that randomised on private state would
   // break that property and with it the blueprint assumption a partner relies on.
   bool   randomTie   = false;
+  // v0.7 phase 3 (K3): the STOCHASTIC limb, and it is a different object.
+  // `rtie=1` above is reproducible by any observer -- it buys tie-break quality,
+  // not unreadability.  `rtie=2` draws from a per-seat stream seeded off this
+  // seat's own reset seed, which no observer of the public stream can replay and
+  // no teammate can reproduce.  THREAT-MODEL H1 makes that legal (independent
+  // per-seat randomisation is the TME regime; only a SHARED secret is forbidden)
+  // but the hierarchy v_Com >= v_Cor >= v_No says it should cost something.
+  // This exists to price that, not to ship it.
+  bool   tieIndep    = false;
 
   // ---- A5: the rationed deliberate miss ------------------------------------
   // M1 removed v0.4's deadlock by DELETING every ask the actor can prove will
@@ -223,6 +232,7 @@ struct V06Agent : V05Agent {
   V06Extra x;
   v06::RolloutEngine roll;
   Rng srng;
+  Rng tieRng;                 // K3: the private per-seat tie stream (rtie=2)
   BlockDP xb;                 // exact posterior, built on demand
   bool    xbOk = false;
   double  xmu[NCARD][NPLAY];  // exact marginals for the current decision
@@ -251,6 +261,7 @@ struct V06Agent : V05Agent {
   }
   void resetV6(uint64_t seed) {
     srng = Rng(mixSeed(seed, 0x0606ull));
+    tieRng = Rng(mixSeed(seed, 0x4B33ull));
     xbOk = xmuOk = false;
     memset(deadTried, 0, sizeof(deadTried));
     deadUsed = 0;
@@ -578,8 +589,14 @@ struct V06Agent : V05Agent {
     if (!doSearch) {
       int pick = ord[0];
       if (x.randomTie && tie >= 2) {
-        Rng r(mixSeed(publicHash, uint64_t(seat) * 1000003 + uint64_t(pub.nEvents)));
-        pick = ord[size_t(r.u32(uint32_t(tie)))];
+        if (x.tieIndep) {
+          // Per-seat, private, unreplayable.  Drawn from tieRng so the
+          // determinization sampler's own stream is untouched.
+          pick = ord[size_t(tieRng.u32(uint32_t(tie)))];
+        } else {
+          Rng r(mixSeed(publicHash, uint64_t(seat) * 1000003 + uint64_t(pub.nEvents)));
+          pick = ord[size_t(r.u32(uint32_t(tie)))];
+        }
       }
       if (x.chainPass && cfg.searchTopK > 1) pick = chainRescore(pub, buf, ord, n, u);
       lastMySet = setOf(buf[pick].card); lastAskP = pp[pick];
