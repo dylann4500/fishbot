@@ -28,6 +28,7 @@
 #include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
 #include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
 #include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
+#include "v07_side.hpp"             // v0.7 phase-3 mechanical side-channel gate
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -935,6 +936,76 @@ int main(int argc, char** argv) {
   // lets phase 2 compute the digest of a SEALED bank without learning anything
   // about how any policy performs on it -- the only phase-2 contact with the
   // holdout, recorded as such in RESEARCH-LOG.md.
+  // ---------------------------------------------------------------- v0.7 K0
+  // The mechanical side-channel certification gate.  THREAT-MODEL.md 6.4
+  // specifies S1-S6 and records that none of them reads only existing
+  // artifacts; this is the harness for the four pass/fail ones.  See
+  // engine/src/v07_side.hpp for what each test does and, more importantly, for
+  // what each cannot see.
+  if (cmd == "v7side") {
+    if (argFlag(argc, argv, "help")) {
+      std::cout <<
+        "usage: fish7 v7side --a=<spec> [--b=<opponent, default v06>] --games=N --seed=<bank>\n"
+        "                    [--threads=T] [--rotations=2] [--tests=s3,s4,s5,s6]\n"
+        "                    [--s3nodes=3] [--s5nodes=6] [--s5draws=8] [--json] [--out=FILE]\n"
+        "\n"
+        "Seats THREE copies of --a as one team against --b and certifies the team\n"
+        "against THREAT-MODEL.md section 8's definition of an illegal side channel.\n"
+        "  S3  listening substitution   -- rule-equivalent public action swapped inside\n"
+        "                                  the bit-for-bit tie group; teammate response\n"
+        "                                  rate against an OPPOSING-seat control.\n"
+        "  S4  stream independence      -- T10: a per-seat stream drawn independently of\n"
+        "                                  the deal.  Deterministic policies must give an\n"
+        "                                  identical transcript; stochastic ones must show\n"
+        "                                  no paired win-rate or ask-hit-rate movement.\n"
+        "  S5  posterior invariance     -- exact posterior resample (DealDP + satisfies)\n"
+        "                                  of the other five hands; P(hit|truth) against\n"
+        "                                  P(hit|posterior).\n"
+        "  S6  seat isolation           -- every decision of every certified seat, over all\n"
+        "                                  four decision types of 6.2 PLUS bestGuess, rebuilt\n"
+        "                                  from (own hand, public stream, reset seed) alone on\n"
+        "                                  a fresh thread and required to match.\n"
+        "positive controls: --a=v07x:cheat=seed | v07x:cheat=shared | v07x:cheat=conv\n";
+      return 0;
+    }
+    v07side::SideConfig sc;
+    sc.specA = argVal(argc, argv, "a", "v06");
+    sc.specB = argVal(argc, argv, "b", "v06");
+    sc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+    sc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+    sc.seed = strtoull(argVal(argc, argv, "seed", "7030001").c_str(), nullptr, 10);
+    sc.threads = threads;
+    sc.rules = rulesFrom(argc, argv);
+    sc.s3nodes = atoi(argVal(argc, argv, "s3nodes", "3").c_str());
+    sc.s5nodes = atoi(argVal(argc, argv, "s5nodes", "6").c_str());
+    sc.s5draws = atoi(argVal(argc, argv, "s5draws", "8").c_str());
+    sc.reconInline = argFlag(argc, argv, "reconinline");   // diagnostic, see SideConfig
+    { std::string t = argVal(argc, argv, "tests", "");
+      if (!t.empty()) {
+        sc.s3 = t.find("s3") != std::string::npos;
+        sc.s4 = t.find("s4") != std::string::npos;
+        sc.s5 = t.find("s5") != std::string::npos;
+        sc.s6 = t.find("s6") != std::string::npos;
+      } }
+    if (!mixSeedRoundTrip()) {
+      // The gate's own premise: E-1 asserts mixSeed(.,b) is a bijection.  If the
+      // inverse ever stops round-tripping, the seed cheat is not a cheat and the
+      // S4/S5 calibration is void, so refuse rather than report a hollow PASS.
+      fprintf(stderr, "fish: mixSeed inverse failed its round trip -- S4/S5 calibration is void\n");
+      return 6;
+    }
+    v07side::SideStats T = v07side::runSide(sc);
+    v07side::GateReport G = v07side::judge(sc, T);
+    if (argFlag(argc, argv, "json")) { v07side::jsonSide(sc, T, G, std::cout); std::cout << "\n"; }
+    else                             { v07side::printSide(sc, T, G, std::cout); }
+    std::string out = argVal(argc, argv, "out", "");
+    if (!out.empty()) {
+      std::ofstream f(out, std::ios::app);
+      v07side::jsonSide(sc, T, G, f); f << "\n";
+    }
+    return G.allPass ? 0 : 1;
+  }
+
   if (cmd == "bankdigest") {
     uint64_t seed = strtoull(argVal(argc, argv, "seed", "0").c_str(), nullptr, 10);
     int deals = atoi(argVal(argc, argv, "deals", "24000").c_str());

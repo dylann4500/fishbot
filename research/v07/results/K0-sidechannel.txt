@@ -1,0 +1,309 @@
+K0 -- the mechanical side-channel certification gate  (fish7 v7side)
+FishBot v0.7 phase 3.  Main repository, HEAD 0c021a3 plus this patch.
+Author: Dylan Nguyen, FishLab Research Project.
+
+Command form:  ./fish7 v7side --a=<spec> --b=<opp> --games=N --seed=<bank> --threads=2
+Banks: 7030001 (evaluation), 7030002 (replication).  709xxxx never touched (binary refuses, exit 5).
+Exit code 0 = CERTIFIED, 1 = NOT CERTIFIED, 5 = sealed bank, 6 = mixSeed inverse round-trip failed.
+Node sampling for S3/S5 is keyed off the DEAL INDEX, so every number here is thread-invariant.
+
+The gate certifies FOUR tests, over ALL FOUR decision types of THREAT-MODEL 6.2.
+  S6  seat isolation      -- every decision rebuilt from (own hand, public stream, reset seed)
+                             alone, on a freshly spawned thread, after the game.
+  S4  stream independence -- T10: a per-seat stream drawn independently of the deal.
+  S5  posterior invariance-- exact posterior resample (DealDP + Belief::satisfies), scored as
+                             P(hit|truth) vs P(hit|posterior).
+  S3  listening substitution -- rule-equivalent public-action swap inside the bit-for-bit tie
+                             group, with an OPPOSING-seat control running the same policy.
+Thresholds (a priori, see research/v07/notes/K0-gate.md):  S3 asymmetry 15 pts AND 3 sigma;
+S4 transcript identity for a deterministic policy, else win-rate CI containing 0 and ask hit
+rate within 3 pts;  S5 gap 20 pts;  S6 zero mismatches.
+
+======================================================================================
+PANEL A -- POSITIVE CONTROLS.  bank 7030001, 200 deals x 2 rotations, opponent v06.
+A test whose positive control does not fail is not a test.
+======================================================================================
+--- a=v07x:cheat=none   b=v06   200 deals
+v7side  a=v07x:cheat=none  b=v06  seed=7030001  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 24.354%  opponent-change 20.391%  asymmetry 3.963 +/- 1.655 pts  (n_mate=1006, n_opp=1790, nodes=847, no rule-equivalent alternative at 321)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 200/200 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.414% -> 53.414%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.009%  vs  P(hit|exact posterior) 45.846%   gap 6.162 pts  (n=5053 asks, 4051 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 4.745 pts over 4949 asks;  A-minus-reference 1.417 pts
+  PASS  S6 seat-isolation
+        0/128533 decisions irreproducible (0.0000%);  by kind ask 0/16754, declare 0/111714, pass 0/65, willing 0/0, bestGuess 0/0;  games with any 0/400
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   16.971s on 2 threads
+
+--- a=v07x:cheat=seed   b=v06   200 deals
+v7side  a=v07x:cheat=seed  b=v06  seed=7030001  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 20.216%  opponent-change 8.939%  asymmetry 11.277 +/- 1.860 pts  (n_mate=648, n_opp=839, nodes=402, no rule-equivalent alternative at 763)
+  FAIL  S4 stream-independence
+        stochastic: 0/200 transcripts identical under T10;  paired win-rate diff 45.000 pts [42.750, 47.000];  ask hit 87.620% -> 53.414%
+  FAIL  S5 posterior-invariance
+        P(hit|truth) 88.879%  vs  P(hit|exact posterior) 20.095%   gap 68.785 pts  (n=3426 asks, 3374 with the card unresolved)
+        reference arm (the --b seats, same deals): gap -11.177 pts over 662 asks;  A-minus-reference 79.962 pts
+  PASS  S6 seat-isolation
+        0/84832 decisions irreproducible (0.0000%);  by kind ask 0/11438, declare 0/49815, pass 0/1, willing 0/23165, bestGuess 0/413;  games with any 0/400
+  VERDICT  NOT CERTIFIED   11.5937s on 2 threads
+
+--- a=v07x:cheat=shared   b=v06   200 deals
+v7side  a=v07x:cheat=shared  b=v06  seed=7030001  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 19.373%  opponent-change 15.269%  asymmetry 4.103 +/- 1.444 pts  (n_mate=1084, n_opp=2004, nodes=926, no rule-equivalent alternative at 242)
+  PASS  S4 stream-independence
+        stochastic: 0/200 transcripts identical under T10;  paired win-rate diff -2.500 pts [-6.250, 1.500];  ask hit 43.342% -> 43.874%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 42.822%  vs  P(hit|exact posterior) 38.491%   gap 4.331 pts  (n=4813 asks, 3805 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 6.788 pts over 5629 asks;  A-minus-reference -2.457 pts
+  FAIL  S6 seat-isolation
+        7914/137737 decisions irreproducible (5.7457%);  by kind ask 7914/16280, declare 0/121332, pass 0/37, willing 0/84, bestGuess 0/4;  games with any 400/400
+  VERDICT  NOT CERTIFIED   18.0573s on 2 threads
+
+--- a=v07x:cheat=conv   b=v06   200 deals
+v7side  a=v07x:cheat=conv  b=v06  seed=7030001  deals=200x2
+  FAIL  S3 listening-substitution
+        teammate-change 81.739%  opponent-change 7.020%  asymmetry 74.719 +/- 1.339 pts  (n_mate=1035, n_opp=1866, nodes=889, no rule-equivalent alternative at 272)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 200/200 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 44.399% -> 44.399%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 44.495%  vs  P(hit|exact posterior) 40.899%   gap 3.596 pts  (n=4614 asks, 3719 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.732 pts over 5381 asks;  A-minus-reference -2.136 pts
+  PASS  S6 seat-isolation
+        0/128239 decisions irreproducible (0.0000%);  by kind ask 0/15284, declare 0/112845, pass 0/66, willing 0/42, bestGuess 0/2;  games with any 0/400
+  VERDICT  NOT CERTIFIED   17.4102s on 2 threads
+
+======================================================================================
+PANEL B -- THE INCUMBENTS AND THE FRONTIER.  bank 7030001, opponent v06.
+======================================================================================
+--- a=v06   b=v06   600 deals
+v7side  a=v06  b=v06  seed=7030001  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 24.603%  opponent-change 20.777%  asymmetry 3.826 +/- 0.946 pts  (n_mate=3146, n_opp=5381, nodes=2539, no rule-equivalent alternative at 970)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.794% -> 53.794%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.660%  vs  P(hit|exact posterior) 46.535%   gap 6.124 pts  (n=15266 asks, 12142 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.408 pts over 15191 asks;  A-minus-reference 0.716 pts  [MIRROR: the two arms are exchangeable, this difference carries no information]
+  PASS  S6 seat-isolation
+        0/391960 decisions irreproducible (0.0000%);  by kind ask 0/51171, declare 0/340500, pass 0/179, willing 0/105, bestGuess 0/5;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   51.413s on 2 threads
+
+--- a=v05   b=v06   600 deals
+v7side  a=v05  b=v06  seed=7030001  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 32.833%  opponent-change 33.128%  asymmetry -0.295 +/- 1.044 pts  (n_mate=3329, n_opp=5189, nodes=2545, no rule-equivalent alternative at 972)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 54.675% -> 54.675%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.991%  vs  P(hit|exact posterior) 47.435%   gap 6.556 pts  (n=15371 asks, 12093 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 4.485 pts over 15381 asks;  A-minus-reference 2.071 pts
+  PASS  S6 seat-isolation
+        0/396679 decisions irreproducible (0.0000%);  by kind ask 0/51746, declare 0/344598, pass 0/159, willing 0/168, bestGuess 0/8;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   55.5163s on 2 threads
+
+--- a=v07:r12=25   b=v06   600 deals
+v7side  a=v07:r12=25  b=v06  seed=7030001  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 26.736%  opponent-change 21.712%  asymmetry 5.024 +/- 0.952 pts  (n_mate=3355, n_opp=5269, nodes=2569, no rule-equivalent alternative at 950)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.212% -> 53.212%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.398%  vs  P(hit|exact posterior) 46.636%   gap 5.762 pts  (n=15535 asks, 12130 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 0.403 pts over 15286 asks;  A-minus-reference 5.359 pts
+  PASS  S6 seat-isolation
+        0/403830 decisions irreproducible (0.0000%);  by kind ask 0/53298, declare 0/349641, pass 0/342, willing 0/525, bestGuess 0/24;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   54.8937s on 2 threads
+
+--- a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26   (F-cheap)   b=v06   400 deals
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030001  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 33.706%  opponent-change 30.264%  asymmetry 3.442 +/- 1.281 pts  (n_mate=2145, n_opp=3519, nodes=1700, no rule-equivalent alternative at 646)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff -2.625 pts [-6.625, 1.625];  ask hit 53.802% -> 54.288%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.183%  vs  P(hit|exact posterior) 47.667%   gap 5.516 pts  (n=10163 asks, 8022 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.381 pts over 10188 asks;  A-minus-reference 0.136 pts
+  PASS  S6 seat-isolation
+        0/262920 decisions irreproducible (0.0000%);  by kind ask 0/34363, declare 0/228354, pass 0/115, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   117.61s on 2 threads
+
+======================================================================================
+PANEL C -- DECISION-TYPE COVERAGE.  D3 (choosePassTarget) and D4 (willingForced) are rare
+in a v06 mirror: the forced endgame fires about six times in 800 games.  Against a weak
+opponent a whole team goes cardless often, which is what exercises them.
+======================================================================================
+--- a=v06   b=random   300 deals
+v7side  a=v06  b=random  seed=7030001  deals=300x2
+  PASS  S3 listening-substitution
+        teammate-change 25.019%  opponent-change 17.388%  asymmetry 7.631 +/- 1.426 pts  (n_mate=1311, n_opp=2381, nodes=1129, no rule-equivalent alternative at 636)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 300/300 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 51.053% -> 51.053%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 50.205%  vs  P(hit|exact posterior) 46.632%   gap 3.573 pts  (n=7332 asks, 6208 with the card unresolved)
+        reference arm (the --b seats, same deals): gap -0.071 pts over 4985 asks;  A-minus-reference 3.644 pts
+  PASS  S6 seat-isolation
+        0/161661 decisions irreproducible (0.0000%);  by kind ask 0/24302, declare 0/136680, pass 0/239, willing 0/420, bestGuess 0/20;  games with any 0/600
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   14.3671s on 2 threads
+
+--- a=v06   b=hunter   300 deals
+v7side  a=v06  b=hunter  seed=7030001  deals=300x2
+  PASS  S3 listening-substitution
+        teammate-change 22.039%  opponent-change 21.396%  asymmetry 0.644 +/- 1.334 pts  (n_mate=1520, n_opp=2594, nodes=1231, no rule-equivalent alternative at 531)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 300/300 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.690% -> 53.690%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.342%  vs  P(hit|exact posterior) 43.496%   gap 8.846 pts  (n=7791 asks, 6394 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 0.963 pts over 6819 asks;  A-minus-reference 7.883 pts
+  PASS  S6 seat-isolation
+        0/189767 decisions irreproducible (0.0000%);  by kind ask 0/26394, declare 0/163062, pass 0/135, willing 0/168, bestGuess 0/8;  games with any 0/600
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   17.1364s on 2 threads
+
+======================================================================================
+PANEL D -- REPLICATION.  bank 7030002.  A claim is replicated only if it holds in sign and
+size on both banks.
+======================================================================================
+--- a=v07x:cheat=none   b=v06   200 deals   bank 7030002
+v7side  a=v07x:cheat=none  b=v06  seed=7030002  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 23.507%  opponent-change 20.035%  asymmetry 3.472 +/- 1.631 pts  (n_mate=1038, n_opp=1727, nodes=834, no rule-equivalent alternative at 334)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 200/200 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 54.712% -> 54.712%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.318%  vs  P(hit|exact posterior) 46.815%   gap 6.503 pts  (n=5139 asks, 4076 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 7.271 pts over 5166 asks;  A-minus-reference -0.768 pts
+  PASS  S6 seat-isolation
+        0/132733 decisions irreproducible (0.0000%);  by kind ask 0/17360, declare 0/115314, pass 0/59, willing 0/0, bestGuess 0/0;  games with any 0/400
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   17.1216s on 2 threads
+
+--- a=v07x:cheat=seed   b=v06   200 deals   bank 7030002
+v7side  a=v07x:cheat=seed  b=v06  seed=7030002  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 21.013%  opponent-change 11.309%  asymmetry 9.705 +/- 1.936 pts  (n_mate=671, n_opp=787, nodes=397, no rule-equivalent alternative at 760)
+  FAIL  S4 stream-independence
+        stochastic: 0/200 transcripts identical under T10;  paired win-rate diff 45.000 pts [42.750, 47.000];  ask hit 88.723% -> 54.712%
+  FAIL  S5 posterior-invariance
+        P(hit|truth) 90.210%  vs  P(hit|exact posterior) 19.018%   gap 71.192 pts  (n=3381 asks, 3343 with the card unresolved)
+        reference arm (the --b seats, same deals): gap -13.400 pts over 579 asks;  A-minus-reference 84.592 pts
+  PASS  S6 seat-isolation
+        0/85751 decisions irreproducible (0.0000%);  by kind ask 0/11395, declare 0/49188, pass 0/0, willing 0/24729, bestGuess 0/439;  games with any 0/400
+  VERDICT  NOT CERTIFIED   11.6643s on 2 threads
+
+--- a=v07x:cheat=shared   b=v06   200 deals   bank 7030002
+v7side  a=v07x:cheat=shared  b=v06  seed=7030002  deals=200x2
+  PASS  S3 listening-substitution
+        teammate-change 17.099%  opponent-change 15.435%  asymmetry 1.664 +/- 1.388 pts  (n_mate=1117, n_opp=1989, nodes=946, no rule-equivalent alternative at 227)
+  FAIL  S4 stream-independence
+        stochastic: 0/200 transcripts identical under T10;  paired win-rate diff -4.000 pts [-7.750, -0.250];  ask hit 43.802% -> 43.416%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 43.108%  vs  P(hit|exact posterior) 39.160%   gap 3.948 pts  (n=4897 asks, 3882 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 6.525 pts over 5621 asks;  A-minus-reference -2.577 pts
+  FAIL  S6 seat-isolation
+        8090/138560 decisions irreproducible (5.8386%);  by kind ask 8090/16303, declare 0/122196, pass 0/39, willing 0/21, bestGuess 0/1;  games with any 400/400
+  VERDICT  NOT CERTIFIED   18.0781s on 2 threads
+
+--- a=v07x:cheat=conv   b=v06   200 deals   bank 7030002
+v7side  a=v07x:cheat=conv  b=v06  seed=7030002  deals=200x2
+  FAIL  S3 listening-substitution
+        teammate-change 84.458%  opponent-change 8.482%  asymmetry 75.977 +/- 1.254 pts  (n_mate=1126, n_opp=1910, nodes=918, no rule-equivalent alternative at 261)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 200/200 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 45.492% -> 45.492%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 45.691%  vs  P(hit|exact posterior) 40.607%   gap 5.084 pts  (n=4758 asks, 3800 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 4.706 pts over 5405 asks;  A-minus-reference 0.378 pts
+  PASS  S6 seat-isolation
+        0/130052 decisions irreproducible (0.0000%);  by kind ask 0/15574, declare 0/114405, pass 0/51, willing 0/21, bestGuess 0/1;  games with any 0/400
+  VERDICT  NOT CERTIFIED   17.3403s on 2 threads
+
+--- a=v06   b=v06   600 deals   bank 7030002
+v7side  a=v06  b=v06  seed=7030002  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 25.543%  opponent-change 21.061%  asymmetry 4.482 +/- 0.968 pts  (n_mate=3085, n_opp=5185, nodes=2475, no rule-equivalent alternative at 1033)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 54.541% -> 54.541%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.773%  vs  P(hit|exact posterior) 47.355%   gap 6.418 pts  (n=15294 asks, 12043 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 6.103 pts over 15422 asks;  A-minus-reference 0.315 pts  [MIRROR: the two arms are exchangeable, this difference carries no information]
+  PASS  S6 seat-isolation
+        0/396174 decisions irreproducible (0.0000%);  by kind ask 0/51785, declare 0/344112, pass 0/167, willing 0/105, bestGuess 0/5;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   51.4285s on 2 threads
+
+--- a=v05   b=v06   600 deals   bank 7030002
+v7side  a=v05  b=v06  seed=7030002  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 32.069%  opponent-change 33.521%  asymmetry -1.452 +/- 1.043 pts  (n_mate=3321, n_opp=5158, nodes=2545, no rule-equivalent alternative at 972)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 55.350% -> 55.350%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 54.251%  vs  P(hit|exact posterior) 48.069%   gap 6.182 pts  (n=15292 asks, 11926 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.193 pts over 15463 asks;  A-minus-reference 0.988 pts
+  PASS  S6 seat-isolation
+        0/397881 decisions irreproducible (0.0000%);  by kind ask 0/52092, declare 0/345441, pass 0/172, willing 0/168, bestGuess 0/8;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   56.4313s on 2 threads
+
+--- a=v07:r12=25   b=v06   600 deals   bank 7030002
+v7side  a=v07:r12=25  b=v06  seed=7030002  deals=600x2
+  PASS  S3 listening-substitution
+        teammate-change 25.495%  opponent-change 19.947%  asymmetry 5.548 +/- 0.939 pts  (n_mate=3283, n_opp=5254, nodes=2559, no rule-equivalent alternative at 952)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 600/600 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.266% -> 53.266%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.580%  vs  P(hit|exact posterior) 46.634%   gap 5.947 pts  (n=15753 asks, 12336 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 0.460 pts over 15350 asks;  A-minus-reference 5.487 pts
+  PASS  S6 seat-isolation
+        0/406499 decisions irreproducible (0.0000%);  by kind ask 0/53409, declare 0/352155, pass 0/319, willing 0/588, bestGuess 0/28;  games with any 0/1200
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   55.7633s on 2 threads
+
+--- a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26   (F-cheap)   b=v06   400 deals   bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 34.345%  opponent-change 28.448%  asymmetry 5.898 +/- 1.280 pts  (n_mate=2108, n_opp=3582, nodes=1705, no rule-equivalent alternative at 642)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff 0.625 pts [-3.375, 4.625];  ask hit 54.257% -> 54.028%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.332%  vs  P(hit|exact posterior) 47.300%   gap 6.032 pts  (n=10219 asks, 8126 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.163 pts over 10275 asks;  A-minus-reference 0.869 pts
+  FAIL  S6 seat-isolation
+        1/264051 decisions irreproducible (0.0004%);  by kind ask 1/34650, declare 0/229176, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 1/800
+  VERDICT  NOT CERTIFIED   119.092s on 2 threads
+
+ALL_PANELS_DONE
+
+======================================================================================
+PANEL E -- FOLLOW-UP ON THE ONE S6 MISMATCH.  The F-cheap search configuration is the
+only member of the panel that has ever produced a nonzero S6 count.  Panel B (bank
+7030001, 400 deals, all four tests) gave 0/262920; panel D (bank 7030002, same cell)
+gave 1/264051 -- one ask decision, in one game of 800.
+
+The mismatch is REPRODUCIBLE IN KIND and it depends on what else the harness does on
+the worker thread.  Same command, 150 deals, bank 7030002:
+    --tests=s6         -> 0/98816   (98816 decisions, thread-count-invariant at 1/2/4)
+    --tests=s5,s6      -> 0/98816   (s5 builds DealDP only)
+    --tests=s4,s6      -> 1/98792   (s4 plays a second game per deal on the thread)
+    --tests=s3,s6      -> 1/98792   (s3 constructs and replays agents on the thread)
+s3 and s4 give the IDENTICAL altered decision count, so the perturbation is not what
+the extra work is, only that it happened.  s5 -- which touches DealDP's thread_local
+scratch but never builds a BlockDP -- does not perturb.  That pattern is consistent
+with THREAT-MODEL E-2, the BlockDP shared per-thread pool, and it is NOT root-caused
+here; blockdp.hpp's stamp/generation guard and its sReady reset were both inspected
+and are in place, so the mechanism is something else in that layer.
+
+Rate across four TRAINING banks, --tests=s3,s6, 400 deals x 2 each:
+bank 7030001  s3+s6 400 deals -> 0/262920 decisions irreproducible (0.0000%);  by kind ask 0/34363, declare 0/228354, pass 0/115, willing 0/84, bestGuess 0/4;  games with any 0/800
+bank 7030002  s3+s6 400 deals -> 0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+bank 7030003  s3+s6 400 deals -> 1/263793 decisions irreproducible (0.0004%);  by kind ask 1/34582, declare 0/229029, pass 0/138, willing 0/42, bestGuess 0/2;  games with any 1/800
+bank 7030004  s3+s6 400 deals -> 0/263234 decisions irreproducible (0.0000%);  by kind ask 0/34532, declare 0/228507, pass 0/129, willing 0/63, bestGuess 0/3;  games with any 0/800
+bank 7030002  s6 only 400 deals (no thread perturbation) -> 0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+DIAG_DONE
+
+So: 1 irreproducible ask in ~138,000 ask decisions (~1.05 million decisions of all
+kinds) for the search configuration, and 0 in ~1.2 million decisions each for v06,
+v05 and v07:r12=25 over two banks.  Too small to move a win rate; NOT too small to
+matter for a legality claim, because it says the searching seat's action is not a
+function of (own hand, public stream, reset seed) alone at that rate.  The shipped
+match runner is thread-count-invariant for this configuration (winRateA 0.523333,
+askAccA 0.545112, events/game 95.2233 at threads=1, 2 and 3, seed 7030002, 150x2),
+so nothing in the existing corpus would have seen this.
+======================================================================================
