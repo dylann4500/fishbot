@@ -1,0 +1,15 @@
+v06 vs v06
+games              800
+events/game        94.1925   median 94  p90 109  p99 120  max 131
+asks/game          84.8825   hit rate 53.633%
+DEAD asks          8  (0.011781% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      8  (0.011781% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1532  (2.25606%)
+repeat (a,suit,t)  31860  (46.9178%)
+asks in own-locked 7674  (11.3009% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 184 (2.55556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 4 (66.6667%)
+action-limit games 0 (0%)

@@ -1,0 +1,145 @@
+############ COMMIT GATE: mirror pathology, 400 deals / 800 games, seed 31
+
+===== E-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+games              800
+events/game        94.225   median 94  p90 109  p99 124  max 131
+asks/game          84.9225   hit rate 53.2486%
+DEAD asks          4  (0.00588772% of asks)   -- actor could PROVE the target lacks the card
+dead runs          4  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      4  (0.00588772% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1524  (2.24322%)
+repeat (a,suit,t)  31814  (46.828%)
+asks in own-locked 7652  (11.2632% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 162 (2.25%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   4   wrong 4 (100%)
+action-limit games 0 (0%)
+
+===== E-fit  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0
+games              800
+events/game        94.9575   median 94  p90 110  p99 122  max 125
+asks/game          85.62   hit rate 53.2615%
+DEAD asks          6  (0.00875964% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.00875964% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1580  (2.3067%)
+repeat (a,suit,t)  32346  (47.2232%)
+asks in own-locked 7498  (10.9466% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 170 (2.36111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   12   wrong 12 (100%)
+action-limit games 0 (0%)
+
+===== E-lam013  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leaf=0.13
+games              800
+events/game        94.5075   median 94  p90 109  p99 123  max 126
+asks/game          85.1525   hit rate 53.2926%
+DEAD asks          2  (0.00293591% of asks)   -- actor could PROVE the target lacks the card
+dead runs          2  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      2  (0.00293591% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1574  (2.31056%)
+repeat (a,suit,t)  31892  (46.816%)
+asks in own-locked 7508  (11.0214% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 170 (2.36111%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   10   wrong 4 (40%)
+action-limit games 0 (0%)
+
+===== F-mat  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12
+games              800
+events/game        94.155   median 94  p90 108  p99 123  max 125
+asks/game          84.815   hit rate 52.7531%
+DEAD asks          4  (0.00589518% of asks)   -- actor could PROVE the target lacks the card
+dead runs          4  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      4  (0.00589518% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1546  (2.27849%)
+repeat (a,suit,t)  31358  (46.2153%)
+asks in own-locked 7720  (11.3777% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 164 (2.27778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   10   wrong 6 (60%)
+action-limit games 0 (0%)
+
+===== F-fit  v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,leafeval=linear@-0.2524119725|1.006441838|-0.007067729911|0.1331725493|0.1140997607|0.03249101804|0.142064116|-0.06360956809|-0.01354948052|-0.1514789178|0.09634925984|0.03707876374|0
+v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,leafeval=linear@-0.2524119725|1.006441838|-0.007067729911|0.1331725493|0.1140997607|0.03249101804|0.142064116|-0.06360956809|-0.01354948052|-0.1514789178|0.09634925984|0.03707876374|0 vs v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,leafeval=linear@-0.2524119725|1.006441838|-0.007067729911|0.1331725493|0.1140997607|0.03249101804|0.142064116|-0.06360956809|-0.01354948052|-0.1514789178|0.09634925984|0.03707876374|0
+games              800
+events/game        94.505   median 94  p90 109  p99 123  max 134
+asks/game          85.15   hit rate 53.1533%
+DEAD asks          6  (0.00880799% of asks)   -- actor could PROVE the target lacks the card
+dead runs          6  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      6  (0.00880799% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1446  (2.12272%)
+repeat (a,suit,t)  31666  (46.4856%)
+asks in own-locked 7524  (11.0452% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 148 (2.05556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 4 (66.6667%)
+action-limit games 0 (0%)
+############ SIDE-CHANNEL GATE
+
+===== v7side E-mat bank 7030001
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030001  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 31.120%  opponent-change 28.446%  asymmetry 2.675 +/- 2.144 pts  (n_mate=723, n_opp=1248, nodes=596, no rule-equivalent alternative at 204)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff -2.625 pts [-6.625, 1.625];  ask hit 53.802% -> 54.288%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.560%  vs  P(hit|exact posterior) 47.445%   gap 5.115 pts  (n=10135 asks, 8004 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.021 pts over 10072 asks;  A-minus-reference 0.094 pts
+  PASS  S6 seat-isolation
+        0/262920 decisions irreproducible (0.0000%);  by kind ask 0/34363, declare 0/228354, pass 0/115, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   279.576s on 2 threads
+   exit=0
+
+===== v7side E-mat bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 33.237%  opponent-change 26.561%  asymmetry 6.676 +/- 2.195 pts  (n_mate=695, n_opp=1201, nodes=580, no rule-equivalent alternative at 220)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff 0.625 pts [-3.375, 4.625];  ask hit 54.257% -> 54.028%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.824%  vs  P(hit|exact posterior) 47.263%   gap 5.561 pts  (n=10200 asks, 8070 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.320 pts over 10192 asks;  A-minus-reference 0.240 pts
+  FAIL  S6 seat-isolation
+        1/264051 decisions irreproducible (0.0004%);  by kind ask 1/34650, declare 0/229176, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 1/800
+  VERDICT  NOT CERTIFIED   298.618s on 2 threads
+   exit=1
+
+===== v7side E-fit bank 7030001
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0  b=v06  seed=7030001  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 33.509%  opponent-change 28.607%  asymmetry 4.902 +/- 2.150 pts  (n_mate=758, n_opp=1213, nodes=596, no rule-equivalent alternative at 204)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff 1.250 pts [-2.250, 5.000];  ask hit 54.301% -> 54.145%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.132%  vs  P(hit|exact posterior) 47.188%   gap 5.944 pts  (n=10090 asks, 8006 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.705 pts over 10133 asks;  A-minus-reference 0.239 pts
+  PASS  S6 seat-isolation
+        0/262444 decisions irreproducible (0.0000%);  by kind ask 0/34414, declare 0/227862, pass 0/124, willing 0/42, bestGuess 0/2;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   314.97s on 2 threads
+   exit=0
+
+===== v7side E-fit bank 7030002
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,leafeval=linear@-0.0629388402|1.019907202|-0.07214275398|0.1994612562|0.2399347556|0.02458012352|0.1819971306|-0.6492847873|-0.03003329608|-0.002399982176|0.09210729354|-0.00771463038|0  b=v06  seed=7030002  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 31.233%  opponent-change 31.940%  asymmetry -0.707 +/- 2.167 pts  (n_mate=746, n_opp=1196, nodes=581, no rule-equivalent alternative at 219)
+  PASS  S4 stream-independence
+        stochastic: 0/400 transcripts identical under T10;  paired win-rate diff 1.500 pts [-2.250, 5.375];  ask hit 54.358% -> 54.417%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.414%  vs  P(hit|exact posterior) 47.325%   gap 6.089 pts  (n=10179 asks, 8078 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.107 pts over 10151 asks;  A-minus-reference 0.982 pts
+  PASS  S6 seat-isolation
+        0/264241 decisions irreproducible (0.0000%);  by kind ask 0/34694, declare 0/229335, pass 0/146, willing 0/63, bestGuess 0/3;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   314.776s on 2 threads
+   exit=0
+
+===== v7side F-fit bank 7030001

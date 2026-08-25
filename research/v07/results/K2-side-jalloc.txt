@@ -1,0 +1,22 @@
+v7side  a=v06:jalloc=1  b=v06  seed=7030001  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 24.271%  opponent-change 20.991%  asymmetry 3.280 +/- 1.158 pts  (n_mate=2093, n_opp=3592, nodes=1701, no rule-equivalent alternative at 644)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 400/400 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 53.730% -> 53.730%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 52.887%  vs  P(hit|exact posterior) 46.563%   gap 6.325 pts  (n=10148 asks, 8078 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 5.291 pts over 10098 asks;  A-minus-reference 1.034 pts
+  PASS  S6 seat-isolation
+        0/260607 decisions irreproducible (0.0000%);  by kind ask 0/34018, declare 0/226404, pass 0/119, willing 0/63, bestGuess 0/3;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   337.423s on 2 threads
+v7side  a=v06:jalloc=1  b=v06  seed=7030002  deals=400x2
+  PASS  S3 listening-substitution
+        teammate-change 25.211%  opponent-change 20.784%  asymmetry 4.427 +/- 1.188 pts  (n_mate=2019, n_opp=3445, nodes=1649, no rule-equivalent alternative at 688)
+  PASS  S4 stream-independence
+        DETERMINISTIC: 400/400 transcripts identical under T10;  paired win-rate diff 0.000 pts [0.000, 0.000];  ask hit 54.526% -> 54.526%
+  PASS  S5 posterior-invariance
+        P(hit|truth) 53.888%  vs  P(hit|exact posterior) 47.332%   gap 6.556 pts  (n=10212 asks, 8069 with the card unresolved)
+        reference arm (the --b seats, same deals): gap 6.785 pts over 10249 asks;  A-minus-reference -0.229 pts
+  PASS  S6 seat-isolation
+        0/263707 decisions irreproducible (0.0000%);  by kind ask 0/34455, declare 0/229071, pass 0/115, willing 0/63, bestGuess 0/3;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   348.315s on 2 threads

@@ -1,0 +1,28 @@
+=== F-cheap S6, bank 7030002, run 1, threads=2 ===
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S6 seat-isolation
+        0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   68.5579s on 2 threads
+EXIT=0
+=== F-cheap S6, bank 7030002, run 2, threads=2 ===
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  PASS  S6 seat-isolation
+        0/264075 decisions irreproducible (0.0000%);  by kind ask 0/34653, declare 0/229197, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   68.2334s on 2 threads
+EXIT=0
+=== F-cheap S6, bank 7030002, run 3, threads=1 (serial: kills any race) ===
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  FAIL  S6 seat-isolation
+        1/264061 decisions irreproducible (0.0004%);  by kind ask 1/34651, declare 0/229185, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 1/800
+  VERDICT  NOT CERTIFIED   134.316s on 1 threads
+EXIT=1
+=== F-cheap S6, bank 7030001 control, threads=2 ===
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030001  deals=400x2
+  PASS  S6 seat-isolation
+        0/262920 decisions irreproducible (0.0000%);  by kind ask 0/34363, declare 0/228354, pass 0/115, willing 0/84, bestGuess 0/4;  games with any 0/800
+  VERDICT  CERTIFIED (S3,S4,S5,S6 all pass)   68.7082s on 2 threads
+EXIT=0
+v7side  a=v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26  b=v06  seed=7030002  deals=400x2
+  FAIL  S6 seat-isolation
+        1/264061 decisions irreproducible (0.0004%);  by kind ask 1/34651, declare 0/229185, pass 0/137, willing 0/84, bestGuess 0/4;  games with any 1/800
+  VERDICT  NOT CERTIFIED   131.404s on 1 threads

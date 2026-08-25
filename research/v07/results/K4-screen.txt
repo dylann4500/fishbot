@@ -1,0 +1,27 @@
+reference v06-as-A vs v06 (48 blocks x 200 games): askAcc 54.080%  declAcc 97.806%  allocErrShare 1.939%
+
+=== SCREEN vs Ffast ===
+objective   bank         edge                 ci       n   dAskAcc  dDeclAcc  dAllocErr
+win         7030001     +0.44     [-0.42, +1.32]   12000     +0.82     +0.21      -0.13
+win         7030002     +0.35     [-0.52, +1.20]   12000     +0.78     +0.25      -0.16
+selfdecl    7030001     -2.45     [-3.32, -1.58]   12000     -2.28     +0.39      -0.16
+selfdecl    7030002     -2.07     [-2.94, -1.18]   12000     -2.37     +0.38      -0.17
+selfask     7030001     -1.55     [-2.43, -0.65]   12000     +2.06     -0.33      +0.15
+selfask     7030002     -1.63     [-2.51, -0.76]   12000     +2.13     -0.35      +0.21
+selfalloc   7030001     -0.79     [-1.67, +0.08]   12000     -0.70     -0.03      -0.27
+selfalloc   7030002     -1.60     [-2.45, -0.72]   12000     -0.73     -0.10      -0.29
+
+objective    pooled edge        n  replicated-in-sign  clears-1.53-floor
+win                +0.40    24000  True                False
+selfdecl           -2.26    24000  True                True 
+selfask            -1.59    24000  True                True 
+selfalloc          -1.20    24000  True                False
+
+=== SCREEN vs Fcheap ===
+objective   bank         edge                 ci       n   dAskAcc  dDeclAcc  dAllocErr
+win         7030001     -0.60     [-1.85, +0.65]    6000     +0.24     +0.24      -0.13
+win         7030002     -0.25     [-1.47, +0.98]    6000     +0.45     +0.28      -0.18
+
+objective    pooled edge        n  replicated-in-sign  clears-1.53-floor
+win                -0.43    12000  True                False
+

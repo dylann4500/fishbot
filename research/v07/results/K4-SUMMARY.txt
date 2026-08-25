@@ -1,0 +1,232 @@
+K4 — A per-decision-objective refit of the widened policy class, against the frontier
+FishBot v0.7, phase 3.  Ledger L5.  All numbers measured in this session unless marked.
+Worktree: .claude/worktrees/wf_88eccd0d-4c3-5   Base commit: ad90404 (gate commit)
+
+VERDICT: L5 is KILLED in the form the ledger states it, and the kill separates cleanly
+into a confirmed half (the precision arithmetic) and a refuted half (the objective).
+
+===============================================================================
+0. IDENTITY CONTROL — PASSED
+===============================================================================
+./fish7 pathology --a=v06 --b=v06 --games=400 --rotations=2 --seed=31
+BYTE-IDENTICAL to the same command from the unmodified binary at
+/Users/dylan/Documents/GitHub/fish optimization/engine/fish7
+(md5 0b1b3c9ed2894d0992d527fbde1884e5, both).
+Every switch added defaults off; the new KPIs are opt-in via --kpi= and the new
+JSON fields are read-only counters.
+
+===============================================================================
+1. THE CHEAP DECISIVE PROBE — the design effect, never measured before
+===============================================================================
+L5 says per-decision scoring "buys roughly the ratio of decisions to games in
+effective sample".  That is true only if decisions are independent.  48
+independent 200-game blocks (seeds 74000001+), block-to-block SD against the
+binomial baseline:
+
+  arm           metric      p         dec/game   DEFF   eff.dec/game
+  v06           askAcc      0.54080     42.91    3.41      12.60
+  v06           declAcc     0.97806      4.49    1.03       4.35
+  v06           allocErr    0.01939      4.49    1.01       4.44
+  v07:r12=25    askAcc      0.53180     44.50    1.42      31.44
+  v07:r12=25    declAcc     0.96467      4.63    1.32       3.51
+  v07:r12=25    allocErr    0.02133      4.63    0.73       6.36
+
+Converted into one currency (games needed to resolve a 1.0-win-rate-point-
+equivalent effect at 2 sigma, using the ledger's own §0.2 conversion):
+
+  win rate                     9,604 games
+  declaration accuracy      284 – 560 games      (17x – 34x)
+  allocation-error share    244 – 299 games      (32x – 39x)
+
+=> L5's PRECISION arithmetic is CONFIRMED, with the clustering correction it
+   never had.  Deal-level clustering eats almost none of it on the declaration
+   channel (DEFF 1.0–1.3).  On the ask channel it eats two-thirds for v06
+   (DEFF 3.41) — and the corpus's "85 asks a game" counts both teams; one team
+   asks ~43 times a game.
+
+===============================================================================
+2. THE ZERO-GAME PROBE — the proxies point the wrong way
+===============================================================================
+From K4-probe-kpi-vs-win.jsonl (8 doses of r12, 4,000 games each), over the
+strength-relevant range (doses -25..30, edge -0.77 to +3.42):
+
+  Pearson r(edge, askAcc)  = -0.741
+  Pearson r(edge, declAcc) = -0.825
+
+Over all 8 doses r(edge, askAcc) flips to +0.621, but that is a single leverage
+point: at dose 40 the policy collapses and everything falls together.  The proxy
+only agrees with strength once the policy is already broken.
+
+===============================================================================
+3. THE CLAIM UNDER TEST — matched-budget fits
+===============================================================================
+Four objectives, MATCHED BUDGET: 6 gens x pop 12 x 150 deals x 2 rotations =
+21,600 games each, same starting vector (v06 + 18 zeros = v06 bit for bit),
+same CEM seed, same common random numbers, phase 2's own hyperparameters
+(--base=v07 --full --fromv6 --beta=1 --sigmarel=0.08 --paired --obj=min).
+Fitting bank 7030004 (s1) / 7011001 (s2); evaluation banks 7030001, 7030002.
+
+SEED s1, 12,000 games per bank vs F-fast (v06):
+  objective   bank 7030001           bank 7030002           pooled  clears floor?
+  win         +0.44 [-0.42,+1.32]    +0.35 [-0.52,+1.20]    +0.40   no
+  selfdecl    -2.45 [-3.32,-1.58]    -2.07 [-2.94,-1.18]    -2.26   YES
+  selfask     -1.55 [-2.43,-0.65]    -1.63 [-2.51,-0.76]    -1.59   YES
+  selfalloc   -0.79 [-1.67,+0.08]    -1.60 [-2.45,-0.72]    -1.20   no
+
+SEED s2, 6,000 games per bank vs F-fast:
+  win         -1.13 [-2.42,+0.15]    -1.55 [-2.80,-0.30]    -1.34   no
+  selfdecl    -2.12 [-3.37,-0.85]    -1.42 [-2.65,-0.20]    -1.77   YES
+
+vs F-cheap (v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26),
+6,000 games per bank, `win` arm only (the only non-negative one at s1):
+  win         -0.60 [-1.85,+0.65]    -0.25 [-1.47,+0.98]    -0.43   no
+
+The per-decision objective did NOT find a vector the per-game objective did not.
+It found a worse one, in both fitting seeds.  And no fit at this budget beat v06
+at all: the whole matched-budget rung sits at or below the incumbent, which is
+threat-model T6 and is stated as such rather than hidden.
+
+===============================================================================
+4. THE MECHANISM — the proxy moved and the outcome did not
+===============================================================================
+Per-decision rates on the EVALUATION banks, as deltas from v06-as-arm-A
+(reference from the 48-block design-effect probe: askAcc 54.080%, declAcc
+97.806%, allocErrShare 1.939%):
+
+  objective   d askAcc   d declAcc   d allocErrShare   win-rate edge
+  win         +0.80 pp    +0.23 pp      -0.15 pp          +0.40
+  selfdecl    -2.33 pp    +0.39 pp      -0.17 pp          -2.26
+  selfask     +2.10 pp    -0.34 pp      +0.18 pp          -1.59
+  selfalloc   -0.72 pp    -0.07 pp      -0.28 pp          -1.20
+
+Every per-decision fit moved its OWN proxy in the intended direction, on both
+evaluation banks, and lost win rate.  Two further readings:
+
+ (a) The ledger's §0.2 conversion FAILS out of sample.  +0.385 pp of declaration
+     accuracy should be worth +0.46 win-rate points; it delivered -2.26.  The
+     conversion was fitted on v0.6-vs-v0.5, where declaration accuracy was
+     essentially the only thing that moved.  A fitter free to move 55
+     coordinates holds nothing else fixed, so the conversion is a
+     ceteris-paribus law and the ledger's expected-gain ranking uses it as a
+     sufficient statistic.
+ (b) The two per-decision channels TRADE AGAINST EACH OTHER.  selfdecl bought
+     +0.39 pp of declaration accuracy and paid -2.33 pp of ask accuracy; selfask
+     bought +2.10 pp of ask accuracy and paid -0.34 pp of declaration accuracy.
+     Neither trade is favourable.  This is the v0.5->v0.6 fact (v0.6 LOST 2.3 pp
+     of ask hit rate and GAINED win rate) reproduced with the sign reversed, at
+     almost the same magnitude.
+
+===============================================================================
+5. THE SEARCH-SIDE DIAGNOSTIC — the per-decision objective is not less flat
+===============================================================================
+Read off the fit logs, no extra games.  `bestScore` is exactly 0 when the
+generation's own mean vector was the best of 12 proposals — i.e. when the
+objective could not separate the population at all.
+
+  objective   decisions/cell   gens   zero-gens   mean spread   final r12
+  win                    300      6     2 / 6       0.1239        +0.16
+  selfdecl             1,285      6     2 / 6       0.0211        -0.45
+  selfask             12,871      6     1 / 6       0.0423        +0.70
+  selfalloc            1,303      6     2 / 6       0.0141        +0.69
+  win        (seed s2)   300      6     2 / 6       0.0872        +0.62
+  selfdecl   (seed s2) 1,319      6     1 / 6       0.0175        -0.85
+
+The share of generations at which the objective could not separate 12 proposals
+is essentially the SAME for the per-game and the per-decision objectives.  The
+extra precision did not become extra search traction.
+
+Also note: at sigmarel=0.08 the r7 coordinates have sigma 1.92 on a [-12,12]
+range, so six generations cannot reach r12=25 from zero — every fit here ended
+with |r12| < 0.9.  This budget tests whether the objective helps LOCALLY near
+v06; it does not test whether either objective can find the distant r12 optimum.
+
+===============================================================================
+6. THE COMMIT GATE — mirror (self-play), 400 deals x 2 rotations, seed 31
+===============================================================================
+  configuration     events/game  p99  max  dead asks  longest run  limit  decl wrong
+  v06 (reference)      94.19     120  131   0.0118%       1          0     2.556%
+  K4 s1 win            94.59     125  129   0%            0          0     1.972%
+  K4 s1 selfdecl       96.43     126  132   0.0488%       1          0     2.222%
+  K4 s1 selfask        94.47     128  141   0%            0          0     2.417%
+  K4 s1 selfalloc      95.06     123  125   0.0029%       1          0     2.639%
+
+ALL FOUR PASS.  No configuration approaches the nEvents>=220 cliff (max 141).
+No action-limit games.  No dead run longer than 1 — none of this is the m1=0
+pathology (2.91% dead asks, 326-ask run, 0.33% at the action limit).
+Note: the `win` fit reached the LOWEST mirror misdeclaration rate (1.972%) of
+the five, without being asked to; `selfalloc`, fitted to cut allocation errors,
+RAISED mirror misdeclaration to 2.639%, above v06's 2.556%.
+
+===============================================================================
+7. THE SIDE-CHANNEL GATE — ./fish7 v7side, 400 games, both banks
+===============================================================================
+All four configurations CERTIFIED (S3, S4, S5, S6 all pass) on 7030001 AND
+7030002.  S6: 0 of ~262,000–267,000 decisions irreproducible in every cell.
+S3 asymmetry 4.89–6.02 +/- ~1.18 pts (v06 3.83/4.48; v07:r12=25 5.02/5.55;
+threshold 15 points and 3 sigma).  None of these configurations contains the
+search, so none inherits the F-cheap S6 artifact.
+
+===============================================================================
+8. THE F-CHEAP S6 ARTIFACT — RESOLVED, and it is not a channel
+===============================================================================
+The brief flags one irreproducible F-cheap ask on bank 7030002 (1 in 264,051)
+and asks which it is.  Same spec, same bank, S6 only:
+
+  threads=2, run 1:   0 / 264,075 irreproducible   PASS
+  threads=2, run 2:   0 / 264,075 irreproducible   PASS   (identical)
+  threads=1, run 1:   1 / 264,061 irreproducible   FAIL
+  threads=1, run 2:   1 / 264,061 irreproducible   FAIL   (identical)
+  threads=2, bank 7030001 control: 0 / 262,920     PASS
+
+It is NOT a race: a race is non-deterministic AT 2 threads and clean at 1; this
+is exactly reproducible WITHIN each thread count and differs BETWEEN them.  The
+decision COUNT itself moves with execution context — 264,051 (brief, all four
+tests) / 264,061 (1 thread) / 264,075 (2 threads) for one spec on one bank.
+=> The F-cheap search's transcript is a deterministic function of (deal, thread
+   count), not of the deal alone.  Its determinization consumes from a stream
+   whose consumption depends on execution context.  The S6 "failure" is a
+   symptom of that, not of an illegal channel — but it means no search number in
+   the corpus is bit-reproducible across thread settings, and v7side's S6
+   verdict for a searching configuration is context-dependent.  That is worth a
+   ledger entry and it is not what phase 2 assumed.
+
+===============================================================================
+9. THROUGHPUT — one dedicated run, thread count stated
+===============================================================================
+2,000 games vs v06, seed 7030004, --threads=8, machine shared with 5 agents:
+  v06                209.6 games/s
+  K4 s1 win          202.9 games/s
+  K4 s1 selfdecl     191.8 games/s
+The fitted vectors are F-fast-class in cost.  Every other K4 number in this
+session was measured at --threads=2 and none of them is a throughput claim.
+
+===============================================================================
+10. WHAT WAS NOT DONE
+===============================================================================
+* No fit against a PANEL containing F-cheap.  At 2 threads a 21,600-game fit
+  against the search is ~16 minutes of pure search time per fit; the budget went
+  to replicating the core comparison at a second seed instead.  Fitted against
+  v06, EVALUATED against F-fast and F-cheap, as the brief permits.
+* No r12 attribution.  It needs three new sub-product coordinates and a dose
+  sweep on each; the matched-budget comparison and its replication consumed the
+  budget.  The design-effect table in §1 is the instrument it would use, and it
+  says a declaration-side attribution cell costs ~300 games rather than ~9,600.
+* selfask and selfalloc were fitted at one seed only.
+* No budget curve.  Every fit here is at phase 1's small rung (21,600 games).
+  Whether the per-decision objective wins at 4x the budget is untested, and it
+  is the one honest way the kill in §3 could be wrong.
+
+===============================================================================
+ARTIFACTS
+===============================================================================
+K4-designeffect.jsonl / .txt    the design-effect probe and its analysis
+K4-probe-kpi-vs-win.jsonl       the r12 dose sweep (written by the prior attempt)
+K4-fit-s1-{win,selfdecl,selfask,selfalloc}.jsonl   fit logs, seed s1
+K4-fit-s2-{win,selfdecl}.jsonl                     fit logs, seed s2
+K4-weights/                     the six fitted vectors
+K4-screen-s1-Ffast.jsonl, K4-screen-s1-Fcheap.jsonl, K4-screen-s2-Ffast.jsonl
+K4-screen.txt, K4-screen-s2.txt the tabulated screen
+K4-gate.txt                     the commit gate, all five mirrors
+K4-sidechannel-7030001.txt, K4-sidechannel-7030002.txt
+K4-s6probe.txt                  the F-cheap S6 resolution
+K4-throughput.jsonl

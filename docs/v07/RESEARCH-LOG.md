@@ -1408,3 +1408,357 @@ and `lockthr`, and any future ablation on it measures nothing.
    is still open); stripping `Event::confidence` before `emit`; and moving `decisionCapture()` out of
    the shared namespace before phase 3 begins developing candidates against the channel that measures
    them.
+
+---
+
+## Phase 3 — Candidate architectures
+
+Started from `0c021a3` ("phase 2 v7: open-ended adversary generation"), working tree clean. Inputs
+read: `docs/v07/THREAT-MODEL.md`, `docs/v07/INSTRUMENT.md`, `docs/v07/ADVERSARIES.md`,
+`docs/v07/SUBOPTIMALITY-LEDGER.md`, `docs/v07/PHASE-PROMPTS.md`, and `engine/src/`. The deliverable
+is `docs/v07/CANDIDATES.md`; this section is the working record, including the batteries that did
+not finish and the two places one agent's inference outran its evidence.
+
+**Machine.** Apple M5 Pro, 15 logical cores, `clang++ -O3 -march=native`, macOS 25.5.0 — the same
+machine phases 1 and 2 used. **Every throughput figure produced during the parallel development
+phase is unusable as a headline** and is labelled as such: six workstreams shared the machine and
+load averages ran between 40 and 121 on 15 cores. Two repetitions of a *single* spec spread 18.86
+against 20.87 games/s, and for another 32.42 against 21.39 — a within-spec spread larger than any
+between-spec difference in the phase. Throughput claims in `CANDIDATES.md` are either from dedicated
+back-to-back runs on a momentarily quiet machine, or they are stated as ratios measured within one
+cell, and they say which.
+
+**Structure.** Six workstreams, each in an isolated git worktree branched from the gate commit, each
+required to (i) run the cheapest decisive probe first and stop if it killed the premise, (ii) pass an
+identity control proving the new switch off is bit-identical to the reference binary, (iii) pass the
+commit gate before quoting any strength number, and (iv) pass the mechanical side-channel gate. The
+first attempt at the five candidates was killed 18–20 minutes in by a network outage; the worktrees
+survived with uncommitted work and the second attempt resumed into them rather than retyping. That
+is why every candidate's log begins with a commit of someone else's code.
+
+### 3.0 K0 — the mechanical side-channel gate, and the calibration that makes it a test
+
+THREAT-MODEL.md §6.4 specifies S1–S6 and states that none of them reads only existing artifacts.
+Nothing had been built. `fish7 v7side` (`engine/src/v07_side.hpp`, committed `d1ec24f`) implements
+S3, S4, S5 and S6 and is the first mechanical check of the homogeneity constraint in this corpus.
+
+The design decision worth recording is **S6 by reconstruction rather than by IPC**. THREAT-MODEL
+§6.4 proposes separate processes communicating a serialised event stream; that needs an event format
+and an IPC path, neither of which exists. Instead every decision of every certified seat is rebuilt
+from (own hand, public event stream, reset seed) alone, by a fresh agent, **on a freshly spawned
+thread** (clean thread-locals) and **after the game** (time-shifted, so a process-global static is
+read at the wrong moment), with the seat's own past decisions interleaved into the replay so that a
+stochastic policy's private RNG advances exactly as the live run did. It covers all four decision
+types of §6.2 **plus `bestGuess`** — no prior work in this corpus looked past asks.
+
+**Three planted cheats, each failing exactly one test**, is what makes the gate a test rather than a
+ritual. `v07x:cheat=seed` inverts its own reset seed (splitmix64 finaliser inverted step by step plus
+a modular inverse of `0x9E3779B97F4A7C15`, 2,000 round trips verified before the gate will run),
+re-deals, identifies the post-deal rotation from its own hand, and plays only guaranteed hits: S4's
+ask hit rate 87.62% → 53.41%, S5's gap +68.79 against a +6.16 floor — and it **passes S6, which is
+correct and is the point**, because a seed is something the seat legitimately receives.
+`v07x:cheat=shared` writes a process-global (deliberately not thread-local) board read from
+teammates' slots: S6 5.75% of decisions irreproducible, S3/S4/S5 clean. `v07x:cheat=conv` reads the
+card index of a teammate's most recent ask and conditions on its parity while ignoring the identical
+label on an opponent's: S3 asymmetry +74.72 ± 1.34 against a +3.96 floor, everything else clean.
+**No test subsumes another; dropping any one certifies one of these three cheats.**
+
+**Two corrections to THREAT-MODEL §6.4, both structural.**
+
+**S5 as specified is vacuous.** "Resample the other five hands and require the action to be
+unchanged" cannot detect anything inside this engine: an `Agent` receives its own hand once and a
+public event stream thereafter, so resampling the other hands changes neither input and every policy
+passes, clairvoyant ones included. The reason is the finding: **within the `Agent` interface the
+reset seed is the entire hidden-information surface**, which is why E-1 is the whole of the
+clairvoyance threat and why closing one channel closes the class. S5 was re-scored as
+P(hit | truth) − P(hit | exact posterior draw), with a matched reference arm at the opposing seats on
+the same deals, and in that form it separates the seed cheat from the incumbent by more than tenfold.
+
+**S5 has a large structural floor.** The incumbent's gap is ~6 points and switching v0.6's own policy
+prior off does not remove it (`v06:ptheta=0,pphi=0` gives +6.37). The floor is not the parameter
+vector: once the transcript is policy-generated, the true deal is not a draw from the
+policy-agnostic posterior. It is the same channel phase 1 measured at ~2.0 bits/ask, showing up in a
+second instrument.
+
+**The verdict on the incumbent, which had never been checked.** `v06`, three copies, both training
+banks, 600 deals × 2: S6 **0 of 391,960 and 0 of 396,174** decisions irreproducible; S4
+**DETERMINISTIC, 600/600 transcripts bit-identical** under an independent per-seat stream — so
+**threat-model E-1 is closed by measurement rather than by grep**, and the corpus can stop describing
+it as "open but unused"; S5 gap +6.12/+6.42 against a threshold of 20; S3 asymmetry +3.83 ± 0.95 and
++4.48 ± 0.97 against a threshold of 15 and 3σ. `v05` and `v07:r12=25` also CERTIFIED.
+
+**The one NOT CERTIFIED verdict was the gate's own defect.** `F-cheap` on bank 7030002 returned one
+irreproducible ask in 264,051. Three candidates reproduced and bisected it independently. Running
+`--tests=s6` alone at 2 threads gives **0/264,075, twice, bit-identical including the denominator**;
+at 1 thread, 1/264,061, twice; the full four-test run, 1/264,051. **The audited decision count itself
+takes four values**, so running S3/S4/S5 in the same process changes which games S6 then sees: S6 is
+partly measuring its own harness. The important half of the negative is that `fish7 match` on that
+spec and bank is bit-identical at 1, 2 and 3 threads on win rate, events per game, ask accuracy and
+declaration accuracy — **no strength number in the corpus is impugned**. One agent inferred the
+stronger claim that no search number is bit-reproducible across thread settings; two independent
+direct measurements of `match` contradict it and the weaker statement is the one the evidence
+supports. **Repair: `v7side` must run S6 in a clean process.**
+
+**A real defect found while chasing it, and killed as the explanation.**
+`RolloutEngine::seatAgents()` — the function written to reset the rollout blueprints — **has no
+caller anywhere in the tree**, while `Game::emit` calls `observe()` on those blueprints forever, so
+they accumulate the events of every rollout of every decision of every deal. The fix (`rreset=1`) is
+**not** the cause of the S6 anomaly and is **inert in play** (byte-identical to six decimals on win
+rate, events per game and ask accuracy). Which is itself the lead: the rollout blueprints'
+accumulated observations have zero measurable effect on the search's output.
+
+### 3.1 K1 — the leaf evaluator: fitted 74× better, worth nothing, and the conditional discharged anyway
+
+**Killed as specified; the conditional it was sent to discharge is discharged by re-measurement.**
+
+The probe supported the premise emphatically. Between-candidate R² — the only component the paired
+LCB rule can consume — is 0.00108 for `MaterialLeaf` against 0.07976 for a 13-feature contrast fit in
+the endgame regime, and **−0.01004** against +0.03668 full-game, on ~1.3M leaves, fitted on bank
+7030004 and replicated out of sample on two evaluation banks. The material leaf full-game is worse
+than predicting a decision's group mean. The probe also stated L9 algebraically for the first time:
+`leafFeatures` accumulates `f[12] = f[1] + λ·f[2]` exactly, so v0.6's leaf is a two-feature linear
+function with one shipped constant λ = 1.0, and the contrast-optimal ratio is λ_eff ≈ 0.13.
+
+It converts to nothing. Pooled: fitted +1.84 against the material control's +2.01 endgame, losing on
+both banks individually; +1.60 against +1.52 full-game. **`searchChangeRate` is 0.3205 / 0.3217 /
+0.3237 for material / fitted / λ=0.13** at n ≈ 26,700 where 98/√n = 0.60 — a 74× better leaf changes
+*which* 32% of searched decisions are overridden, not *how many*, and the swap is strength-neutral.
+The only arm that moves it is the degenerate `leaf=0.0` (0.2937, −0.72 points). **The guarded LCB
+rule at κ = 2.5 is nearly leaf-invariant, which is what makes improving the leaf pointless.**
+
+**A methodological negative worth more than the result.** A six-point λ sweep on the reserve bank
+peaked at λ=0.13 with +2.92 against λ=1.0's +2.02. On the evaluation banks that became **+0.06**
+pooled, and full-game it did not replicate in sign. Six values swept on one bank, the maximum taken,
+and the evaluation banks charged for it.
+
+**And the reconciliation, which is the section's real finding.** INSTRUMENT §4.3 reports full-game
+truncated search at +0.08; that is one n=4,000 cell on one bank at 50.08% [48.52, 51.62]. Re-measured
+on the training banks with v0.6's own leaf, `depth=12` with no `maxq` is +1.78 [+0.42, +3.16] and
++1.25 [−0.30, +2.78], pooled **+1.52**; the corpus's exact `depth=24` configuration re-runs at +1.02
+[−0.55, +2.62]. **The interval always contained +1.5.** The inherited conditional's "still binds
+full-game" rested on a single underpowered cell. It is dominated as an operating point — +1.52 at
+5.81 games/s against `F-cheap`'s +2.01 at 17.24 — and its only claim is generality.
+
+### 3.2 K2 — ledger L1 closed at exactly zero, and the exact posterior beaten again
+
+**Killed twice over, in four minutes of measurement, by the ledger's own stated kill condition.**
+
+L1's replay — "the cheapest decisive experiment in this document", specified in phase 0 and never
+run — was implemented as a three-way re-derivation at every voluntary declaration under
+`decisionCapture()` only, scored by the driver against the deal it alone can see. Result:
+**`jointDiffersRate` = 0.00000** on 0/35,957 and 0/35,957 declarations with urgency on, 0/26,812 and
+0/26,808 with it off, and 0/22,473 and 0/22,478 under `jalloc=1` itself — **roughly 210,000
+declarations, not one disagreement.** `jointFixRate` 0/783 and 0/750; `jointBreakRate` 0/35,174 and
+0/35,207. It is not a tie artifact: of 8,813 genuinely ambiguous declarations the joint score
+resolved 8,813 = **100.0% strictly**, and 41.3% of declarations have ≥2 feasible allocations, so
+there was plenty to disagree about. The reason is one line: **`bel.jointSequential`'s first
+chain-rule factor is literally `bel.marg[c][p]`**, and the sequential re-Sinkhorn reweights the
+survivors without reordering them. L1's proposed fix is the same function.
+
+The ceiling is the number to keep. Routed through the **exact** joint maximiser, declaration accuracy
+falls 0.97822 → 0.96679 and 0.97914 → 0.96774, and 0.99142 → 0.97725 with urgency off; paired
+McNemar on 17,978 declarations gives **+218 fixed, −454 broken, net −1.313 pp ≈ −1.58 win-rate
+points**. Decomposed: 87% of declarations have exactly one feasible allocation (shipped 0.99846); 3%
+are flat, where the exact object is provably a coin flip and the shipped rule scores 0.573 against
+0.500; **10% are non-flat with ≥2 allocations, and there the shipped marginal product scores 0.9284
+against the exact MAP's realised 0.8220** — the shipped rule beats exact Bayes by 10.6 points exactly
+where exact Bayes has an opinion. And **72.4% [69.0, 75.8] / 74.4% [71.0, 77.8]** of the L1 error
+class sits in flat states with a 0.518/0.514 exact MAP, which is verbatim L1's own kill condition.
+Ledger C2 said the exact posterior under a uniform prior is the worst of the three inference paths as
+a *predictor*; this is the same finding measured for the first time on the decision itself.
+
+**The cross-cut that changes the ledger's arithmetic.** Deleting urgency removes **71%** of the whole
+L1 error class (1.88%/1.82% → 0.541%/0.533%) and drops the oracle ceiling for a perfect allocator
+from 2.45 win-rate points to **0.84**, below the detection floor. L1 is largely a downstream symptom
+of the branch K3 owns, and **phase 6 must not add K2's and K3's numbers**. As a by-product the same
+capture reproduced phase 2's urgency-off result through an entirely different channel: +1.32 and
++1.20 pp of declaration accuracy = +1.44 to +1.58 points against phase 2's per-game +1.23 to +1.62.
+
+**L13 re-derived and still dead, in both arms.** 108 forced declarations in 20,000 team-games
+(0.00540/game) at accuracy 0.2778 with urgency on — so closing the entire gap to the 0.466 ceiling is
+worth **0.030** win-rate points, the ledger's own 0.016 corrected upward by a factor of two and still
+1/50th of the floor. New and previously unrecorded: **urgency-off raises forced-endgame incidence
+about six-fold (0.0054 → 0.0317 per game) while raising its accuracy from 0.278 to 0.460**, closing
+the gap by itself. The one route by which L13 could have returned is pre-empted by K3's change.
+
+**A lesson worth generalising.** `jalloc=1` is provably inert at declarations and still moves play —
+−0.07 pooled over 48,000 games, +0.167 pp of mirror misdeclaration — because `feasibleAllocation`
+also runs on candidate half-suits that are never declared, where the rescored `pAlloc` perturbs the
+declare/don't-declare comparison. A mechanism can be provably inert on the decision it targets and
+active, harmfully, on a different one.
+
+### 3.3 K3 — the survivor: the indicted defect stack, and a termination rule with a fifty-fold margin
+
+**Live, and the only survivor.** Full result in `CANDIDATES.md` §5; what belongs here is how the
+mechanism was justified before any strength cell was run.
+
+`stall=999` is a threshold no game can reach, so setting it arms the detector's instrumentation
+without ever firing the rule — which means the longest per-seat no-progress run can be read straight
+off ordinary play, at **zero game cost**. Over 800 mirror games and ~456,000 seat-events, v0.6 never
+produces a run longer than **6** (median 3, p99 5); the K3 stack is identical at 3/5/6; the frozen
+configuration (`m1=0` + urgency-off, whose self-play tail is 405 events) produces **326**. A
+fifty-fold separation, so any K in roughly [12, 60] is unreachable in ordinary play and immediate in
+a freeze. **The 220-event clock has no comparable margin: one global threshold with a fifteen-point
+cliff immediately behind it.**
+
+With `stall=12` or `stall=20` armed, every non-diagnostic line of the mirror pathology digest is
+**byte-identical** to the same configuration without the key, with the rule firing **zero times**
+across ~455,000–465,000 `proposeDeclaration` calls. The cost in ordinary play is identically zero.
+On the one configuration that does freeze, K=12 takes the tail from 405 events to 141, the longest
+dead run from 326 to 12, and action-limit games from 2 to 0, at the cost of two declarations taken
+under the stall rung, **both correct**. It does **not** rescue `m1=0`, which still plays 1.71%
+provably-dead asks and still fails gate rule 1; that was the stress case, never a proposal.
+
+**The termination argument was corrected rather than shipped as written.** The progress hash includes
+`handCount[]`, so a successful ask always scores as progress even though a card moving between seats
+is not a monotone gain. The monotone argument therefore bounds only the no-new-certificate mode of
+non-termination. That happens to be the mode that occurs and the empirical bound is what carries, but
+the code comment claimed more than it had.
+
+**The stochastic limb, priced and closed.** A genuinely private per-seat tie draw (`rtie=2`) loses
+**−0.31 [−1.20, +0.59]** over 24,000 games against the publicly reproducible hash, both banks
+marginally favouring the random arm. THREAT-MODEL §10's open question "What does H1 cost in Fish?"
+now has a number at this decision point: **zero to within ±0.9**. It also buys nothing, because phase
+1 left no readability handicap for it to purchase. Keep the deterministic rule — determinism is free
+and is what earns S4's 400/400 transcript-identity result.
+
+**The one open gate item was closed after the workstreams finished.** The composite's S3 cell had run
+at `--s3nodes=1` for cost and returned 11.92 ± 2.33 against a threshold of 15 — the closest anything
+in the phase came to failing. Re-run at the standard three nodes per deal: **+7.061 ± 1.357
+(7030001) and +8.645 ± 1.353 (7030002), CERTIFIED on both**
+(`research/v07/results/K3-side-composite-s3nodes3.txt`). The under-powered estimate was noise around
+a true value near 7–9. But the **ladder** is worth carrying forward: S3 asymmetry runs `v05` ≈ 0,
+`v06` +3.83/+4.48, `v07:r12=25` +5.02/+5.55, this composite +7.06/+8.65, against a threshold of 15.
+Nothing here is an offence and the margin is real, but it is shrinking as configurations stack
+mechanisms that read the transcript harder. Phase 4 should keep measuring it rather than assume it.
+
+### 3.4 K4 — the per-decision objective confirmed as an instrument and killed as an objective
+
+**Killed, with two certified negatives, and one probe worth more than the fits.**
+
+The probe that cost three minutes: **nobody had measured the design effect of deal clustering, and
+nobody could have, because no artifact in the corpus prints the ask count.** L5's arithmetic —
+decisions per game buys that ratio in effective sample — silently assumes decisions are independent.
+Measured over 48 independent blocks: DEFF 1.03 (`v06`) / 1.32 (`r12=25`) for declaration accuracy,
+1.01 / 0.73 for the allocation-error share, 3.41 / 1.42 for ask accuracy. In the ledger's own
+currency, a one-win-rate-point-equivalent effect at 2σ resolves in **284–560 games on the declaration
+channel against 9,604 on the scoreboard**. **L5's precision claim is confirmed at 17×–39×**, and deal
+clustering eats almost none of it on the declaration channel.
+
+The objective fails. Four fits at matched budget (6 gens × pop 12 × 150 deals × 2 rotations = 21,600
+games, identical starting vector, identical common random numbers, phase 2's own CEM
+hyperparameters), pooled over 24,000 evaluation games on two banks: `win` **+0.40**, `selfdecl`
+**−2.26**, `selfask` **−1.59**, `selfalloc` **−1.20**, every one replicated in sign; at a second
+fitting seed `win` −1.34 and `selfdecl` −1.77. Two clear the 1.53 floor as certified negatives.
+
+**The mechanism is measured, not inferred.** Every per-decision fit moved its own proxy in the
+intended direction *on the evaluation banks* and lost: `selfdecl` bought +0.39 pp of declaration
+accuracy and paid **−2.33 pp** of ask accuracy; `selfask` bought +2.10 pp of ask accuracy and paid
+0.34 pp of declarations. The ledger's §0.2 conversion prices `selfdecl`'s gain at +0.46 points; the
+sign is wrong and the magnitude off by 2.7. **That conversion was fitted where declaration accuracy
+was the only thing moving, and a fitter holding 55 coordinates holds nothing else fixed.** This is
+the v0.5 → v0.6 fact — v0.6 *lost* 2.3 pp of ask hit rate while *gaining* win rate — reproduced with
+the sign flipped at nearly the same magnitude.
+
+**A prior probe that bears on the whole widened class.** Over the strength-relevant range of phase
+2's `r12` dose sweep, both proxies are strongly **anti**-correlated with strength: r = −0.74 for ask
+accuracy, r = −0.83 for declaration accuracy. The apparent positive correlation across all eight
+doses is one leverage point at dose 40, where the policy collapses and everything falls together.
+**The proxy only agrees with strength once the policy is already broken.**
+
+**The surprise, unexplained.** The per-decision objective did not make the CEM landscape less flat.
+The share of generations in which the fitter could not beat its own mean vector out of twelve
+proposals is 2/6 for the per-game objective at 300 decisions a cell, 2/6 for `selfdecl` at 1,285, 2/6
+for `selfalloc` at 1,303; only `selfask`, at 12,871, reached 1/6. **Forty-three times the decision
+count bought essentially no search traction.** Precision and traction are different things here.
+
+**What this does not kill.** At `sigmarel=0.08` the widened coordinates get σ = 1.92 on a [−12, 12]
+range, so six generations cannot travel from zero to `r12=25`, and every fit ended with |r12| < 0.9.
+This rung tests whether the objective helps *locally near `v06`*. **The strongest surviving form of
+L5 — a per-decision fit at much wider σ for the same total games, which the design-effect numbers say
+is affordable — has never been run.** And at this budget the per-*game* objective also fails
+(−1.34 at the second seed), so the honest reading of the rung is that a CEM in this class
+random-walks at 21,600 games and walks downhill.
+
+### 3.5 K5 — the corpus's first learned agent, the winner's curse, and ledger C1′ closed
+
+**Killed by the brief's own stated kill condition, on the first pass, and the diagnosis is the
+contribution.**
+
+A conditional logit over 55 decision-time coordinates, fitted on **88,502 searched decisions /
+425,536 candidate rows** captured from `F-cheap` self-play on training bank 7030004 and held out by
+deal, predicts the search's choice at **0.6783** against a blueprint-argmax baseline of **0.6783** —
+identical to four decimals, on the training set too, so it is not an optimisation failure. The model
+learns "always take candidate 0".
+
+**Why: the label is mostly noise, and the null was built to prove it at zero game cost.** Where the
+search deviates, its winning LCB beats the runner-up by less than one combined standard error
+**80.41%** of the time (median z = +0.41). Setting every candidate's true advantage to exactly zero,
+drawing observed advantages from the real recorded standard errors, and applying the engine's real
+LCB rule reproduces the search's deviation rate at **0.3207 against an observed 0.3221** — a 0.4%
+relative error on a quantity the null was never fitted to — and reproduces **84.4%** of the search's
+apparent per-decision advantage. **Inside the bit-for-bit tie group, where the rule applies
+`kappaTie = 0` and therefore no shrinkage at all, it reproduces 95.5%.** This bears on every
+attribution of the search in the corpus.
+
+**The signal is not entirely absent and the arithmetic closes.** Refitting as a regression on the
+signed advantage rather than a classifier on the choice gives held-out R² = **+0.100**; the deployed
+argmax realises +0.0187 sets of held-out advantage against the search's upward-biased +0.1362; and
+the search's non-curse residual is +0.137 − 0.116 = +0.021. **The learned function recovers
+essentially everything genuinely predictable, and everything genuinely predictable is ~15% of what
+the search looks like it is doing.**
+
+**The deployment measurements, and the control that decided it.** Unrestricted, the learned re-ranker
+is **−1.83** pooled over 48,000 games, replicated, clearing the floor in the wrong direction — it
+deviates on 66% of decisions, twice the search's rate, and outside the tie group the blueprint's
+ordering is real information a 10%-R² signal cannot overturn. Restricted to the tie group it is
+**+1.19** pooled, positive on both banks, gate-clean, certified — which looked live for about twenty
+minutes, until the control: `v06:rtie=1`, a free hash tie-break with no learned content, is already
++1.14 [+0.52, +1.77]. Head to head, the learned re-ranker against `rtie=1` is **−0.01 [−0.46, +0.44]**
+at 48,000 games, replicated (+0.00, −0.03).
+
+**This closes ledger C1′**, Open since v0.6: the tie-group ensemble is **real as randomisation and
+exactly zero as selection**. And `v06` is now the wrong control for anything that touches the tie
+group — 53.80% of contested ask decisions are decided by an unstable `std::sort` order, and simply
+decorrelating it is worth +1.14.
+
+**A correction the corpus should absorb.** Measured back to back on a common basis, `F-cheap` is
+**~3.2×** the blueprint, not 242× — the 242× figure (and the paper's "three orders of magnitude") is
+**F-search**, the unrestricted configuration. This session's independent 2-thread calibration agrees
+at 2.95×. The cost problem that motivated the entire candidate is 3× for the operating point whose
+decisions were actually distilled.
+
+**What survives the kill:** the corpus has a learned component; an engine capture channel recording
+one labelled row per *candidate* of every searched decision (the existing `DecisionRecord` channel
+records only the chosen candidate, which cannot fit a re-ranker); and the first demonstration that a
+policy whose function class is not fixed in advance **passes the mechanical side-channel gate** — S3
+asymmetry +3.45/+4.43 unrestricted and +4.41/+4.91 tie-only against the incumbent's +3.83/+4.48, S6
+zero irreproducible decisions in over a million, S4 fully deterministic.
+
+### 3.6 What did not get done, and what was cut
+
+Stated plainly rather than smoothed over, because it bears on how the phase's claims should be read.
+
+* **Nothing measured in this phase is certified.** Every pooled interval's lower bound sits below the
+  C1 class detection floor of 1.53 — the best is +1.28, on the 48,000-game K3 replication. Phase 2's
+  own log describes the same +1.91 as "above the class detection floor of 1.53", which is true of the
+  point estimate and not of the interval.
+* **K3's +1.42 over the phase-2 composite ran on one bank only**, with no mirror commit gate on the
+  combined configuration. It is the single most important cell for phase 4 to replicate.
+* **`v7decide` was not run by K3 or K5.** The machine could not carry it alongside the paired strength
+  cells. K3's declaration-accuracy movements are read off the match JSON instead, where they are free;
+  K5's per-decision quantities come from its own capture channel. Recorded so nobody mistakes the
+  absence for a null.
+* **Machine contention cost real cells.** Several batteries were killed by the background-harness
+  lifetime rather than by anything they found; K1's full-game cells ran at 4,000–5,000 games rather
+  than the 12,000 intended, so its full-game numbers carry ±1.39–1.55 rather than ±0.60. Truncated
+  artifacts were deleted rather than reported.
+* **K1 never reached the control-variate variance reduction**, which was item 4 of its brief.
+* **K2 cancelled its `F-cheap` screen cells** and did not instrument `feasibleAllocation`'s other
+  callers directly; both are recorded as not-run rather than as zeros.
+* **The partner-regime table the phase-4 brief requires has not been run** and nothing in this phase
+  substitutes for it.
+* **The I-2 relabelling test, S1, S2 and the E-3 confidence check are not built.** The relabelling
+  test is the cheapest next addition and would give an exact rather than statistical criterion for
+  part of what S3 covers; the E-3 check would be near-free (zero the field before `observe`, require
+  identical transcripts).

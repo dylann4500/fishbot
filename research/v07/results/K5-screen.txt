@@ -1,0 +1,30 @@
+K5 -- amortising test-time search into a learned evaluator.  Measured cells.
+All paired duplicate blocks, --rotations=2, --threads=2.  Training bank 7030004,
+disjoint from both evaluation banks.  edge = 100*winRateA - 50.
+
+cell                                   n     edge             95% CI     hw98
+K5-vs-v06-7030001                  24000    -1.86  [ -2.40,  -1.32]     0.63
+K5-vs-v06-7030002                  24000    -1.81  [ -2.36,  -1.26]     0.63
+K5tie-vs-rtie-7030001              24000    +0.00  [ -0.61,  +0.63]     0.63
+K5tie-vs-rtie-7030002              24000    -0.03  [ -0.65,  +0.60]     0.63
+K5tie-vs-v06-7030001               24000    +1.58  [ +1.07,  +2.10]     0.63
+K5tie-vs-v06-7030002               24000    +0.80  [ +0.27,  +1.32]     0.63
+
+pooled (mean of the two bank edges, pooled n):
+  learned re-ranker, unrestricted, vs v06         -1.83  n=48000  +-0.45
+  learned re-ranker, TIE GROUP ONLY, vs v06       +1.19  n=48000  +-0.45
+  learned re-ranker, TIE GROUP ONLY, vs v06:rtie=1  -0.01  n=48000  +-0.45
+
+throughput, all three measured back to back on the same loaded machine
+(six agents, load ~70 on 15 cores), 800 games each, 2 threads.  The ABSOLUTE
+numbers are depressed by roughly 3.7x against the unloaded calibration; the
+RATIOS are the quantity of interest.
+  learned tie-only vs v06    14.99 games/s
+  F-cheap search   vs v06     5.56 games/s
+  v06              vs v06    17.84 games/s
+  learned / search = 2.7x    learned / v06 = 0.840x    v06 / search = 3.2x
+  NOTE: the corpus's 242x/300x figure is F-SEARCH (unrestricted).  F-cheap,
+  the configuration whose decisions were distilled, is only ~3.2x the
+  blueprint on this basis -- consistent with the phase-3 brief's own 2-thread
+  calibration (22.7 vs 67 games/s = 2.95x).  The cost problem the amortisation
+  was built to solve is 3x, not 242x, for this operating point.

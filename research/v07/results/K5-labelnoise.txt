@@ -1,0 +1,21 @@
+decisions 88502, of which usable for the z statistic 72578
+LCB margin over runner-up, in units of its own combined standard error:
+   p10   z = +0.109
+   p25   z = +0.351
+   p50   z = +0.963
+   p75   z = +2.107
+   p90   z = +3.220
+   mean  z = +7576226686458.334
+   share of decisions whose winning margin is under 0.25 se: 0.1908
+   share of decisions whose winning margin is under 0.50 se: 0.3266
+   share of decisions whose winning margin is under 1.00 se: 0.5104
+   share of decisions whose winning margin is under 2.00 se: 0.7322
+
+Same statistic restricted to decisions the search DEVIATED on (r>0):
+   n=28162  median z +0.411   share under 1 se 0.8041
+Restricted to decisions with a bit-for-bit tie group (tie>=2):
+   n=39242  median z +0.469   share under 1 se 0.7728
+
+paired mean advantage m of the CHOSEN candidate (sets of differential):
+   mean +0.1371   median +0.0000   share > 0: 0.3221
+   its own se: mean 0.1084 -> the search acts on a signal that is 1.25 se in size

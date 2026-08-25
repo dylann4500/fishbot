@@ -1,0 +1,17 @@
+PER-CELL
+  k3s_vs_fcheap        bank=7030001 n= 12000 edge= +1.56 ci=[ +0.67, +2.43] 98/sqrtN=+-0.89 declAccA=0.9909 declAccB=0.9807 ev/g=94.9
+  k3s_vs_fcheap        bank=7030002 n=  8000 edge= +0.72 ci=[ -0.36, +1.79] 98/sqrtN=+-1.10 declAccA=0.9909 declAccB=0.9817 ev/g=95.1
+  k3s_vs_v06           bank=7030001 n= 12000 edge= +2.89 ci=[ +2.01, +3.77] 98/sqrtN=+-0.89 declAccA=0.9914 declAccB=0.9789 ev/g=95.3
+  k3s_vs_v06           bank=7030002 n=  6000 edge= +2.30 ci=[ +1.03, +3.57] 98/sqrtN=+-1.27 declAccA=0.9910 declAccB=0.9789 ev/g=95.4
+  stackT_vs_fcheap     bank=7030001 n=  6000 edge= +0.97 ci=[ -0.30, +2.22] 98/sqrtN=+-1.27 declAccA=0.9910 declAccB=0.9830 ev/g=95.1
+  stackT_vs_fcheap     bank=7030002 n=  6000 edge= +1.37 ci=[ +0.13, +2.58] 98/sqrtN=+-1.27 declAccA=0.9906 declAccB=0.9822 ev/g=95.2
+  stackT_vs_r2T        bank=7030001 n= 12000 edge= -0.24 ci=[ -1.13, +0.65] 98/sqrtN=+-0.89 declAccA=0.9908 declAccB=0.9912 ev/g=95.0
+  stackT_vs_r2T        bank=7030002 n= 12000 edge= -0.38 ci=[ -1.27, +0.52] 98/sqrtN=+-0.89 declAccA=0.9911 declAccB=0.9914 ev/g=95.2
+  stackT_vs_v06        bank=7030001 n= 24000 edge= +1.80 ci=[ +1.18, +2.44] 98/sqrtN=+-0.63 declAccA=0.9910 declAccB=0.9810 ev/g=95.3
+  stackT_vs_v06        bank=7030002 n= 24000 edge= +2.01 ci=[ +1.38, +2.62] 98/sqrtN=+-0.63 declAccA=0.9908 declAccB=0.9804 ev/g=95.4
+POOLED (mean of bank edges, summed n)
+  k3s_vs_fcheap        banks=2 n= 20000 edge= +1.14 CI=[ +0.15, +2.11] replicatedInSign=True  measured, NOT certified
+  k3s_vs_v06           banks=2 n= 18000 edge= +2.60 CI=[ +1.52, +3.67] replicatedInSign=True  measured, NOT certified
+  stackT_vs_fcheap     banks=2 n= 12000 edge= +1.17 CI=[ -0.08, +2.40] replicatedInSign=True  measured, NOT certified
+  stackT_vs_r2T        banks=2 n= 24000 edge= -0.31 CI=[ -1.20, +0.59] replicatedInSign=True  measured, NOT certified
+  stackT_vs_v06        banks=2 n= 48000 edge= +1.91 CI=[ +1.28, +2.53] replicatedInSign=True  measured, NOT certified

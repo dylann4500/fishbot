@@ -1,0 +1,10 @@
+urgency ON (v06 as shipped)
+   forced declarations 108 in 20000 team-games  ->  0.00540 per game (0.1201% of 89892 declarations)
+   forced-endgame accuracy 0.2778;  gap to the 0.466 feasible ceiling 0.1882
+   closing the WHOLE gap: 0.00540 x 0.1882 x 2 = 0.002033 sets = 0.0303 win-rate points
+
+urgency OFF
+   forced declarations 539 in 17000 team-games  ->  0.03171 per game (0.7096% of 75961 declarations)
+   forced-endgame accuracy 0.4601;  gap to the 0.466 feasible ceiling 0.0059
+   closing the WHOLE gap: 0.03171 x 0.0059 x 2 = 0.000373 sets = 0.0056 win-rate points
+

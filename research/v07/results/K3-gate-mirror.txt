@@ -1,0 +1,144 @@
+### MIRROR v06
+v06 vs v06
+games              800
+events/game        94.1925   median 94  p90 109  p99 120  max 131
+asks/game          84.8825   hit rate 53.633%
+DEAD asks          8  (0.011781% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      8  (0.011781% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1532  (2.25606%)
+repeat (a,suit,t)  31860  (46.9178%)
+asks in own-locked 7674  (11.3009% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 184 (2.55556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 4 (66.6667%)
+action-limit games 0 (0%)
+
+### MIRROR v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 vs v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+games              800
+events/game        95.6925   median 95  p90 111  p99 125  max 129
+asks/game          86.335   hit rate 53.7673%
+DEAD asks          14  (0.0202699% of asks)   -- actor could PROVE the target lacks the card
+dead runs          14  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      14  (0.0202699% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1690  (2.44686%)
+repeat (a,suit,t)  32764  (47.4373%)
+asks in own-locked 7888  (11.4206% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 74 (1.02778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   50   wrong 20 (40%)
+action-limit games 0 (0%)
+
+### MIRROR v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12 vs v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+games              800
+events/game        95.6925   median 95  p90 111  p99 125  max 129
+asks/game          86.335   hit rate 53.7673%
+DEAD asks          14  (0.0202699% of asks)   -- actor could PROVE the target lacks the card
+dead runs          14  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      14  (0.0202699% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1690  (2.44686%)
+repeat (a,suit,t)  32764  (47.4373%)
+asks in own-locked 7888  (11.4206% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 74 (1.02778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   50   wrong 20 (40%)
+action-limit games 0 (0%)
+-- K3 stall detector (K=12, K2=24, soft=0) --
+longest no-progress run per game   median 3  p99 5  max 6
+(seat,event) pairs at press>=1     0  (0% of seat-events)
+declarations while stalled>=K      0   wrong 0 (0%)
+declarations while stalled>=K2     0   wrong 0 (0%)
+agent-side: declOpps 459312  stage1 0  stage2 0  clockStage1 0  maxStall 6
+
+### MIRROR v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=20
+v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=20 vs v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=20
+games              800
+events/game        95.6925   median 95  p90 111  p99 125  max 129
+asks/game          86.335   hit rate 53.7673%
+DEAD asks          14  (0.0202699% of asks)   -- actor could PROVE the target lacks the card
+dead runs          14  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      14  (0.0202699% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1690  (2.44686%)
+repeat (a,suit,t)  32764  (47.4373%)
+asks in own-locked 7888  (11.4206% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 74 (1.02778%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   50   wrong 20 (40%)
+action-limit games 0 (0%)
+-- K3 stall detector (K=20, K2=40, soft=0) --
+longest no-progress run per game   median 3  p99 5  max 6
+(seat,event) pairs at press>=1     0  (0% of seat-events)
+declarations while stalled>=K      0   wrong 0 (0%)
+declarations while stalled>=K2     0   wrong 0 (0%)
+agent-side: declOpps 459312  stage1 0  stage2 0  clockStage1 0  maxStall 6
+
+### MIRROR v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1 vs v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+games              800
+events/game        96.8125   median 96  p90 111  p99 132  max 405
+asks/game          87.475   hit rate 52.9551%
+DEAD asks          1814  (2.59217% of asks)   -- actor could PROVE the target lacks the card
+dead runs          1160  mean length 1.56379  longest 326
+games w/ run>=6    2  (0.25%)
+starved turns      328  (0.468705% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     3174  (4.53558%)
+repeat (a,suit,t)  34212  (48.8883%)
+asks in own-locked 8544  (12.2092% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7192   wrong 76 (1.05673%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   34   wrong 16 (47.0588%)
+action-limit games 2 (0.25%)
+
+### MIRROR v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12 vs v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+games              800
+events/game        96.06   median 96  p90 110  p99 131  max 141
+asks/game          86.7125   hit rate 53.4381%
+DEAD asks          1186  (1.70967% of asks)   -- actor could PROVE the target lacks the card
+dead runs          1160  mean length 1.02241  longest 12
+games w/ run>=6    2  (0.25%)
+starved turns      14  (0.0201816% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     2546  (3.67017%)
+repeat (a,suit,t)  33586  (48.4157%)
+asks in own-locked 7916  (11.4113% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 76 (1.05556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   34   wrong 16 (47.0588%)
+action-limit games 0 (0%)
+-- K3 stall detector (K=12, K2=24, soft=0) --
+longest no-progress run per game   median 3  p99 9  max 13
+(seat,event) pairs at press>=1     8  (0.00173503% of seat-events)
+declarations while stalled>=K      2   wrong 0 (0%)
+declarations while stalled>=K2     0   wrong 0 (0%)
+agent-side: declOpps 461076  stage1 8  stage2 0  clockStage1 0  maxStall 13
+
+### MIRROR v06:stall=12
+v06:stall=12 vs v06:stall=12
+games              800
+events/game        94.1925   median 94  p90 109  p99 120  max 131
+asks/game          84.8825   hit rate 53.633%
+DEAD asks          8  (0.011781% of asks)   -- actor could PROVE the target lacks the card
+dead runs          8  mean length 1  longest 1
+games w/ run>=6    0  (0%)
+starved turns      8  (0.011781% of asks)   -- NO legal ask had a live possibility
+repeat (a,c,t)     1532  (2.25606%)
+repeat (a,suit,t)  31860  (46.9178%)
+asks in own-locked 7674  (11.3009% of asks)   -- guaranteed miss, but emits a certificate
+declarations       7200   wrong 184 (2.55556%)
+  at/after ev>=220 0   wrong 0 (0%)
+  forced endgame   6   wrong 4 (66.6667%)
+action-limit games 0 (0%)
+-- K3 stall detector (K=12, K2=24, soft=0) --
+longest no-progress run per game   median 3  p99 5  max 6
+(seat,event) pairs at press>=1     0  (0% of seat-events)
+declarations while stalled>=K      0   wrong 0 (0%)
+declarations while stalled>=K2     0   wrong 0 (0%)
+agent-side: declOpps 452124  stage1 0  stage2 0  clockStage1 0  maxStall 6
+
+DONE

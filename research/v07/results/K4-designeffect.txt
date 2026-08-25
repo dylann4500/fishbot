@@ -1,0 +1,21 @@
+arm            metric            p    n/blk  dec/game     SDemp     SDbin    DEFF  effDec/game
+v06            winRate     0.50000      200     1.000   0.00000   0.03536    0.00          inf  (MIRROR: exchangeable, no information)
+v06            askAcc      0.54080     8582    42.912   0.00993   0.00538    3.41       12.601
+v06            declAcc     0.97806      898     4.492   0.00497   0.00489    1.03        4.351
+v06            allocErr    0.01939      898     4.492   0.00463   0.00460    1.01        4.436
+v07:r12=25     winRate     0.51583      200     1.000   0.04056   0.03536    1.32        0.760
+v07:r12=25     askAcc      0.53180     8900    44.502   0.00629   0.00529    1.42       31.440
+v07:r12=25     declAcc     0.96467      927     4.634   0.00697   0.00606    1.32        3.510
+v07:r12=25     allocErr    0.02133      927     4.634   0.00405   0.00475    0.73        6.362
+
+--- games needed to resolve a 1.0-win-rate-point-equivalent effect, 2 sigma ---
+(conversion, LEDGER SS0.2: 1 pp of declaration accuracy ~ 1.2 pts of win rate;
+ so a 1-point effect is 0.833 pp of declaration accuracy.)
+  v06            winRate   :     9,604 games   (98/sqrt(N) = 1.0 pt)
+  v06            declAcc   :       284 games   (DEFF 1.03, 4.49 decisions/game)
+  v06            allocErr  :       299 games   (DEFF 1.01, rate 0.01939 per declaration)
+  v06            askAcc    : no established conversion to win rate (DEFF 3.41, 42.9 decisions/game, eff 12.60/game)
+  v07:r12=25     winRate   :     9,604 games   (98/sqrt(N) = 1.0 pt)
+  v07:r12=25     declAcc   :       560 games   (DEFF 1.32, 4.63 decisions/game)
+  v07:r12=25     allocErr  :       244 games   (DEFF 0.73, rate 0.02133 per declaration)
+  v07:r12=25     askAcc    : no established conversion to win rate (DEFF 1.42, 44.5 decisions/game, eff 31.44/game)

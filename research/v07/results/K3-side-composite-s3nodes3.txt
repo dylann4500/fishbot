@@ -1,0 +1,21 @@
+# K3 composite -- S3 listening substitution re-run at FULL power (--s3nodes=3).
+# The phase-3 K3 agent reported this cell at --s3nodes=1 for cost, where bank
+# 7030001 gave 11.92 +/- 2.33 against a threshold of 15 -- the closest any
+# configuration in phase 3 came to failing a side-channel test, and under-powered.
+# Re-run here at the standard 3 nodes/deal, 400 deals x 2 rotations, 2 threads.
+# spec: v07:m2=0,r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,
+#       s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+
+bank 7030001  PASS  teammate 52.198%  opponent 45.137%  asymmetry +7.061 +/- 1.357 pts
+              n_mate=2184  n_opp=3547  nodes=1713  (no rule-equivalent alternative at 633)
+bank 7030002  PASS  teammate 52.775%  opponent 44.130%  asymmetry +8.645 +/- 1.353 pts
+              n_mate=2198  n_opp=3535  nodes=1724  (no rule-equivalent alternative at 614)
+VERDICT: CERTIFIED on both banks.  Threshold 15 pts and 3 sigma.
+
+The under-powered 11.92 was noise around a true value near 7-9.  But note the
+LADDER, which is the finding worth carrying into phase 4: v05 ~0, v06 +3.83/+4.48,
+v07:r12=25 +5.02/+5.55, this composite +7.06/+8.65.  The asymmetry rises
+monotonically as a configuration stacks mechanisms that read the public
+transcript harder.  No offence at any point -- all are far under the threshold --
+but the direction of travel is real and phase 4 should keep measuring it rather
+than assume the margin is permanent.

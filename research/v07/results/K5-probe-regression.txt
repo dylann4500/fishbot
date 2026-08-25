@@ -1,0 +1,62 @@
+train 62330 / test 26172 decisions (deal cut 700)
+linear    l2=1e-06   heldout R2 +0.10135   mean-m-of-pick +0.01595  devrate 0.6684
+linear    l2=1e-05   heldout R2 +0.10138   mean-m-of-pick +0.01581  devrate 0.6687
+linear    l2=0.0001  heldout R2 +0.10119   mean-m-of-pick +0.01713  devrate 0.6682
+linear    l2=0.001   heldout R2 +0.10079   mean-m-of-pick +0.01771  devrate 0.6679
+linear    l2=0.01    heldout R2 +0.10049   mean-m-of-pick +0.01869  devrate 0.6646
+quadratic l2=1e-06   heldout R2 +0.10906   mean-m-of-pick +0.01567  devrate 0.6565
+quadratic l2=1e-05   heldout R2 +0.10909   mean-m-of-pick +0.01590  devrate 0.6570
+quadratic l2=0.0001  heldout R2 +0.10907   mean-m-of-pick +0.01365  devrate 0.5696
+quadratic l2=0.001   heldout R2 +0.10877   mean-m-of-pick +0.01425  devrate 0.5746
+quadratic l2=0.01    heldout R2 +0.10869   mean-m-of-pick +0.01408  devrate 0.5727
+
+mean TRUE paired advantage m of the candidate each rule picks, HELD-OUT deals:
+  blueprint argmax (v0.6)   +0.00000 sets   (= 0 by construction)
+  the search's own LCB rule +0.13624 sets   [UPWARD BIASED: selects on the draw it is scored on]
+  learned advantage (linear, l2=0.01) +0.01869 sets   devrate 0.6646
+
+converted at 1 set of differential = 14.7 win-rate points (LEDGER 0.2):
+  search   +2.003 pts/decision-equivalent   learned +0.275 pts
+  heldout R2 of the learned advantage against m: +0.10049
+
+--- deployment margin sweep (held-out), best class above ---
+  margin 0.00  tieOnly=False  mean-m-of-pick +0.01869  devrate 0.6646
+  margin 0.00  tieOnly=True   mean-m-of-pick +0.00464  devrate 0.3404
+  margin 0.01  tieOnly=False  mean-m-of-pick +0.01323  devrate 0.4506
+  margin 0.01  tieOnly=True   mean-m-of-pick -0.00105  devrate 0.0839
+  margin 0.02  tieOnly=False  mean-m-of-pick +0.01119  devrate 0.4156
+  margin 0.02  tieOnly=True   mean-m-of-pick -0.00105  devrate 0.0839
+  margin 0.03  tieOnly=False  mean-m-of-pick +0.01132  devrate 0.3313
+  margin 0.03  tieOnly=True   mean-m-of-pick -0.00002  devrate 0.0402
+  margin 0.05  tieOnly=False  mean-m-of-pick +0.00646  devrate 0.2342
+  margin 0.05  tieOnly=True   mean-m-of-pick +0.00004  devrate 0.0262
+  margin 0.08  tieOnly=False  mean-m-of-pick +0.00498  devrate 0.1012
+  margin 0.08  tieOnly=True   mean-m-of-pick +0.00000  devrate 0.0000
+  margin 0.12  tieOnly=False  mean-m-of-pick +0.00498  devrate 0.0384
+  margin 0.12  tieOnly=True   mean-m-of-pick +0.00000  devrate 0.0000
+  margin 0.20  tieOnly=False  mean-m-of-pick +0.00178  devrate 0.0128
+  margin 0.20  tieOnly=True   mean-m-of-pick +0.00000  devrate 0.0000
+  margin 0.30  tieOnly=False  mean-m-of-pick +0.00059  devrate 0.0038
+  margin 0.30  tieOnly=True   mean-m-of-pick +0.00000  devrate 0.0000
+  margin 0.50  tieOnly=False  mean-m-of-pick +0.00000  devrate 0.0000
+  margin 0.50  tieOnly=True   mean-m-of-pick +0.00000  devrate 0.0000
+  BEST: margin 0.00 tieOnly=False -> +0.01869 sets, devrate 0.6646  (13.7% of the search's +0.13624)
+
+--- top weights ---
+  setUnres               -0.10788
+  f15                    -0.07241
+  f8                     -0.06025
+  f5                     +0.05845
+  du                     +0.05685
+  f16                    +0.05490
+  f14                    +0.04408
+  f6                     +0.03915
+  _intercept             -0.03547
+  myInSet                -0.03235
+  f3                     -0.03235
+  f4                     +0.03108
+  f12                    +0.02884
+  f1                     +0.02518
+  p                      +0.02423
+
+wrote /private/tmp/claude-501/-Users-dylan-Documents-GitHub-fish-optimization/f63a50cf-0555-4d3c-99d1-238332bf1a3d/scratchpad/K5-reg.json

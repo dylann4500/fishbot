@@ -1,0 +1,8 @@
+observed: mean m of the search's pick   +0.13712 sets  (devrate 0.3221)
+NULL (true advantage identically zero, real se, real LCB rule):
+   mean drawn m of the pick             +0.11578 sets  (devrate 0.3207)
+   -> the observed value is 118.4% of what pure selection-on-noise produces
+
+inside the bit-for-bit tie group (kappaTie = 0, no shrinkage at all):
+   observed mean m of pick +0.19111   devrate 0.5106
+   null     mean m of pick +0.18250   devrate 0.5382

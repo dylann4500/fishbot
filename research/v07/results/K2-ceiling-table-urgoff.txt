@@ -1,0 +1,23 @@
+file: /Users/dylan/Documents/GitHub/fish optimization/research/v07/results/K2-records-urgoff-7030001.csv
+declarations with exact shape: 22341
+
+A. SHIPPED accuracy inside FLAT exact-posterior states, by support size
+   nAlloc=2   n=  245 (1.097% of decls)  shipped 0.6531 [0.5915,0.7099]  exact coin 1/n=0.5000
+   nAlloc=3   n=   29 (0.130% of decls)  shipped 0.9655 [0.8282,0.9939]  exact coin 1/n=0.3333
+   ALL FLAT>=2  n=  274 (1.226% of decls)  shipped 0.6861 [0.6289,0.7382]
+   -> headroom if a POLICY-PRIOR rule made flat states perfect: 0.3849 pp of decl accuracy = 0.462 win pts
+
+B. NON-FLAT states with >=2 allocations
+   n= 2197 (9.834% of decls)  shipped 0.9677 [0.9594,0.9743]
+   exact MAP realized 0.8471 [0.8314,0.8615];  exact posterior's OWN optimum E[pMap]=0.5515
+   -> headroom if a rule made NON-FLAT states perfect: 0.3178 pp = 0.381 win pts
+
+C. UNAMBIGUOUS (exactly one feasible allocation) n=19870 (88.94%)  shipped 0.99854
+
+D. exact-MAP paired McNemar over all declarations
+   +53 fixed  -375 broken  net -322 on 22341 = -1.4413 pp = -1.730 win pts
+
+E. the joint rule
+   ambiguous by the shipped enumerator: 8813 (39.45% of decls)
+   joint argmax differs from marginal-product argmax: 0
+   of those, slot-0 won STRICTLY on joint score (not by the tie rule): 8813 (100.0%)

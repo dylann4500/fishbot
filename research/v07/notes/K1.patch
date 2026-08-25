@@ -1,0 +1,646 @@
+diff --git a/engine/src/main.cpp b/engine/src/main.cpp
+index cb64aa1..13d7a57 100644
+--- a/engine/src/main.cpp
++++ b/engine/src/main.cpp
+@@ -28,6 +28,8 @@
+ #include "probe_declcard.hpp"       // appended: adversarial verify (declareByValue card delta)
+ #include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
+ #include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
++#include "v07_side.hpp"             // v0.7 phase-3 mechanical side-channel gate
++#include "v07_leaffit.hpp"          // v0.7 phase-3 K1: fitting the search leaf
+ #include <chrono>
+ #include <fstream>
+ #include <iostream>
+@@ -660,6 +662,140 @@ int main(int argc, char** argv) {
+     return 0;
+   }
+ 
++  // ------------------------------------------------------------------ v0.7 K1
++  // Sample the states the truncated search's own depth cut produces, record the
++  // realised continuation value under blueprint continuation, and fit a linear
++  // leaf on them.  See engine/src/v07_leaffit.hpp for why the between-candidate
++  // score is the one that decides and the overall score is a distraction.
++  if (cmd == "v7leaffit") {
++    if (argFlag(argc, argv, "help")) {
++      std::cout <<
++        "usage: fish7 v7leaffit --a=<search spec> [--b=v06] --games=N --seed=<FIT bank>\n"
++        "                       [--oos=<eval bank> --oosgames=M] [--stride=K] [--ridge=L]\n"
++        "                       [--threads=T] [--rotations=2] [--json] [--out=FILE]\n"
++        "\n"
++        "Runs --a against --b with the leaf sampler armed.  Every depth cut writes its\n"
++        "13-feature row; the rollout then keeps playing to the end under blueprint\n"
++        "continuation and the final signed half-suit differential is the target.  The\n"
++        "policy is NOT perturbed: playOut still returns the leaf value it would have\n"
++        "returned, and the determinization RNG is untouched.\n"
++        "Fit on the reserve bank (7030004); evaluate out of sample with --oos.\n";
++      return 0;
++    }
++    auto sample = [&](uint64_t bank, int games, std::vector<fish::LeafSample>& out) {
++      fish::leafResetStores();
++      fish::g_leafSampling = true;
++      fish::g_leafStride = atoi(argVal(argc, argv, "stride", "1").c_str());
++      MatchConfig mc;
++      mc.specA = argVal(argc, argv, "a", "v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26");
++      mc.specB = argVal(argc, argv, "b", "v06");
++      mc.games = games;
++      mc.seed = bank;
++      mc.rules = rulesFrom(argc, argv);
++      mc.threads = threads;
++      mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
++      MatchStats st = runMatch(mc);
++      (void)st;
++      fish::g_leafSampling = false;
++      fish::leafDrain(out);
++      fish::leafResetStores();
++    };
++    std::vector<fish::LeafSample> fitS, oosS;
++    uint64_t fitBank = strtoull(argVal(argc, argv, "seed", "7030004").c_str(), nullptr, 10);
++    int fitGames = atoi(argVal(argc, argv, "games", "300").c_str());
++    sample(fitBank, fitGames, fitS);
++    uint64_t oosBank = strtoull(argVal(argc, argv, "oos", "0").c_str(), nullptr, 10);
++    if (oosBank) sample(oosBank, atoi(argVal(argc, argv, "oosgames", "150").c_str()), oosS);
++
++    using namespace fish::leaffit;
++    double lam = atof(argVal(argc, argv, "ridge", "1e-4").c_str());
++    auto XofS = [](const std::vector<fish::LeafSample>& S, std::vector<const double*>& X, std::vector<double>& y) {
++      X.clear(); y.clear(); X.reserve(S.size()); y.reserve(S.size());
++      for (const auto& s : S) { X.push_back(s.f); y.push_back(s.y); }
++    };
++    std::vector<const double*> Xf, Xo; std::vector<double> yf, yo;
++    XofS(fitS, Xf, yf); XofS(oosS, Xo, yo);
++    Grouped gf = groupByDecisionDet(fitS), go = groupByDecisionDet(oosS);
++
++    // The three reference weight vectors, expressed in the same 13-slot basis.
++    double wMat[fish::NLEAF] = {0,0,0,0,0,0,0,0,0,0,0,0,1};   // MaterialLeaf: f[12]
++    double wScr[fish::NLEAF] = {0,1,0,0,0,0,0,0,0,0,0,0,0};   // ScoreLeaf: f[1]
++    bool allCols[fish::NLEAF]; for (int j = 0; j < fish::NLEAF; j++) allCols[j] = true;
++    allCols[12] = false;   // f12 = f1 + lambda*f2 exactly; admitting it is collinear
++    bool sc2[fish::NLEAF] = {false,true,true,false,false,false,false,false,false,false,false,false,false};
++
++    Fit lvl = ridgeFit(Xf, yf, lam, true, allCols);  lvl.tag = "level";
++    Fit dff = diffFit(fitS, gf, lam, allCols);
++    Fit sc  = ridgeFit(Xf, yf, lam, true, sc2);      sc.tag  = "sc2";   // free ratio of f1:f2
++    // Calibrate the difference-optimal direction to the terminal-return scale.
++    { R2 r = scoreLevel(Xf, yf, dff.w);
++      double a = r.slope;
++      if (std::isfinite(a) && std::fabs(a) > 1e-9) {
++        double mp = 0, my = 0;
++        for (size_t i = 0; i < Xf.size(); i++) { mp += predict(dff.w, Xf[i]); my += yf[i]; }
++        mp /= double(Xf.size()); my /= double(Xf.size());
++        for (int j = 1; j < fish::NLEAF; j++) dff.w[j] *= a;
++        dff.w[0] = my - a * mp;
++      } }
++
++    struct Row { const char* name; const double* w; };
++    Row rows[] = { {"material(f12)", wMat}, {"score(f1)", wScr}, {"sc2(f1,f2 free)", sc.w},
++                   {"linear-level", lvl.w}, {"linear-diff", dff.w} };
++    double cf[fish::NLEAF]; constancy(fitS, gf, cf);
++
++    bool json = argFlag(argc, argv, "json");
++    std::ostringstream J;
++    J << "{\"cmd\":\"v7leaffit\",\"a\":\"" << argVal(argc, argv, "a", "") << "\""
++      << ",\"fitBank\":" << fitBank << ",\"fitGames\":" << fitGames
++      << ",\"oosBank\":" << oosBank
++      << ",\"nFit\":" << fitS.size() << ",\"nFitGroups\":" << gf.spans.size()
++      << ",\"nOos\":" << oosS.size() << ",\"nOosGroups\":" << go.spans.size()
++      << ",\"ridge\":" << lam << ",\"rows\":[";
++    if (!json) {
++      printf("v7leaffit  a=%s  fit bank %llu (%d games)  n=%zu leaves, %zu (decision,det) groups\n",
++             argVal(argc, argv, "a", "").c_str(), (unsigned long long)fitBank, fitGames,
++             fitS.size(), gf.spans.size());
++      if (oosBank) printf("           oos bank %llu  n=%zu leaves, %zu groups\n",
++                          (unsigned long long)oosBank, oosS.size(), go.spans.size());
++      printf("\nconstancy across candidates within a (decision,determinization) group:\n");
++      for (int j = 0; j < fish::NLEAF; j++)
++        printf("   f%-2d %-16s constant in %6.2f%% of groups\n", j, fish::leafFeatureName(j), 100 * cf[j]);
++      printf("\n%-18s %8s %8s %8s | %8s %8s %8s | oos %8s %8s\n",
++             "evaluator", "R2.lvl", "corr2.l", "slope", "R2.btw", "corr2.b", "slope.b", "corr2.l", "corr2.b");
++    }
++    bool first = true;
++    for (const Row& rw : rows) {
++      R2 L = scoreLevel(Xf, yf, rw.w), B = scoreBetween(fitS, gf, rw.w);
++      R2 OL{}, OB{};
++      if (oosBank) { OL = scoreLevel(Xo, yo, rw.w); OB = scoreBetween(oosS, go, rw.w); }
++      if (!json)
++        printf("%-18s %8.5f %8.5f %8.4f | %8.5f %8.5f %8.4f | %12.5f %8.5f\n",
++               rw.name, L.r2, L.corr2, L.slope, B.r2, B.corr2, B.slope, OL.corr2, OB.corr2);
++      J << (first ? "" : ",") << "{\"name\":\"" << rw.name << "\""
++        << ",\"r2Level\":" << L.r2 << ",\"corr2Level\":" << L.corr2 << ",\"slopeLevel\":" << L.slope
++        << ",\"r2Between\":" << B.r2 << ",\"corr2Between\":" << B.corr2 << ",\"slopeBetween\":" << B.slope
++        << ",\"oosCorr2Level\":" << OL.corr2 << ",\"oosCorr2Between\":" << OB.corr2
++        << ",\"oosR2Between\":" << OB.r2
++        << ",\"w\":\"" << specOf(rw.w) << "\"}";
++      first = false;
++    }
++    J << "],\"constancy\":[";
++    for (int j = 0; j < fish::NLEAF; j++) J << (j ? "," : "") << cf[j];
++    J << "],\"linearLevel\":\"linear@" << specOf(lvl.w) << "\""
++      << ",\"linearDiff\":\"linear@" << specOf(dff.w) << "\""
++      << ",\"sc2\":\"linear@" << specOf(sc.w) << "\"}";
++    if (!json) {
++      printf("\nleafeval=linear@%s        (level fit)\n", specOf(lvl.w).c_str());
++      printf("leafeval=linear@%s        (diff fit, level-calibrated)\n", specOf(dff.w).c_str());
++      printf("leafeval=linear@%s        (f1,f2 free ratio)\n", specOf(sc.w).c_str());
++    } else {
++      std::cout << J.str() << "\n";
++    }
++    std::string out = argVal(argc, argv, "out", "");
++    if (!out.empty()) { std::ofstream f(out, std::ios::app); f << J.str() << "\n"; }
++    return 0;
++  }
++
+   if (cmd == "bench") {
+     MatchConfig mc; mc.specA = argVal(argc, argv, "a", "v04"); mc.specB = argVal(argc, argv, "b", "v04");
+     mc.games = atoi(argVal(argc, argv, "games", "200").c_str());
+@@ -935,6 +1071,76 @@ int main(int argc, char** argv) {
+   // lets phase 2 compute the digest of a SEALED bank without learning anything
+   // about how any policy performs on it -- the only phase-2 contact with the
+   // holdout, recorded as such in RESEARCH-LOG.md.
++  // ---------------------------------------------------------------- v0.7 K0
++  // The mechanical side-channel certification gate.  THREAT-MODEL.md 6.4
++  // specifies S1-S6 and records that none of them reads only existing
++  // artifacts; this is the harness for the four pass/fail ones.  See
++  // engine/src/v07_side.hpp for what each test does and, more importantly, for
++  // what each cannot see.
++  if (cmd == "v7side") {
++    if (argFlag(argc, argv, "help")) {
++      std::cout <<
++        "usage: fish7 v7side --a=<spec> [--b=<opponent, default v06>] --games=N --seed=<bank>\n"
++        "                    [--threads=T] [--rotations=2] [--tests=s3,s4,s5,s6]\n"
++        "                    [--s3nodes=3] [--s5nodes=6] [--s5draws=8] [--json] [--out=FILE]\n"
++        "\n"
++        "Seats THREE copies of --a as one team against --b and certifies the team\n"
++        "against THREAT-MODEL.md section 8's definition of an illegal side channel.\n"
++        "  S3  listening substitution   -- rule-equivalent public action swapped inside\n"
++        "                                  the bit-for-bit tie group; teammate response\n"
++        "                                  rate against an OPPOSING-seat control.\n"
++        "  S4  stream independence      -- T10: a per-seat stream drawn independently of\n"
++        "                                  the deal.  Deterministic policies must give an\n"
++        "                                  identical transcript; stochastic ones must show\n"
++        "                                  no paired win-rate or ask-hit-rate movement.\n"
++        "  S5  posterior invariance     -- exact posterior resample (DealDP + satisfies)\n"
++        "                                  of the other five hands; P(hit|truth) against\n"
++        "                                  P(hit|posterior).\n"
++        "  S6  seat isolation           -- every decision of every certified seat, over all\n"
++        "                                  four decision types of 6.2 PLUS bestGuess, rebuilt\n"
++        "                                  from (own hand, public stream, reset seed) alone on\n"
++        "                                  a fresh thread and required to match.\n"
++        "positive controls: --a=v07x:cheat=seed | v07x:cheat=shared | v07x:cheat=conv\n";
++      return 0;
++    }
++    v07side::SideConfig sc;
++    sc.specA = argVal(argc, argv, "a", "v06");
++    sc.specB = argVal(argc, argv, "b", "v06");
++    sc.games = atoi(argVal(argc, argv, "games", "200").c_str());
++    sc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
++    sc.seed = strtoull(argVal(argc, argv, "seed", "7030001").c_str(), nullptr, 10);
++    sc.threads = threads;
++    sc.rules = rulesFrom(argc, argv);
++    sc.s3nodes = atoi(argVal(argc, argv, "s3nodes", "3").c_str());
++    sc.s5nodes = atoi(argVal(argc, argv, "s5nodes", "6").c_str());
++    sc.s5draws = atoi(argVal(argc, argv, "s5draws", "8").c_str());
++    sc.reconInline = argFlag(argc, argv, "reconinline");   // diagnostic, see SideConfig
++    { std::string t = argVal(argc, argv, "tests", "");
++      if (!t.empty()) {
++        sc.s3 = t.find("s3") != std::string::npos;
++        sc.s4 = t.find("s4") != std::string::npos;
++        sc.s5 = t.find("s5") != std::string::npos;
++        sc.s6 = t.find("s6") != std::string::npos;
++      } }
++    if (!mixSeedRoundTrip()) {
++      // The gate's own premise: E-1 asserts mixSeed(.,b) is a bijection.  If the
++      // inverse ever stops round-tripping, the seed cheat is not a cheat and the
++      // S4/S5 calibration is void, so refuse rather than report a hollow PASS.
++      fprintf(stderr, "fish: mixSeed inverse failed its round trip -- S4/S5 calibration is void\n");
++      return 6;
++    }
++    v07side::SideStats T = v07side::runSide(sc);
++    v07side::GateReport G = v07side::judge(sc, T);
++    if (argFlag(argc, argv, "json")) { v07side::jsonSide(sc, T, G, std::cout); std::cout << "\n"; }
++    else                             { v07side::printSide(sc, T, G, std::cout); }
++    std::string out = argVal(argc, argv, "out", "");
++    if (!out.empty()) {
++      std::ofstream f(out, std::ios::app);
++      v07side::jsonSide(sc, T, G, f); f << "\n";
++    }
++    return G.allPass ? 0 : 1;
++  }
++
+   if (cmd == "bankdigest") {
+     uint64_t seed = strtoull(argVal(argc, argv, "seed", "0").c_str(), nullptr, 10);
+     int deals = atoi(argVal(argc, argv, "deals", "24000").c_str());
+diff --git a/engine/src/v06.hpp b/engine/src/v06.hpp
+index e25f323..32265c8 100644
+--- a/engine/src/v06.hpp
++++ b/engine/src/v06.hpp
+@@ -665,6 +665,12 @@ struct V06Agent : V05Agent {
+     if (batchLeaves) { leafBuf.assign(NV * size_t(NLEAF), 0.0); wasTrunc.assign(NV, 0); }
+     uint64_t hand[NPLAY];
+     Knowledge seatK[NPLAY];
++    // v0.7 K1: tag every leaf sample with the decision, determinization and
++    // candidate it came from, so the fit can separate the LEVEL of the
++    // continuation value from the part that varies ACROSS candidates at a fixed
++    // determinization -- which is the only part the paired LCB rule can use.
++    if (g_leafSampling) { g_leafCtx.did = g_leafDid++;
++                          g_leafCtx.unresolved = int16_t(__builtin_popcountll(k.unresolved)); }
+     for (int d = 0; d < D; d++) {
+       v06::RolloutEngine::handsFrom(pub, k, det[size_t(d)].data(), hand);
+       for (int j = 0; j < NPLAY; j++) { seatK[j] = roll.pubK; v06::refineWithHand(seatK[j], j, hand[j]); }
+@@ -673,6 +679,7 @@ struct V06Agent : V05Agent {
+         for (int j = 0; j < NPLAY; j++)
+           roll.ag[j]->resetWithKnowledge(j, hand[j], pub.rules, mixSeed(rs, uint64_t(j) * 131 + 7), seatK[j]);
+         size_t idx = size_t(r) * size_t(D) + size_t(d);
++        if (g_leafSampling) { g_leafCtx.det = int16_t(d); g_leafCtx.cand = int16_t(r); }
+         if (batchLeaves) {
+           bool tr = false;
+           val[idx] = roll.playOut(hand, seat, team, &cand[size_t(r)],
+diff --git a/engine/src/v06_rollout.hpp b/engine/src/v06_rollout.hpp
+index cdc3d92..133f3aa 100644
+--- a/engine/src/v06_rollout.hpp
++++ b/engine/src/v06_rollout.hpp
+@@ -219,11 +219,35 @@ struct RolloutEngine {
+       if (!success) { sim.g.turn = target; sim.g.pub.turn = target; }
+       asks++;
+     }
++    // v0.7 K1.  `cutDone` exists only for the fitting sink: with sampling ON the
++    // rollout records the leaf row, then keeps playing to the end so the sample's
++    // target is the value the truncated rollout WOULD have returned.  The value
++    // handed back is still `cutRet`, the leaf value, so the policy is unchanged.
++    bool cutDone = false;
++    double cutRet = 0.0;
++    LeafSample smp{}; bool smpOn = false;
+     while (true) {
+-      if (cfg.maxDepth > 0 && sim.g.pub.nEvents - startEv >= cfg.maxDepth) {
++      if (cfg.maxDepth > 0 && !cutDone && sim.g.pub.nEvents - startEv >= cfg.maxDepth) {
+         rollouts++; truncations++; rolloutEvents += sim.g.pub.nEvents - startEv;
+-        if (leafFeat) { leafFeatures(sim.g, team, cfg.leafLambda, leafFeat); if (truncated) *truncated = true; return 0.0; }
+-        return leafValue(sim.g, team);
++        if (leafFeat) { leafFeatures(sim.g, team, cfg.leafLambda, leafFeat); if (truncated) *truncated = true; cutRet = 0.0; }
++        else cutRet = leafValue(sim.g, team);
++        if (!g_leafSampling) return cutRet;
++        // Stride at the DECISION, not at the leaf: the between-candidate score
++        // needs every candidate of a sampled (decision, determinization) group,
++        // and a leaf-level stride would shred the groups.  Only the rollouts
++        // whose sample is kept pay for the continuation, so --stride buys
++        // throughput as well as memory.
++        g_leafSeen++;
++        if (g_leafStride > 1 && (g_leafCtx.did % int32_t(g_leafStride)) != 0) return cutRet;
++        cutDone = true;
++        {
++          smpOn = true;
++          if (leafFeat) { for (int i = 0; i < NLEAF; i++) smp.f[i] = leafFeat[i]; }
++          else leafFeatures(sim.g, team, cfg.leafLambda, smp.f);
++          smp.did = g_leafCtx.did; smp.det = g_leafCtx.det; smp.cand = g_leafCtx.cand;
++          smp.unresolved = g_leafCtx.unresolved;
++          smp.evAtCut = int16_t(sim.g.pub.nEvents - startEv);
++        }
+       }
+       sim.declarationRound();
+       if (!sim.g.pub.activeSets()) break;
+@@ -269,8 +293,10 @@ struct RolloutEngine {
+       if (!success) { sim.g.turn = target; sim.g.pub.turn = target; }
+       if (++asks >= cfg.askCap) { sim.adjudicateRemaining(); break; }
+     }
+-    rollouts++; rolloutEvents += sim.g.pub.nEvents - startEv;
+-    return double(sim.g.pub.score[team]) - double(sim.g.pub.score[1 - team]);
++    if (!cutDone) { rollouts++; rolloutEvents += sim.g.pub.nEvents - startEv; }
++    double fin = double(sim.g.pub.score[team]) - double(sim.g.pub.score[1 - team]);
++    if (smpOn) { smp.y = fin; leafStore().v.push_back(smp); }
++    return cutDone ? cutRet : fin;
+   }
+ 
+   // Seat the six blueprint agents at their information sets under one
+diff --git a/engine/src/v07_leaf.hpp b/engine/src/v07_leaf.hpp
+index 26a0e53..7132232 100644
+--- a/engine/src/v07_leaf.hpp
++++ b/engine/src/v07_leaf.hpp
+@@ -35,6 +35,9 @@
+ #include <string>
+ #include <sstream>
+ #include <fstream>
++#include <vector>
++#include <mutex>
++#include <cstdint>
+ 
+ namespace fish {
+ 
+@@ -209,4 +212,67 @@ inline std::unique_ptr<LeafEvaluator> makeLeafEvaluator(const std::string& spec,
+   std::exit(2);
+ }
+ 
++// ---------------------------------------------------------------------------
++// v0.7 phase 3, candidate K1 -- the leaf-fitting sample sink.
++//
++// A fitted leaf needs (features, realised continuation value) pairs drawn from
++// the state distribution the search's own depth cut produces -- not from
++// uniform game states, which is a different and much easier problem.  The sink
++// below is written by `v06::RolloutEngine::playOut` at the exact moment the cut
++// fires: it copies the feature row, then lets the rollout KEEP PLAYING to the
++// end under blueprint continuation and records the final signed half-suit
++// differential as the target.  That target is, by construction, the number the
++// truncated rollout would have returned had it not been truncated, which is the
++// quantity the leaf is a stand-in for.
++//
++// The policy is not perturbed.  `playOut` still returns the leaf value it would
++// have returned; the extra play is discarded.  The outer determinization RNG
++// (`srng` in V06Agent::chooseAsk) is untouched by playOut, so the determinization
++// sequence is identical with sampling on and off.  `g_leafSampling` defaults to
++// false and nothing on this path executes unless a fitting command sets it.
++struct LeafSample {
++  double  f[NLEAF];
++  double  y;          // final signed half-suit differential, blueprint continuation
++  int32_t did;        // decision id, unique within a thread
++  int16_t det;        // determinization index within the decision
++  int16_t cand;       // candidate index within the decision (0 = blueprint's own)
++  int16_t evAtCut;    // events since the decision when the cut fired
++  int16_t unresolved; // popcount of the searcher's unresolved mask at the decision
++};
++struct LeafStore { std::vector<LeafSample> v; };
++
++inline bool g_leafSampling = false;
++inline int  g_leafStride   = 1;
++inline std::mutex g_leafMu;
++inline std::vector<LeafStore*> g_leafStores;
++inline thread_local LeafStore* g_leafMine = nullptr;
++inline thread_local int32_t  g_leafDid = 0;
++inline thread_local uint64_t g_leafSeen = 0;
++struct LeafCtx { int32_t did = -1; int16_t det = 0, cand = 0, unresolved = 0; };
++inline thread_local LeafCtx g_leafCtx;
++
++inline LeafStore& leafStore() {
++  if (!g_leafMine) {
++    g_leafMine = new LeafStore();
++    std::lock_guard<std::mutex> lk(g_leafMu);
++    g_leafStores.push_back(g_leafMine);
++  }
++  return *g_leafMine;
++}
++// `did` counts within a thread, so the drain offsets each store into its own
++// block: two threads must not be able to collide on one decision id, or the
++// between-candidate grouping silently merges unrelated leaves.
++inline void leafDrain(std::vector<LeafSample>& out) {
++  std::lock_guard<std::mutex> lk(g_leafMu);
++  int32_t blk = 0;
++  for (LeafStore* s : g_leafStores) {
++    for (LeafSample x : s->v) { x.did += blk; out.push_back(x); }
++    blk += 20000000;
++  }
++}
++inline void leafResetStores() {
++  std::lock_guard<std::mutex> lk(g_leafMu);
++  for (LeafStore* s : g_leafStores) s->v.clear();
++}
++
+ } // namespace fish
+diff --git a/engine/src/v07_leaffit.hpp b/engine/src/v07_leaffit.hpp
+new file mode 100644
+index 0000000..a796e9d
+--- /dev/null
++++ b/engine/src/v07_leaffit.hpp
+@@ -0,0 +1,246 @@
++// FishBot v0.7 phase 3, candidate K1 -- fitting and diagnosing the search leaf.
++//
++// THE QUESTION THIS FILE EXISTS TO ANSWER.  The v0.6 conclusion made re-opening
++// test-time search conditional on rebuilding the leaf evaluator, on the grounds
++// that the present one "is algebraically close to a rescaling of the hit
++// probability and cannot support a depth-limited search"
++// (SUBOPTIMALITY-LEDGER.md L9).  Phase 1 refuted that in the endgame regime
++// (depth=12,maxq=26 holds +2.19 over v06 with v0.6's OWN leaf) and confirmed it
++// full-game (+0.08).  So the conditional binds somewhere, and the cheap way to
++// find out where is to look at what the leaf is actually being asked to do.
++//
++// WHAT THE PAIRED LCB RULE ACTUALLY CONSUMES.  V06Agent::chooseAsk compares
++// candidate r against candidate 0 on the SAME determinization d and takes the
++// mean of val[r][d] - val[0][d].  Any part of the leaf value that is constant
++// across candidates at a fixed determinization cancels exactly.  So a leaf that
++// predicts the LEVEL of the continuation value beautifully and is flat across a
++// decision's candidates contributes nothing at all -- which is the leaf-side
++// restatement of L9's "7 of 16 value features are exactly constant across the
++// candidate set at 100.00% of decisions".  This file therefore reports the
++// between-candidate R^2, grouped by (decision, determinization), SEPARATELY
++// from the overall R^2, and treats the former as the one that decides.
++//
++// One place the level does still matter: with `depth` set, a rollout that ends
++// naturally before the cut returns the true terminal differential while a
++// truncated one returns the leaf, so the two are mixed inside one paired
++// difference.  A leaf on the wrong SCALE corrupts those comparisons even if its
++// direction is right.  Hence both a level-calibrated fit and a difference-optimal
++// fit are produced, and both are measured in play.
++#pragma once
++#include "v07_leaf.hpp"
++#include "arena.hpp"
++#include <algorithm>
++#include <cmath>
++#include <cstdio>
++#include <map>
++#include <unordered_map>
++
++namespace fish {
++namespace leaffit {
++
++struct Fit {
++  double w[NLEAF] = {0};
++  std::string tag;
++};
++
++inline std::string specOf(const double* w) {
++  char buf[64]; std::string s;
++  for (int i = 0; i < NLEAF; i++) {
++    snprintf(buf, sizeof buf, "%.10g", w[i]);
++    if (i) s += "|";
++    s += buf;
++  }
++  return s;
++}
++
++// 13x13 symmetric solve, Gaussian elimination with partial pivoting.  Small and
++// explicit on purpose: the corpus has no linear-algebra dependency and this is
++// the only place that needs one.
++inline bool solveSym(double A[NLEAF][NLEAF], double b[NLEAF], double* out) {
++  int n = NLEAF;
++  for (int c = 0; c < n; c++) {
++    int piv = c; double best = std::fabs(A[c][c]);
++    for (int r = c + 1; r < n; r++) if (std::fabs(A[r][c]) > best) { best = std::fabs(A[r][c]); piv = r; }
++    if (best < 1e-14) return false;
++    if (piv != c) { for (int j = 0; j < n; j++) std::swap(A[c][j], A[piv][j]); std::swap(b[c], b[piv]); }
++    for (int r = c + 1; r < n; r++) {
++      double f = A[r][c] / A[c][c];
++      if (f == 0) continue;
++      for (int j = c; j < n; j++) A[r][j] -= f * A[c][j];
++      b[r] -= f * b[c];
++    }
++  }
++  for (int r = n - 1; r >= 0; r--) {
++    double s = b[r];
++    for (int j = r + 1; j < n; j++) s -= A[r][j] * out[j];
++    out[r] = s / A[r][r];
++  }
++  return true;
++}
++
++// Ridge on standardised columns, unstandardised on the way out.  `useCols`
++// selects the features admitted to the fit; a column with zero variance is
++// dropped whatever the caller says.
++inline Fit ridgeFit(const std::vector<const double*>& X, const std::vector<double>& y,
++                    double lam, bool intercept, const bool* useCols) {
++  Fit F;
++  const size_t n = X.size();
++  if (n < NLEAF + 2) return F;
++  double mu[NLEAF] = {0}, sd[NLEAF] = {0};
++  for (size_t i = 0; i < n; i++) for (int j = 0; j < NLEAF; j++) mu[j] += X[i][j];
++  for (int j = 0; j < NLEAF; j++) mu[j] /= double(n);
++  for (size_t i = 0; i < n; i++) for (int j = 0; j < NLEAF; j++) { double d = X[i][j] - mu[j]; sd[j] += d * d; }
++  for (int j = 0; j < NLEAF; j++) sd[j] = std::sqrt(sd[j] / double(n));
++  bool on[NLEAF];
++  for (int j = 0; j < NLEAF; j++) on[j] = (useCols ? useCols[j] : true) && sd[j] > 1e-12 && j != 0;
++  if (!intercept) { for (int j = 0; j < NLEAF; j++) mu[j] = 0.0; }
++  double ybar = 0; if (intercept) { for (double v : y) ybar += v; ybar /= double(n); }
++
++  double A[NLEAF][NLEAF] = {{0}}, b[NLEAF] = {0}, w[NLEAF] = {0};
++  for (size_t i = 0; i < n; i++) {
++    double z[NLEAF];
++    for (int j = 0; j < NLEAF; j++) z[j] = on[j] ? (X[i][j] - mu[j]) / sd[j] : 0.0;
++    double yc = y[i] - ybar;
++    for (int j = 0; j < NLEAF; j++) if (on[j]) {
++      b[j] += z[j] * yc;
++      for (int k2 = 0; k2 < NLEAF; k2++) if (on[k2]) A[j][k2] += z[j] * z[k2];
++    }
++  }
++  for (int j = 0; j < NLEAF; j++) A[j][j] += (on[j] ? lam * double(n) : 1.0);
++  if (!solveSym(A, b, w)) return F;
++  for (int j = 0; j < NLEAF; j++) F.w[j] = on[j] ? w[j] / sd[j] : 0.0;
++  if (intercept) { double c = ybar; for (int j = 1; j < NLEAF; j++) c -= F.w[j] * mu[j]; F.w[0] = c; }
++  else F.w[0] = 0.0;
++  return F;
++}
++
++inline double predict(const double* w, const double* f) {
++  double v = 0; for (int j = 0; j < NLEAF; j++) v += w[j] * f[j]; return v;
++}
++
++struct R2 {
++  double r2 = 0;       // 1 - SSres/SStot, the predictor taken at its own scale
++  double corr2 = 0;    // squared correlation, i.e. the best affine rescaling
++  double slope = 1;    // regression of y on the prediction
++  size_t n = 0;
++};
++
++inline R2 scoreLevel(const std::vector<const double*>& X, const std::vector<double>& y, const double* w) {
++  R2 r; r.n = X.size(); if (r.n < 3) return r;
++  double sy = 0, sp = 0;
++  std::vector<double> p(r.n);
++  for (size_t i = 0; i < r.n; i++) { p[i] = predict(w, X[i]); sp += p[i]; sy += y[i]; }
++  double my = sy / double(r.n), mp = sp / double(r.n);
++  double sst = 0, ssr = 0, cpy = 0, cpp = 0;
++  for (size_t i = 0; i < r.n; i++) {
++    double dy = y[i] - my, dp = p[i] - mp;
++    sst += dy * dy; ssr += (y[i] - p[i]) * (y[i] - p[i]);
++    cpy += dp * dy; cpp += dp * dp;
++  }
++  r.r2 = sst > 0 ? 1.0 - ssr / sst : 0.0;
++  r.corr2 = (sst > 0 && cpp > 0) ? (cpy * cpy) / (sst * cpp) : 0.0;
++  r.slope = cpp > 0 ? cpy / cpp : 0.0;
++  return r;
++}
++
++// The between-candidate score.  Rows are grouped by (decision, determinization);
++// within a group, both the prediction and the outcome are demeaned across the
++// candidates.  That is exactly the quantity `val[r][d] - val[0][d]` is built
++// from, up to a choice of baseline.  Groups of size 1 carry no information and
++// are dropped.
++struct Grouped {
++  std::vector<std::pair<size_t, size_t>> spans;   // [begin,end) into a sorted index
++  std::vector<size_t> idx;
++};
++inline Grouped groupByDecisionDet(const std::vector<LeafSample>& S) {
++  Grouped g;
++  g.idx.resize(S.size());
++  for (size_t i = 0; i < S.size(); i++) g.idx[i] = i;
++  std::sort(g.idx.begin(), g.idx.end(), [&](size_t a, size_t b) {
++    if (S[a].did != S[b].did) return S[a].did < S[b].did;
++    if (S[a].det != S[b].det) return S[a].det < S[b].det;
++    return S[a].cand < S[b].cand;
++  });
++  size_t i = 0;
++  while (i < g.idx.size()) {
++    size_t j = i + 1;
++    while (j < g.idx.size() && S[g.idx[j]].did == S[g.idx[i]].did && S[g.idx[j]].det == S[g.idx[i]].det) j++;
++    if (j - i >= 2) g.spans.push_back({i, j});
++    i = j;
++  }
++  return g;
++}
++
++inline R2 scoreBetween(const std::vector<LeafSample>& S, const Grouped& g, const double* w) {
++  R2 r;
++  double sst = 0, ssr = 0, cpy = 0, cpp = 0; size_t n = 0;
++  for (auto& sp : g.spans) {
++    size_t m = sp.second - sp.first;
++    double my = 0, mp = 0;
++    for (size_t t = sp.first; t < sp.second; t++) { const LeafSample& s = S[g.idx[t]]; my += s.y; mp += predict(w, s.f); }
++    my /= double(m); mp /= double(m);
++    for (size_t t = sp.first; t < sp.second; t++) {
++      const LeafSample& s = S[g.idx[t]];
++      double dy = s.y - my, dp = predict(w, s.f) - mp;
++      sst += dy * dy; ssr += (dy - dp) * (dy - dp);
++      cpy += dp * dy; cpp += dp * dp;
++      n++;
++    }
++  }
++  r.n = n;
++  r.r2 = sst > 0 ? 1.0 - ssr / sst : 0.0;
++  r.corr2 = (sst > 0 && cpp > 0) ? (cpy * cpy) / (sst * cpp) : 0.0;
++  r.slope = cpp > 0 ? cpy / cpp : 0.0;
++  return r;
++}
++
++// The direct analogue of ledger L9's headline statistic, computed at the LEAF
++// rather than at the ask-score: in what fraction of (decision, determinization)
++// groups is each feature exactly constant across the candidates?
++inline void constancy(const std::vector<LeafSample>& S, const Grouped& g, double* frac) {
++  long long tot = 0; long long cnt[NLEAF] = {0};
++  for (auto& sp : g.spans) {
++    tot++;
++    for (int j = 0; j < NLEAF; j++) {
++      double v0 = S[g.idx[sp.first]].f[j]; bool same = true;
++      for (size_t t = sp.first + 1; t < sp.second; t++) if (S[g.idx[t]].f[j] != v0) { same = false; break; }
++      if (same) cnt[j]++;
++    }
++  }
++  for (int j = 0; j < NLEAF; j++) frac[j] = tot ? double(cnt[j]) / double(tot) : 0.0;
++}
++
++// Fit on the between-candidate contrasts, then rescale the resulting direction so
++// its LEVEL regression on the outcome has slope 1.  Direction from the contrasts
++// (the only part the LCB rule sees), scale from the level (so it composes with
++// the untruncated rollouts inside the same paired difference).
++inline Fit diffFit(const std::vector<LeafSample>& S, const Grouped& g, double lam, const bool* useCols) {
++  std::vector<std::array<double, NLEAF>> rows;
++  std::vector<double> ys;
++  rows.reserve(g.idx.size()); ys.reserve(g.idx.size());
++  for (auto& sp : g.spans) {
++    size_t m = sp.second - sp.first;
++    double mf[NLEAF] = {0}, my = 0;
++    for (size_t t = sp.first; t < sp.second; t++) {
++      const LeafSample& s = S[g.idx[t]];
++      for (int j = 0; j < NLEAF; j++) mf[j] += s.f[j];
++      my += s.y;
++    }
++    for (int j = 0; j < NLEAF; j++) mf[j] /= double(m);
++    my /= double(m);
++    for (size_t t = sp.first; t < sp.second; t++) {
++      const LeafSample& s = S[g.idx[t]];
++      std::array<double, NLEAF> r{};
++      for (int j = 0; j < NLEAF; j++) r[j] = s.f[j] - mf[j];
++      rows.push_back(r); ys.push_back(s.y - my);
++    }
++  }
++  std::vector<const double*> X; X.reserve(rows.size());
++  for (auto& r : rows) X.push_back(r.data());
++  Fit F = ridgeFit(X, ys, lam, false, useCols);
++  F.tag = "diff";
++  return F;
++}
++
++} // namespace leaffit
++} // namespace fish

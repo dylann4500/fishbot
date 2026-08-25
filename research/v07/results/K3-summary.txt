@@ -1,0 +1,320 @@
+K3 — What phase 2 actually indicts: the urgency escalation, the tie-break, and a
+     termination rule that is not a cliff.
+FishBot v0.7 phase 3.  Worktree branched from 0c021a3; the gate files
+(v07_side.hpp, v07_cheat.hpp) were copied verbatim from main at d1ec24f and
+verified byte-identical to it.  Every number below was measured in this session
+unless explicitly attributed to another phase.
+
+SPECS
+  K3-stack      v06:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+  K3-composite  K3-stack + s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  K3-stack-r2   v06:rtie=2,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12
+  F-cheap       v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  phase-2 bar   v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+New spec keys, all default OFF:
+  stall / stall2 / stallsoft   termination by stall instead of by clock
+  rtie=2                       private per-seat tie draw (the stochastic limb)
+  rreset                       rollout-blueprint hygiene (see section 8)
+
+THE BRIEF ITEM, RE-AIMED.  The assignment was conditional: "if the white-box
+inversion responder bites ... if a coordination exploiter bites".  NEITHER
+ANTECEDENT HOLDS, and both were measured rather than assumed — phase 1 priced
+the inverter's contraction at general strength (+1.52) rather than exploitation,
+with W2 showing no linear handicap adds more than 0.07 bits/ask; and phase 2
+closed the coordination limb (A2/X14 at +0.70 against a 2.31 floor) and ledger
+L7 as a negative.  So the stochastic limb had no measured quantity to buy.  It is
+priced below anyway, and closed.  What phase 2 does indict is the incumbent's own
+machinery, and that is what was built.
+
+=============================================================================
+1. IDENTITY CONTROL — PASS, twice, and again after the second code change
+=============================================================================
+pathology --a=v06 --b=v06 --games=400 --rotations=2 --seed=31 --threads=2,
+this build against /Users/dylan/Documents/GitHub/fish optimization/engine/fish7:
+  BYTE-IDENTICAL, md5 0b1b3c9ed2894d0992d527fbde1884e5 on both.
+  Matches the brief's reference exactly: 94.1925 events/game, p99 120, max 131,
+  dead asks 0.011781%, longest dead run 1, action-limit 0, decl wrong 2.55556%.
+v7side --a=v06 --b=v06 --games=100 --seed=7030001: every JSON field identical
+  between the two binaries (seconds/threadsUsed excluded).
+After adding `rreset`, rebuilt and re-ran: pathology still byte-identical.
+
+=============================================================================
+2. THE CHEAP DECISIVE PROBE — zero strength games, and it is the whole case
+   for the mechanism
+=============================================================================
+`stall=999` arms the detector's instrumentation without ever firing it, so the
+longest per-seat no-progress run can be read off ordinary play for free.
+MIRROR, 400 deals x 2 rotations, seed 31:
+
+  configuration                      longest no-progress run/game    max
+                                     median   p99    max            events
+  v06                                   3       5      6              131
+  K3-stack (urgency off, rtie=1)        3       5      6              129
+  m1=0 + urgency off (phase 2's         3       9    326              405
+    rejected stack)
+  m1=0 + urgency off + stall=12         3       9     13              141
+
+Ordinary play never produces a no-progress run longer than 6, over 800 games and
+roughly 456,000 seat-events.  The freeze produces 326.  That is a fifty-fold
+separation, so any K in about [12, 60] is simultaneously unreachable in ordinary
+play and immediate in a freeze.  The 220-event clock has no such margin: it is a
+single global threshold with a fifteen-point cliff behind it.
+
+=============================================================================
+3. THE STALL RULE IS INERT IN ORDINARY PLAY — not "small", identically zero
+=============================================================================
+MIRROR pathology, 800 games, seed 31.  Every non-K3 line of the output is
+byte-identical with and without the key:
+
+  K3-stack without stall   95.6925 ev/g, p99 125, max 129, dead asks 0.0202699%,
+                           longest dead run 1, action-limit 0, decl wrong 1.02778%
+  K3-stack,stall=12        ... every figure above, unchanged ...
+  K3-stack,stall=20        ... every figure above, unchanged ...
+  v06                      94.1925 ev/g ... decl wrong 2.55556%
+  v06:stall=12             ... every figure above, unchanged ...
+  In all of them the detector fired stage1 0 times and stage2 0 times; maxStall 6.
+
+And on the one configuration that does freeze, it bounds it:
+  m1=0+urgency-off             max 405 events, longest dead run 326,
+                               starved turns 328, action-limit games 2 (0.25%),
+                               decl wrong 1.05673%
+  m1=0+urgency-off,stall=12    max 141 events, longest dead run  12,
+                               starved turns  14, action-limit games 0,
+                               decl wrong 1.05556%
+  Two declarations were taken under the stall rung; both were correct.
+
+The acceptance property holds: it never fires in ordinary play, therefore it
+costs zero declaration accuracy there, and it still bounds the game.  This does
+NOT rescue `m1=0` — that configuration still plays 1.71% provably-dead asks and
+still fails gate rule 1.  It was the stress case, not a proposal.
+
+TERMINATION ARGUMENT, CORRECTED.  The header comment inherited from the earlier
+attempt claimed a total termination proof.  It is partial.  The progress hash
+includes handCount[], so a SUCCESSFUL ask always counts as progress even though
+a card moving between two seats is not a monotone gain; the monotone argument
+(mask bits, resolved cards, declared half-suits) bounds only the
+no-new-certificate mode of non-termination.  That is the mode that actually
+occurs — v0.4's dead-ask loop, which is what the urgency-off configurations
+regress into — and the bound that carries is the measured distribution above.
+The comment in v07_stall.hpp was rewritten to say this.
+
+=============================================================================
+4. COMMIT GATE — MIRROR (self-play), 800 games, seed 31
+=============================================================================
+                          ev/g    p99  max  dead-ask%  longest  limit  declWrong%
+                                                       dead run games
+  v06 (reference)        94.1925  120  131  0.011781      1       0     2.55556
+  F-cheap                94.2250  124  131  0.005888      1       0     2.25000
+  K3-stack               95.6925  125  129  0.020270      1       0     1.02778
+  K3-stack-r2 (rtie=2)   94.8175  122  126  0.011696      1       0     1.19444
+  K3-composite           94.8025  122  125  0.008780      1       0     1.25000
+
+All four candidates: zero action-limit games, longest dead run 1, and a maximum
+game length of 125-129 events against the 220 cliff and the 308 stage-2 rung.
+K3-composite has a SHORTER tail than v06 (max 125 against 131), FEWER dead asks
+(0.0088% against 0.0118%), and half its misdeclaration rate.
+
+=============================================================================
+5. SIDE-CHANNEL GATE — fish7 v7side, 400 deals x 2, both banks
+=============================================================================
+  K3-stack       7030001 CERTIFIED    7030002 CERTIFIED
+  K3-stack-r2    7030001 CERTIFIED    7030002 CERTIFIED
+  K3-composite   7030001 CERTIFIED    7030002 CERTIFIED
+
+  S6 seat isolation: ZERO irreproducible decisions in all six runs
+     (261,466 / 263,527 / 263,752 / 265,304 / 262,878 / 263,094).  Note the
+     composite CONTAINS the search that fails S6 as F-cheap, and is clean.
+  S3 asymmetry, threshold 15: K3-stack 6.28+-1.35 / 6.97+-1.36;
+     K3-stack-r2 2.52+-1.17 / 2.91+-1.19; K3-composite 11.92+-2.33 / 2.40+-2.36.
+     CAVEAT, and it is the one open gate item: the composite's S3 ran at
+     --s3nodes=1 for cost, and its bank-7030001 point estimate of 11.92 is the
+     closest any configuration measured here comes to the threshold.  That cell
+     is under-powered.  Re-run it at --s3nodes=3 before the composite ships.
+  S4: K3-stack is DETERMINISTIC — 400/400 transcripts identical under T10, so it
+     provably consumes nothing from its reset seed, exactly as v06 does.
+     K3-stack-r2 and K3-composite are stochastic, so S4 used its paired form:
+     r2 win-rate diff -0.75 [-5.75, +4.25] and +2.63 [-2.13, +7.63];
+     composite -0.25 [-4.38, +3.75] and -2.88 [-7.00, +1.00].  All null.
+  S5 clairvoyance gap, threshold 20: 5.25-6.10 throughout; v06's floor is
+     6.12/6.42, so every K3 arm is at or below the incumbent.
+
+=============================================================================
+6. STRENGTH — paired duplicate blocks, --rotations=2, deal-clustered bootstrap
+=============================================================================
+  cell                          bank      n      edge      98% CI      98/sqrtN
+  K3-stack     vs v06         7030001   24000   +1.80  [+1.18, +2.44]   0.63
+  K3-stack     vs v06         7030002   24000   +2.01  [+1.38, +2.62]   0.63
+    POOLED                              48000   +1.91  [+1.28, +2.53]
+    Phase 2 reported +1.91 [+1.29, +2.54].  Reproduced to two decimals.
+
+  K3-composite vs v06         7030001   12000   +2.89  [+2.01, +3.77]   0.89
+  K3-composite vs v06         7030002    6000   +2.30  [+1.03, +3.57]   1.27
+    POOLED                              18000   +2.60  [+1.52, +3.67]
+
+  K3-composite vs F-cheap     7030001   12000   +1.56  [+0.67, +2.43]   0.89
+  K3-composite vs F-cheap     7030002    8000   +0.72  [-0.36, +1.79]   1.10
+    POOLED                              20000   +1.14  [+0.15, +2.11]
+    WORST CELL LEADS: +0.72, and its interval includes zero.
+
+  K3-stack     vs F-cheap     7030001    6000   +0.97  [-0.30, +2.22]   1.27
+  K3-stack     vs F-cheap     7030002    6000   +1.37  [+0.13, +2.58]   1.27
+    POOLED                              12000   +1.17  [-0.08, +2.40]
+    Phase 2 measured urgency-off ALONE at -0.69 against F-cheap.  Adding rtie=1
+    moves it to +1.17 — at ZERO throughput cost, against a frontier point that
+    costs roughly fifteen times the compute.
+
+  K3-stack(rtie=1) vs K3-stack-r2(rtie=2)
+                              7030001   12000   -0.24  [-1.13, +0.65]   0.89
+                              7030002   12000   -0.38  [-1.27, +0.52]   0.89
+    POOLED                              24000   -0.31  [-1.20, +0.59]
+
+  K3 keys ON TOP OF the phase-2 composite, vs the phase-2 composite
+                              7030001    6000   +1.42  [+0.18, +2.68]   1.27
+    One bank only.  NOT gate-tested — no mirror pathology was run on this
+    configuration, so it is a lead, not a candidate.  Note its arms run 100.1
+    events/game against v06's 94.2, and BOTH arms declare at 0.976 — i.e. on top
+    of the phase-2 composite the +1.42 does NOT come from declaration accuracy,
+    which is where K3's gain against v06 comes from.  That is unexplained.
+
+NONE of these clears the C1 class detection floor of 1.53 on its interval's
+LOWER bound.  Every one is therefore a MEASURED edge, not a certified one.
+Phase 2's RESEARCH-LOG describes the same +1.91 as "above the class detection
+floor of 1.53"; that is true of the point estimate and not of the interval.
+
+Declaration accuracy moves with the configuration, consistently, on every cell
+against v06 and F-cheap: K3 arms 0.9906-0.9914 against v06's 0.9789-0.9810 and
+F-cheap's 0.9807-0.9830.
+
+=============================================================================
+7. THE STOCHASTIC LIMB — priced, and the price is zero
+=============================================================================
+THREAT-MODEL H1 permits independent per-seat randomisation (only a SHARED secret
+is forbidden), but the hierarchy v_Com >= v_Cor >= v_No predicts it should cost
+something, and the threat model says in terms that this is "the trade phase 3
+must price, not assume".  `rtie=1` is not that trade: it is seeded from a rolling
+hash of the PUBLIC event stream, so any observer replays it.  `rtie=2` draws from
+a per-seat stream keyed off that seat's own reset seed, which no observer and no
+teammate can replay — and v7side's S4 confirms the distinction mechanically:
+rtie=1 gives 400/400 identical transcripts under an independent per-seat stream,
+rtie=2 gives 0/400.
+
+  Price of replacing the public rule with the private draw, paired head to head:
+  -0.31 [-1.20, +0.59] over 24,000 games, replicated in sign on both banks, and
+  BOTH banks slightly favour the RANDOM version.
+
+So the Price of Uncorrelation at this decision point is zero to within about
++-0.9 points.  It is also worth nothing, because phase 1 left no readability
+handicap for it to buy.  RECOMMENDATION: keep `rtie=1` — not because randomising
+is expensive but because determinism is free and is what makes S4's strongest
+form (400/400 transcript identity) available.  The limb is closed.
+
+=============================================================================
+8. THE F-CHEAP S6 ANOMALY — chased down; it is not what it looked like
+=============================================================================
+The brief inherited one un-certified panel member: F-cheap fails S6 on bank
+7030002 with 1 irreproducible decision in 264,051, clean on 7030001.
+
+  --tests=s6,          threads=2, seed 7030002:  0 / 264,075  (run twice, same)
+  --tests=s6,          threads=4, seed 7030002:  0 / 264,075
+  --tests=s6,          threads=1, seed 7030002:  1 / 264,061
+  --tests=s6,          threads=2, seed 7030001:  0 / 262,920  (clean control)
+  --tests=s3,s4,s5,s6, threads=2, seed 7030002:  1 / 264,051  (reproduces K0)
+  --tests=s4,s6,       threads=2, seed 7030002:  1 / 264,051  (S4 alone suffices)
+
+Two facts fall out.  First, the mismatch is not a property of a decision: it
+appears and disappears with the thread count and with whether S4's second
+game-pass runs.  Second, and this is the real finding, the DECISION-NODE COUNT
+itself takes four different values — 264,037 / 264,051 / 264,061 / 264,075 —
+depending on those same two knobs.  The harness's play is therefore a function of
+how deals are grouped onto reused agent objects; the search carries state across
+deals; and S6 is partly measuring the harness it runs in.
+
+THE IMPORTANT NEGATIVE: this does NOT impugn any strength number in the corpus.
+`match` results are bit-stable across thread counts:
+  v06 vs v05     threads 1/2/3:  winRateA 0.535000, ev/g 95.535000,
+                                 askAccA 0.547877, declAccA 0.985355 — all equal
+  F-cheap vs v06 threads 1/2/3:  winRateA 0.508750, ev/g 95.147500,
+                                 askAccA 0.538021, declAccA 0.983380 — all equal
+
+A CANDIDATE MECHANISM, FOUND AND THEN KILLED.  `RolloutEngine::playOut` seats the
+six blueprint agents by assigning `sim.agents[p] = ag[p].get()` and never resets
+them; `Game::emit` calls `agents[p]->observe(e)` (game.hpp:260); and
+`RolloutEngine::seatAgents()` — the function written to do exactly that reset —
+has NO CALLER ANYWHERE IN THE TREE.  So the blueprints accumulate the events of
+every rollout of every decision of every deal.  That is real dead code and a real
+hygiene gap, and it is NOT the cause:
+  * with `rreset=1` (blueprints re-seated per rollout) S6 on 7030002 gives
+    2/264,037 at threads=1 and 1/264,051 at threads=2 — no better, and at
+    threads=2 bit-for-bit the same failure; and
+  * `rreset=1` changes match play not at all: F-cheap+rreset vs v06 on 7030001,
+    800 games, gives winRateA 0.508750, ev/g 95.147500, askAccA 0.538021 —
+    identical to six decimals to F-cheap without it.
+The switch ships default-off with the identity control intact.  Recorded as a
+negative, and as a lead for whoever owns the search: the rollout blueprints'
+accumulated observations have zero measurable effect on the search's output,
+which says something about how little those blueprints are actually using.
+The larger paired strength cell for `rreset=1` was killed by the harness lifetime
+and did not complete.
+
+=============================================================================
+9. THE GROUNDING BUDGET (threat-model S1, ceiling on ledger L11) — stated
+   without spending a game
+=============================================================================
+ADVERSARIES.md line 1014 records `v06:ptheta=0,pphi=0` at -6.85 [-7.70, -6.00]
+over 12,000 games.  That IS the S1 cell seen from the other side: playing under
+the grounded, rules-only posterior instead of the policy-aware one costs 6.85
+points.  L11's stated kill condition is "a grounding budget under half a point",
+so the entry is NOT killed.  But 6.85 is a very loose ceiling, because most of
+what the policy-aware posterior buys is reading OPPONENTS, not receiving signals
+from teammates, and L11 is about the latter.  No new games were spent; this is a
+re-reading of an existing cell, and it should be labelled as such.
+
+=============================================================================
+10. THROUGHPUT
+=============================================================================
+Not resolvable on this machine.  Mirror timing cells (600 deals x 2, 2 threads,
+run back to back under a load average near 40 on 15 cores) gave a rep-to-rep
+spread WITHIN a single spec of 32.42 against 21.39 games/s, which exceeds any
+between-spec difference.  The honest statement is that the stall detector's cost
+— one 54-card FNV hash per observed event per seat, and nothing at all when the
+key is off — is below the noise floor of this measurement.  Re-time on a quiet
+machine.  Strength cells reported 20.1-21.6 games/s for K3-stack against v06 and
+4.2-6.9 games/s for the composite, at TWO THREADS on a loaded machine.  These are
+not headline throughput figures and must not be quoted as such.
+
+=============================================================================
+11. ARTIFACTS
+=============================================================================
+research/v07/results/K3-stalldist-baseline.txt   stall distribution at stall=999
+research/v07/results/K3-gate-mirror.txt          commit gate, 7 configurations
+research/v07/results/K3-gate-search.txt          commit gate, composite/r2/F-cheap
+research/v07/results/K3-sidechannel.jsonl        v7side, 3 candidates x 2 banks
+research/v07/results/K3-replicate.jsonl          K3-stack vs v06, both banks
+research/v07/results/K3-screen.jsonl             composite vs v06, 7030001
+research/v07/results/K3-screen2.jsonl            composite vs v06, 7030002
+research/v07/results/K3-compose.jsonl            composite vs F-cheap, 7030001
+research/v07/results/K3-compose-b2.jsonl         composite vs F-cheap, 7030002
+research/v07/results/K3-stackvsfrontier.jsonl    K3-stack vs F-cheap, both banks
+research/v07/results/K3-rtie2price.jsonl         rtie=1 vs rtie=2, both banks
+research/v07/results/K3-onthebar.jsonl           K3 keys on the phase-2 composite
+research/v07/results/K3-s6anomaly.jsonl          S6 reproducibility sweep
+research/v07/results/K3-s6bisect.jsonl           S6 bisect on companion tests
+research/v07/results/K3-threaddep.jsonl          match thread-invariance
+research/v07/results/K3-rreset.jsonl             rollout-hygiene probe
+research/v07/results/K3-throughput.jsonl         timing (noise-dominated)
+research/v07/notes/K3.patch                      the diff against 0c021a3
+
+=============================================================================
+12. WHAT A LATER PHASE SHOULD SCORE, in priority order
+=============================================================================
+1. The phase-2 composite PLUS K3's keys, replicated on 7030002 and put through
+   the commit gate in mirror.  The one cell run here is +1.42 [+0.18, +2.68] on
+   one bank and is the single most decision-relevant number produced.
+2. K3-composite vs F-cheap at 24,000 games per bank.  The worst cell is +0.72
+   with an interval containing zero; the claim is replicated in sign but not in
+   size.
+3. K3-composite's S3 cell at --s3nodes=3.  The --s3nodes=1 run put bank 7030001
+   at 11.92 +- 2.33 against a threshold of 15.
+4. K3-stack against F-mid, which this phase deferred entirely.
+5. Why the +1.42 on top of the phase-2 composite does not show up in declaration
+   accuracy, when K3's gain against v06 plainly does.

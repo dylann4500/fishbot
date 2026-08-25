@@ -39,3 +39,6 @@ yarn-error.log*
 /outputs/
 /work/
 *.tsbuildinfo
+
+# Claude Code agent worktrees -- transient, never committed
+.claude/worktrees/
