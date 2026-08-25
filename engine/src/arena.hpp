@@ -14,6 +14,7 @@ struct MatchStats {
   int winsA = 0;                 // A wins out of 2*games
   long long asks[2] = {0, 0}, hits[2] = {0, 0};
   long long decl[2] = {0, 0}, declCorrect[2] = {0, 0};
+  long long declAllocErr[2] = {0, 0};   // v0.7 phase 3 (K4): ledger L1's error class
   long long fdecl[2] = {0, 0}, fdeclCorrect[2] = {0, 0};
   long long sets[2] = {0, 0};
   long long outOfTurn[2] = {0, 0};
@@ -35,6 +36,7 @@ struct MatchStats {
     for (int i = 0; i < 2; i++) {
       asks[i] += o.asks[i]; hits[i] += o.hits[i];
       decl[i] += o.decl[i]; declCorrect[i] += o.declCorrect[i];
+      declAllocErr[i] += o.declAllocErr[i];
       fdecl[i] += o.fdecl[i]; fdeclCorrect[i] += o.fdeclCorrect[i];
       sets[i] += o.sets[i]; outOfTurn[i] += o.outOfTurn[i];
       lockHeld[i] += o.lockHeld[i]; lockedDecls[i] += o.lockedDecls[i];
@@ -205,6 +207,8 @@ inline MatchStats runMatch(const MatchConfig& mc) {
           st.asks[1] += r.teamAsks[teamB]; st.hits[1] += r.teamHits[teamB];
           st.decl[0] += r.decls[teamA]; st.declCorrect[0] += r.correctDecls[teamA];
           st.decl[1] += r.decls[teamB]; st.declCorrect[1] += r.correctDecls[teamB];
+          st.declAllocErr[0] += r.allocErrDecls[teamA];
+          st.declAllocErr[1] += r.allocErrDecls[teamB];
           st.fdecl[0] += r.forcedDecls[teamA]; st.fdeclCorrect[0] += r.forcedCorrect[teamA];
           st.fdecl[1] += r.forcedDecls[teamB]; st.fdeclCorrect[1] += r.forcedCorrect[teamB];
           st.sets[0] += r.score[teamA]; st.sets[1] += r.score[teamB];

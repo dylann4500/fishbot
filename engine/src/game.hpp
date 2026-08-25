@@ -172,6 +172,13 @@ struct GameResult {
   int asks = 0, hits = 0;
   int teamAsks[2] = {0, 0}, teamHits[2] = {0, 0};
   int decls[2] = {0, 0}, correctDecls[2] = {0, 0};
+  // v0.7 phase 3 (K4).  The ALLOCATION error class: a wrong declaration in which
+  // the declaring team physically held all six cards of the half-suit and named
+  // the wrong teammate.  Ledger L1 sizes this class at 72-75% of all wrong
+  // declarations and at roughly 2.1 win-rate points; INSTRUMENT.md section 2
+  // could only reach it through the per-decision sink, which is not available to
+  // a fitter.  Counted here so a self-oriented per-decision objective can read it.
+  int allocErrDecls[2] = {0, 0};
   int forcedDecls[2] = {0, 0}, forcedCorrect[2] = {0, 0};
   int events = 0;
   bool hitLimit = false;
@@ -324,12 +331,15 @@ public:
       int claimed = d.owner[i];
       if (teamOf(claimed) != team || !(g.hand[claimed] & bit(c))) { correct = false; break; }
     }
+    // v0.7 phase 3 (K4).  Must be read HERE: the half-suit is stripped from every
+    // hand thirty lines below, so `teamOwnsAll` past that point is always false.
+    const bool ownLockedNow = teamOwnsAll(d.set, team);
     if (wantRecord(actor)) {
       DecisionRecord r; baseRecord(r, actor);
       r.kind = forced ? 2 : 1;
       r.set = int8_t(d.set); r.card = -1; r.target = -1;
       r.hit = int8_t(correct ? 1 : 0);
-      r.ownLocked = int8_t(teamOwnsAll(d.set, team) ? 1 : 0);
+      r.ownLocked = int8_t(ownLockedNow ? 1 : 0);
       r.oppLocked = int8_t(teamOwnsAll(d.set, 1 - team) ? 1 : 0);
       r.pAlloc = float(conf); r.p = float(conf);
       if (const DecisionInfo* di = agents[actor]->lastDecision()) {
@@ -378,6 +388,7 @@ public:
       calib->decl.push_back({float(conf), uint8_t(correct ? 1 : 0)});
     if (forced) { res.forcedDecls[team]++; if (correct) res.forcedCorrect[team]++; }
     else { res.decls[team]++; if (correct) res.correctDecls[team]++;
+           else if (ownLockedNow) res.allocErrDecls[team]++;
            res.predSumDecl[team] += conf; res.predNDecl[team]++;
            if (actor != g.turn) res.outOfTurnDecls[team]++; }
     Event e{}; e.kind = forced ? Kind::ForcedDeclare : Kind::Declare;

@@ -86,6 +86,17 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
        << ",\"askAccB\":" << acc(st.hits[1], st.asks[1])
        << ",\"declAccA\":" << acc(st.declCorrect[0], st.decl[0])
        << ",\"declAccB\":" << acc(st.declCorrect[1], st.decl[1])
+       // v0.7 phase 3 (K4).  The DENOMINATORS of the per-decision objectives.
+       // Ledger L5's whole arithmetic is decisions-per-game, and no artifact in
+       // the corpus has ever printed the ask count, so the effective sample of a
+       // per-decision estimator could not be checked against its binomial
+       // baseline.  Printed here, plus the allocation-error share (L1's class).
+       << ",\"asksPerGameA\":" << (n ? double(st.asks[0]) / n : 0)
+       << ",\"asksPerGameB\":" << (n ? double(st.asks[1]) / n : 0)
+       << ",\"nAsksA\":" << st.asks[0] << ",\"nDeclA\":" << st.decl[0]
+       << ",\"nAsksB\":" << st.asks[1] << ",\"nDeclB\":" << st.decl[1]
+       << ",\"allocErrRateA\":" << acc(st.declAllocErr[0], st.decl[0])
+       << ",\"allocErrRateB\":" << acc(st.declAllocErr[1], st.decl[1])
        << ",\"declPerGameA\":" << (n ? double(st.decl[0]) / n : 0)
        << ",\"declPerGameB\":" << (n ? double(st.decl[1]) / n : 0)
        << ",\"forcedAccA\":" << acc(st.fdeclCorrect[0], st.fdecl[0])

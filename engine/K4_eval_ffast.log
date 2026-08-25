@@ -1,0 +1,17 @@
+--- win vs Ffast bank 7030001 ---
+   edge +0.44  ci [-0.42, +1.32]  n=12000
+--- win vs Ffast bank 7030002 ---
+   edge +0.35  ci [-0.52, +1.20]  n=12000
+--- selfdecl vs Ffast bank 7030001 ---
+   edge -2.45  ci [-3.32, -1.58]  n=12000
+--- selfdecl vs Ffast bank 7030002 ---
+   edge -2.07  ci [-2.94, -1.18]  n=12000
+--- selfask vs Ffast bank 7030001 ---
+   edge -1.55  ci [-2.43, -0.65]  n=12000
+--- selfask vs Ffast bank 7030002 ---
+   edge -1.63  ci [-2.51, -0.76]  n=12000
+--- selfalloc vs Ffast bank 7030001 ---
+   edge -0.79  ci [-1.67, +0.08]  n=12000
+--- selfalloc vs Ffast bank 7030002 ---
+   edge -1.60  ci [-2.45, -0.72]  n=12000
+EVALDONE
