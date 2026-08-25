@@ -583,11 +583,13 @@ tolerance.** Getting back to that took most of phase 4's diagnostic effort and t
 here, because the two conditions the rule now carries are not obvious and a phase-5 reader who drops
 either of them will measure something else.
 
-**Condition 1: one thread.** Above one thread the test is a lottery. Run alone at 13 threads on one
-fixed cell, the same command returns 1, 2, 3 and 4 mismatches on successive invocations and the
-*denominator* moves too (270,593 / 270,608). Phase 3 attributed this to `v7side` leaking
-state between its own four passes and recorded `--tests=s6` alone at 2 threads as `0/264,075`, twice.
-That attribution does not survive — S6 was running alone. At `--threads=1` the test is deterministic.
+**Condition 1: one thread.** The audit depends on the deal-to-thread partition. Run alone at 13
+threads on one fixed cell, the same command returns 1, 2, 3 and 4 mismatches on successive
+invocations and the *denominator* moves too (270,593 / 270,608); at 2 threads the same cell gives a
+third value again. Phase 3 attributed this to `v7side` leaking state between its own four passes;
+that does not survive, because S6 was running alone. (Phase 3's own 2-thread `F-cheap` runs *do*
+agree with each other across several invocations, so the variability is a property of the partition
+rather than of "any thread count above one".) Only `--threads=1` fixes the partition.
 
 **Condition 2: fresh agents per deal (`--freshagents`).** With condition 1 alone, every configuration
 carrying the truncated search still shows 1–3 irreproducible **ask** decisions per ~270,000, and no
@@ -599,7 +601,8 @@ carries residue from its previous deals that the reconstruction's fresh agent do
 Two independent demonstrations, neither of which involves the side-channel harness reading anything
 about seats:
 
-* **Rebuilding the agents per deal takes every mismatching cell to exactly zero**, on every cell
+* **Rebuilding the agents per deal — or just the rollout engine — takes every mismatching cell to
+  exactly zero**, on every cell
   tested: the frozen configuration 1/270,593 → **0**/270,628; `F-cheap` 1/264,061 → **0**/264,075;
   the phase-2 composite 3/272,402 → **0**/272,390. Note the middle one: **264,075 is exactly the
   denominator phase 3 recorded for the one `F-cheap` run it believed was clean.** That run was not
@@ -611,8 +614,9 @@ about seats:
   count. With the search removed they are identical at every thread count without it.
 
 **What this is and is not.** It is **not** a channel between seats: it is one agent instance carrying
-its own past. It is **not** the rollout blueprints' accumulated `Knowledge` — `rreset=1`, phase 3's
-fix for exactly that, changes the counts by nothing. It **is** cross-game memory in the sense S6
+its own past. It is inside the search's rollout engine but **not** the
+blueprints' accumulated `Knowledge` — `rreset=1`, phase 3's fix for exactly that, re-seats the
+blueprints without rebuilding the engine and does not remove it. It **is** cross-game memory in the sense S6
 defines, and it is a real defect in the engine's reuse of agents, of a size that moves one deal in
 800 for a searching configuration and nothing at all for a blueprint.
 
@@ -636,11 +640,21 @@ defines, and it is a real defect in the engine's reuse of agents, of a size that
    and fails for a searching configuration played against itself. Phase 5 reports every searching
    cell's thread count with the cell, and the preregistered batteries fix it at 13.
 
-**What is still unknown**, and phase 5 is not asked to find it: *which* state survives `reset()`. The
-remaining suspects are the thread-local `BlockDP::buffers()` / `generation()` pool and
-`Belief::buffers()`, both shared by every agent on a thread. The decisive experiment is to reset those
-pools per deal and re-run the thread sweep; it is cheap and it is phase 6's or a maintenance task's,
-not phase 5's.
+**The carrier is named, and the fix is deliberately not shipped.** `--freshagents` rebuilds only agent
+objects, so it cannot clear a thread-local — which rules out `BlockDP::buffers()`,
+`BlockDP::generation()` and `Belief::buffers()` as sole carriers. Patching `V06Agent::resetV6` to
+clear the exact-posterior cache `BlockDP xb` changes **nothing**; patching it to rebuild
+**`v06::RolloutEngine roll`** reproduces the `--freshagents` result to the digit, both denominators
+included (0/270,628 and 0/272,390). The residue is inside the search's own engine, which `reset()`
+and `resetWithKnowledge()` never touch and which is therefore carried from deal to deal for the life
+of an agent instance.
+
+Rebuilding `roll` at reset is a one-line fix and it **changes the play of every searching
+configuration by about one deal in 800, the frozen one included**. Changing the policy after the
+freeze is the one thing the freeze exists to prevent, so phase 5 evaluates the frozen configuration
+**as frozen, with the defect present**, and the fix is the first maintenance item after phase 5. If
+phase 5 finds a nonzero S6 count *under* `--freshagents`, that is something else and it is the
+headline.
 
 ---
 

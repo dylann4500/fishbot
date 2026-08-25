@@ -1922,7 +1922,7 @@ process, which is the configuration CANDIDATES §10 named as the fix that would 
 `F-cheap` anomaly. It does not clear it. Chasing that is the most valuable thing in this phase, and
 it ends with the defect identified, demonstrated by two independent routes, and removed.
 
-**Step 1: above one thread the test is a lottery.** Run alone at 13 threads on one fixed cell
+**Step 1: the audit is not reproducible above one thread.** Run alone at 13 threads on one fixed cell
 (`v07cand`, bank 7030001, 400 deals), the *same command* returns:
 
 | run | mismatches | decisions audited |
@@ -1932,10 +1932,17 @@ it ends with the defect identified, demonstrated by two independent routes, and 
 | 3 | 2 | 270,593 |
 | 4 | 4 | 270,608 |
 
-**The denominator moves too.** That is the same signature phase 3 recorded for `F-cheap`
-(264,037 / 264,051 / 264,061 / 264,075) and attributed to `v7side` leaking state between its own four
-passes. The attribution does not survive: S6 is running *alone* here. Phase 3's evidence for it —
-"`--tests=s6` alone at 2 threads is 0/264,075, twice" — was two draws from this lottery.
+**The denominator moves too**, and at 2 threads the same cell gives a third value again (3/270,608).
+Phase 3 recorded the same shape for `F-cheap` (264,051 at four tests / 2 threads, 264,061 at s6-only /
+1 thread, 264,075 at s6-only / 2 threads) and attributed it to `v7side` leaking state between its own
+four passes. **That attribution does not survive** — S6 is running *alone* here.
+
+One qualification, because the corpus's own artifacts contradict the strong form and it should not be
+overstated: phase 3's 2-thread `F-cheap` runs **agree with each other** across at least five
+invocations at `0/264,075`. So "a lottery above one thread" is right for this cell at 13 threads and
+is not established as a general property of every thread count. The reproducible statement is that
+**the audit depends on the deal-to-thread partition**, which is a function of both the thread count
+and the cell, and that only `--threads=1` fixes the partition.
 
 **Step 2: at one thread it is deterministic**, and it then reproduces phase 3's own one-thread figure
 for `F-cheap` on bank 7030002 exactly: **1/264,061**. Measured that way at 1,200 deals a cell on both
@@ -1952,13 +1959,17 @@ training banks:
 Every mismatch is an **ask**. No declaration, pass, willing-forced or best-guess decision failed to
 reproduce in any configuration in any run.
 
-**Step 3: what it is not.** `rreset=1` — phase 3's fix for the rollout blueprints, which `Game::emit`
-feeds `observe()` forever because `RolloutEngine::seatAgents()` has no caller — changes the counts by
-**exactly nothing**, denominators included. Running the reconstruction **inline on the worker thread**
-rather than on a fresh one changes nothing either. And the rate does not track the number of
-Monte-Carlo determinizations: `det` = 1 / 4 / 12 / 24 gives 3 / 1 / 2 / 0 mismatches per ~790,000, so
-it is not an unreproduced determinization draw — at `det=1` there is one draw and the rate is the
-highest of the four.
+**Step 3: what it is not.** Running the reconstruction **inline on the worker thread** rather than on
+a fresh one changes nothing (`1/270,593`, `3/272,402`, `1/264,061` identical both ways), so thread
+isolation is not it. The rate does not track the number of Monte-Carlo determinizations either:
+`det` = 1 / 4 / 12 / 24 gives 3 / 1 / 2 / 0 mismatches per ~790,000, and at `det=1` there is a single
+draw and the rate is the *highest* of the four — so it is not an unreproduced determinization draw.
+`rreset=1` — phase 3's fix for the rollout blueprints, which `Game::emit` feeds `observe()` forever
+because `RolloutEngine::seatAgents()` has no caller — leaves the counts unchanged in this phase's own
+runs (`1/264,061` with and without, on the cell that shows a mismatch). Phase 3's own
+`K3-rreset.jsonl` records `2/264,037` for a run whose flags it does not record, so the two
+measurements do not agree; nothing below rests on `rreset` either way, because Step 4 identifies the
+carrier directly.
 
 **Step 4: what it is.** **Agents are constructed once per thread and reused across every deal that
 thread is handed** — `arena.hpp` does it, and `v07_side.hpp` does the same with twelve agents. Some
@@ -1991,14 +2002,37 @@ Each cell is reproducible; the *thread count* is what moves it. With the search 
 identical at every thread count. With `--freshagents` they are identical at every thread count. One
 deal in 800.
 
-**Step 5: what this is and is not.** It is **not** a channel between seats — it is one agent instance
-carrying its own past. It **is** cross-game memory in exactly the sense THREAT-MODEL S6 defines, and
-S6 was right to flag it; what was wrong was the corpus's reading of what S6 had found. It is not the
-rollout blueprints' accumulated `Knowledge`, because `rreset=1` does not touch it. **Which** state it
-is remains unknown: the suspects are the thread-local `BlockDP::buffers()` / `generation()` pool and
-`Belief::buffers()`, both shared by every agent on a thread and both introduced for the exact-belief
-path the search uses. Resetting those per deal and repeating the thread sweep is the experiment that
-would name it, and it was not run.
+**Step 5: the carrier, named to the object.** `--freshagents` rebuilds only the agent objects, so it
+cannot clear a thread-local — which rules out `BlockDP::buffers()`, `BlockDP::generation()` and
+`Belief::buffers()` as sole carriers, since clearing nothing of theirs is what the flag does and the
+flag zeroes the count. The carrier must therefore be per-agent state that `reset()` does not clear.
+Two candidates were tested by patching `V06Agent::resetV6` and re-running the two mismatching cells at
+one thread, **without** `--freshagents`:
+
+| what `resetV6` was made to clear | v07cand bank 1 | P2-composite bank 2 |
+|---|---:|---:|
+| nothing (as shipped) | 1 / 270,593 | 3 / 272,402 |
+| `BlockDP xb`, the exact-posterior cache | 1 / 270,593 | 3 / 272,402 |
+| **`v06::RolloutEngine roll`** | **0 / 270,628** | **0 / 272,390** |
+| *(`--freshagents`, for comparison)* | *0 / 270,628* | *0 / 272,390* |
+
+**Rebuilding the rollout engine at reset reproduces the fresh-agent result to the digit, including
+both denominators.** So the residue is inside `V06Agent::roll` — the search's own machinery, which
+`reset()` and `resetWithKnowledge()` never touch and which is therefore carried from deal to deal for
+the life of the agent instance. That is consistent with every other observation: blueprint-only
+configurations are exactly zero because they never construct a rollout; `rreset=1` does not fix it
+because it re-seats the blueprints' `Knowledge` at rollout start rather than rebuilding the engine;
+and every mismatch is an **ask**, which is the only decision the search reaches.
+
+It is **not** a channel between seats — it is one agent instance carrying its own past. It **is**
+cross-game memory in exactly the sense THREAT-MODEL S6 defines, and S6 was right to flag it; what was
+wrong was the corpus's reading of what S6 had found.
+
+**The fix is one line and it is deliberately NOT shipped.** Rebuilding or properly resetting `roll` in
+`resetV6()` changes the play of every searching configuration — one deal in 800 — including the frozen
+one, whose digest and whose every measured edge were taken under the defect. Changing the policy after
+the freeze is the one thing the freeze exists to prevent. It is recorded here, named, with the
+experiment that identifies it, as the first maintenance item after phase 5.
 
 **One operational note that cost half an hour.** `cp` over `engine/fish7` while a battery is running
 produces a binary that runs, exits 0, and prints **nothing** — no output, no error. `rm` then `cp`.
@@ -2342,9 +2376,15 @@ Row = the seat-0 run, column = the run its two partners come from, opponent = th
 of `v05`. The diagonal is self-play. A convention private to one run shows up as the
 off-diagonal collapsing relative to the diagonal.
 
-| seat 0 \ partners | `p4-xp1` | diagonal - mean off-diagonal |
-|---|---:|---:|
-| `p4-xp1` | +4.69 [+4.07, +5.32] | **--** |
+| seat 0 \ partners | `p4-xp1` | `p4-xp2` | diagonal - mean off-diagonal |
+|---|---:|---:|---:|
+| `p4-xp1` | +4.69 [+4.07, +5.32] | +4.60 [+3.97, +5.23] | **+0.10** |
+| `p4-xp2` | +4.26 [+3.64, +4.89] | +4.73 [+4.10, +5.36] | **+0.47** |
+
+**Self-play +4.71 over 2 diagonal cells; cross-play +4.43 over 2 off-diagonal cells; the gap is
++0.28 points** against a per-cell half-width of about 0.63. The Hanabi line reports
+self-play-to-cross-play collapses of 23.97 to 2.52 (SAD) and 24.04 to 0.12 (IPPO); this is
+not that, and the runs are genuinely different policies -- see the distances below.
 
 Parameter distance between the runs, so the table above can be read:
 
@@ -2676,12 +2716,13 @@ Stated plainly rather than smoothed over, because it bears on how §4's claims s
   48,000-game head-to-head in §4.4, which is a better measurement of the same thing, but the
   consequence is that the panel's regret is computed over three arms and not four and is therefore a
   lower bound.
-* **The S6 residual is explained but not named.** §4.3 shows it is per-agent state surviving
-  `reset()` and reachable only under the search, demonstrated by two independent routes and removed
-  entirely by rebuilding the agents per deal. **Which** field it is was not determined; the suspects
-  are the thread-local `BlockDP::buffers()`/`generation()` pool and `Belief::buffers()`, and the
-  experiment that would name it — reset those pools per deal and repeat the thread sweep — is cheap
-  and was not run.
+* **The S6 residual is explained, named to the object, and deliberately not fixed.** §4.3 identifies
+  it as `V06Agent::roll`, the rollout engine, which `reset()` never touches: rebuilding it at reset
+  reproduces the `--freshagents` result to the digit. The one-line fix changes the play of every
+  searching configuration by about one deal in 800 — the frozen one included — and shipping it after
+  the freeze is the one thing the freeze exists to prevent. It is the first maintenance item after
+  phase 5. **What is still not known is which field inside the engine**; the object is named, the
+  member is not.
 * **The cross-play runs were fitted in the wrong architecture** and the table was not re-run after
   the engine fix. §4.8 states exactly what they do and do not answer. Re-running is ~50 minutes of
   fitting and ~50 of cells, and it is preregistered as phase-5 cell B7 on the frozen configuration
