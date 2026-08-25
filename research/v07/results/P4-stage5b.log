@@ -1,0 +1,3 @@
+########## CROSS-PLAY between independently-trained runs of the architecture
+  cross  p4-xp1 x p4-xp1  bank 7030001
+  cross  p4-xp1 x p4-xp1  bank 7030002

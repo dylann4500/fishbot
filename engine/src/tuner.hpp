@@ -160,6 +160,15 @@ struct TuneSpec {
   double sigmaFloor = 0.03;
   double smoothing = 0.6;
   uint64_t seed = 424242;
+  // v0.7 phase 4.  Shard the FITTING deal stream, so several independent searches
+  // can run on one registered bank without sharing its deals.  `runMatch` already
+  // partitions a bank exactly by deal index (arena.hpp); until now only `match`
+  // parsed `--shard`, so a `tune --shard=` was silently ignored and two searches
+  // written as disjoint quietly shared every deal.  Phase 5 needs eight searches
+  // and has two sealed fitting banks, so this is what makes that design real.
+  // The per-generation deal count is scaled up by `shards` so a sharded search
+  // still evaluates `gamesPerOpponent` deals per opponent per generation.
+  int shard = 0, shards = 1;
   Rules rules;
   int threads = 0;
   std::string baseSpec = "v04";
@@ -243,8 +252,9 @@ inline Evaluation evaluateCandidate(const TuneSpec& sp, const std::vector<double
     mc.specA = spec; mc.specB = sp.panel[i];
     mc.partnersA = sp.partners;
     mc.correlated = sp.correlated;
-    mc.games = sp.gamesPerOpponent;
+    mc.games = sp.gamesPerOpponent * sp.shards;  // so a shard still plays gamesPerOpponent deals
     mc.rotations = sp.rotations;
+    mc.shard = sp.shard; mc.shards = sp.shards;
     mc.seed = mixSeed(genSeed, i * 7919 + 13);   // common random numbers
     mc.rules = sp.rules;
     mc.threads = sp.threads;

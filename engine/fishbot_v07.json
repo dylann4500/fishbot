@@ -19,7 +19,7 @@
     "depth": "12",
     "maxq": "26"
   },
-  "allparamsSpec": "v07:rtie=1,force=1000000,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,allparams=11.26561|4.18288|3.05733|3.80008|4.35318|6.42340|1.36441|-0.38185|-0.81545|-6.24532|-2.62967|1.49745|3.12582|3.96890|1.06205|-1.62528|4.04349|1.01429|1.21342|-0.79873|0.84218|0.76534|0.26573|4.77343|2.99879|7.12192|0.78874|0.84929|-0.02068|0.37062|0.14525|5.89200|3.27319|3.76581|0.17133|-0.47667|-0.77680|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|25.00000|0.00000|0.00000|0.00000|0.00000|0.00000",
+  "allparamsSpec": "v07:rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26,allparams=11.26561|4.18288|3.05733|3.80008|4.35318|6.42340|1.36441|-0.38185|-0.81545|-6.24532|-2.62967|1.49745|3.12582|3.96890|1.06205|-1.62528|4.04349|1.01429|1.21342|-0.79873|0.84218|0.76534|0.26573|4.77343|2.99879|7.12192|0.78874|0.84929|-0.02068|0.37062|0.14525|5.89200|3.27319|3.76581|0.17133|-0.47667|-0.77680|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|0.00000|25.00000|0.00000|0.00000|0.00000|0.00000|0.00000",
   "switchesNotExpressibleAsVector": {
     "askfloor": {
       "value": "-1",
@@ -116,11 +116,11 @@
   },
   "inheritedVectorProvenance": "fitC.jsonl [final weights record] sha256:be4a4c31d9153208 gens=14 obj=minimaxregret paired=1 panel=v05+v03+withholder+feint seed=20260824 deals=200x2 sigmaRel=0.04",
   "provenance": {
-    "commit": "f6de497387f536c212103b4f14d6789ccc8556d9",
+    "commit": "ce787103420c216eb35539b62237b2eccfc38020",
     "treeDirty": true,
-    "note": "phase 4 freeze; re-verified after the factory.hpp ordering fix",
+    "note": "phase 4 freeze; re-verified after the factory.hpp precedence fix and the tune --shard addition",
     "srcSha256_16": {
-      "arena.hpp": "19d82a97a4377c44",
+      "arena.hpp": "00c8d4be751ec2e2",
       "baselines.hpp": "66a596070343a15c",
       "belief.hpp": "1465eb549089ae74",
       "blockdp.hpp": "588b458307f4c68d",
@@ -131,7 +131,7 @@
       "httpd.hpp": "65cf973b622d1280",
       "human.hpp": "b04e1b21f85975a8",
       "lobby.hpp": "9ed9ea8f104931cc",
-      "main.cpp": "d92780883e3ff1e6",
+      "main.cpp": "4cbdb0741213e20b",
       "oracle.hpp": "54e61c60349bd993",
       "probe_askchannel.hpp": "55790adbb99fa6e5",
       "probe_coordination.hpp": "70db5625c29da912",
@@ -177,7 +177,7 @@
       "probe_vwill_main.cpp": "9ab6fb1ca7378fb9",
       "serve.hpp": "024ba44cd64b4ab0",
       "table.hpp": "0f324071e89fd64c",
-      "tuner.hpp": "ff05d6ff262c6643",
+      "tuner.hpp": "f0781e2d1f485941",
       "tunnel.hpp": "96636163767fb355",
       "v04.hpp": "02b0805292691d70",
       "v05.hpp": "83d87d562b97e0f3",
@@ -196,7 +196,7 @@
       "v07_probe.hpp": "149abdd5ecf7a281",
       "v07_responder.hpp": "9efc1b0525f8b9cf",
       "v07_seeds.hpp": "f7dec8c8c432c1f8",
-      "v07_side.hpp": "98d37842a04eaf15",
+      "v07_side.hpp": "fa961698c1133407",
       "v07_stall.hpp": "ef51d21a76257d4c"
     }
   },
@@ -212,6 +212,7 @@
       "askAccB": 0.504843,
       "identical": true
     },
+    "R2c_publishedForm": "PASS -- the frozen spec and `allparamsSpec` are the same policy with the search off, which also fails loudly if factory.hpp's explicit-key-beats-allparams precedence is ever reverted",
     "R2b_switches": [
       "askfloor",
       "oppfloor",

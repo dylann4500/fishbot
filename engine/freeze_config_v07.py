@@ -140,11 +140,12 @@ VEC = V6 + RW
 VECSTR = "|".join("%.5f" % x for x in VEC)
 
 # The vector form carries every option EXCEPT the rN= keys, which allparams
-# now supplies.  weightSpec (tuner.hpp:158) continues an existing option list
+# now supplies.  It KEEPS the sentinels, and must: they are applied after the
+# bulk vector and are the only way the -1 switches can be expressed at all.  weightSpec (tuner.hpp:158) continues an existing option list
 # with a comma rather than opening a second colon; the same rule applies here.
-vopts = collections.OrderedDict((k, v) for k, v in OPTS.items() if not re.fullmatch(r"r\d+", k))
-vopts["allparams"] = VECSTR
-VECSPEC = build_spec(BASE, vopts)
+vopts_pub = collections.OrderedDict((k, v) for k, v in OPTS.items() if not re.fullmatch(r"r\d+", k))
+vopts_pub["allparams"] = VECSTR
+VECSPEC = build_spec(BASE, vopts_pub)
 
 # ---- R2b: which options the vector provably cannot carry ------------------
 # factory.hpp:108-110.  A sentinel outside the clamp is a SWITCH, not a value.
@@ -194,6 +195,21 @@ def cell(sa, sb, deals):
                          "--games=%d" % deals, "--rotations=2", "--seed=7030003",
                          "--threads=" + THREADS, "--json").strip().splitlines()[-1])
 
+# R2c: THE PUBLISHED VECTOR FORM.  `forms()` strips the sentinels from both arms so
+# that R2a tests the vector and nothing else; the string the JSON PUBLISHES must
+# not be built that way, because without the sentinels the vector's clamped
+# coordinates put the urgency escalation back on and the artifact would name two
+# different policies in two fields.  VECSPEC keeps them, and R2c asserts that the
+# published form and the frozen spec are the same policy with the search off --
+# which is also the one assertion in this corpus that fails loudly if the
+# `factory.hpp` precedence fix (an explicit key beats `allparams=`) is ever
+# reverted, since under the old precedence the sentinels are discarded.
+def drop_search(spec_opts):
+    return collections.OrderedDict((k, v) for k, v in spec_opts.items()
+                                   if k not in ("s1", "det", "cand", "kappa", "rbelief", "depth", "maxq"))
+pubA = build_spec(BASE, drop_search(OPTS))
+pubB = build_spec(BASE, drop_search(vopts_pub))
+
 bpA, bpB = forms(True)
 jb = cell(bpA, bpB, 400)
 exact = (jb["winRateA"] == 0.5 and jb["ci"] == [0.5, 0.5]
@@ -205,6 +221,16 @@ if not exact:
              "  The frozen JSON does not pin the configuration."
              % (jb["winRateA"], jb["ci"], jb["meanSetsA"], jb["meanSetsB"],
                 jb["askAccA"], jb["askAccB"], jb["declAccA"], jb["declAccB"]))
+
+jc = cell(pubA, pubB, 400)
+if not (jc["winRateA"] == 0.5 and jc["ci"] == [0.5, 0.5]
+        and jc["meanSetsA"] == jc["meanSetsB"] and jc["askAccA"] == jc["askAccB"]
+        and jc["declAccA"] == jc["declAccB"]):
+    sys.exit("R2c FAILED: the frozen spec and the PUBLISHED allparams form are not the same policy "
+             "with the search off.\n  sets %r/%r ask %r/%r decl %r/%r\n"
+             "  Either the sentinels are missing from allparamsSpec, or factory.hpp no longer lets an "
+             "explicit key beat allparams=." % (jc["meanSetsA"], jc["meanSetsB"], jc["askAccA"],
+                                                jc["askAccB"], jc["declAccA"], jc["declAccB"]))
 
 R2A_SEARCH = None
 if SEARCHKEYS:
@@ -235,7 +261,7 @@ doc["version"] = "0.7"
 doc["spec"] = SPEC
 doc["base"] = BASE
 doc["options"] = OPTS
-doc["allparamsSpec"] = specB
+doc["allparamsSpec"] = VECSPEC
 doc["switchesNotExpressibleAsVector"] = SENTINEL
 doc["allparams"] = VEC
 doc["allparamsLayout"] = {"nfeat": 20, "v05knobs": 14, "v06askTerms": 3, "v07responder": NR7,
@@ -252,6 +278,9 @@ doc["roundTrip"] = {
                             "arms, the spec form and the allparams form play identically on every deal "
                             "of an 800-game cell on bank 7030003",
     "R2a_vector_search": R2A_SEARCH,
+    "R2c_publishedForm": "PASS -- the frozen spec and `allparamsSpec` are the same policy with the "
+                        "search off, which also fails loudly if factory.hpp's explicit-key-beats-"
+                        "allparams precedence is ever reverted",
     "R2b_switches": sorted(SENTINEL),
     "R3_digestMd5": DIGMD5,
     "R3_command": "fish7 pathology --a=<spec> --b=<spec> --games=400 --rotations=2 --seed=31 --threads=2",
@@ -295,6 +324,8 @@ if R2A_SEARCH is not None:
           % ("identical" if R2A_SEARCH["identical"] else "DIVERGES",
              R2A_SEARCH["setsA"], R2A_SEARCH["setsB"],
              R2A_SEARCH["askAccA"], R2A_SEARCH["askAccB"], R2A_SEARCH["games"]))
+print("  R2c published PASS  (the frozen spec and the published allparamsSpec are the same policy;\n"
+      "                this also fails if factory.hpp's key-beats-allparams precedence regresses)")
 print("  R2b switch %s cannot be expressed as vector coordinates (clamped); recorded as switches"
       % (", ".join("`%s=%s`" % (k, SENTINEL[k]["value"]) for k in sorted(SENTINEL)) or "(none)"))
 print("  R3 digest  %s" % DIGMD5)

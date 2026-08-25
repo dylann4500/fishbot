@@ -46,7 +46,7 @@ from that file rather than typing it**, and runs `freeze_config_v07.py --verify-
 | mirror pathology digest | `5f81f440fc9c272a87e87c05fecc7b74` |
 | inherited vector | v0.6's `V6PARAMS`, `fitC.jsonl … obj=minimaxregret paired=1 panel=v05+v03+withholder+feint seed=20260824` |
 | resolved vector | 55 coordinates, recorded in the JSON: 20 ask weights, 14 v0.5 knobs, 3 v0.6 ask terms, 18 v0.7 responder coordinates |
-| commit gate | **PASS**, all seven rules (`P4-gate.jsonl`, id `FROZEN-v07`) |
+| commit gate | **PASS**, all eight rules G1–G6, G7a, G7b (`P4-gate.jsonl`, id `FROZEN-v07`) |
 
 **What each key is, so phase 5 can read a failure.**
 
@@ -259,7 +259,8 @@ For `FROZEN`, `INCUMBENT`, `F-cheap`, and the **negative control** below, on the
 (see §2.1(b) for why the gate does not spend holdout material):
 
 `fish7 pathology --a=SPEC --b=SPEC --games=400 --rotations=2 --seed=31`, plus `fish7 v7side` on both
-*training* banks with **S6 in its own process at `--threads=1`** (§5.3 says why).
+*training* banks with **S6 in its own process at `--threads=1 --freshagents`** — all three conditions,
+and §5.3 says why each is needed.
 
 | rule | threshold | set from |
 |---|---|---|
@@ -325,8 +326,12 @@ permitted to lead with it even if it flatters the frozen configuration.
 ### B4 — a fresh adversary search against the frozen configuration
 
 Eight independent searches. Only two sealed banks are available for fitting, so they are **sharded**,
-and the mapping is fixed here rather than left to be chosen: `--shard=s/4` partitions a bank by deal
-index exactly (`arena.hpp`), so eight disjoint fitting sets exist.
+and the mapping is fixed here rather than left to be chosen. `--shard=s/n` partitions a bank by deal
+index exactly (`arena.hpp`), so eight disjoint fitting sets exist. **`tune` did not parse `--shard`
+until phase 4 added it** (`tuner.hpp`, `main.cpp`): before that a sharded `tune` silently ignored the
+flag and two searches written as disjoint shared every deal. The tuner scales its per-generation deal
+count by `shards`, so `--games=120 --shard=s/4` still evaluates 120 deals per opponent per
+generation, out of 480 indices.
 
 | id | fitting bank | shard | id | fitting bank | shard |
 |---|---|---|---|---|---|
@@ -366,8 +371,8 @@ phase 2's adversaries.
 | Z07 | C1 | `v06` | `win`, v0.5 basin | a different starting basin: one more shared bias removed |
 | **Z08** | **C5 white-box** | `v07i` | `win` | **the white-box inverter, required by the phase-5 brief.** It sharpens its deal posterior by inverting the target's transcript against the target's known deterministic policy; phase 1 measured that channel at ~2.0 bits per observed ask. |
 
-Budget per search: 8 generations × 12 population × 120 deals × 2 rotations = **23,040 games**;
-total fitting **184,320 games**. Evaluation of each fitted adversary against `FROZEN`: 6,000 deals ×
+Budget per search: 8 generations × 12 population × 120 deals × 2 rotations = **23,040 games**, drawn
+from 480 deal indices of the bank under `--shard=s/4`; total fitting **184,320 games**. Evaluation of each fitted adversary against `FROZEN`: 6,000 deals ×
 2 rotations × 2 banks = **24,000 games**, half-width 0.63.
 
 **Nothing fitted here is evaluated on the bank it was fitted on.** The win rate reached during
@@ -399,9 +404,16 @@ three mechanisms composing at 83% of their naive sum; a v0.7 report that quotes 
 This is ledger L6's design (`engine/experiments_v06.sh:125-131`) at 30× its power — L6 ran 800 games
 a cell, half-width ±3.46, at which "not one of the four deltas is separated from any other".
 
-Arms: `FROZEN`, `INCUMBENT`, `v05`.
+Arms: `FROZEN`, `INCUMBENT`, `v05` — **all three at every partner setting**, because S1's reported
+baseline is `INCUMBENT` − `v05` and it has to be taken over the same rows as `FROZEN` − `INCUMBENT`.
 Partners *P*: **itself**, `v06`, `v05`, `v04`, `v03`, `detective`, `withholder`, `lockout`.
-6,000 deals × 2 rotations × 2 banks = 24,000 games a cell, half-width **0.63**.
+6,000 deals × 2 rotations × 2 banks = 24,000 games a cell, half-width **0.63**. 3 × 8 = **24 cells,
+576,000 games.**
+
+**And the same table against `--b=v06`**: arms `FROZEN` and `INCUMBENT`, partners itself, `v06`,
+`v03`, `detective` — 8 cells, 192,000 games. §1 item 4 states expectations for that regime and
+without these cells they cannot be checked, and §4.7 of the phase-4 log is explicit that a
+partner-transfer claim holding against one opponent is not a claim.
 
 The self-play row is reported but **never headlined**: the target configuration is three copies, so
 self-play coordination is legitimate, and the question this table answers is whether the *advantage
@@ -464,7 +476,7 @@ Phase 5 re-measures on holdout material, 1,200 deals per cell, both banks, for `
 
 | arm | `--threads=1` alone | `--threads=1 --freshagents` |
 |---|---|---|
-| what phase 4 measured on training banks | 0–3 mismatches per ~270,000 for searching arms, 0 for blueprint | **0 everywhere** |
+| what phase 4 measured on training banks | 1–3 mismatches per ~270,000 for searching arms, 0 for blueprint | **0 everywhere** |
 | what phase 5 must find | a nonzero, ask-only residue for searching arms | **0**; anything else is a finding |
 
 Reporting both is the point: the first column is the reproduction of phase 4's defect and the second
@@ -511,7 +523,7 @@ one-switch deviations of the incumbent do it. The v0.7 case has to be against th
 
 | # | claim | passes if | fails if |
 |---|---|---|---|
-| S1 | **the advantage is not a self-play convention** | v0.7's partner-transfer profile is **no worse than the incumbent's own, measured the same way on the same material**: `min` over the changed-partner rows of the `FROZEN` − `INCUMBENT` delta is at least the `min` of the `INCUMBENT` − `v05` delta, **and** the ratio (median changed-partner delta) / (self-play delta) is at least the same ratio for `INCUMBENT` − `v05` | either comparison goes the wrong way — v0.7 then transfers *worse* than the policy it replaces |
+| S1 | **the advantage does not COLLAPSE under partner change** | the `FROZEN` − `INCUMBENT` delta is **positive in at least five of the eight changed-partner rows** of B6, **and** its minimum is **not below −1.0** (about 1.5 cell half-widths) | a majority of rows negative, or any row below −1.0. Either is a collapse; neither is mere shrinkage |
 | S2 | **the advantage is not a private convention between identical fits** | in B7, the off-diagonal (run *i* with run *j*'s partners) is within 1.5 points of the diagonal | the off-diagonal collapses |
 | S3 | **no fresh adversary exploits it** | every B4 arm's edge over `FROZEN` has an upper bound below 1.53 | any arm clears 1.53 with a replicated sign |
 | S4 | **the gain is attributable** | in B5, no single leave-one-out drop accounts for more than the whole, and the components' naive sum exceeds the measured whole (sub-additive, as phase 2's did at 83%) | the measured whole exceeds the naive sum of its parts, which would mean the attribution is wrong |
@@ -522,35 +534,46 @@ one-switch deviations of the incumbent do it. The v0.7 case has to be against th
 A failure of S1, S2 or S6 is a **substantive** failure and the report says v0.7 is brittle in that
 named way. A failure of S7 is a **procedural** failure and phase 5 stops.
 
-**S1 has no free constant, and getting there took two failed attempts that are recorded rather than
-hidden.** The first draft, written before phase 4's partner table had run, set S1 as "the
-changed-partner delta is within 1.5 points of the self-play delta". Phase 4 then measured the table
-and **neither v0.7 nor v0.6 passes that** — a three-seat upgrade is simply worth more than a one-seat
-upgrade, which is arithmetic and not brittleness. The second draft asked for five of seven
-changed-partner deltas to clear zero; recomputing the delta intervals properly (each arm's pooled
-half-width combined in quadrature, which is *conservative* because the two arms are paired on deals
-and the harness gives no paired delta across two separate cells) gives **four of seven**, so v0.7
-would have failed its own test while v0.6 has never been measured against it at all.
+**S1 took three drafts and all three are recorded, because the third is the one phase 5 applies and
+the reader is entitled to know it was not the first thing that came to mind.**
 
-Two failed thresholds in a row is the signal that the constant was the problem. **S1 now has no
-constant: it uses the incumbent as its own control**, which is this corpus's standing habit
-everywhere else. B6 already runs the `v05` arm needed to compute the baseline, so both profiles come
-out of the same battery on the same deals.
+* **Draft 1**, written before phase 4's partner table ran: "the changed-partner delta is within 1.5
+  points of the self-play delta". Measured, **neither v0.7 nor v0.6 passes it** — a three-seat
+  upgrade is simply worth more than a one-seat upgrade, which is arithmetic, not brittleness.
+* **Draft 2**: "at least five of seven changed-partner deltas clear zero". Computing the delta
+  intervals properly — each arm's pooled half-width combined in quadrature, which is *conservative*
+  because the arms are paired on deals and the harness gives no paired delta across two cells — gives
+  **four of seven**, so v0.7 would fail a test v0.6 had never been measured against.
+* **Draft 3**: use the incumbent as its own control, comparing v0.7's `min` and median/self ratio
+  against `INCUMBENT` − `v05`. **Abandoned not because v0.7 loses it** — although on the rows
+  available it does — but because **the baseline is computable on only three of the seven rows**: B6
+  as first written ran the `v05` arm at four partner settings and the other two arms at eight, so the
+  medians would be taken over different row sets. **The fix is to make the comparison computable
+  rather than to drop it: B6 now runs all three arms at all eight settings**, and the comparison is
+  *reported* rather than gated, because three rows is not a baseline anyone should gate on.
 
-For the record, phase 4's training measurement of the v0.7 side (deltas of `FROZEN` − `INCUMBENT`
-against a `v05` opponent, conservative intervals):
+So S1 as it stands tests **collapse**, which is what the phase brief asks — *"a convention that
+collapses in cross-play is brittleness"*.
+
+**Stated in advance so the direction cannot be chosen afterwards: on phase 4's training measurement
+the incumbent-baseline comparison goes AGAINST v0.7.** v0.7 over v0.6 has min −0.15, median +1.26,
+self +2.94, ratio **0.428**. v0.6 over v0.5, on the three rows where both are currently measurable,
+has min −0.61, median +0.64, self +1.35, ratio **0.472**. If phase 5's fuller measurement keeps that
+ordering, the honest sentence for the report is *"v0.7's advantage transfers across partners about as
+well as v0.6's did, and on the median-to-self-play ratio slightly less well"* — not "it transfers".
+
+Phase 4's training measurement of the v0.7 side (deltas of `FROZEN` − `INCUMBENT`, `v05` opponent):
 
 | partners | itself | `v06` | `v05` | `v04` | `v03` | `detective` | `withholder` | `lockout` |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | delta | +2.94 | +1.26 | +0.80 | +0.14 | +1.61 | +1.43 | −0.15 | +2.08 |
 | clears zero | yes | yes | no | no | yes | yes | no | yes |
 
-min = −0.15, median of the seven changed-partner rows = +1.26, ratio to the self-play row = 0.43.
-The corpus's baseline for the same quantity — v0.6 over v0.5, `paper/tables_v06/partners.tex` — is
-self-play +2.25 with changed-partner deltas spanning **−0.8 to +1.4**, i.e. min −0.8 and a ratio well
-under 0.43, but measured at ±3.46 and therefore not usable as a threshold. **That is exactly why B6
-re-measures it at 24,000 games a cell rather than quoting it**, and why S1 compares the two profiles
-produced by the same battery instead of comparing v0.7 to a published number.
+Seven of the eight rows are positive and the minimum is −0.15, so the collapse test passes; only four
+clear zero under the conservative interval, which is why the count-of-significant-rows version was
+abandoned.
+
+---
 
 ### 5.3 The S6 side-channel rule, and the confound phase 4 removed from it
 
@@ -562,7 +585,7 @@ either of them will measure something else.
 
 **Condition 1: one thread.** Above one thread the test is a lottery. Run alone at 13 threads on one
 fixed cell, the same command returns 1, 2, 3 and 4 mismatches on successive invocations and the
-*denominator* moves too (270,593 / 270,608 / 270,628). Phase 3 attributed this to `v7side` leaking
+*denominator* moves too (270,593 / 270,608). Phase 3 attributed this to `v7side` leaking
 state between its own four passes and recorded `--tests=s6` alone at 2 threads as `0/264,075`, twice.
 That attribution does not survive — S6 was running alone. At `--threads=1` the test is deterministic.
 
@@ -599,6 +622,14 @@ defines, and it is a real defect in the engine's reuse of agents, of a size that
    --freshagents`. Under those conditions every configuration in this corpus — the incumbent, the
    incumbent's frontier, phase 3's survivor and the frozen configuration — measures **exactly zero**.
    A nonzero count in phase 5 is therefore a genuine finding and not the residue.
+
+   **The rule tests a mode no scored cell uses, and that has to be said in the report.**
+   `--freshagents` changes play — it is what takes `F-cheap`'s audited denominator from 264,061 to
+   264,075 — so G7b certifies "with the residue removed, nothing else depends on anything it should
+   not". The residue itself is **not** removed from the shipped mode; it is a named, quantified
+   engine defect (1–3 ask decisions per ~270,000, one deal in 800 of play) that every strength number
+   in this corpus is measured under. Phase 6 must not write "the frozen configuration passes S6"
+   without that clause.
 2. **It corrects `CANDIDATES.md` C14 on two counts.** "It is `v7side` leaking state between its own
    four passes" is not what is happening, and "`fish7 match` is bit-stable across thread counts for
    both search and non-search play" is **false in general** — it holds for the cells phase 3 tested

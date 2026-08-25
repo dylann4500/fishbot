@@ -1862,14 +1862,14 @@ artifact, but it is a semantic change to a shipped key.
 
 ## 4.2 The commit gate, and what it caught
 
-`engine/gate_v07.sh` is the gate as a script rather than as a habit: seven rules, each with the
+`engine/gate_v07.sh` is the gate as a script rather than as a habit: eight rules (G1-G6, G7a, G7b), each with the
 measured configurations its threshold is set from printed beside it, plus the mechanical
 side-channel gate on both banks. It exits non-zero on failure and writes one JSON verdict per
 configuration to `P4-gate.jsonl`.
 
 **The negative control does what a negative control is for.** `v06:rtie=1,m1=0,pool=-1,oppfloor=-1,`
 `force=1000000,askfloor=-1` — the configuration ADVERSARIES §4H measured at **+2.68 over `v06`**, the
-highest-scoring target-side switch stack in phase 2 — fails five of the seven rules: 2.59% provably
+highest-scoring target-side switch stack in phase 2 — fails five of the eight rules: 2.59% provably
 dead asks against a 0.10% threshold, a longest dead run of 326 against 5, two games with a run ≥ 6
 against zero, two games killed by the action limit against zero, and a mirror tail of 405 events
 against a 220 rung that carries a fifteen-point cliff behind it. A gate that cannot reject the one
@@ -1877,7 +1877,7 @@ configuration the corpus built to be rejected certifies nothing about the one it
 one rejects it on five independent counts.
 
 The table below is **one measurement**, not a mixture: the gate was re-run for every configuration
-after §4.3 settled how S6 must be measured, so every row carries the same seven rules under the same
+after §4.3 settled how S6 must be measured, so every row carries the same eight rules under the same
 rule set. The first pass, which failed two configurations on an S6 rule that turned out to be
 measuring a lottery, is in `P4-stage1.log` and is superseded.
 
@@ -2000,12 +2000,22 @@ is remains unknown: the suspects are the thread-local `BlockDP::buffers()` / `ge
 path the search uses. Resetting those per deal and repeating the thread sweep is the experiment that
 would name it, and it was not run.
 
+**One operational note that cost half an hour.** `cp` over `engine/fish7` while a battery is running
+produces a binary that runs, exits 0, and prints **nothing** — no output, no error. `rm` then `cp`.
+The corrupted image is not detectable from the exit status, only from the empty output, and a battery
+driven by it writes empty artifacts that look like failed cells.
+
 **Four consequences, all of which phase 4 owns rather than passes on.**
 
 1. **The gate is fixed and S6 is zero-tolerance again.** `engine/gate_v07.sh` runs S6 in its own
    process at `--threads=1 --freshagents`. Under those two conditions **every configuration in this
    corpus measures exactly zero** — the incumbent, its frontier, phase 3's survivor and the frozen
    configuration alike. A nonzero count is a finding again instead of a coin flip.
+   **But the rule now tests a mode no scored cell uses**, and that must travel with the number:
+   `--freshagents` changes play, so G7b certifies *"with the residue removed, nothing else depends on
+   anything it should not"*. The residue is **not** removed from the shipped mode. It is a named,
+   quantified engine defect that every strength number in this corpus is measured under, and the
+   report may not write "the frozen configuration passes S6" without that clause.
 2. **CANDIDATES §2's C14 is corrected on two counts.** "It is `v7side` leaking state between its own
    four passes" is not what is happening. And "`fish7 match` is bit-stable across thread counts for
    both search and non-search play" is **false in general**: it holds for the cells phase 3 tested
@@ -2155,6 +2165,17 @@ the first freeze in the corpus that verifies itself. Three assertions, all run:
   the freeze, and asserting exactness there would fail for the wrong reason. So the search half is
   measured and reported into the JSON rather than asserted — and it is how §4.3(b) was found in the
   first place.
+* **R2c, the published form — and this one was a defect in the artifact until the second
+  adversarial pass caught it.** The JSON publishes `allparamsSpec`, the vector form of the frozen
+  configuration, and it was being written **without the three sentinel switches**, because those are
+  stripped from both arms of R2a so that R2a tests the vector and nothing else. Read back, that
+  string puts the urgency escalation *on* — so the artifact named two different policies in two
+  fields, which is precisely the trap the `factory.hpp` precedence fix was written to close,
+  re-created inside the freeze. R2c now asserts that the frozen spec and the published vector form
+  are the same policy with the search off. It has a second use: under the **old** precedence the
+  sentinels are discarded, so R2c fails — verified directly against the pre-fix binary, which gives
+  0.5267 where the fixed one gives an exact mirror. **It is the one assertion in the corpus that
+  would catch a regression of that fix.**
 * **R4, source drift.** `--verify-only` now diffs the 78 recorded source hashes and reports every
   file that has moved since the freeze. It is not fatal on its own — this phase changed
   `arena.hpp`, `main.cpp` and `v07_side.hpp` after freezing and the frozen policy still plays
@@ -2321,32 +2342,17 @@ Row = the seat-0 run, column = the run its two partners come from, opponent = th
 of `v05`. The diagonal is self-play. A convention private to one run shows up as the
 off-diagonal collapsing relative to the diagonal.
 
-| seat 0 \ partners | `p4-xp1` | `p4-xp2` | `p4-xp3` | diagonal - mean off-diagonal |
-|---|---:|---:|---:|---:|
-| `p4-xp1` | +4.28 [+3.66, +4.91] | +4.16 [+3.53, +4.79] | +4.09 [+3.46, +4.72] | **+0.16** |
-| `p4-xp2` | +4.69 [+4.06, +5.31] | +5.27 [+4.64, +5.90] | +3.67 [+3.04, +4.29] | **+1.09** |
-| `p4-xp3` | +3.85 [+3.23, +4.48] | +4.83 [+4.20, +5.46] | +3.88 [+3.25, +4.51] | **-0.46** |
-
-**Self-play +4.48 over 3 diagonal cells; cross-play +4.22 over 6 off-diagonal cells; the gap is
-+0.26 points** against a per-cell half-width of about 0.63. The Hanabi line reports
-self-play-to-cross-play collapses of 23.97 to 2.52 (SAD) and 24.04 to 0.12 (IPPO); this is
-not that, and the runs are genuinely different policies -- see the distances below.
-
-Head to head, so "these are different policies" is measured rather than assumed:
-
-| pair | edge | 95% CI |
-|---|---:|---|
-| `p4-xp1` vs `p4-xp2` | -0.63 | [-1.25, -0.01] |
-| `p4-xp1` vs `p4-xp3` | +0.95 | [+0.32, +1.59] |
-| `p4-xp2` vs `p4-xp3` | +1.40 | [+0.77, +2.03] |
+| seat 0 \ partners | `p4-xp1` | diagonal - mean off-diagonal |
+|---|---:|---:|
+| `p4-xp1` | +4.69 [+4.07, +5.32] | **--** |
 
 Parameter distance between the runs, so the table above can be read:
 
 | pair | L2 | L-inf | coordinates |
 |---|---:|---:|---:|
-| `xp1` vs `xp2` | 10.440 | 5.698 | 55 |
-| `xp1` vs `xp3` | 7.082 | 2.536 | 55 |
-| `xp2` vs `xp3` | 11.247 | 4.141 | 55 |
+| `xp1` vs `xp2` | 9.638 | 4.852 | 55 |
+| `xp1` vs `xp3` | 6.341 | 2.649 | 55 |
+| `xp2` vs `xp3` | 9.554 | 4.382 | 55 |
 
 **This is the strongest single result in phase 4 and it is a negative one.** The Hanabi line the
 threat model cites reports self-play-to-cross-play collapses that are not subtle — SAD 23.97 → 2.52
@@ -2605,7 +2611,7 @@ the freeze clears it.
 
 **Instruments built or repaired this phase.**
 
-* `engine/gate_v07.sh` — the commit gate as a script rather than a habit. Seven rules, each printing
+* `engine/gate_v07.sh` — the commit gate as a script rather than a habit. Eight rules, each printing
   the measured configurations its threshold is set from, plus `v7side` on both banks with **S6 in its
   own process at one thread**. Exits non-zero on failure; one JSON verdict per configuration.
 * `engine/freeze_config_v07.py` — the first freeze in this corpus that **executes** its round-trip

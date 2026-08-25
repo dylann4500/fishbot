@@ -51,12 +51,15 @@ MIR=$("$FISH" pathology --a="$SPEC" --b="$SPEC" --games="$GAMES" --rotations=2 \
 [ -z "$MIR" ] && { echo "gate_v07.sh: pathology produced no output for $ID" >&2; exit 2; }
 
 # ---- the side-channel gate, on both banks -----------------------------------
-# S6 runs in a CLEAN PROCESS.  Phase 3 (CANDIDATES section 2, C14) bisected the
-# `F-cheap` S6 anomaly to `v7side` leaking state between its own four passes:
-# running S3/S4/S5 in the same process changes which games S6 then sees, and the
-# audited decision COUNT itself takes four different values with execution
-# context (264,037 / 264,051 / 264,061 / 264,075).  Section 10 names fixing this
-# as the first thing phase 4 inherits.  The fix costs one extra process.
+# S6 runs in a CLEAN PROCESS, at ONE THREAD, with FRESH AGENTS per deal -- three
+# conditions, and RESEARCH-LOG section 4.3 shows all three are needed.
+#
+# Phase 3 (CANDIDATES section 2, C14) attributed the `F-cheap` S6 anomaly to
+# `v7side` leaking state between its own four passes.  That attribution does not
+# survive: S6 run ALONE is still a lottery above one thread.  The clean process is
+# kept anyway because it costs one invocation and removes one variable, but it is
+# not the fix and this comment no longer claims it is.  The fix is the other two
+# conditions, and under them every configuration in the corpus measures zero.
 SIDEJSON="[]"
 if [ "$SIDE" = "1" ]; then
   rows=""; n=0
@@ -66,9 +69,9 @@ if [ "$SIDE" = "1" ]; then
                         --tests=s3,s4,s5 --threads="$THREADS" --json 2>/dev/null | tail -1)
     # S6 AT ONE THREAD.  Above one thread the test is a lottery: the same command
     # on the same cell returns 1, 2, 3 and 4 mismatches on successive runs and the
-    # DENOMINATOR moves too (270,593 / 270,608 / 270,628).  At one thread it is
-    # deterministic and reproduces phase 3's own one-thread figure for F-cheap
-    # exactly (1/264,061).  A gate that is a lottery is not a gate.
+    # DENOMINATOR moves too (270,593 / 270,608).  At one thread it is deterministic
+    # and reproduces phase 3's own one-thread figure for F-cheap exactly
+    # (1/264,061).  A gate that is a lottery is not a gate.
     # ...AND WITH FRESH AGENTS PER DEAL.  Phase 4 traced the S6 residual to
     # per-agent state that survives `reset()`: agents are built once per thread and
     # reused across deals (arena.hpp, v07_side.hpp), so a searching configuration
@@ -172,11 +175,20 @@ if side:
         # agents per deal so the seat's own cross-deal residue is not counted as a
         # seat-isolation failure.  Under those two conditions every configuration in
         # this corpus -- blueprint and searching alike -- measures exactly zero.
-        okb = (s6res["mismatch"] == 0)
+        #
+        # `mismatch == 0` alone is NOT enough, and this is the same hole the G7a fix
+        # closed one branch up: v07_side.hpp records status "SKIP" when s6Nodes is 0,
+        # and a skipped test yields mismatch 0 over 0 nodes and would pass.  Require
+        # the test to have RUN and to report PASS on its own line.
+        ran = all(r.get("tests", {}).get("S6 seat-isolation", {}).get("status") == "PASS" for r in a6)
+        okb = (s6res["mismatch"] == 0) and s6res["nodes"] > 0 and ran
         RULES.append(("G7b S6 seat-isolation", okb,
-          "%d/%d = %.2f per million" % (s6res["mismatch"], s6res["nodes"], rate),
-          "zero tolerance; one thread and fresh agents per deal, so the audit is deterministic "
-          "and the cross-deal residue of section 4.3 is not miscounted as a side channel"))
+          "%d/%d = %.2f per million%s" % (s6res["mismatch"], s6res["nodes"], rate,
+                                          "" if ran and s6res["nodes"] else "   (SKIPPED -- not a pass)"),
+          "zero tolerance, AGENTS REBUILT PER DEAL: this asks whether the seat's action depends on "
+          "anything beyond its permitted inputs ONCE the cross-deal residue of RESEARCH-LOG 4.3 is "
+          "removed.  That residue is a real engine defect present in the mode every scored cell uses, "
+          "quantified there, and it is NOT what this rule tests"))
 
 passed = all(ok for _, ok, _, _ in RULES)
 verdict = "PASS" if passed else "FAIL"

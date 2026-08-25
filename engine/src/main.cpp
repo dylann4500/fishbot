@@ -259,6 +259,10 @@ mc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see MatchCo
                    : ob == "regret"        ? TuneObjective::Regret
                    : ob == "minimaxregret" ? TuneObjective::MinimaxRegret
                                            : TuneObjective::SoftMin; }
+    { std::string sh = argVal(argc, argv, "shard", "");
+      if (!sh.empty()) { auto sl = sh.find('/');
+        if (sl != std::string::npos) { sp.shard = atoi(sh.substr(0, sl).c_str());
+                                       sp.shards = std::max(1, atoi(sh.substr(sl + 1).c_str())); } } }
     sp.seed = strtoull(argVal(argc, argv, "seed", "424242").c_str(), nullptr, 10);
     // v0.7 phase 2.  --kpi selects the quantity the CEM climbs.  The default is
     // the incumbent behaviour (win rate); the others name a per-decision failure

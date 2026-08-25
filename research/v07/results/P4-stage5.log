@@ -1,2 +1,10 @@
 ###### STAGE 5: cross-play, re-fitted against the frozen architecture  Tue Aug 25 12:31:00 PDT 2026
 === crossfit xp1  seed=7060001 basin=v06-incumbent budget=6x12x150 sigmarel=0.12 ===
+  xp1 fitted in 925s
+=== crossfit xp2  seed=7060002 basin=v06-incumbent budget=6x12x150 sigmarel=0.12 ===
+  xp2 fitted in 896s
+=== crossfit xp3  seed=7060003 basin=v05-defaults budget=6x12x150 sigmarel=0.12 ===
+  xp3 fitted in 968s
+== crossfit complete -> ../research/v07/results/P4-crossfit.jsonl ==
+###### STAGE 5b: the cross-play matrix  Tue Aug 25 13:17:29 PDT 2026
+########## CROSS-PLAY between independently-trained runs of the architecture
