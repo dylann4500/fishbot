@@ -1,0 +1,195 @@
+K2 -- Joint-posterior declaration allocation, and the measured ceiling on it
+FishBot v0.7 phase 3.  Ledger L1 / L13, INSTRUMENT I3, register item V6-M9.
+Worktree .claude/worktrees/wf_88eccd0d-4c3-3, branched from 0c021a3.
+Every number below was measured in this session unless a source is named.
+
+VERDICT: L1's named mechanism is KILLED.  The candidate policy (jalloc=1) is KILLED.
+         The ceiling measurement the ledger asked for is delivered and it closes the
+         entry as an INFORMATION LIMIT, which is the outcome the ledger itself named
+         as the thing that would kill it.
+
+================================================================================
+0. IDENTITY CONTROL
+================================================================================
+./fish7 pathology --a=v06 --b=v06 --games=400 --rotations=2 --seed=31
+  this build   md5 0b1b3c9ed2894d0992d527fbde1884e5
+  reference    md5 0b1b3c9ed2894d0992d527fbde1884e5     BYTE-IDENTICAL.  PASS.
+All new behaviour is behind `jalloc` / `jtopm` (default off) and the L1 replay,
+which only runs under decisionCapture().
+
+================================================================================
+1. THE CHEAP DECISIVE PROBE (zero games of any new policy) -- L1's replay
+================================================================================
+At every voluntary declaration, recorded: (a) the shipped marginal-product
+allocation, (b) the JOINT argmax over the same feasible set (bel.jointSequential),
+(c) the EXACT posterior's shape from the block DP (surviving count vectors,
+assignment counts, MAP mass, flatness), (d) ground truth.
+
+THE RESULT, and it is a hard zero:
+
+  jointDiffersRate = 0.000000 in EVERY cell.
+    bank 7030001  urgency on   0 / 35,957 declarations
+    bank 7030002  urgency on   0 / 35,957
+    bank 7030001  urgency off  0 / 26,812
+    bank 7030002  urgency off  0 / 26,808
+    plus 44,951 more under jalloc=1 itself.  ~210,000 declarations, zero disagreements.
+
+  It is not a tie-breaking artifact.  Of the 8,813 genuinely ambiguous declarations
+  in the urgency-off dump, the joint score resolved 8,813 (100.0%) STRICTLY -- it had
+  a strict opinion every time -- and agreed with the marginal-product argmax every
+  time.  Urgency-on dump: 7,418 ambiguous, 7,089 (95.6%) strict, 0 disagreements.
+
+  jointFixRate  0 / 783 (7030001) and 0 / 750 (7030002) wrong declarations.
+  jointBreakRate 0 / 35,174 and 0 / 35,207 correct declarations.
+
+THE EXACT JOINT MAXIMISER IS WORSE, NOT BETTER (BlockDP::bestTeamAllocation's rule):
+  bank 7030001   shipped 0.97822   exact MAP 0.96679   -1.143 pp
+  bank 7030002   shipped 0.97914   exact MAP 0.96774   -1.140 pp
+  urgency off    shipped 0.99142   exact MAP 0.97725   -1.417 pp
+  Paired McNemar (urgency-on dump, 17,978 decls): +218 fixed, -454 broken,
+  net -1.313 pp = -1.58 win-rate points at the ledger's 1.2 conversion.
+  This confirms ledger C2 inside the declaration channel specifically.
+
+================================================================================
+2. THE MEASURED CEILING -- where the residual declaration error actually lives
+================================================================================
+v06, urgency ON, bank 7030001, 17,978 declarations:
+  unambiguous (1 feasible allocation)   86.93% of decls   shipped 0.99846
+  FLAT exact posterior, >=2 allocations  3.13%            shipped 0.5730 [0.532,0.613]
+                                                          exact coin flip 0.5000
+  NON-FLAT, >=2 allocations              9.94%            shipped 0.9284 [0.916,0.939]
+                                                          exact MAP realized 0.8220
+                                                          exact's OWN optimum E[pMap] 0.5540
+
+v06, urgency OFF, bank 7030001, 22,341 declarations:
+  unambiguous                           88.94%            shipped 0.99854
+  FLAT, >=2 allocations                  1.23%            shipped 0.6861 [0.629,0.738]
+  NON-FLAT, >=2 allocations              9.83%            shipped 0.9677 [0.959,0.974]
+                                                          exact MAP realized 0.8471
+
+  The shipped marginal product beats the exact posterior by 10.6 points (urgency on)
+  and 12.1 points (urgency off) in exactly the states where the exact posterior is
+  NOT indifferent.  The uniform-deal posterior is not a ceiling on this channel;
+  it is below the floor the deployed approximation already stands on.
+
+L1's ERROR CLASS IS MOSTLY FLAT -- the ledger's own kill condition:
+  l1AllocErrFlatShare   0.72378 [0.690, 0.758]  (7030001)
+                        0.74390 [0.710, 0.778]  (7030002)
+  l1AllocErrCeiling     0.51779 / 0.51441 -- the exact MAP is a coin flip there.
+  Ledger L1, "What would kill it": "The replay showing that most allocation errors
+  sit in flat-posterior states."  72-74% do.
+
+THE ORACLE HEADROOM, in win-rate points at the ledger's 1.2 conversion:
+  urgency ON   flat states made perfect     1.335 pp -> 1.60 pts
+               non-flat states made perfect 0.712 pp -> 0.85 pts
+  urgency OFF  flat states made perfect     0.385 pp -> 0.46 pts
+               non-flat states made perfect 0.318 pp -> 0.38 pts
+  With urgency off -- the configuration phase 2 already showed is worth +1.23 to
+  +1.62 -- a PERFECT ORACLE allocator is worth 0.84 win-rate points in total, which
+  is BELOW the 1.53-point C1 class detection floor.  L1 is not merely hard to close;
+  after K3's deletion it is not measurable even at its oracle ceiling.
+
+================================================================================
+3. THE URGENCY CROSS-CUT (the brief required both arms; they differ a lot)
+================================================================================
+                                    urgency ON        urgency OFF
+  declAccuracy   bank 7030001       0.97822           0.99142    (+1.320 pp)
+                 bank 7030002       0.97914           0.99116    (+1.202 pp)
+  -> +1.44 to +1.58 win-rate points at the 1.2 conversion.  This reproduces phase 2's
+     +1.23 to +1.62 for urgency-off THROUGH A PER-DECISION CHANNEL, independently.
+  l1AllocErrShare                   0.01883 / 0.01824  0.00541 / 0.00533
+  -> deleting urgency removes 71% of the entire L1 error class.
+  L1 is largely a DOWNSTREAM SYMPTOM of the urgency branch K3 owns, not an
+  independent defect of the allocation rule.
+  The joint rule is inert in BOTH arms, so it does not "only help inside a branch
+  K3 is deleting" -- it helps nowhere.
+
+================================================================================
+4. THE CANDIDATE POLICY: jalloc=1 -- KILLED
+================================================================================
+Select the allocation by joint score over the top-M by marginal product, ties to the
+marginal-product winner.  jalloc=0 is exactly today's code and today's bits.
+
+COMMIT GATE, mirror, 800 games, seed 31   (v06 reference in brackets)
+  events/game   94.09 [94.19]   p99 120 [120]   max 131 [131]
+  dead asks     6 = 0.00885% [8 = 0.01178%]     longest dead run 1 [1]
+  starved turns 6 [8]           action-limit games 0 (0%) [0]
+  declarations  7200  wrong 196 = 2.72222%  [184 = 2.55556%]   <- WORSE
+  at/after ev>=220: 0.  GATE: PASS on every rule; misdeclaration moves the wrong way.
+
+SIDE-CHANNEL GATE  ./fish7 v7side --a=v06:jalloc=1 --b=v06 --games=400
+  bank 7030001  CERTIFIED   S3 asym 3.280 +/- 1.158   S4 deterministic 400/400
+                            S5 gap 6.325 (thr 20)     S6 0/260,607 irreproducible
+  bank 7030002  CERTIFIED   S3 asym 4.427 +/- 1.188   S4 deterministic 400/400
+                            S5 within threshold       S6 0/263,707 irreproducible
+  (v06's own S3 is +3.83 +/- 0.95 / +4.48 +/- 0.97 -- indistinguishable.)
+
+STRENGTH, paired duplicate blocks, --rotations=2
+  v06:jalloc=1 vs v06   7030001   24,000 games   -0.104 [-0.188, -0.025]
+  v06:jalloc=1 vs v06   7030002   24,000 games   -0.038 [-0.121, +0.046]
+  POOLED                          48,000 games   -0.071   replicated in SIGN (both < 0)
+  Not screened against F-cheap: a candidate that loses to F-fast is not on the frontier.
+
+PER DECISION (v7decide, 2,500 deals x 2 per bank, against the v06 cells above)
+  declAccuracy  7030001  0.97726 [0.9752,0.9792]  vs v06 0.97822  -> -0.096 pp
+                7030002  0.98007 [0.9782,0.9819]  vs v06 0.97914  -> +0.093 pp
+  The per-decision movement DOES NOT REPLICATE IN SIGN.  It is noise.
+
+THROUGHPUT, dedicated run, bank 7030004 (fitting/reserve bank), 2 threads
+  v06:jalloc=1 mirror   8.93 games/s
+  v06 mirror           57.79 games/s
+  -> jalloc costs 6.5x for a mechanism that changes zero of ~210,000 declarations.
+
+WHY IT MOVES ANYTHING AT ALL.  feasibleAllocation runs on every candidate half-suit,
+not only the one declared.  The joint argmax is provably identical on the sets that
+are actually declared; the disagreements live on low-confidence sets that are NOT
+declared, where the rescored `prob` perturbs the declare/don't-declare comparison.
+So jalloc is inert on the decision L1 names and active only on a different decision,
+where it is measurably (if barely) harmful.
+
+================================================================================
+5. LEDGER L13 -- the forced endgame, re-derived from this session's own capture
+================================================================================
+Conversion: 0.141 sets = 2.1 win-rate points (ledger 0.2) -> 1 set = 14.89 points.
+  urgency ON    108 forced declarations in 20,000 team-games = 0.00540 / game
+                accuracy 0.2778;  gap to the 0.466 feasible ceiling 0.1882
+                closing the WHOLE gap = 0.002033 sets = 0.0303 win-rate points
+  urgency OFF   539 forced declarations in 17,000 team-games = 0.03171 / game
+                accuracy 0.4601;  gap 0.0059
+                closing the WHOLE gap = 0.000373 sets = 0.0056 win-rate points
+L13 stays dead in both arms: 1/50th of the C1 detection floor.  NEW: deleting
+urgency raises forced-endgame incidence about six-fold AND raises forced-endgame
+accuracy from 0.278 to 0.460 -- it closes the forced-endgame gap by itself, so the
+one route by which L13 could have returned is taken by K3's change, not by repair.
+
+================================================================================
+6. WHAT PHASE 6 SHOULD TAKE FROM THIS
+================================================================================
+* L1's named mechanism (marginal product vs joint posterior) is closed at exactly
+  zero, on ~210,000 declarations, on two banks, in both urgency arms.
+* L1's channel is real but its addressable part is an INFORMATION LIMIT under the
+  uniform-deal prior, and after urgency deletion its whole oracle ceiling (0.84 pts)
+  sits below the 1.53-point detection floor.
+* The only remaining route into the flat states is the POLICY PRIOR -- who asked for
+  what, which the uniform-deal posterior discards by construction.  Shipped accuracy
+  in flat states is 0.573 (urgency on) / 0.686 (urgency off) against a provable 0.500
+  coin flip, so the deployed marginals already extract some of it.  That is L11's
+  territory, not L1's, and it is worth at most 0.46 points post-urgency-off.
+* Exact Bayesian inference is not a ceiling in this game.  Measured here for the
+  third time in the corpus and the first time on the declaration decision itself.
+
+================================================================================
+7. ARTIFACTS (all under research/v07/results/)
+================================================================================
+  K2-ceiling-urgon.jsonl            v7decide cells, urgency on, both banks + dump cell
+  K2-ceiling-urgoff.jsonl           v7decide cells, urgency off, both banks + dump cell
+  K2-records-v06-7030001.csv        per-declaration rows, urgency on (17,978 decls)
+  K2-records-urgoff-7030001.csv     per-declaration rows, urgency off (22,341 decls)
+  K2-ceiling-table-urgon.txt        section 2, urgency on
+  K2-ceiling-table-urgoff.txt       section 2, urgency off
+  K2-forced-endgame-arithmetic.txt  section 5
+  K2-side-jalloc.txt / .jsonl       v7side, both banks, CERTIFIED
+  K2-screen-vs-v06.jsonl            the two 24,000-game paired cells
+  K2-perdec-jalloc.jsonl            per-decision cells for jalloc=1
+  K2-summary.txt                    this file
+  research/v07/notes/K2.patch       the diff against 0c021a3
