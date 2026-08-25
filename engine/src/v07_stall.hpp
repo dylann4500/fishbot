@@ -32,14 +32,25 @@
 // only accumulate: a mask bit, once cleared by a certificate, is never set
 // again; a resolved card is never unresolved again (an unresolved card cannot
 // move, because a card only moves on a successful ask and a successful ask
-// reveals it publicly); a half-suit, once declared, never returns.  So every
-// progress event strictly decreases P, P is a non-negative integer bounded by
-// 54*5 + 9 + 54, and there are at most that many progress events in a game.
-// Between two progress events at most `stall2` events can pass before the seat
-// on turn is forced to cash its best candidate, which removes a half-suit and is
-// itself progress.  The game is therefore bounded.  The bound is loose; the
-// distribution is what matters and it is measured, in MIRROR, in the pathology
-// gate.
+// reveals it publicly); a half-suit, once declared, never returns.  Each such
+// event strictly decreases P, P is a non-negative integer bounded by
+// 54*5 + 9 + 54, and there are therefore at most that many of them in a game.
+//
+// AND WHAT THAT ARGUMENT DOES NOT COVER -- stated because the first draft of
+// this comment overclaimed it.  The hash also contains `handCount[]`, so a
+// SUCCESSFUL ask is always scored as progress even though a card moving between
+// two seats is not a monotone gain: nothing above forbids a card being won back
+// later.  So the rule does not by itself bound the number of successful asks,
+// and "the game is therefore bounded" is proved only for the mode of
+// non-termination that actually occurs -- a run of asks that produce no new
+// certificate, which is exactly v0.4's dead-ask loop and exactly what the
+// urgency-off configurations regress into.  Excluding `handCount[]` would make
+// the argument total but would also make a genuine transfer invisible to the
+// detector, which is worse.  The bound that carries is therefore EMPIRICAL, and
+// it is measured in MIRROR in the pathology gate: on the worst freezer in the
+// corpus (`m1=0` + urgency-off) the self-play tail goes from 405 events and a
+// 326-ask dead run to 141 events and a 12-ask dead run, with the action-limit
+// game count going 2 -> 0.  Report the distribution, never the mean.
 //
 // WHAT THIS IS NOT.  It is not a new information channel.  The counter is a
 // function of (own hand, public event stream) alone -- the same argument that
