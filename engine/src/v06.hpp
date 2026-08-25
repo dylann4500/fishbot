@@ -742,6 +742,12 @@ struct V06Agent : V05Agent {
     if (batchLeaves) { leafBuf.assign(NV * size_t(NLEAF), 0.0); wasTrunc.assign(NV, 0); }
     uint64_t hand[NPLAY];
     Knowledge seatK[NPLAY];
+    // v0.7 K1: tag every leaf sample with the decision, determinization and
+    // candidate it came from, so the fit can separate the LEVEL of the
+    // continuation value from the part that varies ACROSS candidates at a fixed
+    // determinization -- which is the only part the paired LCB rule can use.
+    if (g_leafSampling) { g_leafCtx.did = g_leafDid++;
+                          g_leafCtx.unresolved = int16_t(__builtin_popcountll(k.unresolved)); }
     for (int d = 0; d < D; d++) {
       v06::RolloutEngine::handsFrom(pub, k, det[size_t(d)].data(), hand);
       for (int j = 0; j < NPLAY; j++) { seatK[j] = roll.pubK; v06::refineWithHand(seatK[j], j, hand[j]); }
@@ -750,6 +756,7 @@ struct V06Agent : V05Agent {
         for (int j = 0; j < NPLAY; j++)
           roll.ag[j]->resetWithKnowledge(j, hand[j], pub.rules, mixSeed(rs, uint64_t(j) * 131 + 7), seatK[j]);
         size_t idx = size_t(r) * size_t(D) + size_t(d);
+        if (g_leafSampling) { g_leafCtx.det = int16_t(d); g_leafCtx.cand = int16_t(r); }
         if (batchLeaves) {
           bool tr = false;
           val[idx] = roll.playOut(hand, seat, team, &cand[size_t(r)],

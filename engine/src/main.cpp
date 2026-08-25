@@ -30,6 +30,7 @@
 #include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
 #include "v07_side.hpp"             // v0.7 phase-3 mechanical side-channel gate
 #include "v07_learn_run.hpp"        // v0.7 phase-3 K5: the amortised (learned) policy
+#include "v07_leaffit.hpp"          // v0.7 phase-3 K1: fitting the search leaf
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -670,6 +671,140 @@ int main(int argc, char** argv) {
     printf("vweights=");
     for (int u = 0; u < D; u++) printf("%s%.6f", u ? "|" : "", w[u]);
     printf("\n");
+    return 0;
+  }
+
+  // ------------------------------------------------------------------ v0.7 K1
+  // Sample the states the truncated search's own depth cut produces, record the
+  // realised continuation value under blueprint continuation, and fit a linear
+  // leaf on them.  See engine/src/v07_leaffit.hpp for why the between-candidate
+  // score is the one that decides and the overall score is a distraction.
+  if (cmd == "v7leaffit") {
+    if (argFlag(argc, argv, "help")) {
+      std::cout <<
+        "usage: fish7 v7leaffit --a=<search spec> [--b=v06] --games=N --seed=<FIT bank>\n"
+        "                       [--oos=<eval bank> --oosgames=M] [--stride=K] [--ridge=L]\n"
+        "                       [--threads=T] [--rotations=2] [--json] [--out=FILE]\n"
+        "\n"
+        "Runs --a against --b with the leaf sampler armed.  Every depth cut writes its\n"
+        "13-feature row; the rollout then keeps playing to the end under blueprint\n"
+        "continuation and the final signed half-suit differential is the target.  The\n"
+        "policy is NOT perturbed: playOut still returns the leaf value it would have\n"
+        "returned, and the determinization RNG is untouched.\n"
+        "Fit on the reserve bank (7030004); evaluate out of sample with --oos.\n";
+      return 0;
+    }
+    auto sample = [&](uint64_t bank, int games, std::vector<fish::LeafSample>& out) {
+      fish::leafResetStores();
+      fish::g_leafSampling = true;
+      fish::g_leafStride = atoi(argVal(argc, argv, "stride", "1").c_str());
+      MatchConfig mc;
+      mc.specA = argVal(argc, argv, "a", "v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26");
+      mc.specB = argVal(argc, argv, "b", "v06");
+      mc.games = games;
+      mc.seed = bank;
+      mc.rules = rulesFrom(argc, argv);
+      mc.threads = threads;
+      mc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+      MatchStats st = runMatch(mc);
+      (void)st;
+      fish::g_leafSampling = false;
+      fish::leafDrain(out);
+      fish::leafResetStores();
+    };
+    std::vector<fish::LeafSample> fitS, oosS;
+    uint64_t fitBank = strtoull(argVal(argc, argv, "seed", "7030004").c_str(), nullptr, 10);
+    int fitGames = atoi(argVal(argc, argv, "games", "300").c_str());
+    sample(fitBank, fitGames, fitS);
+    uint64_t oosBank = strtoull(argVal(argc, argv, "oos", "0").c_str(), nullptr, 10);
+    if (oosBank) sample(oosBank, atoi(argVal(argc, argv, "oosgames", "150").c_str()), oosS);
+
+    using namespace fish::leaffit;
+    double lam = atof(argVal(argc, argv, "ridge", "1e-4").c_str());
+    auto XofS = [](const std::vector<fish::LeafSample>& S, std::vector<const double*>& X, std::vector<double>& y) {
+      X.clear(); y.clear(); X.reserve(S.size()); y.reserve(S.size());
+      for (const auto& s : S) { X.push_back(s.f); y.push_back(s.y); }
+    };
+    std::vector<const double*> Xf, Xo; std::vector<double> yf, yo;
+    XofS(fitS, Xf, yf); XofS(oosS, Xo, yo);
+    Grouped gf = groupByDecisionDet(fitS), go = groupByDecisionDet(oosS);
+
+    // The three reference weight vectors, expressed in the same 13-slot basis.
+    double wMat[fish::NLEAF] = {0,0,0,0,0,0,0,0,0,0,0,0,1};   // MaterialLeaf: f[12]
+    double wScr[fish::NLEAF] = {0,1,0,0,0,0,0,0,0,0,0,0,0};   // ScoreLeaf: f[1]
+    bool allCols[fish::NLEAF]; for (int j = 0; j < fish::NLEAF; j++) allCols[j] = true;
+    allCols[12] = false;   // f12 = f1 + lambda*f2 exactly; admitting it is collinear
+    bool sc2[fish::NLEAF] = {false,true,true,false,false,false,false,false,false,false,false,false,false};
+
+    Fit lvl = ridgeFit(Xf, yf, lam, true, allCols);  lvl.tag = "level";
+    Fit dff = diffFit(fitS, gf, lam, allCols);
+    Fit sc  = ridgeFit(Xf, yf, lam, true, sc2);      sc.tag  = "sc2";   // free ratio of f1:f2
+    // Calibrate the difference-optimal direction to the terminal-return scale.
+    { R2 r = scoreLevel(Xf, yf, dff.w);
+      double a = r.slope;
+      if (std::isfinite(a) && std::fabs(a) > 1e-9) {
+        double mp = 0, my = 0;
+        for (size_t i = 0; i < Xf.size(); i++) { mp += predict(dff.w, Xf[i]); my += yf[i]; }
+        mp /= double(Xf.size()); my /= double(Xf.size());
+        for (int j = 1; j < fish::NLEAF; j++) dff.w[j] *= a;
+        dff.w[0] = my - a * mp;
+      } }
+
+    struct Row { const char* name; const double* w; };
+    Row rows[] = { {"material(f12)", wMat}, {"score(f1)", wScr}, {"sc2(f1,f2 free)", sc.w},
+                   {"linear-level", lvl.w}, {"linear-diff", dff.w} };
+    double cf[fish::NLEAF]; constancy(fitS, gf, cf);
+
+    bool json = argFlag(argc, argv, "json");
+    std::ostringstream J;
+    J << "{\"cmd\":\"v7leaffit\",\"a\":\"" << argVal(argc, argv, "a", "") << "\""
+      << ",\"fitBank\":" << fitBank << ",\"fitGames\":" << fitGames
+      << ",\"oosBank\":" << oosBank
+      << ",\"nFit\":" << fitS.size() << ",\"nFitGroups\":" << gf.spans.size()
+      << ",\"nOos\":" << oosS.size() << ",\"nOosGroups\":" << go.spans.size()
+      << ",\"ridge\":" << lam << ",\"rows\":[";
+    if (!json) {
+      printf("v7leaffit  a=%s  fit bank %llu (%d games)  n=%zu leaves, %zu (decision,det) groups\n",
+             argVal(argc, argv, "a", "").c_str(), (unsigned long long)fitBank, fitGames,
+             fitS.size(), gf.spans.size());
+      if (oosBank) printf("           oos bank %llu  n=%zu leaves, %zu groups\n",
+                          (unsigned long long)oosBank, oosS.size(), go.spans.size());
+      printf("\nconstancy across candidates within a (decision,determinization) group:\n");
+      for (int j = 0; j < fish::NLEAF; j++)
+        printf("   f%-2d %-16s constant in %6.2f%% of groups\n", j, fish::leafFeatureName(j), 100 * cf[j]);
+      printf("\n%-18s %8s %8s %8s | %8s %8s %8s | oos %8s %8s\n",
+             "evaluator", "R2.lvl", "corr2.l", "slope", "R2.btw", "corr2.b", "slope.b", "corr2.l", "corr2.b");
+    }
+    bool first = true;
+    for (const Row& rw : rows) {
+      R2 L = scoreLevel(Xf, yf, rw.w), B = scoreBetween(fitS, gf, rw.w);
+      R2 OL{}, OB{};
+      if (oosBank) { OL = scoreLevel(Xo, yo, rw.w); OB = scoreBetween(oosS, go, rw.w); }
+      if (!json)
+        printf("%-18s %8.5f %8.5f %8.4f | %8.5f %8.5f %8.4f | %12.5f %8.5f\n",
+               rw.name, L.r2, L.corr2, L.slope, B.r2, B.corr2, B.slope, OL.corr2, OB.corr2);
+      J << (first ? "" : ",") << "{\"name\":\"" << rw.name << "\""
+        << ",\"r2Level\":" << L.r2 << ",\"corr2Level\":" << L.corr2 << ",\"slopeLevel\":" << L.slope
+        << ",\"r2Between\":" << B.r2 << ",\"corr2Between\":" << B.corr2 << ",\"slopeBetween\":" << B.slope
+        << ",\"oosCorr2Level\":" << OL.corr2 << ",\"oosCorr2Between\":" << OB.corr2
+        << ",\"oosR2Between\":" << OB.r2
+        << ",\"w\":\"" << specOf(rw.w) << "\"}";
+      first = false;
+    }
+    J << "],\"constancy\":[";
+    for (int j = 0; j < fish::NLEAF; j++) J << (j ? "," : "") << cf[j];
+    J << "],\"linearLevel\":\"linear@" << specOf(lvl.w) << "\""
+      << ",\"linearDiff\":\"linear@" << specOf(dff.w) << "\""
+      << ",\"sc2\":\"linear@" << specOf(sc.w) << "\"}";
+    if (!json) {
+      printf("\nleafeval=linear@%s        (level fit)\n", specOf(lvl.w).c_str());
+      printf("leafeval=linear@%s        (diff fit, level-calibrated)\n", specOf(dff.w).c_str());
+      printf("leafeval=linear@%s        (f1,f2 free ratio)\n", specOf(sc.w).c_str());
+    } else {
+      std::cout << J.str() << "\n";
+    }
+    std::string out = argVal(argc, argv, "out", "");
+    if (!out.empty()) { std::ofstream f(out, std::ios::app); f << J.str() << "\n"; }
     return 0;
   }
 

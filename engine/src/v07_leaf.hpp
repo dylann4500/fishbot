@@ -35,6 +35,9 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <mutex>
+#include <cstdint>
 
 namespace fish {
 
@@ -207,6 +210,69 @@ inline std::unique_ptr<LeafEvaluator> makeLeafEvaluator(const std::string& spec,
   }
   fprintf(stderr, "fish: unknown leaf evaluator '%s'\n", base.c_str());
   std::exit(2);
+}
+
+// ---------------------------------------------------------------------------
+// v0.7 phase 3, candidate K1 -- the leaf-fitting sample sink.
+//
+// A fitted leaf needs (features, realised continuation value) pairs drawn from
+// the state distribution the search's own depth cut produces -- not from
+// uniform game states, which is a different and much easier problem.  The sink
+// below is written by `v06::RolloutEngine::playOut` at the exact moment the cut
+// fires: it copies the feature row, then lets the rollout KEEP PLAYING to the
+// end under blueprint continuation and records the final signed half-suit
+// differential as the target.  That target is, by construction, the number the
+// truncated rollout would have returned had it not been truncated, which is the
+// quantity the leaf is a stand-in for.
+//
+// The policy is not perturbed.  `playOut` still returns the leaf value it would
+// have returned; the extra play is discarded.  The outer determinization RNG
+// (`srng` in V06Agent::chooseAsk) is untouched by playOut, so the determinization
+// sequence is identical with sampling on and off.  `g_leafSampling` defaults to
+// false and nothing on this path executes unless a fitting command sets it.
+struct LeafSample {
+  double  f[NLEAF];
+  double  y;          // final signed half-suit differential, blueprint continuation
+  int32_t did;        // decision id, unique within a thread
+  int16_t det;        // determinization index within the decision
+  int16_t cand;       // candidate index within the decision (0 = blueprint's own)
+  int16_t evAtCut;    // events since the decision when the cut fired
+  int16_t unresolved; // popcount of the searcher's unresolved mask at the decision
+};
+struct LeafStore { std::vector<LeafSample> v; };
+
+inline bool g_leafSampling = false;
+inline int  g_leafStride   = 1;
+inline std::mutex g_leafMu;
+inline std::vector<LeafStore*> g_leafStores;
+inline thread_local LeafStore* g_leafMine = nullptr;
+inline thread_local int32_t  g_leafDid = 0;
+inline thread_local uint64_t g_leafSeen = 0;
+struct LeafCtx { int32_t did = -1; int16_t det = 0, cand = 0, unresolved = 0; };
+inline thread_local LeafCtx g_leafCtx;
+
+inline LeafStore& leafStore() {
+  if (!g_leafMine) {
+    g_leafMine = new LeafStore();
+    std::lock_guard<std::mutex> lk(g_leafMu);
+    g_leafStores.push_back(g_leafMine);
+  }
+  return *g_leafMine;
+}
+// `did` counts within a thread, so the drain offsets each store into its own
+// block: two threads must not be able to collide on one decision id, or the
+// between-candidate grouping silently merges unrelated leaves.
+inline void leafDrain(std::vector<LeafSample>& out) {
+  std::lock_guard<std::mutex> lk(g_leafMu);
+  int32_t blk = 0;
+  for (LeafStore* s : g_leafStores) {
+    for (LeafSample x : s->v) { x.did += blk; out.push_back(x); }
+    blk += 20000000;
+  }
+}
+inline void leafResetStores() {
+  std::lock_guard<std::mutex> lk(g_leafMu);
+  for (LeafStore* s : g_leafStores) s->v.clear();
 }
 
 } // namespace fish
