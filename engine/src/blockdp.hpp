@@ -510,6 +510,71 @@ struct BlockDP {
     return 0.0;
   }
 
+  // ---- v0.7 phase 3 (K2): the SHAPE of the allocation posterior -----------
+  //
+  // Ledger L1 asks for a measured ceiling, not another rule.  Under the
+  // uniform-deal prior P(assignment A) = S_{t(A)} / Z, constant within a count
+  // vector -- so the whole exact posterior over the assignments in which
+  // `teamMask` holds all six cards of half-suit `s` is described by the list of
+  // surviving team-only count vectors, their assignment counts g[e] and their
+  // path masses S[e].  Two consequences that this struct exists to measure:
+  //
+  //   * if exactly ONE count vector survives, the exact posterior is UNIFORM
+  //     over every feasible allocation, no belief under this prior can prefer
+  //     one of them, and the best any rule can do is 1 / nAlloc.  That is an
+  //     information limit, not a mechanism defect.
+  //   * otherwise the exact ceiling on allocation accuracy at this state is
+  //     max_e S[e] / sum_e g[e] S[e], attained by naming any assignment inside
+  //     the heaviest count vector.
+  //
+  // Read-only: it builds nothing the queries above do not already build.
+  struct AllocShape {
+    bool ok = false;
+    int  nCV = 0;            // team-only count vectors surviving
+    double nAlloc = 0;       // assignments summed over them
+    double nTopAlloc = 0;    // assignments sharing the heaviest count vector
+    double pMap = 0;         // exact P(MAP assignment | team owns all six)
+    bool flat = false;       // every survivor equally likely
+    int  nCards = 0;
+    int  cards[SETSZ];
+    int  seats[SETSZ];       // one assignment from the heaviest count vector
+  };
+  AllocShape allocShape(int s, int teamMask) {
+    AllocShape R;
+    if (!ensureCurrent()) return R;
+    Group* gr = groupForSet(s);
+    if (!gr) { R.ok = true; R.nCV = 1; R.nAlloc = 1; R.nTopAlloc = 1; R.pMap = 1; R.flat = true; return R; }
+    ensureGroupTable(*gr);
+    int bestE = -1; double bestS = -1, zt = 0, minS = 1e300, maxS = -1;
+    for (int e = 0; e < gr->nEnt; e++) {
+      uint64_t tp = gr->tpack[e];
+      bool allTeam = true;
+      for (int p = 0; p < NPLAY; p++)
+        if (!(teamMask & (1 << p)) && ((tp >> (8 * p)) & 0xFF)) { allTeam = false; break; }
+      if (!allTeam) continue;
+      R.nCV++;
+      R.nAlloc += double(gr->g[e]);
+      zt += double(gr->g[e]) * gr->S[e];
+      if (gr->S[e] < minS) minS = gr->S[e];
+      if (gr->S[e] > maxS) maxS = gr->S[e];
+      if (gr->S[e] > bestS) { bestS = gr->S[e]; bestE = e; R.nTopAlloc = double(gr->g[e]); }
+    }
+    if (bestE < 0 || !(zt > 0)) return R;
+    R.pMap = bestS / zt;
+    // "Flat" is a statement about the whole surviving set, so it is the spread
+    // of S over count vectors, not the size of the top one.
+    R.flat = (R.nCV <= 1) || (maxS - minS <= 1e-9 * std::max(1.0, maxS));
+    int want[NPLAY];
+    for (int p = 0; p < NPLAY; p++) want[p] = int((gr->tpack[bestE] >> (8 * p)) & 0xFF);
+    int assign[SETSZ];
+    if (pick(*gr, bestE, want, assign, 0)) {
+      R.nCards = gr->nCards;
+      for (int i = 0; i < R.nCards; i++) { R.cards[i] = gr->cards[i]; R.seats[i] = assign[i]; }
+    }
+    R.ok = true;
+    return R;
+  }
+
   bool pick(const Group& gr, int e, int* want, int* assign, int i) const {
     if (i == gr.nCards) return true;
     for (int p = 0; p < NPLAY; p++) {

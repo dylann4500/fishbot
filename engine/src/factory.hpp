@@ -6,6 +6,7 @@
 #include "v06.hpp"
 #include "v07_responder.hpp"
 #include "v07_adapt.hpp"
+#include "v07_cheat.hpp"    // phase 3: planted side-channel cheats (probe-only specs)
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
@@ -108,6 +109,10 @@ inline void applyV05Opts(V05Config& c, const std::map<std::string, std::string>&
     c.liveAskGate       = optI(o, "m1", c.liveAskGate ? 1 : 0) != 0;
     c.ownershipByP      = optI(o, "m1p", c.ownershipByP ? 1 : 0) != 0;
     c.feasibleDecl      = optI(o, "m2", c.feasibleDecl ? 1 : 0) != 0;
+    // v0.7 phase 3 (K2), ledger L1.  Default OFF; `jalloc=0` is today's code.
+    c.jalloc            = optI(o, "jalloc", c.jalloc ? 1 : 0) != 0;
+    c.jallocTopM        = optI(o, "jtopm", c.jallocTopM);
+    c.l1ReplayTopM      = optI(o, "l1topm", c.l1ReplayTopM);
     // ---- v0.7 planted weakness ---------------------------------------------
     // `hcap` names the family and `hstr` its size.  hit/decl/prior are pure
     // config transforms (no policy code runs for them); leak/tell/gate set
@@ -270,6 +275,28 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
       for (auto& ch : t) if (ch == '+') ch = ',';
       a->inv.oracle.spec = t; }
     return a;
+  }
+  // ---- v0.7 phase 3: PROBE-ONLY cheats -----------------------------------
+  // Positive controls for `fish7 v7side`.  These deliberately violate T8 and
+  // exist so the side-channel gate can be shown to FAIL something.  The `v07x`
+  // base is produced by no tuner, battery or frozen vector in the corpus, so it
+  // is unreachable from an ordinary spec string.
+  if (base == "v07x") {
+    std::string ck = "none";
+    { auto it = o.find("cheat"); if (it != o.end()) ck = it->second; }
+    if (ck == "seed") {
+      auto a = std::make_unique<CheatSeedAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "shared") {
+      auto a = std::make_unique<CheatSharedAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "conv") {
+      auto a = std::make_unique<CheatConvAgent>(); applyV06Opts(a.get(), o); return a;
+    }
+    if (ck == "none") {   // the identity arm: v0.6 exactly, under the probe name
+      auto a = std::make_unique<V06Agent>(); applyV06Opts(a.get(), o); return a;
+    }
+    fprintf(stderr, "fish: unknown cheat '%s'\n", ck.c_str()); std::exit(2);
   }
   if (base == "v06" || base == "fishbot_v06") {
     auto a = std::make_unique<V06Agent>();

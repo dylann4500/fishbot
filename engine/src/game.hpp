@@ -73,6 +73,21 @@ struct DecisionInfo {
   int    urgWhy   = 0;      // which urgency clauses fired: bit0 patiencePool,
                             // bit1 oppCardFloor, bit2 forceDeclareEvents,
                             // bit3 askFloor
+  // v0.7 phase 3 (K2).  Ledger L1's replay, filled only under decisionCapture()
+  // and only at a voluntary declaration.  Nothing here is read by any policy.
+  //   l1have bit0: the JOINT rescoring ran;  bit1: the EXACT shape was built.
+  int    l1have   = 0;
+  int    l1n      = 0;      // team-feasible assignments the shipped enumerator saw
+  int    l1nCV    = 0;      // EXACT count vectors surviving among them
+  double l1nAlloc = 0;      // assignments the exact engine counts across those
+  double l1pMap   = -1;     // exact P(MAP assignment | team owns all six)
+  int    l1flat   = -1;     // 1 = exact posterior uniform over every survivor
+  double l1jTop   = -1;     // best joint score over the feasible set
+  double l1jSecond= -1;     // runner-up joint score
+  int    l1jSame  = -1;     // 1 = joint argmax == marginal-product argmax
+  int    l1jRescored = 0;   // how many allocations the joint rule rescored
+  int8_t l1jointOwner[SETSZ] = {-1,-1,-1,-1,-1,-1};   // what JOINT names
+  int8_t l1exactOwner[SETSZ] = {-1,-1,-1,-1,-1,-1};   // what EXACT MAP names
   void clear() { *this = DecisionInfo{}; }
 };
 
@@ -96,6 +111,14 @@ struct DecisionRecord {
   int8_t  urgent = 0;       // declaration only: taken under the urgency predicate
   int8_t  pressure = 0;     // declaration only: the escalation rung
   int8_t  urgWhy = 0;       // declaration only: which urgency clauses fired
+  // v0.7 phase 3 (K2): ledger L1's replay, scored against ground truth here.
+  int8_t  l1have = 0;
+  int8_t  l1flat = -1;      // exact posterior uniform over every feasible allocation
+  int8_t  l1jSame = -1;     // joint argmax == the marginal-product argmax
+  int8_t  jointHit = -1;    // would the JOINT rule's allocation have been correct
+  int8_t  exactHit = -1;    // would the EXACT MAP allocation have been correct
+  int16_t l1n = 0, l1nCV = 0;
+  float   l1nAlloc = 0, l1pMap = -1, l1jTop = -1, l1jSecond = -1;
 };
 
 struct DecisionSink {
@@ -315,6 +338,27 @@ public:
         r.urgent = int8_t(di->urgent ? 1 : 0);
         r.pressure = int8_t(di->pressure);
         r.urgWhy = int8_t(di->urgWhy);
+        // v0.7 phase 3 (K2).  Ledger L1's replay is scored HERE, because this is
+        // the only place that can see the deal.  Two counterfactual allocations
+        // of the same half-suit -- what a JOINT argmax would have named and what
+        // the EXACT MAP would have named -- are checked against the same test
+        // the real declaration just took.
+        r.l1have = int8_t(di->l1have);
+        r.l1flat = int8_t(di->l1flat);
+        r.l1jSame = int8_t(di->l1jSame);
+        r.l1n = int16_t(di->l1n); r.l1nCV = int16_t(di->l1nCV);
+        r.l1nAlloc = float(di->l1nAlloc); r.l1pMap = float(di->l1pMap);
+        r.l1jTop = float(di->l1jTop); r.l1jSecond = float(di->l1jSecond);
+        auto scoreAlloc = [&](const int8_t* own) -> int8_t {
+          for (int i = 0; i < SETSZ; i++) {
+            int c = cardOf(d.set, i), q = own[i];
+            if (q < 0 || q >= NPLAY) return -1;
+            if (teamOf(q) != team || !(g.hand[q] & bit(c))) return 0;
+          }
+          return 1;
+        };
+        if (di->l1have & 1) r.jointHit = scoreAlloc(di->l1jointOwner);
+        if (di->l1have & 2) r.exactHit = scoreAlloc(di->l1exactOwner);
       }
       dsink->rows.push_back(r);
     }
