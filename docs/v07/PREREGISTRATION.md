@@ -242,14 +242,16 @@ that file rather than typed, and **`INCUMBENT`** means `v06`.
 |---|---|---|
 | B0.1 | `fish7 bankdigest --seed=S --deals=24000` on all seven sealed seeds (`--deals`, **not** `--games`, which `bankdigest` silently ignores) | all seven digests match §2.1 |
 | B0.2 | decode `adversaries-holdout.sealed`, SHA-256 it | matches `SEAL.json` |
-| B0.3 | `engine/freeze_config_v07.py --verify-only` | R1 string, R2 vector and R3 digest round-trips all pass |
+| B0.3 | `engine/freeze_config_v07.py --verify-only` | R1 string, R2a blueprint-vector and R3 digest round-trips all pass. It also **prints a NOTE listing engine sources that changed since the freeze** — that is a report and not a failure, and phase 4 already leaves three (`arena.hpp`, `main.cpp`, `v07_side.hpp`, all changed after the freeze with the frozen policy byte-identical). A changed source *with* a changed R3 digest is a stop |
 | B0.4 | `fish7 seeds --require=<the seven seeds>` | all registered; the report of any R1/R2 registry violation is recorded |
 | B0.5 | `fish7 verify` and `fish7 selftest` | PASS |
 
 B0.3 is the assertion that the frozen artifact still names the same policy: it rebuilds the spec from
 the JSON's base and option map, plays the spec form against the explicit 55-coordinate `allparams`
-form as a mirror, and recomputes the frozen mirror digest. If the engine has moved under the freeze,
-this fails before any holdout deal is played.
+form **with the search off**, where the two must be identical on every deal, and recomputes the frozen
+mirror digest. If the engine has moved the frozen policy, this fails before any holdout deal is
+played. The same comparison **with the search on** is measured and printed rather than asserted —
+§5.3 explains why it cannot be asserted to zero.
 
 ### B1 — the commit gate, before any strength number
 
