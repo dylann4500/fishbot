@@ -27,6 +27,11 @@ struct DeclProposal { Declaration decl; double conf = 0; bool want = false; };
 // the shipped hot path must not pay for a feature it does not use.  With the
 // flag off the cost is one thread-local bool load per decision.
 inline bool& decisionCapture() { static thread_local bool b = false; return b; }
+// v0.7 phase 3 (K5).  The deal/rotation the current thread is playing, so a
+// per-CANDIDATE capture hook can label its rows with the same clustering unit
+// the bootstrap uses.  Written only on the capture path.
+inline int32_t& captureDeal() { static thread_local int32_t d = 0; return d; }
+inline int16_t& captureRot()  { static thread_local int16_t r = 0; return r; }
 
 // ---------------------------------------------------------------- v0.7 A2
 // The adversary's ex-ante correlation device.

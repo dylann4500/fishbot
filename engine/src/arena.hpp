@@ -190,6 +190,7 @@ inline MatchStats runMatch(const MatchConfig& mc) {
               : 0ull;
           if (mc.captureDecisions) {
             sink.deal = int32_t(i); sink.rot = int16_t(rot);
+            captureDeal() = int32_t(i); captureRot() = int16_t(rot);
             // `orient` is the team label the A arm holds this rotation, so the
             // B arm's seats are the complement.  Recording the target arm is
             // what makes "what does v0.6 do wrong against this exploiter"

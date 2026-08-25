@@ -29,6 +29,7 @@
 #include "probe_v06.hpp"            // v0.6 diagnostics: ties, belief-as-predictor
 #include "v07_probe.hpp"            // v0.7 phase-1 instrument drivers
 #include "v07_side.hpp"             // v0.7 phase-3 mechanical side-channel gate
+#include "v07_learn_run.hpp"        // v0.7 phase-3 K5: the amortised (learned) policy
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -1024,6 +1025,25 @@ int main(int argc, char** argv) {
     printf("{\"probe\":\"bankdigest\",\"seed\":%llu,\"deals\":%d,\"deckSets\":%d,\"digest\":\"%016llx\"}\n",
            (unsigned long long)seed, deals, r.deckSets, (unsigned long long)h);
     return 0;
+  }
+
+  // ---- v0.7 phase 3, candidate K5: the learned component -----------------
+  if (cmd == "v7learn") {
+    std::string mode = argVal(argc, argv, "mode", "capture");
+    if (mode == "capture") {
+      v07learn::CapConfig cc;
+      cc.spec = argVal(argc, argv, "a", cc.spec.c_str());
+      cc.opp  = argVal(argc, argv, "b", "");
+      cc.seed = strtoull(argVal(argc, argv, "seed", "7030004").c_str(), nullptr, 10);
+      cc.games = atoi(argVal(argc, argv, "games", "400").c_str());
+      cc.rotations = atoi(argVal(argc, argv, "rotations", "2").c_str());
+      cc.threads = threads;
+      cc.out = argVal(argc, argv, "out", "");
+      return v07learn::runCapture(cc);
+    }
+    fprintf(stderr, "usage: fish7 v7learn --mode=capture --a=<search spec> --seed=<training bank>\n"
+                    "                     --games=N [--rotations=2] [--threads=T] --out=FILE\n");
+    return 2;
   }
 
   if (cmd == "pathology") {
