@@ -85,6 +85,11 @@ struct V06Extra {
   // v0.7: which leaf evaluator prices a depth cut.  "material" is the v0.6
   // formula and is bit-identical to it.
   std::string leafSpec   = "material";
+  // v0.7 phase 3 (K3): `rreset=1` re-seats the rollout blueprints at the
+  // information set each rollout starts from.  Default false is the shipped
+  // (and measured) behaviour: they are never reset at all.  See the comment on
+  // RolloutConfig::resetAgents in v06_rollout.hpp.
+  bool   rollReset       = false;
   std::string rolloutSpec() const {
     std::string s = rollBase + ":topk=0";
     if (!rollBelief.empty()) s += ",belief=" + rollBelief;
@@ -655,6 +660,7 @@ struct V06Agent : V05Agent {
     roll.cfg.oppSpec = x.rollOpp;
     roll.cfg.myTeam = teamOf(seat);
     roll.cfg.maxDepth = x.maxDepth;
+    roll.cfg.resetAgents = x.rollReset;
     if (roll.cfg.leafSpec != x.leafSpec || roll.cfg.leafLambda != x.leafLambda) {
       roll.cfg.leafSpec = x.leafSpec; roll.cfg.leafLambda = x.leafLambda; roll.rebuildEvaluator();
     }

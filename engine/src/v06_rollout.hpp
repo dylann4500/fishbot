@@ -96,6 +96,17 @@ struct RolloutConfig {
   double leafLambda = 1.0;   // weight on expected half-suit control at a depth cut
   std::string leafSpec = "material";
   int   askCap     = 260;    // per-rollout safety valve
+  // ---- v0.7 phase 3 (K3): the rollout-agent hygiene switch -----------------
+  // `playOut` seats the six blueprint agents by assigning `sim.agents[p] =
+  // ag[p].get()` and never resets them, and `seatAgents()` -- the function
+  // written to do exactly that -- has NO caller anywhere in the tree.  Every
+  // `sim.emit` calls `agents[p]->observe(e)` (game.hpp:260), so each blueprint
+  // agent accumulates the events of every rollout of every decision of every
+  // DEAL its owning V06Agent instance has ever played, and `V06Agent::resetV6`
+  // does not clear `roll`.  That is the cross-deal residue the side-channel
+  // gate's S6 test detects on the F-cheap search: see K3-s6anomaly.jsonl /
+  // K3-s6bisect.jsonl.  Default false reproduces the measured corpus exactly.
+  bool  resetAgents = false;
 };
 
 // Six blueprint agents plus the scratch a rollout needs.  One per thread.
@@ -203,6 +214,18 @@ struct RolloutEngine {
     sim.audit = false; sim.trace.on = false; sim.observer = nullptr;
     sim.calib = nullptr; sim.vsink = nullptr;
     for (int s = 0; s < NSET; s++) sim.lockedAt[s] = -1;
+    // K3.  Seat the blueprints at the information set this rollout actually
+    // starts from, instead of leaving them holding the accumulated observations
+    // of every previous rollout.  The seed is a pure function of the rollout
+    // position (the determinized hands and the seat on turn), so the rollout
+    // stays a deterministic function of its own inputs and nothing upstream --
+    // which is the property that makes the S6 reconstruction reproduce it.
+    if (cfg.resetAgents) {
+      uint64_t sd = 0x9E3779B97F4A7C15ull;
+      for (int p = 0; p < NPLAY; p++) sd = mixSeed(sd, hand[p]);
+      sd = mixSeed(sd, uint64_t(turn) * 1000003ull + uint64_t(basePub.nEvents));
+      seatAgents(hand, sd);
+    }
     for (int p = 0; p < NPLAY; p++) sim.agents[p] = ag[p].get();
 
     const int startEv = sim.g.pub.nEvents;

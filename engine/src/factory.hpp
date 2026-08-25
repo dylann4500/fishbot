@@ -220,6 +220,8 @@ inline void applyV06Opts(V06Agent* a, const std::map<std::string, std::string>& 
     a->x.rollOuter = optI(o, "rsouter", a->x.rollOuter);
     a->x.rollInner = optI(o, "rsinner", a->x.rollInner);
     a->x.rollValue = optI(o, "rvalue", a->x.rollValue ? 1 : 0) != 0;
+    // K3: rollout-agent hygiene.  Default 0 == the shipped, measured behaviour.
+    a->x.rollReset = optI(o, "rreset", a->x.rollReset ? 1 : 0) != 0;
 }
 
 inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
