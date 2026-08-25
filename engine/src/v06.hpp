@@ -233,6 +233,60 @@ inline void applyV6Params(V05Config& c, V06Extra& x, const double* v) {
   x.extraFeats = (x.wVoid != 0.0 || x.wTeamHas != 0.0 || x.wLastLive != 0.0);
 }
 
+// ---- v0.7 phase 3 (K5): search-decision capture ---------------------------
+//
+// Amortising test-time search means learning a function of the information
+// available at decision time that reproduces what the search decides.  That
+// needs a labelled row PER CANDIDATE, not per decision -- the existing
+// DecisionRecord channel records only the candidate that was chosen -- so this
+// hook emits one fixed-width row per candidate at every searched ask decision,
+// with the LCB rule's own verdict attached as the label.
+//
+// It is a thread-local function pointer, null by default and installed only by
+// `fish7 v7learn --mode=capture`.  With no handler installed the search path
+// pays exactly one thread-local load per searched decision and nothing else,
+// which is what keeps the identity control exact.
+//
+// Row layout (V7L_FEATW doubles).  "decision-time" means: computable by the
+// seat before any rollout runs.
+//   0  r              candidate rank in blueprint order (0 = blueprint argmax)
+//   1  isTie          r < tie, i.e. this candidate ties the leader bit for bit
+//   2  du             blueprint score delta u[r] - u[0]  (<= 0)
+//   3  p              the policy's own hit probability for this candidate
+//   4..23             the 20 blueprint ask features f[0..NFEAT-1]
+//   24..29            bel.marg[card][*] by ROLE: own, mate, mate, target,
+//                     other opp, other opp -- the per-card posterior the
+//                     blueprint collapses into f[0]
+//   30  targetRel     (target - seat + 6) % 6, a turn-order position
+//   31  tgtHand       pub.handCount[target] / 9
+//   32  setUnres      unresolved cards in this candidate's half-suit
+//   33  myInSet       cards of that half-suit in the actor's own hand
+//   34  cardIdxInSet  the card's index WITHIN its half-suit.  This is a
+//                     payoff-irrelevant label (THREAT-MODEL I-2).  It is
+//                     captured so the probe can test whether the search's
+//                     choice is predictable from the label alone, and it is
+//                     never fed to a deployed model.
+//   35  card          raw card index, same status as 34
+//   36..46            decision context, identical across the candidates of one
+//                     decision: unresolved, nEvents, myCards, ourCards,
+//                     theirCards, lead, n, tie, K, KC, D
+//   47  m             the search's paired mean advantage over candidate 0
+//   48  se            its paired standard error
+//   49  lcb           the LCB the deviation rule compared
+//   50  chosen        LABEL: 1 iff the LCB rule picked this candidate
+static const int V7L_FEATW = 51;
+struct SearchCapture {
+  int32_t deal = 0; int16_t rot = 0; int16_t event = 0;
+  int8_t  seat = 0, team = 0;
+  int     rows = 0;
+  const double* f = nullptr;      // rows * V7L_FEATW
+};
+// Process-global rather than thread-local, because the arena installs no hooks
+// inside its worker threads; the handler is responsible for its own locking.
+inline void (*&searchCaptureHook())(const SearchCapture&) {
+  static void (*h)(const SearchCapture&) = nullptr; return h;
+}
+
 struct V06Agent : V05Agent {
   V06Extra x;
   v06::RolloutEngine roll;
@@ -743,6 +797,12 @@ struct V06Agent : V05Agent {
       if (lcb > bestLcb) { bestLcb = lcb; bestR = r; }
     }
     if (bestR != 0) changed++;
+    // ---- v0.7 phase 3 (K5): emit the labelled candidate rows ---------------
+    // Second pass, entered only when a handler is installed.  Everything below
+    // index 47 is decision-time information the seat already had; 47-49 are the
+    // search's own verdict and 50 is the label.
+    if (searchCaptureHook()) emitSearchCapture(pub, buf, ord, u, pp, n, tie, K,
+                                               cand, val, wt, D, bestR);
     AskMove pick = cand[size_t(bestR)];
     if (bestR >= K) { deadTried[pick.card][pick.target] = true; deadUsed++; deadPlayed++; }
     lastMySet = setOf(pick.card);
@@ -753,6 +813,83 @@ struct V06Agent : V05Agent {
       lastDec.searched = true; lastDec.changed = (bestR != 0);
     }
     return pick;
+  }
+
+  // ---- v0.7 phase 3 (K5) --------------------------------------------------
+  // One row per LIVE candidate of a searched decision.  Dead candidates offered
+  // by `deadsearch` are skipped: they are not in `ord`, so they have no
+  // blueprint rank, and no configuration this phase measures enables them.
+  void emitSearchCapture(const PublicState& pub, const AskMove* buf,
+                         const std::vector<int>& ord, const std::vector<double>& u,
+                         const std::vector<double>& pp, int n, int tie, int K,
+                         const std::vector<AskMove>& cand,
+                         const std::vector<double>& val, const std::vector<double>& wt,
+                         int D, int bestR) {
+    double wsum2 = 0;
+    for (int d = 0; d < D; d++) wsum2 += wt[size_t(d)] * wt[size_t(d)];
+    const double ess = wsum2 > 0 ? 1.0 / wsum2 : 1.0;
+    const int team = teamOf(seat);
+    int myCards = pub.handCount[seat], ourCards = 0, theirCards = 0;
+    for (int q = 0; q < NPLAY; q++) {
+      if (teamMask & (1 << q)) ourCards += pub.handCount[q]; else theirCards += pub.handCount[q];
+    }
+    const int lead = int(pub.score[team]) - int(pub.score[1 - team]);
+    std::vector<double> rows(size_t(K) * size_t(V7L_FEATW), 0.0);
+    double f[NFEAT];
+    for (int r = 0; r < K; r++) {
+      const AskMove mv = cand[size_t(r)];
+      double* o = rows.data() + size_t(r) * size_t(V7L_FEATW);
+      o[0] = r;
+      o[1] = (r < tie) ? 1 : 0;
+      o[2] = u[size_t(ord[size_t(r)])] - u[size_t(ord[0])];
+      o[3] = pp[size_t(ord[size_t(r)])];
+      features(pub, mv.card, mv.target, f);
+      for (int j = 0; j < NFEAT; j++) o[4 + j] = f[j];
+      // The per-card posterior BY ROLE.  The blueprint sees only the target's
+      // entry (f[0]); the remaining five are the coordinates in which two
+      // candidates of one half-suit at one target can still differ.
+      { int slot = 0;
+        o[24 + slot++] = bel.marg[mv.card][seat];
+        for (int q = 0; q < NPLAY; q++) if (q != seat && (teamMask & (1 << q))) o[24 + slot++] = bel.marg[mv.card][q];
+        o[24 + slot++] = bel.marg[mv.card][mv.target];
+        for (int q = 0; q < NPLAY; q++) if ((oppMask & (1 << q)) && q != mv.target) o[24 + slot++] = bel.marg[mv.card][q];
+      }
+      const int S = setOf(mv.card);
+      o[30] = double((int(mv.target) - seat + NPLAY) % NPLAY);
+      o[31] = pub.handCount[mv.target] / 9.0;
+      o[32] = double(__builtin_popcountll(k.unresolved & setMask(S)));
+      o[33] = double(__builtin_popcountll(k.myHand & setMask(S)));
+      { int idx = 0; for (int j = 0; j < SETSZ; j++) if (cardOf(S, j) == mv.card) idx = j;
+        o[34] = double(idx); }
+      o[35] = double(mv.card);
+      o[36] = double(__builtin_popcountll(k.unresolved));
+      o[37] = double(pub.nEvents);
+      o[38] = double(myCards); o[39] = double(ourCards); o[40] = double(theirCards);
+      o[41] = double(lead);
+      o[42] = double(n); o[43] = double(tie); o[44] = double(K);
+      o[45] = double(cand.size()); o[46] = double(D);
+      double m = 0;
+      for (int d = 0; d < D; d++)
+        m += wt[size_t(d)] * (val[size_t(r) * size_t(D) + size_t(d)] - val[size_t(d)]);
+      double var = 0;
+      for (int d = 0; d < D; d++) {
+        double e = (val[size_t(r) * size_t(D) + size_t(d)] - val[size_t(d)]) - m;
+        var += wt[size_t(d)] * e * e;
+      }
+      double se = ess > 1.5 ? std::sqrt(std::max(0.0, var) * ess / (ess - 1.0) / ess) : 1e9;
+      o[47] = (r == 0) ? 0.0 : m;
+      o[48] = (r == 0) ? 0.0 : se;
+      o[49] = (r == 0) ? 0.0 : (m - ((r < tie) ? x.kappaTie : x.kappa) * se
+                                + x.blend * (u[size_t(ord[size_t(r)])] - u[size_t(ord[0])]));
+      o[50] = (r == bestR) ? 1.0 : 0.0;
+      (void)buf;
+    }
+    SearchCapture sc;
+    sc.deal = captureDeal(); sc.rot = captureRot();
+    sc.event = int16_t(pub.nEvents);
+    sc.seat = int8_t(seat); sc.team = int8_t(team);
+    sc.rows = K; sc.f = rows.data();
+    searchCaptureHook()(sc);
   }
 };
 

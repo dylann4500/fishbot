@@ -7,6 +7,7 @@
 #include "v07_responder.hpp"
 #include "v07_adapt.hpp"
 #include "v07_cheat.hpp"    // phase 3: planted side-channel cheats (probe-only specs)
+#include "v07_learn.hpp"   // phase 3 K5: the amortised (learned) policy
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include <memory>
 #include <map>
@@ -270,6 +271,24 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     a->dumpOn   = optI(o, "dump", a->dumpOn);
     a->mode     = optI(o, "mode", a->mode);
     a->aggrMargin = optD(o, "aggr", a->aggrMargin);
+    return a;
+  }
+  // K5, the amortised search (v07_learn.hpp).  With no `lw=` the model is off
+  // and chooseAsk defers to V06Agent, which is the identity control.
+  if (base == "v07l") {
+    auto a = std::make_unique<V07LAgent>();
+    applyV06Opts(a.get(), o);
+    { auto it = o.find("lw");
+      if (it != o.end()) {
+        std::string t = it->second;
+        for (auto& ch : t) if (ch == '+') ch = '|';   // spec commas/pipes are taken
+        if (!v07learn::parseModel(t, a->lm)) {
+          fprintf(stderr, "fish: v07l: could not parse lw=\n"); std::exit(2);
+        }
+      } }
+    a->lm.margin  = optD(o, "lmargin", a->lm.margin);
+    a->lm.tieOnly = optI(o, "ltie", a->lm.tieOnly ? 1 : 0) != 0;
+    a->lm.maxQ    = optI(o, "lmaxq", a->lm.maxQ);
     return a;
   }
   if (base == "v07i") {
