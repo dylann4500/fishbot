@@ -71,10 +71,12 @@ on whoever is to play. Your hand is fanned along the bottom.
   half-suit, then name the teammate holding each of its six cards; cards in your
   hand are pre-assigned to you. Half-suits you hold nothing in are dimmed but
   still selectable — the rules explicitly permit declaring one, so nothing is
-  blocked on that. Off turn the declaration is *queued* and announced at the
-  engine's next declaration poll, which happens before every ask — exactly the
-  granularity the bots get, so neither side is favoured. On your turn a
-  declaration replaces your ask.
+  blocked on that. Off turn the declaration is announced **immediately**: it cuts
+  short a bot's pace delay and interjects even while another player is still
+  choosing an ask — the rules allow a declaration at any moment, and the table
+  honours that literally. (The player who was interrupted is re-prompted against
+  the new board; an ask they had half-chosen is marked stale rather than played.)
+  On your turn a declaration replaces your ask.
 * **Running out of cards.** If you are cardless and hold the turn, a dialog asks
   which live teammate takes over. You can still declare while cardless.
 * **Forced endgame.** When the other team is out of cards, your team must declare

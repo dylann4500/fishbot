@@ -526,6 +526,7 @@ public:
         }
       }
       AskMove mv = agents[g.turn]->chooseAsk(g.pub);
+      if (isRepoll(mv)) continue;   // interactive only: re-run the declaration poll
       if (!legalAsk(g, g.turn, mv.card, mv.target)) {
         AskMove buf[NSET * SETSZ * 3]; int n = enumerateAsks(g.pub, g.hand[g.turn], g.turn, buf);
         if (!n) {                        // holds only complete sets: must declare

@@ -129,6 +129,15 @@ struct HumanAgent : Agent {
     io->bump();
   }
 
+  // Another (human) seat has a declaration waiting to be announced.  Caller
+  // must hold io->mu.  This is what makes declarations live rather than queued:
+  // every blocking wait in this agent also wakes for it and yields.
+  bool otherSeatWantsDecl() const {
+    for (int p = 0; p < NPLAY; p++)
+      if (p != seat && io->slot[p].human && io->slot[p].haveDecl) return true;
+    return false;
+  }
+
   // Voluntary declaration.  Off turn this is a non-blocking queue check, so the
   // bots are never held up; on turn it is the single blocking decision point.
   bool proposeDeclaration(const PublicState& pub, Declaration& d, double& conf) override {
@@ -144,9 +153,13 @@ struct HumanAgent : Agent {
       sl.need = Need::Turn;
       sl.needSet = -1;
       io->bump();
-      await(lk, [&] { return sl.haveAsk || sl.haveDecl; });
+      await(lk, [&] { return sl.haveAsk || sl.haveDecl || otherSeatWantsDecl(); });
       sl.need = Need::None;
       io->bump();
+      // Another seat's declaration is waiting: decline this poll without
+      // consuming our "ask or declare?" answer, so the round announces theirs
+      // now and re-asks us against the new board immediately after.
+      if (!sl.haveAsk && !sl.haveDecl) return false;
     }
     if (sl.haveDecl && pub.setActive[sl.decl.set]) {
       // Left queued deliberately: declarationRound polls every seat and executes
@@ -185,7 +198,15 @@ struct HumanAgent : Agent {
       sl.need = Need::Turn;
       sl.needSet = -1;
       io->bump();
-      await(lk, [&] { return sl.haveAsk; });
+      await(lk, [&] { return sl.haveAsk || otherSeatWantsDecl(); });
+      // Woken for another seat's declaration rather than our own ask: hand the
+      // loop back so the declaration poll runs now.  We are re-asked right
+      // after; observe() marks any stored ask stale if the board changed.
+      if (!sl.haveAsk && otherSeatWantsDecl()) {
+        sl.need = Need::None;
+        io->bump();
+        return AskMove{REPOLL_SENTINEL, REPOLL_SENTINEL};
+      }
     }
   }
 

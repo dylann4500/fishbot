@@ -264,6 +264,11 @@ struct Table {
     for (;;) {
       if (io.abandon) throw Abandoned{};
       if (io.paused) return;                 // pausing supersedes the delay
+      // A pending human declaration ends the delay at once: the rules allow
+      // declaring at any moment, and the pace is presentation, not turn
+      // structure.  The declaration poll at the top of the loop announces it.
+      for (int p = 0; p < NPLAY; p++)
+        if (io.slot[p].human && io.slot[p].haveDecl) return;
       long long ms = io.paceMs;
       long long el = std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - start).count();

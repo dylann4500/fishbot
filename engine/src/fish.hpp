@@ -176,6 +176,14 @@ inline bool legalAskShape(const PublicState& pub, uint64_t myHand, int actor, in
 
 struct AskMove { uint8_t card, target; };
 
+// Interactive-only sentinel: an agent that returns this from chooseAsk is not
+// asking -- it is requesting that the game loop re-run the declaration poll and
+// come back.  No engine policy ever returns it (card 254 exceeds the deck), so
+// every measured path is untouched; only the human table uses it, to let another
+// seat's declaration interject a turn the human is still thinking about.
+constexpr uint8_t REPOLL_SENTINEL = 254;
+inline bool isRepoll(const AskMove& m) { return m.card == REPOLL_SENTINEL && m.target == REPOLL_SENTINEL; }
+
 inline int enumerateAsks(const PublicState& pub, uint64_t myHand, int actor, AskMove* out) {
   int n = 0;
   for (int s = 0; s < NSET; s++) {
