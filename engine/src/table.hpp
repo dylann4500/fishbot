@@ -44,7 +44,11 @@ inline std::string policyLabel(const std::string& spec) {
   };
   if (base == "v06" || base == "fishbot_v06") {
     name = "FishBot v0.6";
-    if (optI(o, "s1", 0)) name = "FishBot v0.6-Search";
+    if (optI(o, "s1", 0))
+      // det=16,cand=6 is the F-mid operating point -- the strongest v0.6
+      // configuration measured -- and a table of six needs the two search
+      // variants distinguishable at a glance.
+      name = optI(o, "det", 12) >= 16 ? "FishBot v0.6-Search-Max" : "FishBot v0.6-Search";
     else if (optI(o, "legacy", 0)) name = "FishBot v0.6-legacy";
     name += beliefSuffix("fast");
   }
