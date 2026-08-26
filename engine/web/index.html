@@ -243,6 +243,19 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
   aside{width:auto;border-left:0;border-top:1px solid var(--line)}
   #felt{width:100%;max-height:none}
 }
+/* spectator x-ray on small screens: hands leave the felt and become a list */
+#handsPanel{display:none}
+#handsPanel h4{margin:0 0 6px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.hp-row{display:flex;align-items:flex-start;gap:8px;padding:4px 0}
+.hp-row+.hp-row{border-top:1px solid var(--line)}
+.hp-name{flex:0 0 58px;font-size:12px;font-weight:600;padding-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp-name.ta{color:#7ee7c4}.hp-name.tb{color:#ffb06d}
+.hp-row .minihand{background:transparent;border:0;box-shadow:none;padding:0;justify-content:flex-start}
+@media (max-width:700px){
+  #handsPanel.avail{display:block}
+  .stack.xray{display:none}
+  .handbar{height:auto;min-height:40px;padding:6px 0;margin-top:34px}
+}
 /* spectator x-ray: compact per-seat hands, grouped by half-suit */
 .stack.xray{max-width:170px;z-index:3}
 .minihand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-items:center;
@@ -347,6 +360,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
       <div class="a"><h4>Team A</h4><div id="rA"></div><div class="sets" id="setsA"></div></div>
       <div class="b"><h4>Team B</h4><div id="rB"></div><div class="sets" id="setsB"></div></div>
     </div></div>
+    <div class="box" id="handsPanel"><h4>Hands</h4><div id="handsRows"></div></div>
     <div id="netbar" class="netbar" hidden>Connection lost — retrying…</div>
     <div class="btnrow">
       <button class="dec" id="declBtn">Declare</button>
@@ -804,20 +818,8 @@ function renderFelt(){
       const bk=el('div','stack');
       bk.style.left=(50+22*Math.cos(th))+'%'; bk.style.top=(50+24*Math.sin(th))+'%';
       if(st.hands&&xrayOn()){
-        // Watching bots with the x-ray on: the hand itself, compact, grouped
-        // by half-suit so the reasoning behind an ask is visible at a glance.
-        const mh=el('div','minihand'+(teamOf(p)?' tb':' ta'));
-        const cards=(st.hands[p]||[]).slice().sort((a,b)=>a-b);
-        let last=-1;
-        cards.forEach(c=>{
-          const ci=cardInfo(c);
-          if(ci.set!==last&&last!==-1) mh.appendChild(el('span','mgap'));
-          last=ci.set;
-          const m=el('span','mini'+(ci.red?' red':''), ci.joker?(ci.red?'R★':'B★'):ci.name);
-          m.title=ci.long; mh.appendChild(m);
-        });
         bk.classList.add('xray');
-        bk.appendChild(mh);
+        bk.appendChild(miniHandFor(p));
       } else {
         bk.appendChild(el('div','pc back sm'));
       }
@@ -825,6 +827,7 @@ function renderFelt(){
     }
     const xr=document.getElementById('xrayRow');
     if(xr) xr.hidden=!st.hands;
+    renderHandsPanel();
   }
   const c=document.getElementById('center');
   c.innerHTML='';
@@ -836,6 +839,41 @@ function renderFelt(){
   c.appendChild(el('div','to', st.finished
       ? (st.score[0]===st.score[1]?'drawn':(st.score[0]>st.score[1]?'Team A wins':'Team B wins'))
       : (st.turn===view?'Your turn':nameOf(st.turn)+' to play')));
+}
+
+// The x-ray chip strip for one seat: the hand, sorted, grouped by half-suit so
+// the reasoning behind an ask is visible at a glance.  Shared by the felt
+// overlay (desktop) and the hands panel (small screens).
+function miniHandFor(p){
+  const mh=el('div','minihand'+(teamOf(p)?' tb':' ta'));
+  const cards=(st.hands[p]||[]).slice().sort((a,b)=>a-b);
+  let last=-1;
+  cards.forEach(c=>{
+    const ci=cardInfo(c);
+    if(ci.set!==last&&last!==-1) mh.appendChild(el('span','mgap'));
+    last=ci.set;
+    const m=el('span','mini'+(ci.red?' red':''), ci.joker?(ci.red?'R★':'B★'):ci.name);
+    m.title=ci.long; mh.appendChild(m);
+  });
+  return mh;
+}
+
+// On screens too small for the felt overlay, the same information becomes a
+// list under the roster: one row per seat, name coloured by team.  CSS decides
+// which of the two presentations is visible; both render from the same data.
+function renderHandsPanel(){
+  const panel=document.getElementById('handsPanel'), rows=document.getElementById('handsRows');
+  if(!panel||!rows) return;
+  const on=!!(st.hands&&xrayOn());
+  panel.classList.toggle('avail',on);
+  rows.innerHTML='';
+  if(!on) return;
+  for(let p=0;p<6;p++){
+    const r=el('div','hp-row');
+    r.appendChild(el('span','hp-name'+(teamOf(p)?' tb':' ta'),nameOf(p)));
+    r.appendChild(st.handCount[p]?miniHandFor(p):el('span','muted tiny','out of cards'));
+    rows.appendChild(r);
+  }
 }
 
 function renderHand(){
