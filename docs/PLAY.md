@@ -279,12 +279,11 @@ same information the engine hands each bot.
   are one click below it — again exactly what the rules entitle you to.
 * The opening deal is revealed only after the game ends.
 
-The log has two modes. Unticking **full history** shows what the rules actually
-entitle you to: declarations, turn passes, and the previous two asks. Ticked — the
-default — it shows everything. The bots have perfect recall of every public
-event, so the full log is the setting that puts you on even memory terms with
-them; the rule view is the setting that reproduces a real table. Which one is
-"fair" depends on what you are trying to measure, so both are one click apart.
+The log shows only what the rules actually entitle a player to: declarations,
+turn passes, and the previous two asks. There is deliberately no full-history
+mode — real Fish is a memory game, and a scrollback is memory you did not do.
+The bots keep perfect recall of every public event regardless; that asymmetry
+is part of what playing them measures, and the Rules dialog says so.
 
 ## Deliberate simplifications
 

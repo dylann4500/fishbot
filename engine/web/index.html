@@ -375,7 +375,6 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
     <div style="display:flex;align-items:center">
       <span class="tiny muted" style="letter-spacing:.08em;text-transform:uppercase">Log</span>
       <span style="flex:1"></span>
-      <label class="toggle"><input type="checkbox" id="fullLog" checked> full history (training aid)</label>
     </div>
     <div id="log"></div>
   </aside>
@@ -914,10 +913,14 @@ function allocText(o,set){
   return Object.keys(by).map(k=>nm(Number(k))+': '+by[k].join(' ')).join('  ·  ');
 }
 function renderLog(){
+  // Rule view only: what the rules let a player ask about -- declarations,
+  // passes, and the previous two asks.  The full-history mode was removed on
+  // purpose: real Fish is a memory game, and a scrollback is memory you did
+  // not do.  (The bots keep perfect recall either way; that asymmetry is the
+  // game, and the Rules dialog says so.)
   const w=document.getElementById('log'); w.innerHTML='';
-  const full=document.getElementById('fullLog').checked;
   let h=(st.history||[]).map((e,i)=>[e,i]);
-  if(!full){
+  {
     const keep=new Set();
     h.forEach(([e,i])=>{if(e.k!=='ask')keep.add(i);});
     let n=0; for(let i=h.length-1;i>=0&&n<2;i--) if(h[i][0].k==='ask'){keep.add(i);n++;}
@@ -1183,7 +1186,7 @@ function openRules(){
    +'<h4>Information</h4><ul>'
    +'<li>You may ask how many cards any player holds — always shown here.</li>'
    +'<li>You may ask what the previous two asks were — one click under the status banner.</li>'
-   +'<li>The full log is a training aid beyond what the rules allow; the bots have perfect recall of every public event, so it is the setting that puts you on even memory terms with them.</li></ul>';
+   +'<li>The log shows only what the rules allow: declarations, passes, and the previous two asks. Everything else is your memory to keep — the bots have perfect recall of every public event, and that asymmetry is part of the game.</li></ul>';
   showModal('Rules',b);
 }
 
@@ -1654,7 +1657,6 @@ document.getElementById('declBtn').onclick=openSetPick;
 document.getElementById('rulesBtn').onclick=openRules;
 document.getElementById('pauseBtn').onclick=()=>post('/api/pause',{paused:st&&st.paused?0:1});
 document.getElementById('stepBtn').onclick=()=>post('/api/step',{n:1});
-document.getElementById('fullLog').onchange=renderLog;
 document.getElementById('viewNow').onchange=e=>{
   view=Number(e.target.value);localStorage.setItem('fishlab.view',String(view));lastBody='';poll();};
 
