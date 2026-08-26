@@ -255,6 +255,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
   #handsPanel.avail{display:block}
   .stack.xray{display:none}
   .handbar{height:auto;min-height:40px;padding:6px 0;margin-top:34px}
+  /* the top seat's avatar and count badge extend above the oval; give the
+     felt headroom so nothing is cut off at the viewport edge */
+  #felt{margin-top:40px}
 }
 /* spectator x-ray: compact per-seat hands, grouped by half-suit */
 .stack.xray{max-width:170px;z-index:3}
