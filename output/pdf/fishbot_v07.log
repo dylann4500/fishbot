@@ -840,7 +840,7 @@ Package enumitem Warning: Negative labelwidth. This does not make much
 (sections_v07/04-background [10] [11] [12]) (sections_v07/05-inference
 
 Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 90.
+(enumitem)                sense, on input line 89.
 
 [13] [14] [15]
 
@@ -878,19 +878,18 @@ Underfull \hbox (badness 10000) in paragraph at lines 10--10
 []|\T1/lmr/m/n/10 deduction-state stall de-tec-tor
  []
 
-) [17] [18] [19] [20] [21] [22] [23]) (sections_v07/07-evaluation [24]
+) [17] [18] [19] [20] [21] [22] [23] [24]) (sections_v07/07-evaluation [25]
 
 Package enumitem Warning: Negative labelwidth. This does not make much
 (enumitem)                sense, on input line 57.
 
-[25] [26] [27]) (sections_v07/08-threat-model [28])
-(sections_v07/09-development [29]
+[26] [27] [28]) (sections_v07/08-threat-model) (sections_v07/09-development
+[29]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 21.
- [30] [31] [32]) (sections_v07/10-design
-[33] (tables_v07/banks) (tables_v07/sidechannel) [34] (tables_v07/gate)
-[35] (tables_v07/battery)) (sections_v07/11-results [36] (tables_v07/forest)
-(tables_v07/frontier)
+ [30] [31] [32]) (sections_v07/10-design [33] (tables_v07/banks)
+(tables_v07/sidechannel) [34] (tables_v07/gate) [35] (tables_v07/battery))
+(sections_v07/11-results [36] (tables_v07/forest) (tables_v07/frontier)
 Underfull \hbox (badness 1521) in paragraph at lines 39--42
 []\T1/lmr/m/n/10.95 Against lin-eage base-lines, [] gains +4.63 pp over the de-
 ployed [] pol-icy
@@ -1007,4 +1006,4 @@ LaTeX Warning: There were multiply-defined labels.
 Package rerunfilecheck Info: File `fishbot_v07.out' has not changed.
 (rerunfilecheck)             Checksum: 0A5C5F416F026ADCED75889EBA38D266;24758.
  )
-Output written on fishbot_v07.xdv (72 pages, 527748 bytes).
+Output written on fishbot_v07.xdv (72 pages, 529708 bytes).

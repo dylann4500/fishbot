@@ -22,8 +22,7 @@ Symbol & Meaning \\
 \midrule
 \multicolumn{2}{@{}l}{\itshape The game and the hidden state} \\
 $N=6$, $M=9$, $|H|=6$ & seats, half-suits, cards per half-suit; the deck is $M|H|=54$ cards \\
-$s$ & the acting seat; $T(s)$ its team, $\mathcal{T}_s$ its two teammates, $\mathcal{O}_s$ the three
-  opponents \\
+$s$ & the acting seat; $\mathcal{T}_s$ its two teammates, $\mathcal{O}_s$ its three opponents \\
 $D$ & the hidden state: the initial deal, an assignment of all 54 cards to seats, nine each \\
 $\mathcal{I}_s^t$ & seat $s$'s information set after $t$ public events \\
 $\mathcal{P}_t$ & the running hash of the public event stream \\
@@ -172,7 +171,7 @@ Three quantities the policy needs are \emph{defined} by this machinery, and
 \S\ref{sec:inference-prior} records that the deployed configuration substitutes a cheaper
 approximation for each of them. The per-card marginals are \eqref{eq:marg}. The probability that team
 $\mathcal{T}$ owns half-suit $h$ outright, $\pi_{\mathrm{team}}(h)$, is \eqref{eq:marg} restricted to
-block assignments whose image lies in $\mathcal{T}$. And the probability of a fully named allocation,
+block assignments whose image lies in $\mathcal{T}_s \cup \{s\}$. And the probability of a fully named allocation,
 which is exactly what a declaration asserts, is
 \begin{equation}
   \pi_{\mathrm{alloc}}(h, \alpha^\star) \;=\;
@@ -218,9 +217,10 @@ to a fixed iteration count. The row step makes each card's distribution a probab
 step enforces the capacity constraint (C2) that the exact join enforces combinatorially.
 
 Between outer sweeps the routine also applies an independence conditioning step for each live (C5)
-disjunction: for a certificate saying that seat $A$ held \emph{some} card of a half-suit, each
-candidate card $d$ of that half-suit is reweighted by
-$\hat\mu(d,A) \big/ \bigl(1 - \prod_{e}(1 - \hat\mu(e,A))\bigr)$ over the half-suit's cards $e$.
+disjunction: for a certificate saying that seat $j$ held \emph{some} card of a half-suit,
+each candidate card $c'$ of that half-suit is rescaled to
+$\hat\mu(c',j) \big/ \bigl(1 - \prod_{c''}(1 - \hat\mu(c'',j))\bigr)$, the product running over the
+half-suit's cards $c''$.
 So (C5) is neither enforced exactly nor discarded in the deployed path: it is imposed approximately,
 under an independence assumption the exact enumeration of \S\ref{sec:inference-factor} does not need.
 The deployed parameters are $\theta = \vsevenPriorTheta{}$ and $\varphi = \vsevenPriorPhi{}$.

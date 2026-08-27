@@ -15,7 +15,7 @@ are in Appendix~\ref{app:parameters}.
   arr/.style={-{Stealth[length=2mm]},fishgray,thick}]
 \node[pub] (hist) at (0,1.15) {public event stream\\{\scriptsize asks, answers, transfers,}\\[-1pt]{\scriptsize declarations, card counts}};
 \node[box] (hand) at (0,-1.05) {own hand\\{\scriptsize nine cards}};
-\node[box] (bel)  at (4.3,0.05) {deal posterior\\{\scriptsize exact block DP,}\\[-1pt]{\scriptsize fitted policy prior}};
+\node[box] (bel)  at (4.3,0.05) {deal posterior\\{\scriptsize Sinkhorn fit,}\\[-1pt]{\scriptsize fitted policy prior}};
 \node[box] (pol)  at (8.2,0.05) {linear ask and\\declaration score\\{\scriptsize + public-history tie-break}};
 \node[box] (srch) at (12.1,0.05) {guarded search\\{\scriptsize endgame only,}\\[-1pt]{\scriptsize paired LCB deviation}};
 \node[align=center] (act) at (12.1,-1.75) {\textbf{action}};
@@ -62,11 +62,12 @@ half-suits not yet claimed, the rules of \S\ref{sec:game-rules} give
 The last condition is what makes every ask informative: the asker must already hold a card of the
 half-suit, so asking publishes partial ownership.
 
-What the policy actually enumerates is a strict subset of \eqref{eq:legal}. A \emph{live-ask filter}
-first removes candidates the seat can already prove are misses, that is, those with
-$s \notin \mathcal{M}(c)$ ruled out by a certificate, and it is this filter rather than any weighting
-inside \eqref{eq:askscore} that prevents a provably dead ask from being chosen. The filter binds:
-it removes what would otherwise have been the argmax at \vsevenGateBindRate\% of decisions.
+What the policy actually enumerates is a strict subset of \eqref{eq:legal}. A \emph{live-ask filter} first removes candidates the seat can already prove are misses, that is,
+those whose target is excluded by a certificate, $q \notin \mathcal{M}(c)$. It is this filter, rather
+than any weighting inside \eqref{eq:askscore}, that keeps a provably dead ask off the score. It
+binds: it removes what would otherwise have been the argmax at roughly \vsevenGateBindRate\% of
+\vsevenGateBindN{} measured decisions. If no candidate survives the filter the full legal set is
+restored, so the guarantee is not absolute.
 
 \paragraph{The score.} Each candidate is scored by a fitted linear function of a
 $20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \fishseven{}, three
@@ -147,7 +148,7 @@ replaces enumeration order with a deterministic draw keyed by the public record:
   \label{eq:tiebreak}
 \end{equation}
 with $\mathcal{P}_t$ the running hash of the public event stream, $s$ the seat index, $t$ the event
-count, and $\iota$ an unbiased index map from the hash into the tied set. Every seat observes all three arguments, so every teammate can recompute $\rho$; no seat's private
+count, and $\iota$ an index map from the hash into the tied set. Every seat observes all three arguments, so every teammate can recompute $\rho$; no seat's private
 hand enters it, and the choice is reproducible from the public record rather than being an artefact
 of the enumerator's sort order.
 
@@ -222,10 +223,14 @@ own team,
 with $\pi_{\mathrm{alloc}}$ from \eqref{eq:alloc}. \eqref{eq:bestalloc} is the object; it is not what the deployed path computes.
 \fishseven{} enumerates the capacity-feasible assignments of the unresolved cards of $h$ to its own
 team and takes the argmax of the \emph{product of per-card marginals},
-$\prod_{c} \hat\mu(c,\alpha(c))$, reporting that product as $\pi^\star_{\mathrm{alloc}}$. The exact
+$\prod_{c} \hat\mu(c,\alpha(c))$. That product is the selection score only. The winner is then priced
+separately, by sequential conditioning: the belief is refit after each card of the allocation is
+fixed in turn, and the resulting chain-rule product is what the policy reports as
+$\pi^\star_{\mathrm{alloc}}$ and thresholds on. The exact
 object \eqref{eq:alloc} is available from the block dynamic program but sits on no decision path. \S\ref{sec:development-alloc} reports the
 measurement that closed the question of whether that shortcut costs anything: over
-$\sim$\vsevenLoneDecls{} recorded declarations it selects the same allocation as the joint argmax every time, because the sequential rule's first chain-rule factor \emph{is} the marginal and
+$\sim$\vsevenLoneDecls{} recorded declarations it selects the same allocation as the \emph{sequential joint's} argmax every time, because that
+joint's first chain-rule factor \emph{is} the marginal and
 the renormalisation that follows reweights the survivors without reordering them.
 
 \paragraph{When to claim.} Write $\pi_{\mathrm{alloc}}^\star = \pi_{\mathrm{alloc}}(h,\alpha^\star)$
@@ -242,15 +247,15 @@ function $V$:
   \;-\; \underbrace{V(\text{state})}_{\text{wait}},
   \label{eq:declev}
 \end{equation}
-and declares when $\Delta > \delta$ for a fitted margin $\delta$. The two conditioned states differ in the score margin, by $+1$ and $-1$ respectively; in having the
-\emph{unresolved} cards of $h$ removed from the unresolved set, typically fewer than six; and in the
-deltas of the four half-suit-control features the value function reads, all of which are functions of
-the team's expected share of $h$ before the claim.
+and declares when $\Delta > \delta$ for a fitted margin $\delta$. Both conditioned states differ from the waiting state in having the \emph{unresolved} cards of $h$
+removed from the unresolved set, typically fewer than six, and in the deltas of the four
+half-suit-control features the value function reads, all of which are functions of the team's
+expected share of $h$ before the claim. They differ from \emph{each other} only in the score margin,
+by $+1$ and $-1$.
 
 Two overrides sit above \eqref{eq:declev}. Under the forced endgame, when the opposing team is
 cardless and the acting team must resolve the remaining half-suits among itself, the agent declares
-on a threshold, $\pi_{\mathrm{alloc}}^\star \ge \tau$, and on a lower threshold once
-$\pi_{\mathrm{team}} > 1 - 10^{-3}$, since a half-suit the team certainly owns will have to be
+on a threshold, $\pi_{\mathrm{alloc}}^\star \ge \tau$, and on a lower threshold once $\pi_{\mathrm{team}} > 1 - 5\times10^{-4}$, since a half-suit the team certainly owns will have to be
 claimed eventually and delay only costs information. Under \emph{pressure}, the escalation described next, stage 1 lowers the thresholds and stage 2
 removes them: the best available allocation is declared unconditionally, whatever its probability.
 \fishseven{} removes the mechanism that used to raise pressure in ordinary play, and
@@ -337,16 +342,20 @@ auditable:
   \tilde w_d \;=\; \prod_{c \in U_t} \exp\Bigl(\operatorname{clip}\bigl(\theta\, a_{o_d(c),H(c)}
   - \varphi\,(A_{o_d(c)} - a_{o_d(c),H(c)}),\, \pm 2.6\bigr)\Bigr),
   \qquad
-  w_d = \frac{\tilde w_d}{\sum_{d'} \tilde w_{d'}}.
+  w_d = \frac{\tilde w_d}{\sum_{d'} \tilde w_{d'}},
   \label{eq:iw}
 \end{equation}
+where $o_d(c)$ is the seat holding card $c$ in world $d$.
 
 \paragraph{Rolling out.} The candidate set is the top $\texttt{\vsevenOptCand{}}$ blueprint
 candidates, with index $0$ reserved for the blueprint's own choice $a_{(1)}$. For each candidate $r$ and world $d$, all six seats are reconstructed \emph{at their own information
-sets} under $d$, with a cheaper belief than the acting agent's own and the game is played to a terminal state or until \texttt{\vsevenOptDepth{}} further public events
-have elapsed. A run reaching the end returns the acting team's half-suit differential; a run cut at
-the depth limit returns a learned leaf evaluation of the position instead. Write $V_{r,d}$ for
-either. This is the point at which the method departs from standard
+sets} under $d$, each playing a cheaper blueprint than the acting agent's own: the \vfive{} policy
+with an independent-marginal belief and no re-scoring pass and the game is played to a terminal state or until \texttt{\vsevenOptDepth{}} further public events
+have elapsed. A run reaching the end returns the acting team's half-suit differential; a run cut at the limit
+returns a \emph{material} evaluation of the position instead, being the scored half-suit differential
+plus the team's expected control of the live half-suits. That is \vsix{}'s own hand-written leaf, not
+a learned one: \S\ref{sec:development-leaf} reports what happened when a fitted replacement was
+built. Write $V_{r,d}$ for either. This is the point at which the method departs from standard
 determinization: the continuation players are not made clairvoyant. \S\ref{sec:game-why} explains why
 that matters here, namely that clairvoyant play in Fish is degenerate and every action would score
 alike. All candidates share the same $D_{\mathrm{det}}$ worlds, so the comparison is paired and the

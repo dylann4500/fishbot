@@ -2947,3 +2947,40 @@ paper's corrections register asked for, D7 was marked superseded, and D25–D27 
 six self-corrections this paper raised have therefore been adopted at source. The corrections
 register now says so — a correction that has been taken up is still a correction, and reporting it
 as outstanding would be its own small inaccuracy.
+
+---
+
+## 6.4 Phase 6 — the layout audit and the two adversarial passes over the formal sections
+
+Recorded because the second pass found defects the first one created, which is the argument for
+running it at all.
+
+**The layout audit.** Every table's natural width was measured in a box against `\linewidth`
+(469.76pt) rather than judged by eye. Seven tables and one figure exceeded it, worst at 138pt over;
+all were rebuilt from `tabularx`/`xltabular` X columns at unchanged type size. Overfull boxes went
+28 → 0. Float pileup in the sixteen-table results section was fixed with raised allowances, `[tbp]`
+and per-subsection `\FloatBarrier`; a scan of the built PDF reports zero captions preceded by an
+unfinished sentence and zero headings stranded at a page foot.
+
+**Pass 1 over the new formal exposition: 23 findings, four blocking.** The formal description of the
+agent had been written from engine headers and design-intent comments rather than from the frozen
+configuration. Confirmed and fixed: the contestation coordinate's sign was stated backwards
+(`allparams[49] = +25`, on a non-negative term, so it *encourages* the ask); the paper reinstated the
+*information-denial* mechanism that ADVERSARIES §4A records as **refuted**, and named it in the
+abstract as the mechanism of the one component carrying the whole measured gain; a `p`-gating claim
+that is off in the frozen spec (`ownershipByP` defaults false, `m1p` absent); and the declaration
+allocator described as sequential when `feasibleDecl` makes it an enumeration.
+
+**Pass 2, checking the fixes: three of them were wrong in a new way.** The depth-cut leaf was
+"corrected" into a learned evaluator when the frozen spec leaves `leafSpec = material`, which
+contradicted §9's own report that the fitted leaf was rejected. The reported allocation probability
+was stated as the marginal product, when `v05.hpp:888` prices the winner by sequential conditioning
+and it is that value the declaration rule thresholds on. And the live-ask filter was written with the
+wrong seat, `s \notin M(c)` instead of `q \notin M(c)`, which as written would delete the entire
+action set. Pass 2 also caught the 5.78% gate-binding rate as an R1 measurement of the **v0.5**
+policy, against 0.99% for v0.6 over twenty times the sample, and a Figure 1 node still asserting the
+exact block DP under a caption that had been corrected to deny it.
+
+**The standing lesson.** For a configurable engine, read the frozen artifact and probe the
+constructed agent; a header default is what the agent does only if no option and no vector element
+overrides it. Both passes built such a probe, and everything they settled, they settled with it.
