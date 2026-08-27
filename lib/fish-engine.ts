@@ -1,5 +1,9 @@
+import {
+  KVAction, KVDecisionTrace, KVObservation, KVSearchAgent, KVSearchConfig, KVRuleset, KV_SEARCH_DEFAULTS,
+} from "@/lib/kv-search-agent";
+
 export type Team = 0 | 1;
-export type StrategyId = "fishbot" | "fishbot_v02" | "lockout" | "hunter" | "diversifier" | "detective" | "bluffer" | "random";
+export type StrategyId = "fishbot" | "fishbot_v02" | "kv_search" | "lockout" | "hunter" | "diversifier" | "detective" | "bluffer" | "random";
 
 export type Strategy = {
   id: StrategyId;
@@ -14,6 +18,7 @@ export type Strategy = {
 export const STRATEGIES: Record<StrategyId, Strategy> = {
   fishbot: { id: "fishbot", name: "FishBot v0.3", short: "Fish v0.3", description: "Count-conditioned belief search with empirically tuned transfer, continuation, control, and reply values.", icon: "ƒ", declarationThreshold: .963, risk: .02 },
   fishbot_v02: { id: "fishbot_v02", name: "FishBot v0.2 (legacy)", short: "Fish v0.2", description: "Original one-ply utility policy retained as a frozen development baseline.", icon: "ƒ", declarationThreshold: .96, risk: .02 },
+  kv_search: { id: "kv_search", name: "KV Search (fish-researchp12 v0.1)", short: "KV Search", description: "External engine: KV's sampled-world determinization search over a correlated feasible-world particle belief. Ported from fish/agents.py::SearchAgent at its shipped 96-particle / 48-determinization settings.", icon: "◆", declarationThreshold: .75, risk: .05 },
   lockout: { id: "lockout", name: "Turn-starvation specialist", short: "Lockout", description: "Posterior-greedy asking with an explicit penalty for missing into a dangerous opponent.", icon: "⊘", declarationThreshold: .94, risk: .04 },
   hunter: { id: "hunter", name: "Focused hunter", short: "Focus", description: "Builds momentum in one half-suit and keeps pressing it.", icon: "◎", declarationThreshold: .82, risk: .16 },
   diversifier: { id: "diversifier", name: "Adaptive diversifier", short: "Diversify", description: "Switches half-suits to preserve options and spread information.", icon: "↝", declarationThreshold: .88, risk: .12 },
@@ -47,6 +52,14 @@ export const POLICY_TECHNICAL: Record<StrategyId, PolicyTechnical> = {
     reactsToAsk: "Adds public asker/half-suit evidence to an approximate card posterior.",
     declarationRule: "Uses the original dynamic 94–97% combined-confidence threshold.",
     limitations: "Frozen comparison baseline; its original reply-risk feature was not information-safe and is replaced by a public-history estimate in this implementation.",
+  },
+  kv_search: {
+    class: "External engine \u2014 sampled-world determinization search",
+    objective: "Maximize the mean value of an ask or claim across sampled feasible worlds, where a hit is worth 1, a miss -0.2, and a retained turn is worth another discounted ask.",
+    askFormula: "mean over 48 determinizations of [hit ? 1 + .85\u00b7max(next hit chain) : \u2212.2] + 1e-4\u00b7(2\u00b7cards held in half-suit + 1/target hand size); root asks pruned to the top 12 by 20\u00b7P(hit) + .08\u00b7H(P) + base",
+    reactsToAsk: "No explicit reaction term. Public asks enter only as belief constraints: a successful ask fixes the card to the asker, a failed ask removes it from the target, and resolved half-suits leave the deal.",
+    declarationRule: "Claims the modal team-consistent allocation among the particles once it holds at least 75% of them, then only if its determinized value (+6 exact, \u22122 misallocated, \u22126 opponent-held) beats every ask.",
+    limitations: "Ported to TypeScript from the Python original: formulas, constants and orderings are reproduced, but the random stream differs, so tie-breaks and the particle sample are not bit-identical. The belief also does not infer that an asker lacks the card it asked for \u2014 the original omits that inference too.",
   },
   lockout: {
     class: "External-strategy challenger",
@@ -142,6 +155,7 @@ export type GameOptions = {
   detailed?: boolean;
   maxActions?: number;
   fishbotConfig?: Partial<FishBotConfig>;
+  kvSearchConfig?: Partial<KVSearchConfig>;
 };
 
 export type FishBotConfig = {
@@ -339,6 +353,8 @@ type State = {
   firstDeclarationAction: number;
   beliefVersion: number;
   beliefCache: ({ version: number; signalStrength: number; beliefs: number[][] } | null)[];
+  publicHistory: { actor: number; target: number; card: number; success: boolean }[];
+  kvAgents: (KVSearchAgent | null)[];
 };
 
 const TEAM: Team[] = [0, 1, 0, 1, 0, 1];
@@ -668,6 +684,121 @@ function chooseAsk(state: State, actor: number): ScoredAsk | null {
   };
 }
 
+/**
+ * The bridge to KV's external engine (`lib/kv-search-agent.ts`).
+ *
+ * FishLab and KV's `fish` package model the same game — six seats, alternating
+ * teams, nine six-card half-suits including eights-and-jokers, ask legality
+ * requiring a card of the asked half-suit, claims on your own turn only — so
+ * the agent is driven by a translated observation rather than a re-implemented
+ * rule set. Card and half-suit numbering differ between the two projects; the
+ * agent is instantiated in FishLab's numbering, which changes only the order in
+ * which exactly-tied actions are enumerated.
+ */
+const KV_RULESET: KVRuleset = {
+  deckSize: 54,
+  numPlayers: 6,
+  halfSuitOf: Int8Array.from(CARDS.map(card => card.set)),
+  halfSuitCards: HALF_SUITS.map(half => [...half.cards]),
+};
+
+export function kvAgentSeed(seed: number, seat: number) {
+  // runner.play_game seeds each seat with `seed * 1_000_003 + seat * 97`,
+  // reduced here to 32 bits because JavaScript integers are not 63-bit.
+  return (Math.imul(seed >>> 0, 1000003) + seat * 97) >>> 0;
+}
+
+function kvObservation(state: State, actor: number, claimsAllowed: boolean): KVObservation {
+  const legalAsks: { card: number; target: number }[] = [];
+  for (let set = 0; set < 9; set++) {
+    if (!state.activeSets[set]) continue;
+    let holds = false;
+    for (const card of HALF_SUITS[set].cards) if (state.hands[actor].has(card)) { holds = true; break; }
+    if (!holds) continue;
+    for (const card of HALF_SUITS[set].cards) {
+      if (state.hands[actor].has(card)) continue;
+      for (let target = 0; target < 6; target++) {
+        if (TEAM[target] === TEAM[actor] || state.hands[target].size === 0) continue;
+        legalAsks.push({ card, target });
+      }
+    }
+  }
+  const legalClaimHalfSuits: number[] = [];
+  if (claimsAllowed && state.hands[actor].size > 0) {
+    for (let set = 0; set < 9; set++) if (state.activeSets[set]) legalClaimHalfSuits.push(set);
+  }
+  return {
+    player: actor,
+    hand: [...state.hands[actor]].sort((a, b) => a - b),
+    cardCounts: state.hands.map(hand => hand.size),
+    resolved: state.activeSets.map(active => !active),
+    history: state.publicHistory,
+    legalAsks,
+    legalClaimHalfSuits,
+    ply: state.eventCount,
+  };
+}
+
+/**
+ * Build the decision trace the replay and the batch metrics expect for an ask
+ * that an external policy chose. The feature frame is FishLab's, exactly as it
+ * is for every other non-FishBot policy; only `policyScore` is the external
+ * policy's own number.
+ */
+function traceForOption(state: State, actor: number, chosen: { card: number; target: number; set: number }, policy: StrategyId, policyScore: number): ScoredAsk {
+  const config = resolvedFishbotConfig(state);
+  const beliefs = config.useCountConditioning
+    ? conditionedBeliefs(state, actor, config.signalStrength)
+    : independentBeliefs(state, actor);
+  const evaluate = (option: AskOption) => optimizedFishbotFeatures(state, actor, { ...option, probability: beliefs[option.card][option.target] }, beliefs, config);
+  const fishRanked = legalCandidates(state, actor, beliefs).map(option => ({ option, features: evaluate(option) }))
+    .sort((a, b) => b.features.expectedUtility - a.features.expectedUtility || a.option.card - b.option.card || a.option.target - b.option.target);
+  const option: AskOption = { ...chosen, probability: beliefs[chosen.card][chosen.target] };
+  const features = evaluate(option);
+  const topFish = fishRanked.length ? fishRanked[0].features.expectedUtility : features.expectedUtility;
+  return {
+    ...option,
+    decision: {
+      policy,
+      policyScore,
+      fishbotScore: features.expectedUtility,
+      regret: Math.max(0, topFish - features.expectedUtility),
+      reactingToPreviousAsk: Boolean(state.lastAsk && state.lastAsk.target === actor && !state.lastAsk.success),
+      features,
+      alternatives: fishRanked.slice(0, 3).map(item => ({ card: item.option.card, target: item.option.target, score: item.features.expectedUtility })),
+    },
+  };
+}
+
+type KVTurn = { kind: "claim"; set: number; owners: number[]; confidence: number } | { kind: "ask"; ask: ScoredAsk } | null;
+
+let kvTraceSink: ((trace: KVDecisionTrace) => void) | null = null;
+
+/** Opt-in decision tracing, used by `scripts/kv-parity-dump.ts`. Off by default. */
+export function setKvTraceSink(sink: ((trace: KVDecisionTrace) => void) | null) { kvTraceSink = sink; }
+
+function kvTakeTurn(state: State, actor: number, agent: KVSearchAgent): KVTurn {
+  agent.traceDecisions = Boolean(kvTraceSink);
+  const observation = kvObservation(state, actor, state.opts.declarations);
+  let action: KVAction;
+  try {
+    const candidates = agent.candidateActions(observation);
+    if (!candidates.length) return null;
+    action = agent.chooseAction(observation, candidates);
+  } catch {
+    // A belief that cannot be reconciled with the public facts is a bug, not a
+    // legal position; fall back to FishLab's own policy rather than crash a run.
+    const fallback = chooseAsk(state, actor);
+    return fallback ? { kind: "ask", ask: fallback } : null;
+  }
+  if (kvTraceSink && agent.lastTrace) kvTraceSink(agent.lastTrace);
+  if (action.kind === "claim") {
+    return { kind: "claim", set: action.halfSuit, owners: action.allocation, confidence: action.support };
+  }
+  const value = agent.lastEstimates.length ? agent.lastEstimates[0].value : 0;
+  return { kind: "ask", ask: traceForOption(state, actor, { card: action.card, target: action.target, set: CARDS[action.card].set }, "kv_search", value) };
+}
+
 function predictionForSet(state: State, actor: number, set: number, probabilities?: number[][]) {
   const memory = state.memories[actor];
   const team = TEAM[actor];
@@ -793,7 +924,12 @@ export function simulateGame(options: GameOptions): GameSummary {
     replyThreatOnMiss: [0, 0], continuationValue: [0, 0], completionValue: [0, 0],
     hitStreak: 0, maxHitStreak: 0, streakActor: -1, firstDeclarationAction: -1,
     beliefVersion: 0, beliefCache: Array(6).fill(null),
+    publicHistory: [], kvAgents: Array(6).fill(null),
   };
+  for (let player = 0; player < 6; player++) {
+    if (STRATEGIES[options.strategies[TEAM[player]]].id !== "kv_search") continue;
+    state.kvAgents[player] = new KVSearchAgent(KV_RULESET, kvAgentSeed(options.seed, player), options.kvSearchConfig);
+  }
   state.memories = Array.from({ length: 6 }, (_, p) => makeMemory(p, hands));
   const maxActions = options.maxActions ?? 360;
   let loops = 0;
@@ -805,7 +941,19 @@ export function simulateGame(options: GameOptions): GameSummary {
     if (!ownTeamHasCards || !opponentHasCards) {
       const declaringTeam: Team = ownTeamHasCards ? team : (1 - team) as Team;
       const possible = [0, 1, 2, 3, 4, 5].filter(p => TEAM[p] === declaringTeam);
+      // KV's engine hands the forced-claims role to one publicly chosen player
+      // who then makes every remaining claim, and keeps that role even after it
+      // runs out of cards. Choose it publicly, by hand size.
+      const kvClaimer = state.kvAgents[possible[0]]
+        ? [...possible].sort((a, b) => state.hands[b].size - state.hands[a].size || a - b)[0]
+        : -1;
       for (const set of state.activeSets.map((active, s) => active ? s : -1).filter(s => s >= 0)) {
+        const kvAgent = kvClaimer >= 0 ? state.kvAgents[kvClaimer] : null;
+        if (kvAgent) {
+          const claim = kvAgent.forcedClaim(kvObservation(state, kvClaimer, true), set);
+          declareSet(state, kvClaimer, { set, owners: claim.allocation, confidence: claim.support, teamConfidence: claim.support }, true);
+          continue;
+        }
         const choices = possible.map(p => ({ p, d: predictionForSet(state, p, set) })).sort((a, b) => b.d.confidence - a.d.confidence);
         declareSet(state, choices[0].p, { set, ...choices[0].d }, true);
       }
@@ -820,7 +968,19 @@ export function simulateGame(options: GameOptions): GameSummary {
       continue;
     }
 
-    if (options.declarations) {
+    const kvAgent = state.kvAgents[state.turn];
+    let kvAsk: ScoredAsk | null = null;
+    if (kvAgent) {
+      // KV's policy chooses between asking and claiming in a single search, so
+      // it replaces both the declaration pass and the ask selection.
+      const turn = kvTakeTurn(state, state.turn, kvAgent);
+      if (turn && turn.kind === "claim") {
+        declareSet(state, state.turn, { set: turn.set, owners: turn.owners, confidence: turn.confidence, teamConfidence: turn.confidence });
+        if (!state.activeSets.some(Boolean)) break;
+        continue;
+      }
+      kvAsk = turn && turn.kind === "ask" ? turn.ask : null;
+    } else if (options.declarations) {
       let declaration = bestDeclaration(state, state.turn);
       let guard = 0;
       while (declaration && guard++ < 9) {
@@ -832,7 +992,7 @@ export function simulateGame(options: GameOptions): GameSummary {
       if (state.hands[state.turn].size === 0) continue;
     }
 
-    const ask = chooseAsk(state, state.turn);
+    const ask = kvAgent ? kvAsk : chooseAsk(state, state.turn);
     if (!ask) {
       const receiver = nextLiveTeammate(state, state.turn);
       if (receiver !== null && receiver !== state.turn) {
@@ -903,6 +1063,7 @@ export function simulateGame(options: GameOptions): GameSummary {
       pivotalReasons,
       decision: ask.decision,
     });
+    state.publicHistory.push({ actor, target: ask.target, card: ask.card, success });
     state.lastAsk = { actor, target: ask.target, set: ask.set, success };
   }
 

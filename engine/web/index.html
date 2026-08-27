@@ -433,7 +433,13 @@ const POLICY_GROUPS=[
     ['withholder','Withholder'],['feint','Feint'],['silent','Silent']]],
   ['Baselines',[
     ['lockout','Lockout'],['detective','Detective'],['hunter','Hunter'],
-    ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']]]];
+    ['diversifier','Diversifier'],['bluffer','Bluffer'],['random','Random']]],
+  // An outside engine, ported into this one: KV's sampled-world determinization
+  // search (github.com/kv1514/fish-researchp12, fish/agents.py::SearchAgent),
+  // at his shipped 96-particle / 48-determinization settings.
+  ['External engines',[
+    ['kv','KV Search'],
+    ['kv:part=256,det=256','KV Search-Deep']]]];
 const NAMEPOOL=['Nova','Orion','Lyra','Rigel','Vega','Atlas','Juno','Mira','Draco','Pavo',
                 'Sirius','Altair','Cygnus','Perseus','Tycho','Kepler'];
 

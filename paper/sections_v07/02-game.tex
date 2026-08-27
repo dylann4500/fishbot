@@ -27,8 +27,8 @@ every ask into a public declaration of partial ownership.
 A half-suit is claimed by a \textbf{declaration}. A declaring player names, for each of the six cards
 of a half-suit, which member of their \emph{own} team holds it. The claim is all-or-nothing: if every
 assignment is correct the declaring team scores the half-suit, and if any assignment is wrong the
-opposing team scores it. A player may not declare a half-suit they hold entirely, so the interesting
-case is always a claim about cards in teammates' hands.
+opposing team scores it. A declaration is legal only while the half-suit is unclaimed, and a seat with no
+legal ask left is compelled to declare, including a half-suit it holds entirely.
 
 Everything is public. Every ask, its answer, every card transfer, every declaration and its outcome,
 and every player's card count are observed by all six players. Nothing is hidden except the initial
@@ -39,9 +39,13 @@ deal.
 
 Published descriptions of this game document mutually incompatible variants \cite{pagat}, so the rule
 set below is a selection rather than a canon. It matches the strategy corpus this line of work draws
-on \cite{develin} and the rules of record supplied by the project owner. Every contested choice is an
-engine switch, so its effect is measurable rather than assumed, and \S\ref{sec:results-dialects}
-measures the principal comparison under \vsevenDiaRowsWord{} of them. The consequential choices are a
+on \cite{develin} and the rules of record supplied by the project owner. Six of the eight contested choices Appendix~\ref{app:dialect} lists are engine
+switches, so their effect is measurable rather than assumed, and \S\ref{sec:results-dialects}
+measures the principal comparison over \vsevenDiaRowsWord{} dialect rows: the default and seven
+variations. The misdeclaration award is hardcoded and was not varied at all; the forced-endgame
+ladder has no flag of its own inside the scored harness and moves only inside the
+\texttt{-{}-legacy} bundle, which is why \S\ref{sec:results-dialects} can price it only as a
+residual. The consequential choices are a
 54-card deck in nine half-suits with nine cards per player; declaration legal at any moment, in or out
 of turn, by a seat holding cards or not; a misdeclaration awarding the half-suit to the opposing team;
 lowest seat index first among simultaneous declarers; an eight-level willingness ladder in the
@@ -109,12 +113,15 @@ its transcript actually achieves. In the literature and repositories we reviewed
 work covering this case.
 
 \paragraph{The domain is cheap, which is a methodological asset.}
-A deal resolves in roughly a hundred public events, and the engine plays hundreds of complete
-six-player games per second per core with exact inference running in every seat. This is what makes
+A deal resolves in roughly a hundred public events, and on one \vsevenMirrorThreads{}-thread
+desktop the engine plays a six-seat mirror of the blueprint policy at \vsevenMirrorGamesPerSec{}
+complete games per second, with the deployed belief running in every seat; the evaluated
+configuration, which searches, costs at least \vsevenCostFrozenTight$\times$ the non-searching
+blueprint (\S\ref{sec:results-cost}). This is what makes
 the evaluation programme of \S\ref{sec:evaluation} possible: \vsevenBtwoFcheapN{} paired games for a
 single headline comparison, two disjoint holdout banks for every claim, a \vsevenPanelMembers{}-member
 opponent panel scored identically for four configurations, and \vsevenBfourArmsWord{} independent
-adversarial searches all run on one desktop within a day. In a domain where one evaluation cell costs
+adversarial searches all run on one desktop. In a domain where one evaluation cell costs
 GPU-hours, the version of this study that reports its own negative results could not have been
 afforded. The corresponding liability appears in \S\ref{sec:discussion-external}: cheap evaluation is
 not external evaluation.

@@ -7,15 +7,23 @@ holdout deal was played, it gains \vsevenBtwoFcheapMag{}~pp of team win-rate edg
 $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over \vsevenBtwoFcheapN{} games of sealed material, with
 the sign replicating on both banks and every advance-specified validity condition satisfied.
 
-That advantage survives the tests of coordination and robustness this paper applies. A single seat's
+No coordination or robustness test in this paper overturns that advantage, though the picture they
+give is mixed. A single seat's
 upgrade purchases \vsevenOneSeatFive{} of the \vsevenSoneSelf{}~pp three-seat gain, so the value is
 largely individual rather than conventional; cross-play between three independently trained runs moves
 the result by \vsevenXpGapAbs{}~pp; the advantage persists across \vsevenDiaRowsWord{} rule dialects; and
 none of \vsevenBfourArmsWord{} independently constructed adversarial searches, including a white-box
-adversary that reads the target's own deterministic policy and inverts its transcript, found a
-positive edge at the tested budgets.
+adversary that inverts the target's transcript against a \vsix{} model of its deterministic policy,
+found a positive edge at the tested budgets. Two of those tests are not clean: the partner row that
+decides the coordination claim is \vsevenSoneMin{}
+$[\vsevenOppFiveWithholderLo, \vsevenOppFiveWithholderHi]$, above the registered
+$\vsevenSoneThreshold{}$ collapse threshold on the point estimate but not resolved against it
+(\S\ref{sec:results-partners}); and over the shared panel \fishseven{} is
+\vsevenRegretFrozenRank{}rd of four on minimax regret with a worst cell that does not replicate in
+sign (\S\ref{sec:results-panel}).
 
-Two findings qualify that picture and are the reason this paper is worth more than its headline. The
+Two further findings qualify that picture and are the reason this paper is worth more than its
+headline. The
 first is that \fishseven{} does not measurably outperform a composite configuration assembled during
 its own development, at \vsevenBtwoComposite{}~pp
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$. The improvement in this cycle is therefore real,
@@ -24,8 +32,9 @@ a dose response, and the architecture work that followed added no measurable str
 candidate mechanisms were experimentally rejected, each with a diagnosis rather than merely a null:
 the declaration-allocation channel because the mechanism it posited does not exist, a fitted leaf
 evaluator because the rule consuming it is nearly leaf-invariant, per-decision objectives because the
-ask and declaration channels trade against each other, and a learned tie-break because nothing
-learned survives a free public-history randomisation.
+ask and declaration channels trade against each other, and a learned re-ranker because it loses
+outright when deployed unrestricted and, restricted to the exchangeable tied set, is
+indistinguishable from a free public-history randomisation.
 
 Taken together, progress in this policy class is now limited by effects smaller than the evaluation
 and adversary-search machinery can reliably detect. At the calibrated detection scale of this study

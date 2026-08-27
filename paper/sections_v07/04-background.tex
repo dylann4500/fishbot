@@ -54,7 +54,7 @@ dependence on enumeration order itself, which is a correctness problem, and
 \S\ref{sec:agent-tiebreak} is how \fishseven{} addresses it.
 
 \paragraph{The exact posterior is a worse predictor than the deployed approximation.} Scored as
-predictors on identical states, the ranking is:
+predictors on identical states in the \vfive{} mirror, the ranking is:
 
 \begin{center}\tabfont
 \begin{tabular}{lrr}
@@ -62,14 +62,18 @@ predictors on identical states, the ranking is:
 Posterior & Log loss (nats) & Argmax hit rate \\
 \midrule
 Exact, uniform deal prior & \vsixBeliefExactNLL{} & \vsixBeliefExactHit\% \\
-Rules posterior, no policy prior & \vsixBeliefNoPriorNLL{} & \vsixBeliefNoPriorHit\% \\
-\textbf{Deployed approximation} & \textbf{\vsixBeliefShippedNLL{}} & \textbf{\vsixBeliefShippedHit\%} \\
+Approximation, certificate half of the prior deleted ($\theta = 0$) & \vsixBeliefNoPriorNLL{} & \vsixBeliefNoPriorHit\% \\
+\textbf{\vfive{}'s deployed approximation} & \textbf{\vsixBeliefShippedNLL{}} & \textbf{\vsixBeliefShippedHit\%} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The exact object is the worst row. The policy prior accounts for the entire difference: exactness in
-this game is purchased by discarding behaviour, because the block construction of
+The exact object is the worst row, and it stays worst with the prior deleted outright as well
+($\theta = \varphi = 0$: \vsevenBeliefPriorlessNLL{} nats and \vsevenBeliefPriorlessHit\%), so
+most of the log-loss gap has no behavioural content at all, though most of the hit-rate gap does. The certificate half of the prior is the gap
+between the second and third rows; the prior as a whole is the gap from the
+$\theta = \varphi = 0$ figures to the third. Separately from the ordering, exactness in this game also forecloses
+behaviour, because the block construction of
 \S\ref{sec:inference} has no parameter through which an opponent's tendencies could enter. Exactness
 and behaviour-awareness are not available in the same object here. This closed an experiment three
 studies had listed as outstanding, and it established a methodological rule the project has applied

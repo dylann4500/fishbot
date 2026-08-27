@@ -25,17 +25,20 @@ in advance. Table~\ref{tab:configs} defines every configuration this paper compa
 \subsection{What the instrument can detect}
 \label{sec:development-instrument}
 
-The detection-floor procedure of \S\ref{sec:evaluation-floor} was calibrated in this phase and
-produced the two findings reported there: the floor is \vsevenPrimaryFloor{}~pp, and it does not
-decrease with evaluation games. Two further results shape later sections.
+The detection-floor procedure of \S\ref{sec:evaluation-floor} was built and calibrated in this
+phase, which measured the floor at \vsevenFloorPhaseOne{}~pp and predicted that it would fall as
+(evaluation games)$^{-1/2}$. The phase of \S\ref{sec:development-adversaries} re-measured the same
+rung at four times the games and got \vsevenPrimaryFloor{}~pp, refuting the prediction; that is the
+first of the two findings \S\ref{sec:evaluation-floor} reports, the second being that floors are
+family-specific, with the declaration channel's at \vsevenDeclFloor{}~pp. Two further results shape
+later sections.
 
 \paragraph{Transcript inversion contracts the posterior, and is not an attack.} Because the target
 team is deterministic and published, an adversary can invert its transcript, asking for each observed
 ask which deals would have produced it and contracting the posterior accordingly. Measured, this
 contracts the deal posterior by approximately \vsevenBitsPerAsk{} bits per observed ask beyond the
 certificates the rules already supply. Converting those bits into play is worth
-\vsevenInversionUnfitted{}~pp unfitted, the strongest single arm anyone constructed against the
-deployed policy.
+\vsevenInversionUnfitted{}~pp unfitted against the deployed policy.
 
 It is nonetheless not an exploit. The excess tracks planted-edge size to within
 $\pm$\vsevenInversionTrack{}~pp on all eight rungs of the calibration ladder, which is the signature
@@ -44,11 +47,12 @@ than \vsevenHandicapBits{} bits per ask, so within this policy family there is n
 handicap available for a stochastic policy to purchase. A brief that proposed a stochastic policy
 conditional on the inverter succeeding was therefore closed on its antecedent.
 
-\paragraph{A cost figure the record had wrong.} The corpus priced the searching configuration at
-\vsevenCorpusCost$\times$ the blueprint. That figure describes the \emph{unrestricted} search, which
-is not the frontier point anything was measured at; the endgame-restricted operating point was
-re-measured at approximately \vsevenCostRecorded$\times$. \S\ref{sec:results-cost} corrects that
-correction in turn.
+\paragraph{A cost figure the record had wrong.} The \vsix{} paper priced the searching configuration
+at ``three orders of magnitude'' the blueprint, a ratio that mixed an all-threads timing with a
+single-thread one. Re-timed here on one basis, it is \vsevenPhaseOneCost$\times$. But that figure
+describes the \emph{unrestricted} search, which is not the frontier point anything was measured at,
+and phase~3 re-measured the endgame-restricted operating point at approximately
+\vsevenCostRecorded$\times$. \S\ref{sec:results-cost} corrects that correction in turn.
 
 \subsection{Open adversary generation against the frontier}
 \label{sec:development-adversaries}
@@ -56,10 +60,11 @@ correction in turn.
 The constraint on this phase was that the searches must not share a bias, since fifteen runs of one
 search constitute one run. Every exploiter search in the corpus before it had been the same search: a
 cross-entropy fit of a linear vector maximising win rate from one seed against one target. This phase
-constructed six adversary classes across three correlation regimes, and measured channel ceilings
-before fitting anything against them.
+constructed six adversary classes in the synchronised regime, plus one fitted search in the
+ex-ante-correlated regime, and measured channel ceilings before fitting anything against them.
 
-\textbf{The principal finding is negative.} Nothing constructed exploited the \vsix{} frontier beyond
+\paragraph{The principal finding is negative.}
+Nothing constructed exploited the \vsix{} frontier beyond
 the detection floor. The best measured exploitability of the deployed policy remains an in-class
 figure of \vsevenBestExploit{}~pp $[\vsevenBestExploitLo, \vsevenBestExploitHi]$ over
 \vsevenBestExploitN{} games, which is below the class floor of \vsevenPrimaryFloor{}. Seven
@@ -69,8 +74,9 @@ Every configuration that beat the deployed policy by more than the floor proved 
 a better policy rather than an exploit: the target's own test-time search at
 \vsevenSearchAsExploit{}~pp, and a single out-of-class coordinate at \vsevenOneSwitchArm{}~pp whose
 gain survives against opponents sharing none of the target's machinery. The second of those is the
-contestation weight of \S\ref{sec:agent-contest}, and it is where this cycle's entire strength gain
-originates.
+contestation weight of \S\ref{sec:agent-contest}; \S\ref{sec:results-attribution} measures on
+holdout what it contributes and finds it the largest of the five components \fishseven{} carries,
+rather than the whole of the gain.
 
 Two further results from this phase bear on \fishseven{}'s design. The declaration-urgency channel
 that the phase expected to be its headline has a measured ceiling of \vsevenUrgencyCeiling{}~pp
@@ -129,21 +135,30 @@ An inherited hypothesis held that the test-time search cannot be judged until it
 rebuilt, the deployed one being algebraically close to a rescaling of the hit probability. A leaf was
 fitted for the purpose, and the statistic that matters, between-candidate $R^2$, which is the only
 component the paired deviation rule can consume, improved from \vsevenKoneRsqBefore{} to
-\vsevenKoneRsqAfter{}, a \vsevenKoneFold-fold gain replicated out of sample on approximately
-\vsevenKoneLeaves{} leaves.
+\vsevenKoneRsqAfter{} in sample, a \vsevenKoneFold-fold gain, and from \vsevenKoneRsqOosBefore{} to
+\vsevenKoneRsqOosAfter{} out of sample, so the direction replicates and the multiple does not. The
+fit was scored over approximately \vsevenKoneLeaves{} leaves across two search regimes and three
+banks.
 
 In play it is worth \vsevenKoneInPlay{}~pp against the material control's \vsevenKoneControl{}~pp,
 losing on both banks individually. The diagnosis is conversion failure rather than fit failure: the
-rule's deviation rate is \vsevenKoneChangeLo{} for the material leaf and \vsevenKoneChangeHi{} for
-the retuned one, so at the deployed shrinkage the deviation rule is nearly leaf-invariant. A better
+rule's deviation rate is \vsevenKoneChangeLo{} for the deployed material leaf,
+\vsevenKoneChangeMid{} for the fitted one and \vsevenKoneChangeHi{} for a third arm that merely
+rescales the material leaf's constant, so at the deployed shrinkage the deviation rule is nearly
+leaf-invariant. A better
 leaf is not the available lever. This reproduces, in a new domain, the abstraction pathology the
 poker literature documents \cite{waugh-abstraction}: a model improved on its own metric can leave
 play unchanged or worse.
 
 The inherited hypothesis was discharged separately and by re-measurement rather than by the new
 evaluator. The single underpowered cell on which it rested, one \vsevenFullGameOldN{}-game cell at
-\vsevenFullGameOld{}~pp, re-runs at \vsevenTruncatedEndgame{}~pp replicated in the endgame regime
-using \vsix{}'s own leaf.
+\vsevenFullGameOld{}~pp, is the \texttt{depth=24} configuration; re-run on the training banks with
+\vsix{}'s own leaf it gives \vsevenDepthTwentyFour{}
+$[\vsevenDepthTwentyFourLo, \vsevenDepthTwentyFourHi]$, and full-game search at \texttt{depth=12}
+gives \vsevenFullGameReOne{} and \vsevenFullGameReTwo{}~pp, pooled \vsevenFullGameRePooled{}.
+Phase 1's \vsevenTruncatedEndgame{}~pp refuted the conditional in the endgame regime only, at
+\texttt{depth=12} with \texttt{maxq=26}; it was this full-game cell that left it binding for
+full-game search.
 
 \subsubsection{Fitting against a per-decision objective produces a worse policy}
 \label{sec:development-perdecision}
@@ -154,7 +169,8 @@ and the two halves are independent.
 
 The design effect of deal clustering was measured for the first time in this cycle, and a
 one-point-equivalent effect resolves in \vsevenPerDecisionGamesLo{} to \vsevenPerDecisionGamesHi{}
-games on the declaration channel against \vsevenScoreboardGames{} on the scoreboard, confirming the
+games on the declaration channel and \vsevenAllocGamesLo{} to \vsevenAllocGamesHi{} on the
+allocation-error channel, against \vsevenScoreboardGames{} on the scoreboard, confirming the
 precision claim at \vsevenDesignEffectLo{} to \vsevenDesignEffectHi{} times.
 
 But all three self-oriented per-decision objectives, fitted at matched budget against a per-game
@@ -171,12 +187,17 @@ buys one out of the other. The estimator is worth keeping and the objective is n
 
 In the \vsix{} mirror \vsevenTieContested\% of contested ask decisions tie bit-for-bit, and the
 open question was whether anything can be \emph{selected} within that set rather than merely
-randomised. A learned re-ranker
-restricted to the tied set was built for the purpose.
+randomised. The learned candidate this cycle built was not built for that question. It was the
+brief's wildcard, aimed at amortising test-time search, and it was fitted unrestricted over
+\vsevenKfiveFitDecisions{} searched decisions. Deployed unrestricted it scores
+\vsevenKfiveUnrestricted{}~pp pooled over \vsevenPhaseThreeCell{} games, negative on both banks
+$[\vsevenKfiveUnrestrictedLo, \vsevenKfiveUnrestrictedHi]$. Restricting it to the tied set is one
+added switch on the same fitted weight vector, and it is there that the tie-group question gets
+answered.
 
-Against the deployed policy it scores \vsevenKfiveTieOnly{}~pp, indistinguishable from the free
-public-history tie-break's \vsevenKfiveFreeTie{}~pp; head to head against that free tie-break at
-\vsevenPhaseTwoCell{} games it is \vsevenKfiveHeadToHead{}~pp $\pm$ \vsevenKfivePm{}, replicated.
+Restricted, against the deployed policy it scores \vsevenKfiveTieOnly{}~pp, indistinguishable from
+the free public-history tie-break's \vsevenKfiveFreeTie{}~pp; head to head against that free tie-break at
+\vsevenPhaseThreeCell{} games it is \vsevenKfiveHeadToHead{}~pp $\pm$ \vsevenKfivePm{}, replicated.
 Nothing learned survives the free tie-break, and the correct control for any mechanism operating
 inside the tied set is the decorrelated policy rather than the deployed one.
 
@@ -192,8 +213,12 @@ set, where the rule applies no shrinkage at all.
 
 Closing the entire forced-endgame accuracy gap, re-derived from this cycle's own capture, is worth
 \vsevenLthirteenClose{}~pp, which is the register's own figure corrected upward by a factor of two and
-still a fiftieth of the detection floor. The single route by which it could have returned, an
-adversary driving incidence upward, costs that adversary \vsevenLthirteenAdvCost{}~pp.
+still a fiftieth of the detection floor. The single route by which it could have returned is an
+adversary driving the target's incidence upward, and the one construction measured does not do that:
+a team that never declares voluntarily raises its \emph{own} forced-endgame rate, not its opponent's,
+and pays \vsevenLthirteenAdvCostLo{} to \vsevenLthirteenAdvCostHi{}~pp for it. No construction that
+raises the target's incidence was measured, so the route is closed by the absence of a mechanism
+rather than by a price.
 
 \subsection{Selection and freezing}
 \label{sec:development-freeze}

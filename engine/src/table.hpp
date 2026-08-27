@@ -25,7 +25,9 @@ inline bool knownPolicy(const std::string& spec) {
   static const char* ok[] = {"v07", "fishbot_v07", "v06", "fishbot_v06", "v05", "fishbot_v05",
                              "v04", "fishbot_v04", "v03", "fishbot_v03", "v02", "fishbot_v02",
                              "random", "hunter", "diversifier", "detective", "lockout", "bluffer",
-                             "silent", "feint", "withholder"};
+                             "silent", "feint", "withholder",
+                             // External engines ported into this one (src/kv.hpp).
+                             "kv", "kvsearch"};
   for (const char* n : ok) if (base == n) return true;
   return false;
 }
@@ -62,6 +64,13 @@ inline std::string policyLabel(const std::string& spec) {
   }
   else if (base == "v03" || base == "fishbot_v03") name = "FishBot v0.3";
   else if (base == "v02" || base == "fishbot_v02") name = "FishBot v0.2";
+  else if (base == "kv" || base == "kvsearch") {
+    // KV's sampled-world search (src/kv.hpp).  The shipped settings are 96
+    // particles / 48 determinizations; anything larger is his `fish analyze`
+    // operating point and is worth distinguishing on the table.
+    name = "KV Search";
+    if (optI(o, "part", 96) > 96 || optI(o, "det", 48) > 48) name = "KV Search-Deep";
+  }
   else if (base.empty()) name = "Detective";
   else { name = base; name[0] = char(toupper((unsigned char)name[0])); }
   return name;

@@ -51,11 +51,13 @@ posited does not exist: the sequential joint's first chain-rule factor is the ma
 allocators agree at every recorded decision. A leaf evaluator improved \vsevenKoneFold{}-fold in the
 only statistic its consumer can use changes play by nothing, because the deviation rule that consumes
 it is nearly leaf-invariant, which is the abstraction pathology of \cite{waugh-abstraction} appearing
-in a new domain. Fitting against any self-oriented per-decision objective produces a worse policy
-while moving its own proxy in the intended direction, because the ask and declaration channels trade
-against each other. And nothing learned survives a free public-history tie-break inside the
-exchangeable tied set, whose selection signal is approximately \vsevenCurseTieShare\% winner's curse
-against approximately \vsevenCurseShare\% for the search as a whole.
+in a new domain. Each of the three self-oriented per-decision objectives tested produced a worse policy at matched
+budget while moving its own proxy in the intended direction; the two channel-oriented fits lost
+because the ask and declaration channels trade against each other. And a learned re-ranker aimed at amortising test-time search loses outright deployed unrestricted
+at \vsevenKfiveUnrestricted{}~pp; restricted to the exchangeable tied set, nothing it learned
+survives a free public-history tie-break. Inside that tied set approximately \vsevenCurseTieShare\% of the
+search's own selection signal is winner's curse on its Monte Carlo draw, against approximately
+\vsevenCurseShare\% for the search as a whole.
 
 \subsection{Limits of the current policy class}
 \label{sec:discussion-limits}
@@ -91,7 +93,8 @@ bound} on exploitability rather than an upper bound.
 A stronger response outside the tested classes, or the same classes at a larger budget, could give a
 larger figure. The white-box transcript inverter, which is the class this domain's threat model was
 written for, effectively searched \vsevenZeightLive{} live coordinates at \vsevenBfourGens{}
-generations of \vsevenBfourPop{}. Its failure is evidence about that search. This is the precise
+generations of \vsevenBfourPop{}, against a \vsix{} model of the target rather than the target
+itself (\S\ref{sec:results-whitebox}). Its failure is evidence about that search. This is the precise
 reading error the v0.4 record in this corpus committed, having reported a null exploitability result
 as a demonstration of robustness, and naming it here is how this paper avoids repeating it.
 

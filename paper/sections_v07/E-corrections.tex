@@ -16,11 +16,13 @@ exists in the form it does.
 
 \begin{description}
 
-\item[The cost of the frontier's search, wrong in both directions.] The corpus recorded the searching configuration at \vsevenCorpusCost$\times$ the
-  blueprint, and the \vsix{} paper at ``three orders of magnitude''. Both figures describe the
+\item[The cost of the frontier's search, wrong in both directions.] The \vsix{} paper recorded the
+  searching configuration at ``three orders of magnitude'' the blueprint, mixing an all-threads
+  timing with a single-thread one; phase~1 of this cycle re-timed it on one basis at
+  \vsevenPhaseOneCost$\times$. Both figures describe the
   \emph{unrestricted} configuration, which is not the point of the frontier anything was measured at.
   The endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$ during
-  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the correction}: measured on the shared panel at a fixed thread count,
+  phase~3, and that correction was carried into the protocol. \textbf{This report corrects the correction}: measured on the shared panel at a fixed thread count,
   \fcheap{}, the configuration the \vsevenCostRecorded$\times$ describes, costs at least
   \vsevenCostFcheapTight$\times$ the blueprint, and \fishseven{} at least
   \vsevenCostFrozenTight$\times$ (\S\ref{sec:results-cost}). Every figure in that table is a lower
@@ -72,7 +74,7 @@ exists in the form it does.
   search capture from the development phase, \vsevenKfiveBytes{} bytes, exceeded the repository
   host's file-size limit and was removed from git history so the work could be published. The file is
   retained on disk with its SHA-256 recorded in a sidecar
-  (\texttt{\vsevenKfiveDigest{}\ldots}) and is regenerable from the capture harness; no measurement in
+  (\texttt{\vsevenKfiveDigest{}\ldots})\@ and is regenerable from the capture harness; no measurement in
   this paper depends on it. The rewrite changed every commit hash from phase 3 onward, so hashes
   recorded inside the phase-5 artifacts no longer resolve.
   Appendix~\ref{app:repro} gives the mapping and confirms the seal commit is unaffected.
@@ -129,6 +131,84 @@ exists in the form it does.
   half-width of \vsevenXpHalfWidth{} and a \vsevenStwoThreshold{}-point threshold, so no verdict
   moves and this paper reads no lift out of it either. What the correction is worth is only this:
   the sign as printed \emph{implies} a small collapse, and the data support no direction at all.
+
+\item[The vetted bibliography carried eight metadata errors, four of them author lists.] Every one of
+  the seventy-one references this paper cites has now been checked against its source rather
+  than against the earlier cycle's bibliography, which is where all of them were inherited from. Four
+  author lists were wrong: one entry carried the adjacent entry's five names where the paper it cites
+  has four, one printed nine names from a later paper by overlapping authors where the cited preprint
+  has seven, and one added an author the cited work does not have. The others were a repository start
+  year a year early, a page range, the title of a containing work, and a web article's site printed as
+  its author. All eight are corrected in this document's reference list and none of them touches a
+  claim in the text. The lesson is the one \S\ref{app:corrections-corpus} already draws about an
+  annotation in the same file: a bibliography that has been vetted once and copied forward is not the
+  same thing as a bibliography that has been checked.
+
+\item[The legacy residual's interval was computed over an inert cell.] The phase-5 document forms
+  the residual's half-width over five dialect cells with unit coefficients, one of which is the
+  \texttt{-{}-maxasks=360} row. That row is bit-identical to the default --- the same win rate and
+  the same interval on both banks --- so it carries no variance, and its own document says so two
+  lines later. Excluding it, and giving the default row the coefficient the two-component residual
+  actually gives it, the interval is
+  $[\vsevenLegacyResidualLo, \vsevenLegacyResidualHi]$ rather than the recorded
+  $[\vsevenLegacyResidualRecordedLo, \vsevenLegacyResidualRecordedHi]$. This paper prints the
+  narrower of the two. The two documents also express the width differently, this one as the full
+  interval over the residual and the recording as the half-width over it, so their multiples are not
+  comparable as printed and are omitted here. No verdict moves:
+  S5 is decided by the largest excursion, and the residual is consistent with zero under either.
+  Neither figure is a true 95\% interval, because all the cells share banks and deals and the
+  ask-cap identity proves the correlation is large.
+
+\item[The sub-floor control's registered comparison named the wrong handicap rung.] The
+  preregistration introduces B9.3's sub-floor rung as ``\texttt{hstr=0.05}, the rung phase 2 measured
+  at $+0.88$'' and directs the phase-5 excess to be read against phase 2's $-0.01$
+  $[-0.45, +0.42]$. Phase 2 measured \texttt{hstr=0.05} at a planted cost of $+0.67$ and an excess of
+  \vsevenSubFloorExcess{} $[\vsevenSubFloorExcessLo, \vsevenSubFloorExcessHi]$; $+0.88$ and $-0.01$
+  are its \texttt{hstr=0.08} row, and phase~1 pins the same split independently. The phase-5
+  recording inherited the pairing. \S\ref{sec:results-controls} quotes the rung-matched figure. The
+  verdict does not move --- the control is whether the planted edge is recovered, and it is not on
+  either pairing --- but the margin it is compared against does, from seven tenths of a point to a
+  little under half a point.
+
+\item[The live-ask gate's binding rate was the incumbent's, and its sample size a third cell's.] The
+  phase-2 mechanism characterisation captures the \emph{target} arm, so every rate in its table is
+  measured on \vsix{}. Its rate column comes from a 4,000-deal mirror cell and its
+  \texttt{n} column from the 3,000-deal treatment cell, so the pair
+  $0.00994$ over $260{,}987$ decisions is not any one cell. The quantity also does not carry over:
+  the gate acts on the argmax of an ask score that \fishseven{} extends with a coordinate
+  \vsix{} does not have, so the rate at which it displaces that argmax is a different number.
+  \S\ref{sec:agent-policy} now quotes a capture of the frozen configuration from its own seats on the
+  same diagnostic bank, which binds at \vsevenGateBindRate\% of \vsevenGateBindN{} ask decisions,
+  half a point above the incumbent's rate.
+
+\item[A counter-example was quoted at twice its distinct size.] The second sample that refutes the
+  one-live-half-suit universal (\S\ref{app:dialect}) is reported in its source as 118 of 120 forced
+  declarations. That source's own preceding section establishes that a mirror run at
+  \texttt{-{}-rotations=6} plays identical policies in both team orientations and so records every
+  declaration twice, and re-runs this very seed at \texttt{-{}-rotations=3} for
+  \vsevenLadderSecondTotal{}. The distinct evidence is one occasion in \vsevenLadderSecondTotal{},
+  not two in 120. The rate is unchanged; the sample size is halved. The same doubling applies to the
+  earlier run quoted in the same sentence, which is why it is described there as records rather than
+  as occasions.
+
+\item[A cost to an adversary was printed with no cell behind it.] The phase-2 document, closing the
+  forced-endgame induction route, states that the construction which raises the \emph{target's}
+  incidence ``was measured at $-17$ points''. No cell in the results tree produces it: no recorded
+  configuration string describes that construction, and the only measurement near $-17$ in the cycle
+  is an unrelated belief ablation. What was measured is the other construction, a team that never
+  declares voluntarily, which raises its own incidence and not its opponent's, at
+  \vsevenLthirteenAdvCostLo{} to \vsevenLthirteenAdvCostHi{}~pp on two independent cells.
+  \S\ref{sec:development-arithmetic} now says that, and says that the route is closed for want of a
+  mechanism rather than by a price.
+
+\item[Two figures were attributed to the wrong document.] The
+  \vsevenPhaseOneCost$\times$ cost of the unrestricted search is phase~1 of this cycle's own timing,
+  produced expressly to replace the \vsix{} paper's mixed-basis ``three orders of magnitude''; the
+  protocol presented it as an inherited record that this cycle corrected. And the leaf evaluator's \vsevenKoneFold-fold gain in between-candidate
+  $R^2$ is an in-sample gain, described in its source as replicating out of sample; out of sample the
+  same pair is \vsevenKoneRsqOosBefore{} against \vsevenKoneRsqOosAfter{}, so the direction
+  replicates and the multiple does not. Neither error changes a verdict: the cost figure is corrected
+  again by \S\ref{sec:results-cost} in any case, and the leaf's conversion failure is what kills it.
 
 \end{description}
 

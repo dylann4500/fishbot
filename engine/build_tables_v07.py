@@ -419,7 +419,13 @@ def emit(name, value, src):
         raise SystemExit('macro %s emitted twice with different values: %r vs %r'
                          % (name, _SEEN[name], value))
     _SEEN[name] = value
-    OUT.append('%% %s\n\\providecommand{\\%s}{}\\renewcommand{\\%s}{%s}' % (src, name, name, value))
+    # A signed number reaching running prose as ASCII typesets with a text hyphen
+    # and a text plus, while the same figure inside a table cell or a confidence
+    # interval is set in math and gets a proper minus.  The two were appearing in
+    # the same sentence.  \ensuremath settles it, and it also makes the sign
+    # unbreakable: -1.75 was splitting across a line break as "and -" / "1.75".
+    out = ('\\ensuremath{%s}' % value) if _re.fullmatch(r'[+-][0-9][0-9.,]*', value) else value
+    OUT.append('%% %s\n\\providecommand{\\%s}{}\\renewcommand{\\%s}{%s}' % (src, name, name, out))
 
 def _n(x, d=2):
     return ('%.*f' % (d, x))
@@ -443,8 +449,11 @@ def _commafy(n):
 
 def _tex(s):
     """Escape a spec string for LaTeX text.  Specs carry _ and & and %."""
-    return (str(s).replace('\\', '\\textbackslash ').replace('_', '\\_')
-            .replace('%', '\\%').replace('&', '\\&').replace('#', '\\#'))
+    t = (str(s).replace('\\', '\\textbackslash ').replace('_', '\\_')
+         .replace('%', '\\%').replace('&', '\\&').replace('#', '\\#'))
+    # A Markdown code span read out of an artifact would otherwise typeset as
+    # two opening quotes, `like this`, because LaTeX has no closing backtick.
+    return _re.sub(r'`([^`]*)`', r'\\texttt{\1}', t)
 
 BANK1, BANK2, BANK3 = 7090001, 7090002, 7090003
 
@@ -496,7 +505,11 @@ DISPLAY = {'FROZEN': 'FishBot v0.7', 'INCUMBENT': 'v0.6 deployed', 'v06': 'v0.6'
            'itself': 'itself'}
 
 def disp(name):
-    return DISPLAY.get(name, _tex(name))
+    # A name not in DISPLAY is a raw configuration identifier -- a panel member,
+    # a scripted archetype, a sealed adversary.  The prose sets those in
+    # typewriter, so the tables must too, or SEALED:X01xC3f ends up roman in one
+    # column and \texttt{F-cheap} typewriter in the cell below it.
+    return DISPLAY.get(name, '\\texttt{%s}' % _tex(name))
 
 TABLE_SPEC = {}
 
@@ -618,8 +631,8 @@ def b3_panel_table():
         worst_lines.append('%s & %s & $%s$ & $[%s, %s]$ & $%s$ / $%s$ \\\\' %
                            (disp(a), disp(wp), _sg(w), _sg(lo), _sg(hi),
                             _sg(per[0][1]), _sg(per[1][1])))
-    writeTable('worstcase.tex', worst_lines, '@{}L l r c r@{}',
-               'Configuration & Worst cell & Edge (pp) & 95\\% CI & Per bank', xtab=True)
+    writeTable('worstcase.tex', worst_lines, 'llrcr',
+               'Configuration & Worst cell & Edge (pp) & 95\\% CI & Per bank')
 
     # ---- minimax regret: for each member, the best arm on it; an arm's regret
     # is its largest shortfall from that best, maximised over members.
@@ -650,7 +663,7 @@ def b3_panel_table():
     emit('vsevenRegretBest', _tex(order[0]), 'P5-B3.jsonl: arm with the lowest minimax regret')
     emit('vsevenRegretFrozenRank', {a: i + 1 for i, a in enumerate(order)}['FROZEN'],
          'P5-B3.jsonl: FROZEN rank of four on minimax regret, 1 = best')
-    TABLE_SPEC['regret.tex'] = ('llr', 'Configuration & Minimax regret (pp) & Attained against')
+    TABLE_SPEC['regret.tex'] = ('lrr', 'Configuration & Minimax regret (pp) & Attained against')
     writeTable('regret.tex', ['%s & %s & %s \\\\' % (disp(a), _n(regret[a][0]), disp(regret[a][1]))
                               for a in order])
 
@@ -691,9 +704,9 @@ def b3_panel_table():
     for p in panel:
         full.append('%s & %s & %s \\\\' % (disp(p), cls[p], ' & '.join(
             ('$%s$' % _sg(cell[(a, p)][0])) if (a, p) in cell else '---' for a in arms)))
-    writeTable('panelfull.tex', full, '@{}L l r r r r@{}',
+    writeTable('panelfull.tex', full, '@{}l l r r r r@{}',
                'Panel member & Class & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite',
-               longtable=True, xtab=True)
+               longtable=True)
     return cell, panel, cls
 
 
@@ -834,16 +847,16 @@ def b5_attribution():
             loo = '$%s$ & $[%s, %s]$' % (_sg(d), _sg(dlo), _sg(dhi))
         else:
             loo = '--- & ---'
-        lines.append('%s & $%s$ & $[%s, %s]$ & %s \\\\' % (_tex(name), _sg(am), _sg(alo), _sg(ahi), loo))
+        lines.append('\\texttt{%s} & $%s$ & $[%s, %s]$ & %s \\\\' % (_tex(name), _sg(am), _sg(alo), _sg(ahi), loo))
     # m2=0 is preregistered as a B5 cell although the freeze does not carry it
     mm, mlo, mhi, _ = pool(by['A-m2'])
     emit('vsevenAddInMtwo', _sg(mm), 'P5-B5.jsonl A-m2: add-one-in, NOT carried by the freeze')
     emit('vsevenAddInMtwoLo', _sg(mlo), 'P5-B5.jsonl A-m2: lower bound')
     emit('vsevenAddInMtwoHi', _sg(mhi), 'P5-B5.jsonl A-m2: upper bound')
-    lines.append('\\textit{m2=0} \\textit{(not in the freeze)} & $%s$ & $[%s, %s]$ & --- & --- \\\\'
+    lines.append('\\texttt{m2=0} \\textit{(not in the freeze)} & $%s$ & $[%s, %s]$ & --- & --- \\\\'
                  % (_sg(mm), _sg(mlo), _sg(mhi)))
-    writeTable('attribution.tex', lines, '@{}L r c r c@{}',
-               'Component & Add-one-in & 95\\% CI & Leave-one-out & 95\\% CI', xtab=True)
+    writeTable('attribution.tex', lines, 'lrcrc',
+               'Component & Add-one-in & 95\\% CI & Leave-one-out & 95\\% CI')
     naive = sum(addins)
     emit('vsevenBfiveSum', _sg(naive), 'P5-B5.jsonl: naive sum of the FIVE add-one-in cells the freeze carries')
     emit('vsevenBfiveSumSix', _sg(naive + mm), 'P5-B5.jsonl: the six-term sum including A-m2, printed for D12')
@@ -914,8 +927,8 @@ def b6_partners():
                           _sg(d), _sg(dlo), _sg(dhi), _sg(per[BANK1]),
                           _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
             out[(opp, p)] = d
-        writeTable('partners_%s.tex' % opp, lines, '@{}L r c r c@{}',
-                   'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Repl.', xtab=True)
+        writeTable('partners_%s.tex' % opp, lines, 'lrcrc',
+                   'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Repl.')
     # S1 as PREREGISTRATION 5.2 draft 3 states it: min, median, self, ratio, and
     # the incumbent's own baseline over v05 on the same eight rows.
     ch = [out[('v05', p)] for p in PORDER if p != 'itself' and ('v05', p) in out]
@@ -971,7 +984,7 @@ def b7_crossplay():
             (diag if i == j else off).append(m)
     lines = []
     for i in range(1, 4):
-        lines.append('\\textbf{xp%d} & %s \\\\' % (i, ' & '.join(
+        lines.append('xp%d & %s \\\\' % (i, ' & '.join(
             '$%s$ $[%s, %s]$' % (_sg(grid[(i, j)][0]), _sg(grid[(i, j)][1]), _sg(grid[(i, j)][2]))
             for j in range(1, 4))))
     TABLE_SPEC['crossplay.tex'] = ('lccc', 'Run \\textbackslash\\ partners & xp1 & xp2 & xp3')
@@ -1036,10 +1049,10 @@ def b8_dialects():
         emit('vsevenDia%sHi' % t, _sg(hi), 'P5-B8.jsonl %s: upper bound' % name)
         emit('vsevenDia%sVsDefault' % t, _sg(m - base), 'P5-B8.jsonl %s: excursion from the default row' % name)
         if name != 'default': exc.append((abs(m - base), name, m - base))
-        lines.append('%s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & $%s$ \\\\' %
-                     (_tex(name), _sg(m), _sg(lo), _sg(hi), BANK3, _sg(per[BANK3]),
-                      BANK1, _sg(per[BANK1]), _sg(m - base)))
-    TABLE_SPEC['dialects.tex'] = ('lrrlr',
+        lines.append('%s & $%s$ & $[%s, %s]$ & $%s$ / $%s$ & $%s$ \\\\' %
+                     (_tex(name), _sg(m), _sg(lo), _sg(hi), _sg(per[BANK3]),
+                      _sg(per[BANK1]), _sg(m - base)))
+    TABLE_SPEC['dialects.tex'] = ('lrrrr',
         'Dialect & Edge (pp) & 95\\% CI & Per bank & vs default')
     writeTable('dialects.tex', lines)
     mx = max(exc)
@@ -1056,8 +1069,12 @@ def b8_dialects():
     comp = sum(pool([r for r in rows if r['row'] == n])[0] - base
                for n in ('no-out-of-turn', 'no-cardless-declare', 'maxasks=360'))
     leg = pool([r for r in rows if r['row'] == 'legacy'])[0] - base
+    # `maxasks=360' is bit-identical to `default' -- equal winRateA and equal ci
+    # tuples on both banks -- so its term is identically zero and contributes no
+    # variance.  Folding it in leaves legacy + default - n1 - n2, which is the
+    # two-component residual the prose asserts, with unit coefficients.
     ses = []
-    for n in ('legacy', 'no-out-of-turn', 'no-cardless-declare', 'maxasks=360', 'default'):
+    for n in ('legacy', 'no-out-of-turn', 'no-cardless-declare', 'default'):
         _, _, _, s = pool([r for r in rows if r['row'] == n])
         ses.append(s)
     h = 1.96 * math.sqrt(sum(s * s for s in ses))
@@ -1095,10 +1112,12 @@ def b9_controls():
         emit('vsevenB9%sRecovered' % t, 'yes' if dlo > 1.53 else 'no',
              'P5-B9.jsonl hstr=%s: is the planted edge recovered above the 1.53 floor' % h)
         lines.append('%s%s & \\ci{$%s$}{%s, %s} & \\ci{$%s$}{%s, %s} & '
-                     '\\ci{$%s$}{%s, %s} & \\ci{$\\mathbf{%s}$}{%s, %s} \\\\[0.4ex]' %
+                     '\\ci{$%s$}{%s, %s} & \\ci{$\\mathbf{%s}$}{%s, %s} \\\\' %
                      (h, ' \\textit{(sub-floor)}' if h == '0.05' else '',
                       _sg(pm), _sg(plo), _sg(phi), _sg(hm), _sg(hlo), _sg(hhi),
                       _sg(cm), _sg(clo), _sg(chi), _sg(d), _sg(dlo), _sg(dhi)))
+    # separate the rungs, but not the last row from \bottomrule
+    lines = [l + '\\addlinespace[0.9ex]' for l in lines[:-1]] + lines[-1:]
     writeTable('controls.tex', lines, '@{}l C C C C@{}',
                'Planted handicap & Planted cost & vs.\\ handicapped & vs.\\ v0.7 & Recovered excess',
                xtab=True)
@@ -1144,7 +1163,7 @@ def b9_controls():
         sl.append('\\texttt{v07x:cheat=%s} & %s & %s & %s \\\\' % (
             cheat, ' & '.join(res[t] for t in ('s3', 's4', 's5', 's6')),
             ', '.join(req), '\\checkmark' if ok else '\\textbf{no}'))
-    TABLE_SPEC['sidechannel.tex'] = ('lccccll',
+    TABLE_SPEC['sidechannel.tex'] = ('lccccl c',
         'Planted channel & S3 & S4 & S5 & S6 & Must fail & As required')
     writeTable('sidechannel.tex', sl)
     emit('vsevenSideCells', str(len(side)), 'P5-B9side.jsonl: side-channel control cells')
@@ -1165,7 +1184,8 @@ def b10_residual():
             lines.append('%s & %d & %d / %s & \\textbf{%d} / %s \\\\' %
                          (disp(arm), bank, pm, _commafy(pn), gm, _commafy(gn)))
     TABLE_SPEC['residual.tex'] = ('llrr',
-        'Configuration & Bank & \\texttt{--threads=1} & \\texttt{--threads=1 --freshagents}')
+        'Configuration & Bank & \\texttt{-{}-threads=1} & '
+        '\\begin{tabular}[b]{@{}r@{}}\\texttt{-{}-threads=1}\\\\\\texttt{-{}-freshagents}\\end{tabular}')
     writeTable('residual.tex', lines)
     emit('vsevenSsixGateNonzero', str(gate_nonzero), 'P5-B10.jsonl: gate-condition cells with a nonzero mismatch')
     emit('vsevenSsixPlainNonzero', str(plain_nonzero), 'P5-B10.jsonl: one-thread cells with a nonzero mismatch')
@@ -1201,7 +1221,7 @@ def b0_verification():
     lines = ['%d & %s & \\texttt{%s} & %s \\\\' % (r['seed'], _commafy(r['deals']), r['digest'],
                                                    '\\checkmark' if r['match'] else '\\textbf{MISMATCH}')
              for r in bd['rows']]
-    TABLE_SPEC['banks.tex'] = ('lrll', 'Bank & Deals & Digest reproduced & Matches commitment')
+    TABLE_SPEC['banks.tex'] = ('lrlc', 'Bank & Deals & Digest reproduced & Matches commitment')
     writeTable('banks.tex', lines)
     sa = d['B0_2_sealedAdversaries']
     emit('vsevenSealedRows', str(sa['rows']), 'P5-B0.json: rows decoded from the sealed adversary half')
@@ -1281,10 +1301,10 @@ def b0_verification():
     KEYDOC = {
         'r12': 'half-suit contestation weight (\\texttt{oppCertDonate})',
         'rtie': 'tie-break by a hash of the public event stream, not sort order',
-        'pool': 'urgency pooling threshold; $-1$ disables',
-        'oppfloor': 'urgency opponent-ownership floor; $-1$ disables',
+        'pool': 'urgency pooling threshold; \\texttt{-1} disables',
+        'oppfloor': 'urgency opponent-ownership floor; \\texttt{-1} disables',
         'force': 'urgency forcing horizon in events; $10^6$ disables',
-        'askfloor': 'urgency ask floor; $-1$ disables',
+        'askfloor': 'urgency ask floor; \\texttt{-1} disables',
         'stall': 'escalate after $K$ public events with no change in this seat\'s certificate hash',
         's1': 'enable the endgame-truncated determinized search',
         'det': 'determinizations sampled per searched decision',
@@ -1303,14 +1323,14 @@ def b0_verification():
     # The component table the agent section leads with: mechanism first, harness
     # name second, so a reader meets the idea before the identifier.
     COMPONENTS_TABLE = [
-        ('Deal inference', 'exact posterior with fitted policy prior',
+        ('Deal inference', 'Sinkhorn fit to the deal posterior, from a fitted policy prior',
          'unchanged', '\\S\\ref{sec:inference}'),
         ('Ask and declaration policy', 'fitted linear score, 37 coordinates',
          'unchanged; no refit in this cycle', '\\S\\ref{sec:agent-policy}'),
         ('Tie-breaking among equal-scoring asks', 'enumeration order (unstable sort)',
          'hash of the public event stream (\\texttt{rtie})', '\\S\\ref{sec:agent-tiebreak}'),
         ('Half-suit contestation', 'absent',
-         'information-denial weight (\\texttt{r12})', '\\S\\ref{sec:agent-contest}'),
+         'contested-half-suit weight (\\texttt{r12})', '\\S\\ref{sec:agent-contest}'),
         ('Declaration urgency escalation', 'event-count clock at 220 events',
          'disabled (\\texttt{pool}, \\texttt{oppfloor}, \\texttt{force}, \\texttt{askfloor})',
          '\\S\\ref{sec:agent-urgency}'),
@@ -1321,13 +1341,21 @@ def b0_verification():
     ]
     writeTable('components.tex',
                ['%s & %s & %s & %s \\\\' % r for r in COMPONENTS_TABLE],
-               'p{0.20\\linewidth}p{0.24\\linewidth}p{0.34\\linewidth}l',
-               'Component & v0.6 & FishBot v0.7 & Section')
+               '@{}Q{0.77} Q{0.92} Q{1.31} l@{}',
+               'Component & v0.6 & FishBot v0.7 & Section', xtab=True)
     lay = fz['allparamsLayout']
-    lay_lines = [('%s & %s \\\\' % (_tex(k), _tex(v)))
-                 for k, v in lay.items() if k != 'note']
+    lay_lines = []
+    for k, v in lay.items():
+        if k == 'note': continue
+        # the summary row is a sum of the rows above it, not a sixth block
+        if k == 'total': lay_lines.append('\\midrule')
+        lay_lines.append('%s & %s \\\\' % (('%s' if k == 'total' else '\\texttt{%s}') % _tex(k), _tex(v)))
     writeTable('layout.tex', lay_lines, 'lr', 'Block & Coordinates')
-    emit('vsevenLayoutNote', _tex(lay.get('note', '')), 'engine/fishbot_v07.json: allparamsLayout note')
+    # the note names a source file; every other filename in the paper is
+    # typewriter, and a roman \_ prints as a long low bar
+    note = _re.sub(r'((?:[A-Za-z0-9./-]|\\_)+\.(?:hpp|cpp|py|json|tex))',
+                   r'\\texttt{\1}', _tex(lay.get('note', '')))
+    emit('vsevenLayoutNote', note, 'engine/fishbot_v07.json: allparamsLayout note')
     emit('vsevenNotVectorisable', ', '.join('\\texttt{%s}' % _tex(x)
                                             for x in fz['switchesNotExpressibleAsVector']),
          'engine/fishbot_v07.json: switches that cannot be expressed in the parameter vector')
@@ -1369,7 +1397,7 @@ GNAME = {'G1 dead asks': 'provably-dead asks $\\le 0.10\\%$',
          'G5 mirror tail': 'mirror tail max $< 220$, p99 $\\le 150$',
          'G6 late declarations': 'declarations at/after event 220 = 0',
          'G7a S3/S4/S5': 'S3/S4/S5 certified, zero tolerance',
-         'G7b S6 seat-isolation': 'S6 = 0 at \\texttt{--threads=1 --freshagents}'}
+         'G7b S6 seat-isolation': 'S6 = 0 at \\texttt{-{}-threads=1 -{}-freshagents}'}
 CTAG = {'FROZEN': 'Frozen', 'INCUMBENT': 'Incumbent', 'F-cheap': 'Fcheap', 'NEGCONTROL': 'Neg'}
 RTAG = {'G1': 'Gone', 'G2': 'Gtwo', 'G3': 'Gthree', 'G4': 'Gfour', 'G5': 'Gfive',
         'G6': 'Gsix', 'G7a': 'Gsevena', 'G7b': 'Gsevenb'}
@@ -1524,6 +1552,26 @@ def throughput_paper():
     emit('vsevenCostRecorded', '3.2', 'docs/v07/PREREGISTRATION.md: the cost multiple the record carried')
 
 
+# Identifiers in the deviation register.  The source document backticks some of
+# them and not others, so a pass over the un-backticked remainder is what makes
+# the column consistent: --threads=13, main.cpp and a bare digest are all set the
+# way the rest of the paper sets an identifier.  Segments already inside a
+# \texttt group are left alone rather than nested.
+_TTSPLIT = _re.compile(r'(\\texttt\{[^}]*\})')
+
+def _tt_bare(seg):
+    seg = _re.sub(r'(?<![-\w])--([A-Za-z][A-Za-z0-9-]*(?:=[^\s,;.)]+)?)',
+                  r'\\texttt{-{}-\1}', seg)
+    seg = _re.sub(r'(?<![\w/])((?:[A-Za-z0-9./-]|\\_)+\.(?:hpp|cpp|py|json|jsonl|md|txt|tex)'
+                  r'(?::\d+)?)(?![\w])', r'\\texttt{\1}', seg)
+    seg = _re.sub(r'(?<![\w])([0-9a-f]{16,})(?![\w])', r'\\texttt{\1}', seg)
+    return seg
+
+def _tt_identifiers(body):
+    return ''.join(p if p.startswith('\\texttt{') else _tt_bare(p)
+                   for p in _TTSPLIT.split(body))
+
+
 # ---------------------------------------------------------------- deviations
 def deviations():
     """The deviation register is READ OUT of docs/v07/FINAL-RESULTS.md rather
@@ -1553,8 +1601,39 @@ def deviations():
         body = ' '.join(body.split())
         body = body.replace('\\', '').replace('&', '\\&').replace('%', '\\%').replace('_', '\\_')
         body = body.replace('#', '\\#').replace('$', '\\$')
+        # Elide before converting the Markdown markup below, not after: cutting
+        # inside a \\texttt{...} group would emit an unbalanced brace.
         if len(body) > 460:
-            body = body[:457].rsplit(' ', 1)[0] + '\\,\\ldots'
+            body = body[:457].rsplit(' ', 1)[0]
+            # an elision can strand the opening half of a pair; drop it rather
+            # than let it swallow the rest of the entry
+            for ch in ('"', '`'):
+                if body.count(ch) % 2:
+                    body = body[:body.rfind(ch)].rstrip()
+            body += '\\,\\ldots'
+        # Code spans FIRST, quotes second.  The other order eats itself: `` is
+        # what a converted opening quote is made of, so a code-span pass run
+        # afterwards matches it as an empty span and emits \\texttt{}.
+        # Markdown code spans would otherwise typeset as two opening quotes,
+        # `like this`, because LaTeX has no closing backtick; set them the way
+        # the paper sets every other identifier.
+        body = _re.sub(r'`([^`]*)`', r'\\texttt{\1}', body)
+        # The register is read out of a Markdown document, which uses straight
+        # quotes.  Every other quotation in the paper is typographic, so balanced
+        # pairs are converted rather than left to render as two verticals.
+        body = _re.sub(r'"([^"]*)"', lambda m: '``' + m.group(1) + "''", body)
+        # Options, file names and digests the source did not backtick.
+        body = _tt_identifiers(body)
+        # A long option keeps two hyphens.  `--' ligatures to an en dash, so
+        # --threads=13 was reaching the page as -threads=13, which is a different
+        # command.  A `--' with space on both sides is prose punctuation and is
+        # left alone.
+        body = _re.sub(r'(?<![-\w])--(?=[A-Za-z])', '-{}-', body)
+        if body.count('{') != body.count('}'):
+            raise SystemExit('deviation %s: unbalanced braces after conversion: %r' % (did, body))
+        for junk in ('\\texttt{}', '``\'\'', '\"'):
+            if junk in body:
+                raise SystemExit('deviation %s: %r survived conversion in %r' % (did, junk, body))
         lines.append('\\textbf{%s} & %s & %s \\\\' % (did, _tex(kind).title(), body))
     writeTable('deviations.tex', lines, '@{}l l L@{}',
                'ID & Kind & Deviation, addition or correction', longtable=True, xtab=True)

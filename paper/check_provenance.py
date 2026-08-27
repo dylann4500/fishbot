@@ -115,6 +115,9 @@ def resolved_values(files, prefixes):  # noqa: D401
         for kind, name, v in re.findall(
                 r'(provide|renew|new)command\{\\((?:%s)[A-Za-z]+)\}\{([^}]*)\}'
                 % '|'.join(prefixes), open(f).read()):
+            # a signed value is wrapped as \ensuremath{-1.47} so that prose and
+            # tables share one minus glyph; the sentinel check wants the number
+            v = re.sub(r'^\\ensuremath\{', '', v).rstrip('}')
             if kind == 'provide':
                 if name not in val:
                     val[name] = (v, False)

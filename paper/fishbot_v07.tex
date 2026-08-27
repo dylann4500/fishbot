@@ -5,6 +5,13 @@
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb,amsthm}
+% \mathbb{1} does not exist.  amssymb's blackboard alphabet is letters only, and
+% position 1 of msbm10 holds \nVdash, so every indicator function in this paper
+% was printing as a struck-through turnstile -- a binary relation, in a numerator
+% where a 0/1 indicator was meant.  dsfont has the digit; \ind is used everywhere
+% so the choice is made once.
+\usepackage{dsfont}
+\newcommand{\ind}{\mathds{1}}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
@@ -20,11 +27,24 @@
 \usepackage{hyperref}
 \DeclareUrlCommand\filepath{\urlstyle{tt}}
 \usepackage{xurl}        % break long URLs anywhere, so none reaches the margin
+% xurl permits a break anywhere in a path or URL, and that is what lets the
+% bare SHA-256 of Appendix G and the long repository URLs of the bibliography
+% break at all.  Restricting the break points -- to stop the one URL that
+% breaks after ``https:'' -- costs four loose lines in the bibliography, so
+% the general case keeps xurl's rule.  A digest gets its own command below,
+% restricted to breaking between hex characters.
+\DeclareUrlCommand\hexdigest{\urlstyle{tt}%
+  \def\UrlBreaks{\do\0\do\1\do\2\do\3\do\4\do\5\do\6\do\7\do\8\do\9%
+                 \do\a\do\b\do\c\do\d\do\e\do\f}}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc}
+\usetikzlibrary{arrows.meta,positioning,calc,fit}
+\usepackage{needspace}   % keep a long table off the foot of a page
 \usepackage{enumitem}
 \usepackage{fancyhdr}
-\usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+% singlelinecheck=false: without it a caption short enough to fit one line is
+% centred and every longer one is flush left, so Table 12's caption and Table
+% 11's -- on the same page -- were set two different ways.
+\usepackage[font=small,labelfont=bf,skip=6pt,singlelinecheck=false]{caption}
 \captionsetup[table]{position=above,skip=6pt}
 \captionsetup[figure]{position=below,skip=8pt}
 
@@ -35,7 +55,25 @@
             pdftitle={FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing
                       in Six-Player Canadian Fish},
             pdfauthor={Dylan Nguyen}}
-\setlist{nosep,leftmargin=*}
+% nosep zeroes topsep as well as itemsep, which ran every list straight into
+% the paragraphs either side of it: on p70 the paragraph after item 3 began
+% within a point of the items' own runover indent and read as a fourth line
+% of the item.  Keep the tight item spacing, restore the boundary.
+\setlist{topsep=.4\baselineskip,partopsep=0pt,itemsep=0pt,parsep=0pt,leftmargin=*}
+% Every description list in this document is a run-in heading: a bold sentence
+% that opens the paragraph it introduces.  Under leftmargin=* the default label
+% box is handed a negative width -- enumitem says so eight times -- and the
+% first line of every entry is then stretched to the width of the text block,
+% which is what the underfull boxes in Appendix E were.  style=unboxed sets the
+% label as ordinary text at the head of the paragraph instead.  The entries
+% also need separating from one another, since nosep removes it.
+\setlist[description]{style=unboxed,leftmargin=0pt,labelsep=0.5em,
+                      topsep=\medskipamount,itemsep=\medskipamount,parsep=0pt}
+% Every display should sit the same distance from its lead-in.  TeX otherwise
+% substitutes \abovedisplayshortskip when the preceding line ends left of the
+% display's left edge, which put (14) 2.7pt below its lead-in and (15) 13.6pt.
+\abovedisplayshortskip=\abovedisplayskip
+\belowdisplayshortskip=\belowdisplayskip
 \setlength{\parindent}{1.2em}
 \setlength{\parskip}{0pt plus 1pt}
 % Agent names are \mbox'ed and confidence intervals are unbreakable math, so a
@@ -68,15 +106,31 @@
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 \newcolumntype{R}{>{\raggedleft\arraybackslash}X}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
+% A weighted X column, for a table whose columns should not be equal thirds.
+% Named Q, not W: array already defines a W column type.
+% The weights within one table must sum to the number of X columns it uses, so
+% that tabularx still fills exactly \linewidth and no wider.
+\newcolumntype{Q}[1]{>{\hsize=#1\hsize\raggedright\arraybackslash}X}
 % A numeric cell whose confidence interval is stacked under its estimate, so a
 % five-column interval table fits the text block without shrinking the type.
 \newcommand{\ci}[2]{#1\newline{\scriptsize $[#2]$}}
 
-% Float placement.  The results section declares sixteen tables, and with LaTeX's
-% default allowances (one float per page top, 70% of a page) they queue up and
-% surface pages later, in the middle of prose they have nothing to do with.
-% Raising the allowances lets a float settle on or near the page that first
-% refers to it; \FloatBarrier at each subsection stops any that still cannot.
+% Float placement.  Every table and figure in this document is declared [!ht],
+% so it is set at the point in the prose where it is written and only moves if
+% it genuinely will not fit there.  That, and not a barrier, is what keeps a
+% float next to the text that discusses it.
+%
+% There is deliberately NO \FloatBarrier at subsection level.  A barrier that
+% finds a float still deferred issues \clearpage, and since the subsections
+% here are short and several of the tables are half a page tall, that was
+% ejecting the rest of the page: the worst case left a page carrying three
+% lines of text and nothing else, and four more pages carried holes of a
+% quarter page or larger.  placeins is still loaded with [section], so no float
+% may cross a section boundary, which is the guarantee that actually matters.
+%
+% The allowances below are raised from the class defaults (one float per page
+% top, 70% of a page) because the results section declares sixteen tables and
+% the defaults make them queue.
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{2}
 \setcounter{totalnumber}{4}
@@ -171,7 +225,10 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \input{sections_v07/12-discussion}
 \input{sections_v07/13-conclusion}
 
-\clearpage
+% No \clearpage here: the References follow the conclusion on the same page.
+% With one, section 13's last four lines took a page of their own.
+\phantomsection
+\addcontentsline{toc}{section}{References}
 \input{sections_v07/bibliography}
 
 \clearpage

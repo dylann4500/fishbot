@@ -53,18 +53,16 @@ replicates and one that does not.
 
 Two derived quantities are used throughout and are defined once here.
 
-\begin{description}
-\item[Pooling two banks.] Two banks of equal size pool as the mean of their two edges, with standard
+\paragraph{Pooling two banks.} Two banks of equal size pool as the mean of their two edges, with standard
   error $\mathrm{se}_{\text{pooled}} = \sqrt{\mathrm{se}_1^2 + \mathrm{se}_2^2}/2$, where each
   $\mathrm{se}$ is recovered from that bank's clustered interval as half-width divided by $1.96$. The
   pooled interval is the estimate plus or minus $1.96\,\mathrm{se}_{\text{pooled}}$. Both per-bank
   values are printed beside every pooled figure in this paper.
-\item[Differences between separately measured cells.] A difference between two pooled cells, such as
+\paragraph{Differences between separately measured cells.} A difference between two pooled cells, such as
   an ablation's leave-one-out drop, is the difference of the estimates with the two pooled half-widths
   combined in quadrature. This is conservative. The configurations are paired on deals, so a genuine
   paired difference would be narrower, but the harness produces no paired difference \emph{across} two
   separately executed cells, and constructing one would assert more than the data structure supports.
-\end{description}
 
 \subsection{Power computed before a cell is run}
 \label{sec:evaluation-power}
@@ -150,8 +148,8 @@ support the paper's primary claim.
 
 Win rate and soundness are dissociable in this policy family. The corpus contains a configuration
 that scores \vsevenScoreboardTrapWin\% against an earlier version while making
-\vsevenScoreboardTrapDead\% provably dead asks, asks for cards its own team demonstrably already
-owns, and losing \vsevenScoreboardTrapLimit\% of its games to the action cap. It is both stronger and
+\vsevenScoreboardTrapDead\% provably dead asks, asks whose target it can already prove does not
+hold the card (\S\ref{sec:agent-policy}), and losing \vsevenScoreboardTrapLimit\% of its games to the action cap. It is both stronger and
 broken.
 
 A configuration is therefore gated \emph{before} any strength number is computed for it, on \vsevenGateRulesWord{}

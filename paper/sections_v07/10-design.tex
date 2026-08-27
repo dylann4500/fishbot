@@ -1,11 +1,20 @@
 \section{Experimental design}
 \label{sec:design}
 
-\FloatBarrier
+Figure~\ref{fig:protocol} is the shape of what follows: what was developed on training material,
+what was frozen, and what was measured against sealed material.
+
 \subsection{Configurations compared}
 \label{sec:design-configs}
 
-\begin{table}[tbp]
+Table~\ref{tab:configs} is worth reading before any result, because the paper's central nuance
+depends on the distinction between two of its rows. \fishseven{} is compared against \fcheap{}, a
+configuration that existed before this cycle, and improves on it. It is also compared against
+\composite{}, which was assembled \emph{during} this cycle by the adversary-generation phase, and
+does not measurably improve on it. Those are different claims about different objects and
+\S\ref{sec:results-composite} keeps them apart.
+
+\begin{table}[!ht]
 \centering
 \caption{Every configuration this paper compares. Configurations marked pre-existing were available
 before the v0.7 programme began; the phase-2 composite was assembled during it. Only \fishseven{} was
@@ -36,34 +45,43 @@ opponent panel members, decoded only at evaluation \\
 \end{tabularx}
 \end{table}
 
-Table~\ref{tab:configs} is worth reading before any result, because the paper's central nuance
-depends on the distinction between two of its rows. \fishseven{} is compared against \fcheap{}, a
-configuration that existed before this cycle, and improves on it. It is also compared against
-\composite{}, which was assembled \emph{during} this cycle by the adversary-generation phase, and
-does not measurably improve on it. Those are different claims about different objects and
-\S\ref{sec:results-composite} keeps them apart.
-
-\begin{figure}[tbp]\centering
+\begin{figure}[!ht]\centering
+% Each stage is a fixed-height box whose text is set FROM THE TOP.  A minimum
+% height alone equalises the boxes but leaves the titles at four different
+% heights, because the contents are then centred and carry three, four or five
+% lines.  A top-set minipage equalises both.
+\newcommand{\stage}[2]{\begin{minipage}[t][17.4mm][t]{26mm}\centering
+  \textbf{#1}\\[1pt]{\scriptsize #2}\end{minipage}}
 \begin{tikzpicture}[
   font=\small,
-  st/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=11mm,text width=26mm},
+  st/.style={draw=fishgray,rounded corners=2pt,inner sep=4pt},
   seal/.style={st,fill=fishlight,draw=fishgreen},
-  arr/.style={-{Stealth[length=2mm]},fishgray,thick}]
-\node[st] (base) at (0,0)    {\textbf{v0.6 frontier}\\{\scriptsize deployed policy,}\\[-1pt]{\scriptsize \texttt{F-cheap}, \texttt{F-mid}}};
-\node[st] (dev)  at (3.2,0)  {\textbf{development}\\{\scriptsize instrument, adversaries,}\\[-1pt]{\scriptsize candidate mechanisms}};
-\node[st] (sel)  at (6.4,0)  {\textbf{selection}\\{\scriptsize $K$ configurations}\\[-1pt]{\scriptsize scored and compared}};
-\node[st] (frz)  at (9.6,0) {\textbf{freeze}\\{\scriptsize one configuration,}\\[-1pt]{\scriptsize artifact round-tripped}};
-\node[seal] (ev) at (12.8,0) {\textbf{evaluation}\\{\scriptsize sealed holdout,}\\[-1pt]{\scriptsize registered protocol}};
+  note/.style={inner sep=0pt,font=\scriptsize,align=center},
+  arr/.style={-{Stealth[length=2.2mm]},fishgray,thick}]
+% The gap before evaluation is wider than the other three, because the seal
+% barrier passes between freeze and evaluation and must touch neither box, and
+% the sealed-material note has to begin clear of it.  The whole picture is
+% 461pt wide against a 468pt text block.
+\node[st]   (base) at (0,0)      {\stage{v0.6 frontier}{deployed policy,\\[-1pt] \texttt{F-cheap}, \texttt{F-mid}}};
+\node[st]   (dev)  at (3.161,0)  {\stage{development}{instrument, adversaries,\\[-1pt] candidate mechanisms}};
+\node[st]   (sel)  at (6.322,0)  {\stage{selection}{$K$ configurations\\[-1pt] scored and compared}};
+\node[st]   (frz)  at (9.483,0)  {\stage{freeze}{one configuration,\\[-1pt] artifact round-tripped}};
+\node[seal] (ev)   at (13.084,0) {\stage{evaluation}{sealed holdout,\\[-1pt] registered protocol}};
 \draw[arr] (base) -- (dev); \draw[arr] (dev) -- (sel); \draw[arr] (sel) -- (frz); \draw[arr] (frz) -- (ev);
-\node[align=center,font=\scriptsize,fishgray,text width=70mm] (train) at (4.8,-1.75)
+% The barrier, midway between freeze and evaluation.  Its label is set above
+% the row on a white ground, so the dashes stop at the word rather than
+% running through it: nothing in this figure is drawn on top of anything else.
+\draw[fishgreen,very thick,dashed] (11.2835,1.75) -- (11.2835,-3.25);
+\node[fishgreen,font=\scriptsize\bfseries,fill=white,inner sep=2pt] at (11.2835,1.34) {seal};
+% Both notes hang from the same depth, so their first lines align.  The sealed
+% note begins to the right of the barrier and never crosses it.
+\node[note,fishgray,text width=68mm,anchor=north] (train) at (4.7415,-1.45)
   {\textbf{training material}: banks 7030001--7030004, unsealed adversary half.\\
    Everything left of the barrier may see this material.};
-\node[align=center,font=\scriptsize,fishgreen,text width=38mm] (hold) at (12.8,-1.75)
+\node[note,fishgreen,text width=33mm,anchor=north west] (hold) at (11.5335,-1.45)
   {\textbf{sealed material}: banks committed by digest, adversary half encrypted, decoded only here.};
-\draw[fishgreen,very thick,dashed] (11.2,1.2) -- (11.2,-2.6);
-\node[font=\scriptsize\bfseries,fishgreen,rotate=90] at (10.95,-0.7) {seal};
-\draw[fishgray,dotted] (4.8,-0.75) -- (4.8,-1.15);
-\draw[fishgreen,dotted] (12.8,-0.75) -- (12.8,-1.15);
+\draw[fishgray,dotted]  (4.7415,-1.09) -- (4.7415,-1.41);
+\draw[fishgreen,dotted] (13.084,-1.09) -- (13.084,-1.41);
 \end{tikzpicture}
 \caption{The development and evaluation protocol. Configurations were generated, scored and selected
 using training material only. Exactly one configuration was then frozen, and evaluated against
@@ -73,11 +91,17 @@ a run naming a sealed seed fails unless an explicit variable is set, which was s
 \label{fig:protocol}
 \end{figure}
 
-\FloatBarrier
 \subsection{Material, and the checks performed before any measurement}
 \label{sec:design-material}
 
-\begin{table}[tbp]\centering
+All \vsevenBanks{} bank digests reproduce, at \vsevenBankDeals{} deals each (Table~\ref{tab:banks}). The sealed adversary half
+decodes to \vsevenSealedRows{} configurations whose plaintext SHA-256 matches the commitment recorded
+at sealing. The frozen configuration's artifact verifies, its specification rebuilding character for
+character from its own ordered option map, and its round trip with search enabled is identical over
+\vsevenRtwoaGames{} games. The engine's soundness audit reports \vsevenVerifyViolations{} violations
+in \vsevenVerifyChecks{} checks and its self-test passes on \vsevenSelftestChecks{} checks.
+
+\begin{table}[!ht]\centering
 \caption{The deal banks. Each digest was recomputed before any cell was played, by folding the six
 dealt hands and the dealer of every deal into a rolling hash without constructing a policy or playing
 a game. The committed digests had been computed by a different build of the engine at sealing time,
@@ -86,14 +110,7 @@ so agreement is between two binaries as well as two dates.}
 {\tabfont\input{tables_v07/banks}}
 \end{table}
 
-All \vsevenBanks{} bank digests reproduce, at \vsevenBankDeals{} deals each. The sealed adversary half
-decodes to \vsevenSealedRows{} configurations whose plaintext SHA-256 matches the commitment recorded
-at sealing. The frozen configuration's artifact verifies, its specification rebuilding character for
-character from its own ordered option map, and its round trip with search enabled is identical over
-\vsevenRtwoaGames{} games. The engine's soundness audit reports \vsevenVerifyViolations{} violations
-in \vsevenVerifyChecks{} checks and its self-test passes on \vsevenSelftestChecks{} checks.
-
-\begin{table}[tbp]\centering
+\begin{table}[!ht]\centering
 \caption{Calibration of the side-channel controls on holdout material. \emph{Must fail} is the set
 the protocol names for each planted violation in advance. It is not one test each: the seed cheat is
 visible to two of them. A control failing a test outside its set, or missing one inside it, would
@@ -106,18 +123,10 @@ The homogeneity controls of \S\ref{sec:evaluation-side} calibrate as specified: 
 fails exactly the tests named for it and no others, identically on both banks, over
 \vsevenSideCells{} cells (Table~\ref{tab:sidechannel}).
 
-\FloatBarrier
 \subsection{The soundness gate}
 \label{sec:design-gate}
 
-\begin{table}[tbp]\centering
-\caption{The soundness gate, \vsevenGateRulesWord{} rules, run on training material by design. The negative control is
-a configuration constructed to be rejected.}
-\label{tab:gate}
-{\tabfont\input{tables_v07/gate}}
-\end{table}
-
-\fishseven{} passes all \vsevenGateRulesWord{} rules: \vsevenGateDeadAsks\% provably dead asks against a
+\fishseven{} passes all \vsevenGateRulesWord{} rules of Table~\ref{tab:gate}: \vsevenGateDeadAsks\% provably dead asks against a
 0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail maximum \vsevenGateTailMax{} with
 99th percentile \vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches over
 \vsevenGateSsixNodes{} audited decisions. Reported but not gated: \vsevenGateEvents{} events per game,
@@ -125,7 +134,13 @@ a configuration constructed to be rejected.}
 \vsevenNegFailCount{} rules, namely \vsevenNegFails{}, which are exactly the rules the protocol names
 for it in advance.
 
-\FloatBarrier
+\begin{table}[!ht]\centering
+\caption{The soundness gate, \vsevenGateRulesWord{} rules, run on training material by design. The negative control is
+a configuration constructed to be rejected.}
+\label{tab:gate}
+{\tabfont\input{tables_v07/gate}}
+\end{table}
+
 \subsection{The registered protocol}
 \label{sec:design-protocol}
 
@@ -148,11 +163,13 @@ a particular ordering, so that its direction could not be chosen after the fact,
 training material that comparison ran \emph{against} \fishseven{}. \S\ref{sec:results-partners}
 reports the outcome and uses the registered wording.
 
-\FloatBarrier
 \subsection{The battery}
 \label{sec:design-battery}
 
-\begin{table}[tbp]\centering
+\vsevenScoredCells{} scored cells over \vsevenScoredGames{} games (Table~\ref{tab:battery}). No registered cell was dropped;
+\vsevenCellsAdded{} were added, and Appendix~\ref{app:deviations} records why.
+
+\begin{table}[!ht]\centering
 \caption{Every registered battery against what was measured. \emph{Registered} is the count the
 protocol names, not the count that ran: two deviations add a reference cell and sixteen control cells,
 because without them three of the protocol's own questions are not computable from the cells it
@@ -160,9 +177,6 @@ lists.}
 \label{tab:battery}
 {\tabfont\input{tables_v07/battery}}
 \end{table}
-
-\vsevenScoredCells{} scored cells over \vsevenScoredGames{} games. No registered cell was dropped;
-\vsevenCellsAdded{} were added, and Appendix~\ref{app:deviations} records why.
 
 Scored cells carry no soundness-audit evidence, and this paper does not imply otherwise. The match
 harness does not run the audit, so the audit check count is \vsevenAuditChecks{} in all

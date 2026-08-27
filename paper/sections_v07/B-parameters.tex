@@ -59,9 +59,11 @@ The freeze artifact records its provenance as
 \end{quote}
 
 \noindent
-No gradient or population fit was run in this cycle; the one coordinate that is not inherited had
-its value chosen as the argmax of a measured dose response (\S\ref{sec:agent-policy},
-\S\ref{sec:agent-contest}).
+The remaining coordinates are the extended responder block, and they are all zero but one. That is
+the identity condition: with every responder coordinate at zero the extended class reproduces
+\vsix{} bit for bit, which is the certificate \S\ref{sec:agent} relies on. No gradient or population
+fit was run in this cycle. The single non-zero coordinate, \texttt{r12}, had its value chosen as the
+argmax of a measured dose response (\S\ref{sec:agent-policy}, \S\ref{sec:agent-contest}).
 
 \subsection*{Coordinates known to be inert}
 

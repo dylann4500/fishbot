@@ -3,28 +3,35 @@
 
 \fishseven{} is a configuration of the \vsix{} policy family rather than a new architecture. That
 sentence was written into the evaluation protocol before any holdout result was known, and the
-evaluation did not disturb it. This section describes the agent conceptually. The literal
+evaluation did not disturb it. This section describes the agent conceptually: Figure~\ref{fig:pipeline} shows the decision
+pipeline, and Table~\ref{tab:components} sets its components against \vsix{}'s. The literal
 configuration string, its option map, the parameter vector layout and the freeze artifact's hashes
 are in Appendix~\ref{app:parameters}.
 
-\begin{figure}[tbp]\centering
+\begin{figure}[!ht]\centering
 \begin{tikzpicture}[
   font=\small,
   box/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=9mm},
+  % the three pipeline stages carry the same amount of content, so they are
+  % held to one height rather than left to differ by the 1pt their last lines do
+  stage/.style={box,minimum height=15mm,text width=32mm},
   pub/.style={box,fill=fishlight,draw=fishgreen},
   arr/.style={-{Stealth[length=2mm]},fishgray,thick}]
 \node[pub] (hist) at (0,1.15) {public event stream\\{\scriptsize asks, answers, transfers,}\\[-1pt]{\scriptsize declarations, card counts}};
 \node[box] (hand) at (0,-1.05) {own hand\\{\scriptsize nine cards}};
-\node[box] (bel)  at (4.3,0.05) {deal posterior\\{\scriptsize Sinkhorn fit,}\\[-1pt]{\scriptsize fitted policy prior}};
-\node[box] (pol)  at (8.2,0.05) {linear ask and\\declaration score\\{\scriptsize + public-history tie-break}};
-\node[box] (srch) at (12.1,0.05) {guarded search\\{\scriptsize endgame only,}\\[-1pt]{\scriptsize paired LCB deviation}};
+\node[stage] (bel)  at (4.3,0.05) {deal posterior\\{\scriptsize Sinkhorn fit,}\\[-1pt]{\scriptsize fitted policy prior}};
+\node[stage] (pol)  at (8.2,0.05) {linear ask and\\declaration score\\{\scriptsize + public-history tie-break}};
+\node[stage] (srch) at (12.1,0.05) {guarded search\\{\scriptsize endgame only,}\\[-1pt]{\scriptsize paired LCB deviation}};
 \node[align=center] (act) at (12.1,-1.75) {\textbf{action}};
 \draw[arr] (hist) -- (bel); \draw[arr] (hand) -- (bel);
 \draw[arr] (bel) -- (pol); \draw[arr] (pol) -- (srch); \draw[arr] (srch) -- (act);
 \draw[arr,dashed] (pol.south) .. controls +(0,-1.2) and +(-2,-1.2) .. (act.west);
 \node[font=\scriptsize,fishgray,align=center] at (10.15,-1.25) {blueprint action\\if search declines};
-\draw[fishgreen,dashed,rounded corners=3pt] (-1.75,-1.9) rectangle (1.75,2.0);
-\node[font=\scriptsize,fishgreen] at (0,-2.15) {information set};
+% The enclosure is fitted to the two nodes it contains rather than drawn at
+% hand-measured coordinates: at (-1.75,1.75) its sides ran along the borders of
+% the public-event-stream box, which is exactly as wide as the rectangle was.
+\node[draw=fishgreen,dashed,rounded corners=3pt,inner sep=6pt,fit=(hist)(hand)] (iset) {};
+\node[font=\scriptsize,fishgreen,below=2pt of iset] {information set};
 \end{tikzpicture}
 \caption{The information structure of a Fish seat and the \fishseven{} decision pipeline. A seat
 observes the public event stream and its own hand, and nothing else; there is no path from a policy to
@@ -37,7 +44,7 @@ justifies it (\S\ref{sec:agent-search}).}
 \label{fig:pipeline}
 \end{figure}
 
-\begin{table}[tbp]\centering
+\begin{table}[!ht]\centering
 \caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
 are used in the paper only where a command must be reproduced.}
 \label{tab:components}
@@ -66,7 +73,7 @@ What the policy actually enumerates is a strict subset of \eqref{eq:legal}. A \e
 those whose target is excluded by a certificate, $q \notin \mathcal{M}(c)$. It is this filter, rather
 than any weighting inside \eqref{eq:askscore}, that keeps a provably dead ask off the score. It
 binds: it removes what would otherwise have been the argmax at roughly \vsevenGateBindRate\% of
-\vsevenGateBindN{} measured decisions. If no candidate survives the filter the full legal set is
+\vsevenGateBindN{} ask decisions captured from \fishseven{}'s own seats. If no candidate survives the filter the full legal set is
 restored, so the guarantee is not absolute.
 
 \paragraph{The score.} Each candidate is scored by a fitted linear function of a
@@ -95,7 +102,7 @@ The three extra terms are the ones \vsix{} added, and each expresses an effect t
     \label{eq:gvoid}\\
   g_2(a) &= \Pr\bigl[\,\mathrm{own}(c) \in \mathcal{T}_s \cup \{s\}\,\bigr],
     \label{eq:gteam}\\
-  g_3(a) &= p_a \cdot \mathbb{1}\bigl[\,q \text{ is the last opponent holding cards, and holds one}\,\bigr].
+  g_3(a) &= p_a \cdot \ind\bigl[\,q \text{ is the last opponent holding cards, and holds one}\,\bigr].
     \label{eq:glast}
 \end{align}
 Equation~\eqref{eq:gvoid} is the probability that the ask takes the target's \emph{last} card of the
@@ -298,7 +305,7 @@ no-progress counter
   \label{eq:stall}
 \end{equation}
 and escalate to pressure stage 1 when $\nu_t \ge K$ and to stage 2 when $\nu_t \ge 2K$, with
-$K = \texttt{\vsevenOptStallK{}}$ and $2K = \vsevenOptStallTwo{}$ in \fishseven{}.
+$K = \texttt{\vsevenOptStallK{}}$ and $2K = \texttt{\vsevenOptStallTwo{}}$ in \fishseven{}.
 
 \paragraph{Why it is a safeguard and not a guarantee.} Consider
 $\Phi_t = \sum_{c \in U_t}\bigl(|\mathcal{M}_t(c)| - 1\bigr) + |U_t| + |\mathcal{H}_t|$. Certificates
@@ -410,7 +417,7 @@ it can compute the \emph{distribution} of $i$'s action induced by its own poster
   \Pr\bigl[\,a_i = a \mid \mathcal{I}_j^t\,\bigr]
   \;=\; \sum_{D \,\models\, \mathcal{I}_j^t}
   \Pr\bigl[D \mid \mathcal{I}_j^t\bigr]\;
-  \mathbb{1}\!\left[\Pi\bigl(\text{hand}_i(D),\, \mathcal{P}_t\bigr) = a\right],
+  \ind\!\left[\Pi\bigl(\text{hand}_i(D),\, \mathcal{P}_t\bigr) = a\right],
   \label{eq:coord}
 \end{equation}
 and, having observed $a_i$, condition on it. That is exactly the (C5) reasoning of

@@ -7,7 +7,7 @@ import {
 } from "@/lib/fish-engine";
 
 const GAME_COUNTS = [100, 250, 500, 1000, 2500, 5000];
-const POLICY_ORDER: StrategyId[] = ["fishbot", "lockout", "detective", "fishbot_v02", "diversifier", "hunter", "bluffer", "random"];
+const POLICY_ORDER: StrategyId[] = ["fishbot", "kv_search", "lockout", "detective", "fishbot_v02", "diversifier", "hunter", "bluffer", "random"];
 const SPEEDS = [.25, .5, 1, 2, 4];
 
 const pct = (value: number, digits = 1) => `${(value * 100).toFixed(digits)}%`;

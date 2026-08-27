@@ -178,6 +178,8 @@ Package: amsthm 2020/05/29 v2.20.6
 \thm@postskip=\skip53
 \thm@headsep=\skip54
 \dth@everypar=\toks29
+) (dsfont.sty
+Package: dsfont 1995/08/01 v0.1 Double stroke roman fonts
 ) (booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen157
@@ -206,7 +208,8 @@ Package: array 2021/10/04 v2.5f Tabular extension package (FMi)
 \extratabsurround=\skip55
 \backup@length=\skip56
 \ar@cellbox=\box54
-) (longtable.sty
+)
+(longtable.sty
 Package: longtable 2021-09-01 v4.17 Multi-page Table package (DPC)
 \LTleft=\skip57
 \LTright=\skip58
@@ -224,8 +227,7 @@ Package: longtable 2021-09-01 v4.17 Multi-page Table package (DPC)
 \c@LT@tables=\count280
 \c@LT@chunks=\count281
 \LT@p@ftn=\toks31
-)
-(tabularx.sty
+) (tabularx.sty
 Package: tabularx 2020/01/15 v2.11c `tabularx' package (DPC)
 \TX@col@width=\dimen173
 \TX@old@table=\dimen174
@@ -240,10 +242,10 @@ Package: xltabular 2020/11/04 v0.2e `xltabular' package (hv,RN)
 Package: ltablex 2014/08/13 v1.1 Modified tabularx
 )) (placeins.sty
 Package: placeins 2005/04/18  v 2.2
-) (xcolor.sty
+)
+(xcolor.sty
 Package: xcolor 2021/10/31 v2.13 LaTeX color extensions (UK)
-
-(color.cfg
+ (color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: xetex.def on input line 227.
@@ -264,10 +266,9 @@ File: dvipsnam.def 2016/06/17 v3.0m Driver-dependent file (DPC,SPQR)
 Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
  (graphics.sty
 Package: graphics 2021/03/04 v1.4d Standard LaTeX Graphics (DPC,SPQR)
- (trig.sty
+(trig.sty
 Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
-)
-(graphics.cfg
+) (graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: xetex.def on input line 107.
@@ -281,23 +282,23 @@ Package: ltxcmds 2020-05-10 v1.25 LaTeX kernel commands for general use (HO)
 ) (pdftexcmds.sty
 Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
 )
- (infwarerr.sty
+
+(infwarerr.sty
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode not found.
-)
-(kvsetkeys.sty
+) (kvsetkeys.sty
 Package: kvsetkeys 2019/12/15 v1.18 Key value parser (HO)
 ) (kvdefinekeys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
 ) (pdfescape.sty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
-) (hycolor.sty
-Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
 )
-(letltxmacro.sty
+(hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+) (letltxmacro.sty
 Package: letltxmacro 2019/12/03 v1.6 Let assignment for LaTeX macros (HO)
 ) (auxhook.sty
 Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
@@ -309,10 +310,10 @@ Package: kvoptions 2020-10-07 v3.14 Key value format for package options (HO)
 \Hy@pagecounter=\count284
  (pd1enc.def
 File: pd1enc.def 2022-02-21 v7.00n Hyperref: PDFDocEncoding definition (HO)
-) (intcalc.sty
-Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-(etexcmds.sty
+(intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+) (etexcmds.sty
 Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
 )
 \Hy@SavedSpaceFactor=\count285
@@ -351,8 +352,7 @@ Package hyperref Info: Link coloring with OCG OFF on input line 6052.
 Package hyperref Info: PDF/A mode OFF on input line 6057.
 LaTeX Info: Redefining \ref on input line 6097.
 LaTeX Info: Redefining \pageref on input line 6101.
-
-(atbegshi-ltx.sty
+ (atbegshi-ltx.sty
 Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
 package with kernel methods
 )
@@ -604,7 +604,12 @@ File: tikzlibrarypositioning.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 )
 (tikzlibrarycalc.code.tex
 File: tikzlibrarycalc.code.tex 2021/05/15 v3.1.9a (3.1.9a)
-) (enumitem.sty
+) (tikzlibraryfit.code.tex
+File: tikzlibraryfit.code.tex 2021/05/15 v3.1.9a (3.1.9a)
+) (needspace.sty
+Package: needspace 2010/09/12 v1.3d reserve vertical space
+)
+(enumitem.sty
 Package: enumitem 2019/06/20 v3.9 Customized lists
 \labelindent=\skip62
 \enit@outerparindent=\dimen294
@@ -626,8 +631,7 @@ rs
 \f@nch@O@orf=\skip71
 ) (caption.sty
 Package: caption 2022/03/01 v3.6b Customizing captions (AR)
-
-(caption3.sty
+ (caption3.sty
 Package: caption3 2022/03/17 v2.3b caption3 kernel (AR)
 \caption@tempdima=\dimen295
 \captionmargin=\dimen296
@@ -646,11 +650,11 @@ Package caption Info: longtable package is loaded.
  (ltcaption.sty
 Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
 ))
-Package hyperref Info: Option `colorlinks' set `true' on input line 37.
+Package hyperref Info: Option `colorlinks' set `true' on input line 57.
 \c@theorem=\count321
- (numbers_v05) (numbers_v05_generated)
-(numbers_v06) (numbers_v06_generated) (numbers_v07) (numbers_v07_generated)
-(l3backend-xetex.def
+
+(numbers_v05) (numbers_v05_generated) (numbers_v06) (numbers_v06_generated)
+(numbers_v07) (numbers_v07_generated) (l3backend-xetex.def
 File: l3backend-xetex.def 2022-02-07 L3 backend support: XeTeX
 \c__kernel_sys_dvipdfmx_version_int=\count322
 \l__color_backend_stack_int=\count323
@@ -660,38 +664,35 @@ File: l3backend-xetex.def 2022-02-07 L3 backend support: XeTeX
 \g__pdf_backend_object_int=\count326
 \g__pdf_backend_annotation_int=\count327
 \g__pdf_backend_link_int=\count328
-) (fishbot_v07.aux
-
-LaTeX Warning: Label `tab:battery' multiply defined.
-
-)
+) (fishbot_v07.aux)
 \openout1 = `fishbot_v07.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 149.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
-49.
- (ts1cmr.fd
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 203.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 2
+03.
+
+(ts1cmr.fd
 File: ts1cmr.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 149.
-LaTeX Font Info:    ... okay on input line 149.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 203.
+LaTeX Font Info:    ... okay on input line 203.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
@@ -727,11 +728,11 @@ LaTeX Font Info:    ... okay on input line 149.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 149.
-Package microtype Info: Applying patch `item' on input line 149.
-Package microtype Info: Applying patch `toc' on input line 149.
-Package microtype Info: Applying patch `eqnum' on input line 149.
-Package microtype Info: Applying patch `footnote' on input line 149.
+LaTeX Info: Redefining \microtypecontext on input line 203.
+Package microtype Info: Applying patch `item' on input line 203.
+Package microtype Info: Applying patch `toc' on input line 203.
+Package microtype Info: Applying patch `eqnum' on input line 203.
+Package microtype Info: Applying patch `footnote' on input line 203.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: No adjustment of tracking.
@@ -741,7 +742,7 @@ Package microtype Info: No adjustment of kerning.
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
 (RS)
 )
-Package hyperref Info: Link coloring ON on input line 149.
+Package hyperref Info: Link coloring ON on input line 203.
  (nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
  (refcount.sty
@@ -751,49 +752,49 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count329
 )
-LaTeX Info: Redefining \ref on input line 149.
-LaTeX Info: Redefining \pageref on input line 149.
-LaTeX Info: Redefining \nameref on input line 149.
+LaTeX Info: Redefining \ref on input line 203.
+LaTeX Info: Redefining \pageref on input line 203.
+LaTeX Info: Redefining \nameref on input line 203.
  (fishbot_v07.out) (fishbot_v07.out)
 \@outlinefile=\write4
 \openout4 = `fishbot_v07.out'.
 
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
-51.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 2
+05.
  (ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-51.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 2
+05.
  (omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-151.
+205.
  (omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-151.
+205.
  (omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 151.
+(Font)              <12> on input line 205.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 151.
+(Font)              <8> on input line 205.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 151.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 151
+(Font)              <6> on input line 205.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 205
 .
  (umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 151
+LaTeX Font Info:    Trying to load font information for U+msb on input line 205
 .
  (umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
@@ -810,11 +811,11 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 15.
+(Font)              <10> on input line 14.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 15.
+(Font)              <7> on input line 14.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 15.
+(Font)              <5> on input line 14.
 )
 (fishbot_v07.toc
 LaTeX Font Info:    External font `lmex10' loaded for size
@@ -825,185 +826,49 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 \tf@toc=\write5
 \openout5 = `fishbot_v07.toc'.
 
- [3] (sections_v07/01-introduction
+ [3] (sections_v07/01-introduction [4
 
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 31.
+])
+(sections_v07/02-game [5] [6]) (sections_v07/03-related [7] [8] [9] [10])
+(sections_v07/04-background [11] [12]) (sections_v07/05-inference [13] [14]
+LaTeX Font Info:    Trying to load font information for U+dsrom on input line 1
+06.
 
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 50.
-
-[4
-
-]) (sections_v07/02-game [5] [6]) (sections_v07/03-related [7] [8] [9])
-(sections_v07/04-background [10] [11] [12]) (sections_v07/05-inference
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 89.
-
-[13] [14] [15]
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 247.
-
-[16]) (sections_v07/06-agent (tables_v07/components
-Underfull \hbox (badness 5711) in paragraph at lines 7--7
-[]|\T1/lmr/m/n/10 Tie-breaking among
- []
-
-
-Underfull \hbox (badness 1783) in paragraph at lines 7--7
-[]|\T1/lmr/m/n/10 hash of the pub-lic event stream
- []
-
-
-Underfull \hbox (badness 5519) in paragraph at lines 9--9
-[]|\T1/lmr/m/n/10 Declaration ur-gency
- []
-
-
-Underfull \hbox (badness 1383) in paragraph at lines 9--9
-[]|\T1/lmr/m/n/10 disabled (\T1/lmtt/m/n/10 pool\T1/lmr/m/n/10 , \T1/lmtt/m/n/1
-0 oppfloor\T1/lmr/m/n/10 , \T1/lmtt/m/n/10 force\T1/lmr/m/n/10 ,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 10--10
-[]|\T1/lmr/m/n/10 Termination safe-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 10--10
-[]|\T1/lmr/m/n/10 deduction-state stall de-tec-tor
- []
-
-) [17] [18] [19] [20] [21] [22] [23] [24]) (sections_v07/07-evaluation [25]
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 57.
-
-[26] [27] [28]) (sections_v07/08-threat-model) (sections_v07/09-development
-[29]
+(Udsrom.fd
+File: Udsrom.fd 1995/08/01 v0.1 Double stroke roman font definitions
+)
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/10.95'
+(microtype)             (new value: 10.95pt) on input line 106.
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/8'
+(microtype)             (new value: 8.0pt) on input line 106.
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/6'
+(microtype)             (new value: 6.0pt) on input line 106.
+ [15] [16]) (sections_v07/06-agent [17] (tables_v07/components)
+[18] [19] [20] [21] [22] [23] [24]) (sections_v07/07-evaluation [25] [26]
+[27] [28]) (sections_v07/08-threat-model [29]) (sections_v07/09-development
+[30]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 21.
- [30] [31] [32]) (sections_v07/10-design [33] (tables_v07/banks)
-(tables_v07/sidechannel) [34] (tables_v07/gate) [35] (tables_v07/battery))
-(sections_v07/11-results [36] (tables_v07/forest) (tables_v07/frontier)
-Underfull \hbox (badness 1521) in paragraph at lines 39--42
-[]\T1/lmr/m/n/10.95 Against lin-eage base-lines, [] gains +4.63 pp over the de-
-ployed [] pol-icy
- []
-
-[37] [38] (tables_v07/selection) [39] (tables_v07/worstcase)
-Underfull \hbox (badness 1242) in paragraph at lines 187--191
-[][]\T1/lmr/m/n/10.95 's worst cell is -0.04 pp $\OT1/lmr/m/n/10.95 [\OMS/lmsy/
-m/n/10.95 ^^@\OT1/lmr/m/n/10.95 1\OML/lmm/m/it/10.95 :\OT1/lmr/m/n/10.95 41\OML
-/lmm/m/it/10.95 ; \OT1/lmr/m/n/10.95 +1\OML/lmm/m/it/10.95 :\OT1/lmr/m/n/10.95 
-33]$ \T1/lmr/m/n/10.95 against the de-ployed pol-icy's -4.24
- []
-
-(tables_v07/regret)
-Underfull \hbox (badness 1303) in paragraph at lines 215--222
-[][] \T1/lmr/m/n/10.95 is \T1/lmr/bx/n/10.95 3rd of four \T1/lmr/m/n/10.95 on m
-in-i-max re-gret, at 4.53 against F-cheap's 4.00 and
- []
-
-(tables_v07/farpanel) [40] (tables_v07/attribution) [41]
+ [31] [32] [33]) (sections_v07/10-design [34] (tables_v07/banks) [35]
+(tables_v07/sidechannel) (tables_v07/gate) [36] (tables_v07/battery))
+(sections_v07/11-results [37] (tables_v07/forest) (tables_v07/frontier)
+[38] [39] (tables_v07/selection) (tables_v07/worstcase) [40] (tables_v07/regret
+) (tables_v07/farpanel) [41] (tables_v07/attribution) [42]
 (tables_v07/partners_v05) (tables_v07/partners_v06) (tables_v07/regimes)
-[42] (tables_v07/crossplay) (tables_v07/crossh2h) [43] (tables_v07/dialects)
-[44] (tables_v07/adversaries) [45] [46] (tables_v07/controls)
-(tables_v07/residual) [47] (tables_v07/cost)) (sections_v07/12-discussion
-[48] [49] [50] [51]) (sections_v07/13-conclusion [52]) [53]
-(sections_v07/bibliography [54
+[43] (tables_v07/crossplay) (tables_v07/crossh2h) (tables_v07/dialects)
+[44] (tables_v07/adversaries) [45] (tables_v07/controls) [46]
+(tables_v07/residual) (tables_v07/cost) [47]) (sections_v07/12-discussion
+[48] [49] [50] [51]) (sections_v07/13-conclusion [52])
+(sections_v07/bibliography [53] [54] [55] [56]) [57] (sections_v07/A-dialect)
+(sections_v07/B-parameters [58
 
-]
-Underfull \hbox (badness 1472) in paragraph at lines 103--105
-[]\T1/lmr/m/n/10.95 T. Cazenave and V. Ven-tos, ``The $\OML/lmm/m/it/10.95 ^^K^
-^V$ \T1/lmr/m/n/10.95 Search Al-go-rithm for the Game of Bridge,''
- []
-
-[55] [56] [57]) [58] (sections_v07/A-dialect) (sections_v07/B-parameters
-[59
-
-] (tables_v07/options) (tables_v07/layout) [60]) (sections_v07/C-thresholds
-[61]) (sections_v07/D-panel (tables_v07/panelfull [62]))
-(sections_v07/E-corrections
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 18.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 19--29
-[]\T1/lmr/m/n/10.95 The cor-pus recorded the
- []
-
-[63]
-Underfull \hbox (badness 10000) in paragraph at lines 30--36
-[]\T1/lmr/m/n/10.95 The
- []
-
-
-Underfull \hbox (badness 2277) in paragraph at lines 37--42
-[]\T1/lmr/m/n/10.95 The reg-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 48--56
-[]\T1/lmr/m/n/10.95 The vet-ted
- []
-
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 71.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 71--79
-[]\T1/lmr/m/n/10.95 A per-
- []
-
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 81.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 82--95
-[]\T1/lmr/m/n/10.95 The freeze
- []
-
-[64]
-Underfull \hbox (badness 2460) in paragraph at lines 98--107
-[]\T1/lmr/m/n/10.95 Before any hold-out ma-te-rial
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 108--115
-[]\T1/lmr/m/n/10.95 The phase-5 record-ing
- []
-
-
-Underfull \hbox (badness 3199) in paragraph at lines 126--132
-[]\T1/lmr/m/n/10.95 The phase-5 doc-
- []
-
-) (sections_v07/F-deviations [65] (tables_v07/deviations [66] [67] [68]
-[69])) (sections_v07/G-reproduction
-Underfull \hbox (badness 1648) in paragraph at lines 37--44
-\T1/lmr/m/n/10.95 hashes. Ev-ery one of the 428 scored cells was played by $\T1
-/lmtt/m/n/10.95 e n g i n e / f i s h7$\T1/lmr/m/n/10.95 , SHA-256
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 37--44
-\T1/lmtt/m/n/10.95 cf6d5ea2c1f0e9e3896bc51f2a366834e7d60303eaf85acc553346c97359
-f4e3\T1/lmr/m/n/10.95 , 1,242,312 bytes,
- []
-
-[70] (tables_v07/battery) [71]) [72] (fishbot_v07.aux)
-
-LaTeX Warning: There were multiply-defined labels.
-
+] (tables_v07/options) (tables_v07/layout)
+[59]) (sections_v07/C-thresholds [60]) (sections_v07/D-panel
+(tables_v07/panelfull [61])) (sections_v07/E-corrections [62] [63] [64]
+[65]) (sections_v07/F-deviations (tables_v07/deviations [66] [67] [68] [69]))
+(sections_v07/G-reproduction [70] (tables_v07/battery) [71]) [72]
+(fishbot_v07.aux)
 Package rerunfilecheck Info: File `fishbot_v07.out' has not changed.
-(rerunfilecheck)             Checksum: 0A5C5F416F026ADCED75889EBA38D266;24758.
+(rerunfilecheck)             Checksum: 48A7FF36FF07532141807D4D78FCA24E;24855.
  )
-Output written on fishbot_v07.xdv (72 pages, 529708 bytes).
+Output written on fishbot_v07.xdv (72 pages, 560608 bytes).

@@ -9,6 +9,7 @@
 #include "v07_cheat.hpp"    // phase 3: planted side-channel cheats (probe-only specs)
 #include "v07_learn.hpp"   // phase 3 K5: the amortised (learned) policy
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
+#include "kv.hpp"          // external engine: KV's sampled-world search (fish-researchp12)
 #include <memory>
 #include <map>
 #include <sstream>
@@ -472,6 +473,26 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
     a->cfg.priorTheta = optD(o, "ptheta", a->cfg.priorTheta);
     a->cfg.priorPhi   = optD(o, "pphi", a->cfg.priorPhi);
     a->cfg.declareEnabled = optI(o, "declare", 1) != 0;
+    return a;
+  }
+
+  // ---- external engines --------------------------------------------------
+  // KV's sampled-world determinization search, ported from
+  // github.com/kv1514/fish-researchp12.  `kv` is his shipped configuration
+  // (96 particles, 48 determinizations, depth 2); the options expose the same
+  // knobs his CLI does, so `kv:part=256,det=256` is his `fish analyze` setting.
+  if (base == "kv" || base == "kvsearch") {
+    auto a = std::make_unique<kvsearch::KVAgent>();
+    a->cfg.particles         = optI(o, "part", a->cfg.particles);
+    a->cfg.determinizations  = optI(o, "det", a->cfg.determinizations);
+    a->cfg.depth             = optI(o, "depth", a->cfg.depth);
+    a->cfg.maxRootActions    = optI(o, "cand", a->cfg.maxRootActions);
+    a->cfg.maxRolloutActions = optI(o, "roll", a->cfg.maxRolloutActions);
+    a->cfg.successReward     = optD(o, "reward", a->cfg.successReward);
+    a->cfg.failurePenalty    = optD(o, "penalty", a->cfg.failurePenalty);
+    a->cfg.informationWeight = optD(o, "info", a->cfg.informationWeight);
+    a->cfg.claimSupport      = optD(o, "support", a->cfg.claimSupport);
+    a->cfg.stalemateClaimAfter = optI(o, "stale", a->cfg.stalemateClaimAfter);
     return a;
   }
 

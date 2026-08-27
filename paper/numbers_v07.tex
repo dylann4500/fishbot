@@ -22,51 +22,58 @@
 
 % =========================== PHASE 1 -- the instrument =====================
 % docs/v07/INSTRUMENT.md
+% The unrestricted search's cost on one basis.  This is phase 1's own timing,
+% not an inherited figure: the corpus recorded "three orders of magnitude" on a
+% mixed basis and the ledger 300-420x on other hardware.
+\providecommand{\vsevenPhaseOneCost}{242}
 \providecommand{\vsevenFloorPhaseOne}{1.68}
 \providecommand{\vsevenBitsPerAsk}{2.0}
-\providecommand{\vsevenInversionUnfitted}{+1.52}
+\providecommand{\vsevenInversionUnfitted}{\ensuremath{+1.52}}
 \providecommand{\vsevenInversionTrack}{0.4}
 \providecommand{\vsevenHandicapBits}{0.07}
-\providecommand{\vsevenFmidHeadToHead}{+2.52}
-\providecommand{\vsevenTruncatedEndgame}{+2.19}
-\providecommand{\vsevenFullGameOld}{+0.08}
+\providecommand{\vsevenTruncatedEndgame}{\ensuremath{+2.19}}
+\providecommand{\vsevenFullGameOld}{\ensuremath{+0.08}}
 
 % =========================== PHASE 2 -- the adversaries ====================
 % docs/v07/ADVERSARIES.md
-\providecommand{\vsevenBestExploit}{+0.79}
-\providecommand{\vsevenBestExploitLo}{+0.48}
-\providecommand{\vsevenBestExploitHi}{+1.10}
+\providecommand{\vsevenBestExploit}{\ensuremath{+0.79}}
+\providecommand{\vsevenBestExploitLo}{\ensuremath{+0.48}}
+\providecommand{\vsevenBestExploitHi}{\ensuremath{+1.10}}
 \providecommand{\vsevenBestExploitN}{96,000}
-\providecommand{\vsevenUrgencyCeiling}{+0.38}
-\providecommand{\vsevenUrgencyCeilingLo}{-0.06}
-\providecommand{\vsevenUrgencyCeilingHi}{+0.81}
-\providecommand{\vsevenUrgencyWorthLo}{+1.23}
-\providecommand{\vsevenUrgencyWorthHi}{+1.62}
+\providecommand{\vsevenUrgencyCeiling}{\ensuremath{+0.38}}
+\providecommand{\vsevenUrgencyCeilingLo}{\ensuremath{-0.06}}
+\providecommand{\vsevenUrgencyCeilingHi}{\ensuremath{+0.81}}
+\providecommand{\vsevenUrgencyWorthLo}{\ensuremath{+1.23}}
+\providecommand{\vsevenUrgencyWorthHi}{\ensuremath{+1.62}}
 \providecommand{\vsevenCliff}{15.18}
 \providecommand{\vsevenCliffTail}{405}
 \providecommand{\vsevenCliffIncumbentTail}{149}
-\providecommand{\vsevenCorrelatedFit}{+0.70}
+\providecommand{\vsevenCorrelatedFit}{\ensuremath{+0.70}}
 \providecommand{\vsevenCorrelatedFloor}{2.31}
 \providecommand{\vsevenSubAddPhaseTwo}{0.83}
-\providecommand{\vsevenOneSwitchArm}{+2.71}
-\providecommand{\vsevenSearchAsExploit}{+1.89}
+\providecommand{\vsevenOneSwitchArm}{\ensuremath{+2.71}}
+\providecommand{\vsevenSearchAsExploit}{\ensuremath{+1.89}}
 
 % ---- the contestation coordinate: what it is worth, and what it does --------
 % docs/v07/ADVERSARIES.md
-\providecommand{\vsevenOneSwitchArmVsFcheap}{+0.55}
-\providecommand{\vsevenOneSwitchArmWorst}{-1.69}
+\providecommand{\vsevenOneSwitchArmWorst}{\ensuremath{-1.69}}
 \providecommand{\vsevenOneSwitchArmWorstOpp}{Fsearch}
-\providecommand{\vsevenContestNegDose}{-1.47}
+\providecommand{\vsevenContestNegDose}{\ensuremath{-1.47}}
 \providecommand{\vsevenContestTargetAskBefore}{0.540}
 \providecommand{\vsevenContestTargetAskAfter}{0.521}
 \providecommand{\vsevenContestSelfAskBefore}{0.543}
 \providecommand{\vsevenContestSelfAskAfter}{0.534}
 \providecommand{\vsevenContestDecisions}{261,000}
 
-% ---- the live-ask gate's binding rate, measured on the v0.6 policy ----------
-% docs/v07/ADVERSARIES.md
-\providecommand{\vsevenGateBindRate}{1.0}
-\providecommand{\vsevenGateBindN}{260,987}
+% ---- the live-ask gate's binding rate on the DEPLOYED policy -----------------
+% The phase-2 characterisation captured the target arm, so it measures the gate
+% on \vsix{}; the gate acts on the argmax of an ask score that \fishseven{}
+% extends, so the rate is a different quantity there.  This is the frozen spec
+% captured from its own seats on the same diagnostic bank, `--capture=a`:
+%   gateBindRate 0.014108 [0.013494, 0.014716] over n = 269,423 ask decisions.
+% research/v07/results/P5-mech-arm-a.jsonl
+\providecommand{\vsevenGateBindRate}{1.4}
+\providecommand{\vsevenGateBindN}{269,423}
 
 % =========================== PHASE 3 -- the candidates =====================
 % docs/v07/CANDIDATES.md
@@ -74,99 +81,146 @@
 \providecommand{\vsevenLoneCeilingBefore}{2.45}
 \providecommand{\vsevenLoneCeilingAfter}{0.84}
 \providecommand{\vsevenLoneUrgencyShare}{71}
-\providecommand{\vsevenJointWorseNet}{-1.313}
-\providecommand{\vsevenJointWorseWin}{-1.58}
+\providecommand{\vsevenJointWorseNet}{\ensuremath{-1.313}}
+\providecommand{\vsevenJointWorseWin}{\ensuremath{-1.58}}
 \providecommand{\vsevenJointFlatLo}{72.4}
 \providecommand{\vsevenJointFlatHi}{74.4}
 \providecommand{\vsevenKoneRsqBefore}{0.00108}
 \providecommand{\vsevenKoneRsqAfter}{0.07976}
+\providecommand{\vsevenKoneRsqOosBefore}{0.00664}
+\providecommand{\vsevenKoneRsqOosAfter}{0.08424}
 \providecommand{\vsevenKoneFold}{74}
-\providecommand{\vsevenKoneInPlay}{+1.84}
-\providecommand{\vsevenKoneControl}{+2.01}
+\providecommand{\vsevenKoneInPlay}{\ensuremath{+1.84}}
+\providecommand{\vsevenKoneControl}{\ensuremath{+2.01}}
 \providecommand{\vsevenKoneChangeLo}{0.3205}
+\providecommand{\vsevenKoneChangeMid}{0.3217}
 \providecommand{\vsevenKoneChangeHi}{0.3237}
-\providecommand{\vsevenKfourSelfDecl}{-2.26}
-\providecommand{\vsevenKfourSelfAsk}{-1.59}
-\providecommand{\vsevenKfourSelfAlloc}{-1.20}
-\providecommand{\vsevenKfourTradeGain}{+0.39}
-\providecommand{\vsevenKfourTradeCost}{-2.33}
+\providecommand{\vsevenKfourSelfDecl}{\ensuremath{-2.26}}
+\providecommand{\vsevenKfourSelfAsk}{\ensuremath{-1.59}}
+\providecommand{\vsevenKfourSelfAlloc}{\ensuremath{-1.20}}
+\providecommand{\vsevenKfourTradeGain}{\ensuremath{+0.39}}
+\providecommand{\vsevenKfourTradeCost}{\ensuremath{-2.33}}
 \providecommand{\vsevenDesignEffectLo}{17}
 \providecommand{\vsevenDesignEffectHi}{39}
 \providecommand{\vsevenPerDecisionGamesLo}{284}
 \providecommand{\vsevenPerDecisionGamesHi}{560}
 \providecommand{\vsevenScoreboardGames}{9,604}
-\providecommand{\vsevenKfiveHeadToHead}{-0.01}
+\providecommand{\vsevenKfiveHeadToHead}{\ensuremath{-0.01}}
 \providecommand{\vsevenKfivePm}{0.45}
 \providecommand{\vsevenCurseShare}{84}
 \providecommand{\vsevenCurseTieShare}{95.5}
 \providecommand{\vsevenTieContested}{53.80}
 \providecommand{\vsevenLthirteenClose}{0.030}
-\providecommand{\vsevenKthreeOverVsix}{+1.91}
-\providecommand{\vsevenKthreeOverVsixLo}{+1.28}
-\providecommand{\vsevenKthreeOverVsixHi}{+2.53}
-\providecommand{\vsevenKthreeOverComposite}{+1.42}
-\providecommand{\vsevenKthreeOverCompositeLo}{+0.18}
-\providecommand{\vsevenKthreeOverCompositeHi}{+2.68}
+\providecommand{\vsevenKthreeOverComposite}{\ensuremath{+1.42}}
+\providecommand{\vsevenKthreeOverCompositeLo}{\ensuremath{+0.18}}
+\providecommand{\vsevenKthreeOverCompositeHi}{\ensuremath{+2.68}}
 \providecommand{\vsevenStallFrozenRun}{326}
 \providecommand{\vsevenStallIncumbentRun}{6}
-\providecommand{\vsevenMisdeclBefore}{2.556}
-\providecommand{\vsevenMisdeclAfter}{1.028}
-\providecommand{\vsevenCorpusCost}{242}
 
 % =========================== PHASE 4 -- the freeze =========================
 % docs/v07/RESEARCH-LOG.md
-\providecommand{\vsevenTrainFcheap}{+3.18}
-\providecommand{\vsevenTrainFcheapLo}{+2.55}
-\providecommand{\vsevenTrainFcheapHi}{+3.81}
-\providecommand{\vsevenTrainSubAdd}{63}
-\providecommand{\vsevenSsixCarrier}{V06Agent::roll}
 \providecommand{\vsevenSsixIncidence}{800}
 
 % docs/v07/PREREGISTRATION.md
-\providecommand{\vsevenTrainGroup}{+0.78}
-\providecommand{\vsevenTrainGroupLo}{+0.33}
-\providecommand{\vsevenTrainGroupHi}{+1.22}
-\providecommand{\vsevenTrainRtwelveLoo}{+2.10}
-\providecommand{\vsevenTrainSearchLoo}{+0.77}
-\providecommand{\vsevenTrainRtieLoo}{+0.20}
-\providecommand{\vsevenTrainUrgoffLoo}{+0.02}
+\providecommand{\vsevenTrainGroup}{\ensuremath{+0.78}}
+\providecommand{\vsevenTrainGroupLo}{\ensuremath{+0.33}}
+\providecommand{\vsevenTrainGroupHi}{\ensuremath{+1.22}}
+\providecommand{\vsevenTrainRtwelveLoo}{\ensuremath{+2.10}}
 \providecommand{\vsevenXpDistanceLo}{6.3}
 \providecommand{\vsevenXpDistanceHi}{9.6}
-\providecommand{\vsevenTrainOneSeatFive}{+1.26}
-\providecommand{\vsevenTrainOneSeatSix}{+2.88}
-\providecommand{\vsevenTrainOppSixSelf}{+4.82}
-\providecommand{\vsevenTrainOppSixLo}{+2.50}
-\providecommand{\vsevenTrainOppSixHi}{+2.88}
+\providecommand{\vsevenTrainOneSeatFive}{\ensuremath{+1.26}}
+\providecommand{\vsevenTrainOneSeatSix}{\ensuremath{+2.88}}
+\providecommand{\vsevenTrainOppSixSelf}{\ensuremath{+4.82}}
+\providecommand{\vsevenTrainOppSixLo}{\ensuremath{+2.50}}
+\providecommand{\vsevenTrainOppSixHi}{\ensuremath{+2.88}}
 
 % =========================== THE LEDGER ====================================
 % docs/v07/SUBOPTIMALITY-LEDGER.md
-\providecommand{\vsevenLtwoPriority}{0.61}
 \providecommand{\vsevenLonePriority}{0.48}
-\providecommand{\vsevenLthreeDeadAsks}{11.7}
-\providecommand{\vsevenLelevenBits}{1.30}
-\providecommand{\vsevenLedgerOpen}{5}
 
 % ---- further transcribed measurements, phase 3 ----
 % docs/v07/CANDIDATES.md
+% The full-game re-measurement that actually discharged the inherited
+% leaf-evaluator conditional (CANDIDATES.md "What the candidate did discharge,
+% by re-measurement"), and the exact depth=24 configuration's re-run.
+\providecommand{\vsevenFullGameReOne}{\ensuremath{+1.78}}
+\providecommand{\vsevenFullGameReTwo}{\ensuremath{+1.25}}
+\providecommand{\vsevenFullGameRePooled}{\ensuremath{+1.52}}
+\providecommand{\vsevenDepthTwentyFour}{\ensuremath{+1.02}}
+\providecommand{\vsevenDepthTwentyFourLo}{\ensuremath{-0.55}}
+\providecommand{\vsevenDepthTwentyFourHi}{\ensuremath{+2.62}}
+% The learned re-ranker as it was built and first deployed, before the tie-group
+% restriction: class C4, amortisation of test-time search.
+\providecommand{\vsevenKfiveUnrestricted}{\ensuremath{-1.83}}
+\providecommand{\vsevenKfiveFitDecisions}{88,502}
+% CANDIDATES.md carries the point estimate, the game count and "replicated" but
+% no interval for that cell; the interval is pooled from the two bank rows of
+% research/v07/results/K5-vs-v06-7030001.jsonl
+% research/v07/results/K5-vs-v06-7030002.jsonl
+\providecommand{\vsevenKfiveUnrestrictedLo}{\ensuremath{-2.22}}
+\providecommand{\vsevenKfiveUnrestrictedHi}{\ensuremath{-1.45}}
+% docs/v07/CANDIDATES.md
+% The phase-5 recording's own interval and ratio for the legacy residual, which
+% Appendix E reconciles against the two-component figure this paper prints.
+% docs/v07/FINAL-RESULTS.md
+\providecommand{\vsevenLegacyResidualRecordedLo}{\ensuremath{-1.95}}
+\providecommand{\vsevenLegacyResidualRecordedHi}{\ensuremath{+1.37}}
+% docs/v07/CANDIDATES.md
+% The allocation-error channel of the design-effect table, which the 17x-39x
+% envelope spans and the sentence quoting it named only one side of.
+\providecommand{\vsevenAllocGamesLo}{244}
+\providecommand{\vsevenAllocGamesHi}{299}
 \providecommand{\vsevenLoneStrictLo}{95.6}
 \providecommand{\vsevenLoneStrictHi}{100}
 \providecommand{\vsevenJointFixed}{218}
 \providecommand{\vsevenJointBroken}{454}
 \providecommand{\vsevenKoneLeaves}{1.3M}
-\providecommand{\vsevenKfiveTieOnly}{+1.19}
-\providecommand{\vsevenKfiveFreeTie}{+1.14}
+\providecommand{\vsevenKfiveTieOnly}{\ensuremath{+1.19}}
+\providecommand{\vsevenKfiveFreeTie}{\ensuremath{+1.14}}
 \providecommand{\vsevenCurseRelErr}{0.4}
-\providecommand{\vsevenLthirteenAdvCost}{17}
 \providecommand{\vsevenFullGameOldN}{4,000}
 
-% ---- the phase-2 and phase-3 cell sizes these sections quote ----
+% ---- the second sample that refuted the ladder universal ----
+% research/v05/results/P2-verify-forced-endgame.md
+% Section 6 of that document reports 118 of 120 from a `--rotations=6` mirror
+% run; its own section 5 establishes that such runs record every declaration
+% twice and re-runs this seed at `--rotations=3` for 60.  The distinct count is
+% quoted here.
+\providecommand{\vsevenLadderSecondSeed}{1234567}
+\providecommand{\vsevenLadderSecondTotal}{60}
+
+% ---- the belief ranking with the policy prior deleted outright ----
+% research/v06/results/F2-belief-noprior.txt
+\providecommand{\vsevenBeliefPriorlessNLL}{1.39339}
+\providecommand{\vsevenBeliefPriorlessHit}{49.14}
+
+% ---- engine throughput, the six-seat mirror of the non-searching policy ----
+% The `v06` row.  The table's `v07` row, at 356.35, is the extended responder
+% class with every coordinate at zero, which research/v07/results/G1-identity.txt
+% certifies is \vsix{} bit for bit; the two rows are one policy and the spread
+% between them is scheduler noise (31.18 against 31.00 single-thread).
+% research/v07/results/T1-throughput.jsonl
+\providecommand{\vsevenMirrorGamesPerSec}{326}
+\providecommand{\vsevenMirrorThreads}{fifteen}
+
+% ---- the phase-2 cell sizes these sections quote ----
 % docs/v07/ADVERSARIES.md
 \providecommand{\vsevenPhaseTwoCell}{48,000}
-\providecommand{\vsevenSubFloorExcess}{-0.01}
-\providecommand{\vsevenSubFloorExcessLo}{-0.45}
-\providecommand{\vsevenSubFloorExcessHi}{+0.42}
+% The excess phase 2 measured at the SAME handicap rung as phase 5's sub-floor
+% control, `decl,hstr=0.05` (ADVERSARIES.md's C1 table).  The preregistration
+% named the rung correctly but paired it with the `hstr=0.08` row's numbers;
+% Appendix E records the correction.
+\providecommand{\vsevenSubFloorExcess}{\ensuremath{+0.25}}
+\providecommand{\vsevenSubFloorExcessLo}{\ensuremath{-0.19}}
+\providecommand{\vsevenSubFloorExcessHi}{\ensuremath{+0.68}}
+% The cost to an adversary of the one construction that was measured, a team
+% that never declares voluntarily (ADVERSARIES.md's phase summary and its
+% `v06:declare=0` screen row).
+\providecommand{\vsevenLthirteenAdvCostLo}{6}
+\providecommand{\vsevenLthirteenAdvCostHi}{8}
 
 % docs/v07/CANDIDATES.md
+\providecommand{\vsevenPhaseThreeCell}{48,000}
 \providecommand{\vsevenStallMirrorGames}{800}
 
 % ---- the scoreboard-selected configuration the commit-gate ordering exists for ----
@@ -194,7 +248,6 @@
 % docs/v07/FINAL-RESULTS.md
 \providecommand{\vsevenResidueGames}{12,000}
 \providecommand{\vsevenResidueRatio}{76}
-\providecommand{\vsevenDriftCommits}{five}
 
 % ---- the v0.4 exploitability figure the record misreads ----
 % paper/sections_v06/11-results.tex
@@ -208,5 +261,4 @@
 % empty box.
 % research/v07/results/MANIFEST-P5.json
 \providecommand{\vsevenScoredCells}{0}
-\providecommand{\vsevenBinaryShaShort}{0000000000000000}
 \providecommand{\vsevenBinaryBytes}{0}

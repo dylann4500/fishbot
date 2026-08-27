@@ -11,7 +11,7 @@ analytic closed-form expression, and the paper avoids that phrase.
 Table~\ref{tab:notation} fixes the symbols used here and in \S\ref{sec:agent}. A reader may prefer to
 skim it and return.
 
-\begin{table}[tbp]
+\begin{table}[!t]
 \centering
 \caption{Notation used in \S\ref{sec:inference} and \S\ref{sec:agent}.}
 \label{tab:notation}
@@ -103,7 +103,7 @@ $\mathcal{M}_t(c)$, initialised to all six seats and only ever shrunk:
 Conditioned on $\mathcal{I}_s^t$, all consistent deals are equally likely, so the posterior is
 uniform on the feasible set:
 \begin{equation}
-  \Pr[D \mid \mathcal{I}_s^t] \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s^t\right]}{Z},
+  \Pr[D \mid \mathcal{I}_s^t] \;=\; \frac{\ind\!\left[D \models \mathcal{I}_s^t\right]}{Z},
   \qquad
   Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s^t\}\bigr|.
   \label{eq:posterior}
@@ -175,9 +175,9 @@ block assignments whose image lies in $\mathcal{T}_s \cup \{s\}$. And the probab
 which is exactly what a declaration asserts, is
 \begin{equation}
   \pi_{\mathrm{alloc}}(h, \alpha^\star) \;=\;
-  \frac{\mathbb{1}\!\left[\alpha^\star \in \mathcal{F}_h\right]}{Z}
+  \frac{\ind\!\left[\alpha^\star \in \mathcal{F}_h\right]}{Z}
   \sum_{\mathbf{u}, \mathbf{v}} F_{k-1}(\mathbf{v})\,
-  \mathbb{1}\!\left[\sigma(\alpha^\star) = \mathbf{u}\right]
+  \ind\!\left[\sigma(\alpha^\star) = \mathbf{u}\right]
   G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
   \label{eq:alloc}
 \end{equation}
@@ -201,7 +201,7 @@ The path the agent deploys adds two such parameters and gives up exactness for t
 the count join by iterative proportional fitting, better known here as Sinkhorn scaling, on the
 $|U_t| \times 6$ matrix of admissible card--seat pairs. Initialise
 \begin{equation}
-  \hat\mu^{(0)}(c,p) \;=\; \mathbb{1}\!\left[p \in \mathcal{M}(c)\right] \cdot
+  \hat\mu^{(0)}(c,p) \;=\; \ind\!\left[p \in \mathcal{M}(c)\right] \cdot
   \exp\Bigl(\operatorname{clip}\bigl(\theta\, a_{p,H(c)} - \varphi\, (A_p - a_{p,H(c)}),\; \pm 2.6\bigr)\Bigr),
   \label{eq:prior}
 \end{equation}

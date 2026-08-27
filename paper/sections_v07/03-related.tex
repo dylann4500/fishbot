@@ -12,12 +12,13 @@ sources is quantitative or describes a program. McLeod's Pagat entry \cite{pagat
 rules source and records several points on which dialects differ; ours is specified in
 \S\ref{sec:game-dialect}. Develin's chapter \cite{develin} is the most detailed strategy writing we
 located, describes the same dialect, and supplies two observations this design uses: an ask teaches
-the opponents as much as it teaches a teammate, and a player may not declare a half-suit they hold
-entirely. Secondary strategy pages \cite{dorsa,strategy-site,wikiliterature} restate blackballing,
+the opponents as much as it teaches a teammate, and a player is better off not declaring a half-suit
+it holds entirely, since holding one carries no risk. The second is a tactic and not a rule: the
+engine imposes no such condition, and \S\ref{sec:game-rules} states what it does impose. Secondary strategy pages \cite{dorsa,strategy-site,wikiliterature} restate blackballing,
 asking the asker, and an endgame delegation heuristic; they are evidence about how the game is
 played and talked about, not sources of quantitative claims.
 
-\textbf{Computational prior art remains close to absent.} Searches across this project's cycles
+\paragraph{Computational prior art remains close to absent.} Searches across this project's cycles
 found no academic work on this game, no public repository containing search, planning or a working
 learner for it, and no coverage in RLCard \cite{rlcard}. The one agent located, Somani's
 \texttt{literature} \cite{somani,somani-server}, plays the four-player, 48-card variant, which does
@@ -109,8 +110,11 @@ meta-lesson rather than its machinery: when a search subproblem has many near-eq
 which one is selected is not a tie-break. That is the same observation \S\ref{sec:background-vsix}
 makes about an argmax resolved by array order.
 
-Every method above is published with a caveat that it can increase exploitability, so none can be
-evaluated by win rate alone. Local best response gives a cheap lower bound: a small greedy search
+The result that a search of this kind can \emph{increase} exploitability is Zhang and Sandholm's
+\cite{zhang2021subgamesolvingwithoutck}. Where the other work above carries a guarantee at all, its
+conditions and this game's fit to them are recorded above, method by method. What none of them
+supports is reading a win rate as a bound on exploitability, which is why this paper measures the two
+separately. Local best response gives a cheap lower bound: a small greedy search
 looking one action ahead and assuming checks thereafter showed each of the 2016 competition entrants
 it evaluated to be more than 3{,}180\,mBB/h exploitable \cite{lisy2017lbr}, the competition's
 winning submission was not among them, and the authors say why. Its two documented pitfalls are carried into
@@ -135,14 +139,17 @@ factorised dynamic program and is cheap,
 so the usual excuse for approximating does not apply, and yet substituting the exact posterior
 into an otherwise identical policy \emph{loses}, on two independent seed banks.
 
-Two adjacent lines are named and not used. Belief modelling in cooperative games, the Bayesian
+Two adjacent lines are named, one of them with a single member this study uses. Belief modelling in cooperative games, the Bayesian
 Action Decoder's public-belief formulation \cite{foerster2019bad} and its factorised-prescription
 successor \cite{sokota2021capi}, is aimed at games whose exact belief is intractable, which is the
-opposite of the situation here. And the exact-counting machinery this study does not need to
+opposite of the situation here. And of the exact-counting machinery this study does not need in order to
 approximate, Ryser's inclusion--exclusion formula \cite{ryser}, Glynn's sign-vector formula
 \cite{glynn}, the Jerrum--Sinclair--Vigoda chain \cite{jsv}, matrix scaling \cite{lsw} and
-sequential importance sampling \cite{chen-sis}, is sidestepped entirely by the block structure of
-\S\ref{sec:inference}. No learned belief model appears anywhere in this corpus, and that is a
+sequential importance sampling \cite{chen-sis}, the block structure of \S\ref{sec:inference}
+removes the necessity for all five and four go unused. Matrix scaling is the exception: the deployed
+path replaces the exact count join with a Sinkhorn iteration of exactly that kind, not because the
+exact count is unaffordable but to buy the two policy-prior parameters
+(\S\ref{sec:inference-prior}). No learned belief model appears anywhere in this corpus, and that is a
 stated non-goal rather than an oversight.
 
 \subsection{Team games and common information}
@@ -161,20 +168,27 @@ exactly one reason: each seat privately observes nine cards its teammates do not
 The cooperative-play line is cited for its evaluation discipline rather than its algorithms. Hanabi
 was proposed as a benchmark precisely because self-play scores overstate coordination
 \cite{bard-hanabi}, and the ad-hoc-teamplay results that followed
-\cite{hu-sad,hu-otherplay,hu2021obl,hu2022sed,cox-hanabi,tian2020jps,jacob2022pikl,hu2022humanregularized,dizdarevic2025ah2ac2}
+\cite{hu-sad,hu-otherplay,hu2021obl,hu2022sed,jacob2022pikl,hu2022humanregularized,dizdarevic2025ah2ac2}
 are the reason the cross-play measurement of \S\ref{sec:results-crossplay} exists at all: a
 convention that collapses when partners are swapped is brittleness, and it is invisible to self-play
-evaluation. The same lesson from a different direction is Cicero's use of a human-regularised policy
+evaluation. Two neighbouring results are cited for what they show about porting rather than as
+ad-hoc teamplay: joint policy search is the bridge-bidding analogue, scoring simultaneous changes at
+several information sets \cite{tian2020jps}, and the Hanabi construction that most clearly fails to
+port is the hat-guessing code \cite{cox-hanabi}, which works because each receiver sees every other
+receiver's hand, and in Fish no player sees any other player's hand. The same lesson from a different direction is Cicero's use of a human-regularised policy
 \cite{fair2022cicero}.
 
 \subsection{Evaluation methodology}
 \label{sec:related-eval}
 
 The evaluation framework of \S\ref{sec:evaluation} draws on a literature usually treated as
-plumbing. Duplicate-style variance reduction and its estimators, DIVAT \cite{zinkevich-divat} and
-AIVAT \cite{burch-aivat}, are the reason every cell in this paper is a paired duplicate rather
-than an independent sample. The Annual Computer Poker Competition's protocols \cite{acpc} are the
-model for a fixed opponent panel scored identically for every arm. Abstraction pathology
+plumbing. Every cell in this paper is a paired duplicate rather than an independent sample, on the model of
+duplicate bridge and of the Annual Computer Poker Competition's duplicate matches and common seeds
+\cite{acpc}, whose protocols are also the model for a fixed opponent panel scored identically for
+every arm. The estimator-side alternatives, DIVAT \cite{zinkevich-divat} and AIVAT
+\cite{burch-aivat}, subtract a learned or hand-built value function from a single sample instead;
+neither is used here, and the pairing is what makes the design competitive with them without
+introducing a fitted object. Abstraction pathology
 \cite{waugh-abstraction} is the standing warning that a model can be improved on its own metric and
 made worse in play, which \S\ref{sec:development-leaf} reproduces exactly. Re-evaluation of agent
 populations \cite{balduzzi-reeval} and the rating literature

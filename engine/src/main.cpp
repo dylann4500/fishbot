@@ -135,9 +135,16 @@ static void printMatch(const MatchStats& st, const std::string& a, const std::st
   }
 }
 
+#include "kv_parity.hpp"
+
 int main(int argc, char** argv) {
   std::string cmd = argc > 1 ? argv[1] : "help";
   int threads = atoi(argVal(argc, argv, "threads", "0").c_str());
+
+  // Test-only: see src/kv_parity.hpp.  Constructs no game.
+  if (cmd == "kvparity") {
+    return kvsearch::parityMain(argVal(argc, argv, "file", "").c_str());
+  }
 
   if (cmd == "match") {
     MatchConfig mc;

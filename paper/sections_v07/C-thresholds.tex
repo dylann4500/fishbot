@@ -30,7 +30,7 @@ actually satisfied (\S\ref{sec:design-protocol}). Result: the comparison
 \subsection*{The secondary claims}
 
 \begin{center}\tabfont
-\begin{tabular}{llp{0.40\linewidth}l}
+\begin{tabularx}{\linewidth}{@{}l l L l@{}}
 \toprule
 \# & Claim & Passes if & Result \\
 \midrule
@@ -43,7 +43,7 @@ S5 & it survives the rule dialect & every row keeps its sign, none more than \vs
 S6 & the worst case is not catastrophic & \fishseven{}'s worst panel cell no worse than the deployed \vsix{} policy's & PASS \\
 S7 & the instrument is intact & the planted edges recover, the sub-floor rung does not, the cheats fail exactly their own tests & PASS \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
 The protocol's ``eight changed-partner rows'' counts the self-play row among them; \S\ref{sec:results-partners}
