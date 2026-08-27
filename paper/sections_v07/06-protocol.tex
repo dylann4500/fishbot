@@ -1,0 +1,87 @@
+\section{The protocol, and the seal}
+\label{sec:protocol}
+
+The evaluation was run from a cleared context against a protocol committed before any holdout bank had
+been played and before the sealed adversary half had been decoded. The phase read that protocol and
+nothing else from the v0.7 document set: not the candidate report, not the adversary report, not any
+training log. Where a training measurement is quoted for comparison it is quoted \emph{from the
+protocol itself}, which states its expectations in advance for exactly that purpose --- so agreement
+is a check and disagreement is a finding.
+
+\subsection{The material, and what had to be verified before anything was measured}
+\label{sec:protocol-material}
+
+\begin{table}[t]\centering
+\caption{The deal banks, each digest recomputed before any cell was played by folding the six dealt
+hands and the dealer of every deal into a rolling hash without constructing a policy or playing a
+game. The committed digests were computed by a \emph{different build} of the engine at seal time, so
+agreement is between two binaries as well as two dates.}
+\label{tab:banks}
+\input{tables_v07/banks}
+\end{table}
+
+All \vsevenBanks{} bank digests match (\vsevenBanksMatch{}), at \vsevenBankDeals{} deals each. The
+sealed adversary half decodes to \vsevenSealedRows{} rows whose plaintext SHA-256 matches the
+commitment recorded at \texttt{\vsevenSealCommit{}}. The freeze artifact verifies
+(\vsevenFreezeVerify{}), its spec rebuilds character-identically from its own ordered option map, and
+its round-trip \emph{with the search on} is identical over \vsevenRtwoaGames{} games. The engine's own
+audit reports \vsevenVerifyViolations{} soundness violations in \vsevenVerifyChecks{} checks and its
+self-test passes on \vsevenSelftestChecks{} checks.
+
+Three of the fourteen sealed adversaries are policies the rest of the panel already carries. They are
+run anyway, because the protocol fixes the panel by name, and their agreement with the corresponding
+scripted or frontier cell is used as a free determinism check
+(\S\ref{sec:corrections-reproducibility}).
+
+\subsection{The commit gate runs before any strength number}
+\label{sec:protocol-gate}
+
+A configuration that scores higher while failing the pathology rules is rejected, and the ordering is
+not a formality: the corpus contains a configuration that scores 56.6\% against \vfour{} while
+carrying 44.8\% dead asks and losing 14\% of its games to the action limit. Win rate and soundness are
+dissociable in this family.
+
+\begin{table}[t]\centering
+\caption{The commit gate, eight rules, run on training material by design --- it is a soundness check
+on self-play behaviour, not a strength claim. The negative control is the configuration the corpus
+built to be rejected; a gate that could not reject it would certify nothing about the one it accepts.}
+\label{tab:gate}
+\input{tables_v07/gate}
+\end{table}
+
+\frozen{} passes all \vsevenGateRules{} rules: \vsevenGateDeadAsks\% provably-dead asks against a
+0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail max \vsevenGateTailMax{} and p99
+\vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches in \vsevenGateSsixNodes{}
+audited decisions. Reported and not gated: \vsevenGateEvents{} events per game, \vsevenGateAskHit\%
+ask hit rate, \vsevenGateMisdecl\% misdeclaration. The negative control fails
+\vsevenNegFailCount{} rules --- \vsevenNegFails{} --- which are exactly the ones the protocol names in
+advance, on \vsevenNegDeadAsks\% dead asks, a longest dead run of \vsevenNegLongestDead{} and a mirror
+tail reaching \vsevenNegTailMax{}.
+
+\subsection{What the protocol said would count as failure}
+\label{sec:protocol-failure}
+
+Seven conditions were written down in advance, ``because after the numbers are in every one of these
+has a reading that makes it sound like something else''. They are reproduced in full in
+Appendix~\ref{app:thresholds} and answered condition by condition in \S\ref{sec:against}. Two of them
+came out against the release.
+
+The protocol also fixed the primary bar. \fcheap{} is named rather than the deployed policy,
+deliberately: the deployed policy ships its search off, beating it is the easier claim, and an
+earlier phase had already shown that several unfitted one-switch deviations of the incumbent do it.
+The v0.7 case had to be against the frontier.
+
+And it fixed, in advance, the sentence to be used if the partner-regime ordering survived --- naming
+the direction so it could not be chosen afterwards, and recording that on training material that
+comparison goes \emph{against} the release. \S\ref{sec:results-partners} reports what happened and
+uses the sentence.
+
+\subsection{Deviations are recorded next to the result they affect}
+\label{sec:protocol-deviations}
+
+The protocol requires a deviation for anything the evaluation did that it does not specify: a cell
+dropped, a cell added, a threshold read a particular way, a command whose flags differ. There are
+\vsevenDeviations{} of them, \vsevenDeviationAdded{} adding cells or checks the protocol's own
+questions turn out not to be computable without, and \vsevenDeviationCorrections{} of them
+corrections. Appendix~\ref{app:deviations} is the full register, read out of the results document
+rather than retyped. \vsevenCellsDropped{} preregistered cells were dropped.

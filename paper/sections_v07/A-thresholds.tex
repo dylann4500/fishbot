@@ -1,0 +1,59 @@
+\section{The preregistered thresholds, verbatim}
+\label{app:thresholds}
+
+Reproduced from \filepath{docs/v07/PREREGISTRATION.md}, committed before any holdout bank had been
+played and before the sealed adversary half had been decoded. The verdicts are
+\S\ref{sec:results} and \S\ref{sec:against}.
+
+\subsection*{The primary claim}
+
+\frozen{} beats \fcheap{} on both primary holdout banks, pooled over \vsevenBtwoFcheapN{} games.
+
+\begin{center}\small
+\begin{tabular}{ll}
+\toprule
+Verdict & Condition \\
+\midrule
+CERTIFIED advancement & pooled lower bound above \vsevenPrimaryFloor{}, sign replicates on both banks, gate passes \\
+measured advancement & pooled lower bound above 0 but under \vsevenPrimaryFloor{}, sign replicates, gate passes \\
+not an advancement & the pooled interval contains zero, or the sign does not replicate, or the gate fails \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Result: \textbf{\vsevenPrimaryVerdict{}}.
+
+\subsection*{The secondary claims}
+
+\begin{center}\small
+\begin{tabular}{llp{0.40\linewidth}l}
+\toprule
+\# & Claim & Passes if & Result \\
+\midrule
+S1 & no collapse under partner change & at least five of the eight changed-partner deltas positive, and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
+S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{} points of the diagonal & \vsevenStwoVerdict{} \\
+S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
+S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
+S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{} points below default & \vsevenSfiveVerdict{} \\
+S6 & the worst case is not catastrophic & \frozen{}'s worst panel cell no worse than \incumbent{}'s & PASS \\
+S7 & the instrument is intact & the planted edges recover, the sub-floor rung does not, the cheats fail exactly their own tests & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A failure of S1, S2 or S6 would have been a substantive failure and the report would say the release is
+brittle in that named way. A failure of S7 would have been procedural and the evaluation would have
+stopped.
+
+\subsection*{What would mean v0.7 is not an advancement}
+
+The seven conditions are answered in \S\ref{sec:against-seven}. Two are met or unresolved. The
+protocol's own closing provision is quoted in full, because this report relies on it:
+
+\begin{quote}\small
+``And the honest all-negative path is a legitimate deliverable. If phase~5 returns `no advancement over
+the frontier', the v0.7 report is a barrier report: the four ledger entries phase~3 closed with
+measurements, the two corrections to the corpus's own record, the mechanical side-channel gate with its
+three calibrated positive controls, and the S6 residual this document commits. That is a real
+contribution and the report should not apologise for it.''
+\end{quote}

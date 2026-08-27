@@ -351,7 +351,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dir', default='research/v07/results')
     ap.add_argument('--json', action='store_true')
+    ap.add_argument('--paper', action='store_true',
+                    help='emit paper/numbers_v07_generated.tex and paper/tables_v07/*.tex '
+                         'instead of the INSTRUMENT.md markdown')
     a = ap.parse_args()
+    if a.paper:
+        return paper_main()
     scal = {}
     sections = [("Throughput (T1)", throughput),
                 ("Detection floor summary", floor_summary),
@@ -369,6 +374,1048 @@ def main():
         print(json.dumps(scal, indent=1, sort_keys=True))
     else:
         print("".join(body))
+
+
+
+# =============================================================================
+# --paper : emit paper/numbers_v07_generated.tex and paper/tables_v07/*.tex
+# =============================================================================
+# The v0.6 manuscript's convention, kept exactly: every macro is written as
+# \providecommand followed by \renewcommand so this generated file always wins
+# over the placeholder in numbers_v07.tex, and every macro carries a comment
+# naming the artifact and field it was read from.  paper/check_provenance.py
+# reads those comments.  No number in sections_v07/ is typed by hand.
+import hashlib, re as _re, time as _time
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_HERE)
+_PAPER = os.path.join(_ROOT, 'paper')
+_TBL = os.path.join(_PAPER, 'tables_v07')
+_RES = os.path.join(_ROOT, 'research', 'v07', 'results')
+
+OUT = []
+_SEEN = {}
+
+_DIGITWORD = {'0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+              '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine'}
+
+def _mac(name):
+    """A LaTeX control word is letters only: \\vsevenBtwoFcheap is one macro,
+    \\vsevenB2Fcheap is \\vsevenB followed by the text "2Fcheap".  Any digit that
+    reaches a macro name is therefore a silent typesetting bug, so digits are
+    spelled and the result is asserted alphabetic."""
+    out = ''.join(_DIGITWORD[c] if c.isdigit() else c for c in str(name))
+    if not out.isalpha():
+        raise SystemExit('macro name is not alphabetic after spelling digits: %r -> %r'
+                         % (name, out))
+    return out
+
+def emit(name, value, src):
+    """One generated macro.  Re-emitting a name with a different value is a bug
+    in this script, not something to paper over, so it raises."""
+    name = _mac(name)
+    value = str(value)
+    if name in _SEEN and _SEEN[name] != value:
+        raise SystemExit('macro %s emitted twice with different values: %r vs %r'
+                         % (name, _SEEN[name], value))
+    _SEEN[name] = value
+    OUT.append('%% %s\n\\providecommand{\\%s}{}\\renewcommand{\\%s}{%s}' % (src, name, name, value))
+
+def _n(x, d=2):
+    return ('%.*f' % (d, x))
+
+def _sg(x, d=2):
+    return ('%+.*f' % (d, x))
+
+def _commafy(n):
+    return '{:,}'.format(int(n))
+
+def _tex(s):
+    """Escape a spec string for LaTeX text.  Specs carry _ and & and %."""
+    return (str(s).replace('\\', '\\textbackslash ').replace('_', '\\_')
+            .replace('%', '\\%').replace('&', '\\&').replace('#', '\\#'))
+
+BANK1, BANK2, BANK3 = 7090001, 7090002, 7090003
+
+def _rows(fn):
+    rs = load_jsonl(os.path.join(_RES, fn))
+    return [r for r in rs if r.get('ok')]
+
+def _edge(r):
+    return pts(r['match']['winRateA'])
+
+def _ci(r):
+    return pts(r['match']['ci'][0]), pts(r['match']['ci'][1])
+
+def _se(r):
+    lo, hi = _ci(r)
+    return (hi - lo) / (2 * 1.96)
+
+def pool(rs):
+    """Two banks of equal size: mean of the edges, se = sqrt(se1^2+se2^2)/2.
+    FINAL-RESULTS.md section 0 fixes this arithmetic; it is repeated here rather
+    than imported because this script must be readable on its own."""
+    es = [_edge(r) for r in rs]
+    ss = [_se(r) for r in rs]
+    m = sum(es) / len(es)
+    sp = math.sqrt(sum(s * s for s in ss)) / len(ss)
+    return m, m - 1.96 * sp, m + 1.96 * sp, sp
+
+def delta(a, b):
+    """A difference of two POOLED cells, half-widths combined in quadrature.
+    PREREGISTRATION 5.2 fixes this and calls it conservative: the arms are
+    paired on deals but the harness gives no paired delta across two cells."""
+    ma, _, _, sa = pool(a)
+    mb, _, _, sb = pool(b)
+    d = ma - mb
+    h = 1.96 * math.sqrt(sa * sa + sb * sb)
+    return d, d - h, d + h
+
+def replicates(rs):
+    es = [_edge(r) for r in rs]
+    return all(e > 0 for e in es) or all(e < 0 for e in es)
+
+TABLE_SPEC = {}
+
+def writeTable(fn, lines, spec=None, header=None, longtable=False):
+    os.makedirs(_TBL, exist_ok=True)
+    spec, header = (spec, header) if spec else TABLE_SPEC[fn]
+    with open(os.path.join(_TBL, fn), 'w') as f:
+        if longtable:
+            f.write('\\begin{longtable}{%s}\n\\toprule\n%s \\\\\n\\midrule\n\\endfirsthead\n'
+                    '\\toprule\n%s \\\\\n\\midrule\n\\endhead\n' % (spec, header, header))
+            f.write('\n'.join(lines) + '\n\\bottomrule\n\\end{longtable}\n')
+        else:
+            f.write('\\begin{tabular}{%s}\n\\toprule\n%s \\\\\n\\midrule\n' % (spec, header))
+            f.write('\n'.join(lines) + '\n\\bottomrule\n\\end{tabular}\n')
+
+
+# ---------------------------------------------------------------- B3, the headline
+# The project's standing reporting rule (paper/sections_v06/10-protocol.tex,
+# sec:protocol-metrics) is that the worst case leads and an aggregate never
+# does.  So B3 is emitted first and the panel mean is emitted last, labelled.
+ARMTAG = {'FROZEN': 'Frozen', 'INCUMBENT': 'Incumbent', 'F-cheap': 'Fcheap',
+          'composite': 'Composite'}
+# A panel member that IS the arm gives that arm a free 0.00 cell, which can only
+# flatter its worst case.  FROZEN is not a panel member and carries none, so the
+# worst case is also computed with self-cells excluded and both are printed.
+SELFCELL = {'INCUMBENT': ('F-fast', 'SEALED:S-reference-0'),
+            'F-cheap': ('F-cheap',), 'composite': ('composite',), 'FROZEN': ()}
+
+def b3_panel_table():
+    rows = _rows('P5-B3.jsonl')
+    arms = ['FROZEN', 'INCUMBENT', 'F-cheap', 'composite']
+    panel, cls, deals = [], {}, {}
+    for r in rows:
+        if r['arm'] == 'FROZEN' and r['bank'] == BANK1:
+            panel.append(r['opp']); cls[r['opp']] = r['cls']; deals[r['opp']] = r['deals']
+    cell = {}
+    for a in arms:
+        for p in panel:
+            rs = [r for r in rows if r['arm'] == a and r['opp'] == p]
+            if len(rs) == 2:
+                cell[(a, p)] = pool(rs) + (tuple(sorted((r['bank'], _edge(r)) for r in rs)),)
+    emit('vsevenPanelMembers', str(len(panel)), 'P5-B3.jsonl: distinct panel members')
+    emit('vsevenPanelCells', str(len(rows)), 'P5-B3.jsonl: scored cells, 4 arms x 31 members x 2 banks')
+    emit('vsevenPanelNear', str(sum(1 for p in panel if cls[p] == 'near')), 'P5-B3.jsonl: near-class members')
+    emit('vsevenPanelFar', str(sum(1 for p in panel if cls[p] == 'far')), 'P5-B3.jsonl: far-class members')
+    emit('vsevenPanelExpensive', str(sum(1 for p in panel if cls[p] == 'expensive')), 'P5-B3.jsonl: expensive-class members')
+    for c, tag in (('near', 'Near'), ('far', 'Far'), ('expensive', 'Expensive')):
+        d = {deals[p] for p in panel if cls[p] == c}
+        emit('vsevenDeals%s' % tag, _commafy(sorted(d)[0]), 'P5-B3.jsonl: deals per bank, %s class' % c)
+
+    # ---- worst case per arm, with and without the arm's own free self-cell
+    worst_lines = []
+    for a in arms:
+        vals = [(cell[(a, p)][0], p) for p in panel if (a, p) in cell]
+        w, wp = min(vals)
+        _, lo, hi, _ = cell[(a, wp)][:4]
+        per = cell[(a, wp)][4]
+        t = ARMTAG[a]
+        emit('vsevenWorst%s' % t, _sg(w), 'P5-B3.jsonl: %s worst pooled panel cell' % a)
+        emit('vsevenWorst%sLo' % t, _sg(lo), 'P5-B3.jsonl: %s worst cell, pooled lower bound' % a)
+        emit('vsevenWorst%sHi' % t, _sg(hi), 'P5-B3.jsonl: %s worst cell, pooled upper bound' % a)
+        emit('vsevenWorst%sOpp' % t, _tex(wp), 'P5-B3.jsonl: %s worst cell opponent' % a)
+        nonself = [(v, p) for v, p in vals if p not in SELFCELL[a]]
+        w2, wp2 = min(nonself)
+        emit('vsevenWorst%sExSelf' % t, _sg(w2), 'P5-B3.jsonl: %s worst cell excluding its own self-cells' % a)
+        emit('vsevenWorst%sExSelfOpp' % t, _tex(wp2), 'P5-B3.jsonl: %s worst non-self cell opponent' % a)
+        worst_lines.append('%s & %s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s \\\\' %
+                           (_tex(a), _tex(wp), _sg(w), _sg(lo), _sg(hi),
+                            per[0][0], _sg(per[0][1]), per[1][0], _sg(per[1][1])))
+    TABLE_SPEC['worstcase.tex'] = ('llrrl', 'Arm & Worst cell & Edge (pts) & 95\\% CI & Per bank')
+    writeTable('worstcase.tex', worst_lines)
+
+    # ---- minimax regret: for each member, the best arm on it; an arm's regret
+    # is its largest shortfall from that best, maximised over members.
+    reg_lines = []
+    regret = {}
+    for a in arms:
+        best_shortfall, at = -1e9, None
+        runner = None
+        for p in panel:
+            if (a, p) not in cell: continue
+            best = max(cell[(x, p)][0] for x in arms if (x, p) in cell)
+            s = best - cell[(a, p)][0]
+            if s > best_shortfall:
+                runner, best_shortfall, at = at, s, p
+        regret[a] = (best_shortfall, at)
+        t = ARMTAG[a]
+        emit('vsevenRegret%s' % t, _n(best_shortfall), 'P5-B3.jsonl: %s minimax regret over the shared panel' % a)
+        emit('vsevenRegret%sOpp' % t, _tex(at), 'P5-B3.jsonl: member at which %s attains its regret' % a)
+        reg_lines.append('%s & %s & %s \\\\' % (_tex(a), _n(best_shortfall), _tex(at)))
+    # how close the incumbent's attaining member is to its runner-up: the regret
+    # VALUE is stable and the name attached to it is not, and that is only worth
+    # saying if the margin is printed.
+    sh = sorted((max(cell[(x, p)][0] for x in arms if (x, p) in cell) - cell[('INCUMBENT', p)][0])
+                for p in panel if ('INCUMBENT', p) in cell)
+    emit('vsevenRegretIncumbentGap', _n(sh[-1] - sh[-2], 3),
+         'P5-B3.jsonl: INCUMBENT regret, attaining member minus runner-up')
+    order = sorted(arms, key=lambda a: regret[a][0])
+    emit('vsevenRegretBest', _tex(order[0]), 'P5-B3.jsonl: arm with the lowest minimax regret')
+    emit('vsevenRegretFrozenRank', {a: i + 1 for i, a in enumerate(order)}['FROZEN'],
+         'P5-B3.jsonl: FROZEN rank of four on minimax regret, 1 = best')
+    TABLE_SPEC['regret.tex'] = ('llr', 'Arm & Minimax regret (pts) & Attained against')
+    writeTable('regret.tex', ['%s & %s & %s \\\\' % (_tex(a), _n(regret[a][0]), _tex(regret[a][1]))
+                              for a in order])
+
+    # the far archetypes, where the regret is concentrated
+    far_lines = []
+    for p in [x for x in panel if cls[x] == 'far']:
+        far_lines.append('%s & %s \\\\' % (_tex(p), ' & '.join(
+            _sg(cell[(a, p)][0]) for a in arms if (a, p) in cell)))
+    fars = [cell[(a, p)][0] for p in panel if cls[p] == 'far' for a in arms if (a, p) in cell]
+    emit('vsevenFarSpanLo', _n(min(fars)), 'P5-B3.jsonl: smallest edge any arm takes on a far archetype')
+    emit('vsevenFarSpanHi', _n(max(fars)), 'P5-B3.jsonl: largest edge any arm takes on a far archetype')
+    TABLE_SPEC['farpanel.tex'] = ('lrrrr', 'Far archetype & Frozen & Incumbent & F-cheap & Composite')
+    writeTable('farpanel.tex', far_lines)
+
+    # the hardest sealed adversary, where the ordering reverses
+    hard = min(((cell[('INCUMBENT', p)][0], p) for p in panel if p.startswith('SEALED')))
+    hp = hard[1]
+    emit('vsevenHardSealed', _tex(hp), 'P5-B3.jsonl: sealed member on which INCUMBENT is worst')
+    for a in arms:
+        m, lo, hi, _ = cell[(a, hp)][:4]
+        emit('vsevenHard%s' % ARMTAG[a], _sg(m), 'P5-B3.jsonl: %s against %s' % (a, hp))
+        emit('vsevenHard%sLo' % ARMTAG[a], _sg(lo), 'P5-B3.jsonl: %s against %s, lower bound' % (a, hp))
+        emit('vsevenHard%sHi' % ARMTAG[a], _sg(hi), 'P5-B3.jsonl: %s against %s, upper bound' % (a, hp))
+
+    # ---- the aggregate, emitted LAST and named as a diagnostic
+    for a in arms:
+        mean = sum(cell[(a, p)][0] for p in panel if (a, p) in cell) / len(panel)
+        emit('vsevenPanelMean%s' % ARMTAG[a], _sg(mean),
+             'P5-B3.jsonl: %s mean over the 31 shared cells -- DIAGNOSTIC, never the headline' % a)
+
+    # ---- the full 31 x 4 table, so a reader can take the worst cell themselves
+    full = []
+    for p in panel:
+        full.append('%s & %s & %s \\\\' % (_tex(p), cls[p], ' & '.join(
+            ('$%s$' % _sg(cell[(a, p)][0])) if (a, p) in cell else '---' for a in arms)))
+    writeTable('panelfull.tex', full, 'llrrrr',
+               'Panel member & Class & Frozen & Incumbent & F-cheap & Composite', longtable=True)
+    return cell, panel, cls
+
+
+# ---------------------------------------------------------------- B2, the frontier
+B2LAB = {'B2.1': ('Incumbent', 'v06'), 'B2.2': ('Fcheap', 'F-cheap'),
+         'B2.3': ('Fmid', 'F-mid'), 'B2.4': ('Composite', 'the phase-2 composite'),
+         'B2.5': ('Vfive', 'v05')}
+
+def b2_frontier():
+    rows = _rows('P5-B2.jsonl')
+    lines = []
+    for cellid in sorted({r['cell'] for r in rows}):
+        rs = [r for r in rows if r['cell'] == cellid]
+        m, lo, hi, _ = pool(rs)
+        tag, name = B2LAB[cellid]
+        per = {r['bank']: _edge(r) for r in rs}
+        n = sum(r['match']['games'] for r in rs)
+        emit('vsevenBtwo%s' % tag, _sg(m), 'P5-B2.jsonl %s: FROZEN vs %s, pooled edge' % (cellid, name))
+        emit('vsevenBtwo%sLo' % tag, _sg(lo), 'P5-B2.jsonl %s: pooled lower bound' % cellid)
+        emit('vsevenBtwo%sHi' % tag, _sg(hi), 'P5-B2.jsonl %s: pooled upper bound' % cellid)
+        emit('vsevenBtwo%sN' % tag, _commafy(n), 'P5-B2.jsonl %s: games' % cellid)
+        emit('vsevenBtwo%sBankOne' % tag, _sg(per[BANK1]), 'P5-B2.jsonl %s: bank 7090001' % cellid)
+        emit('vsevenBtwo%sBankTwo' % tag, _sg(per[BANK2]), 'P5-B2.jsonl %s: bank 7090002' % cellid)
+        emit('vsevenBtwo%sRepl' % tag, 'yes' if replicates(rs) else 'no',
+             'P5-B2.jsonl %s: sign agrees on both banks' % cellid)
+        lines.append('%s & %s & $%s$ & $[%s, %s]$ & %s & %s \\\\' %
+                     (cellid, _tex(name), _sg(m), _sg(lo), _sg(hi),
+                      _commafy(n), 'yes' if replicates(rs) else 'no'))
+        # declaration accuracy is emitted as a bare rate: match --json gives it no
+        # interval of any kind, which is what PREREGISTRATION 3 correction 4 and
+        # deviation D11 turn on.  It is a diagnostic and carries no claim.
+        emit('vsevenBtwo%sDeclA' % tag, _n(sum(r['match']['declAccA'] for r in rs) / len(rs), 3),
+             'P5-B2.jsonl %s: FROZEN declaration accuracy, a bare rate with no interval' % cellid)
+    TABLE_SPEC['frontier.tex'] = ('llrrrr', 'Cell & Opponent & Edge (pts) & 95\\% CI & Games & Sign replicates')
+    writeTable('frontier.tex', lines)
+    das = [r['match']['declAccA'] for r in rows]
+    dbs = [r['match']['declAccB'] for r in rows]
+    emit('vsevenDeclFrozenLo', _n(min(das), 3), 'P5-B2.jsonl: lowest FROZEN declaration accuracy over the five cells')
+    emit('vsevenDeclFrozenHi', _n(max(das), 3), 'P5-B2.jsonl: highest FROZEN declaration accuracy')
+    emit('vsevenDeclOppLo', _n(min(dbs), 3), 'P5-B2.jsonl: lowest opponent declaration accuracy')
+    emit('vsevenDeclOppHi', _n(max(dbs), 3), 'P5-B2.jsonl: highest opponent declaration accuracy')
+
+
+# ---------------------------------------------------------------- B4, fresh adversaries
+def b4_adversaries():
+    fits = {r['id']: r for r in load_jsonl(os.path.join(_RES, 'P5-B4fits.jsonl'))
+            if r.get('battery') == 'B4fit'}
+    rows = _rows('P5-B4eval.jsonl')
+    ZTAG = {'Z01': 'Zone', 'Z02': 'Ztwo', 'Z03': 'Zthree', 'Z04': 'Zfour',
+            'Z05': 'Zfive', 'Z06': 'Zsix', 'Z07': 'Zseven', 'Z08': 'Zeight'}
+    lines, uppers = [], []
+    for zid in sorted({r['cell'] for r in rows}):
+        rs = [r for r in rows if r['cell'] == zid]
+        # the row is the ADVERSARY's edge over FROZEN: the adversary is arm A.
+        m, lo, hi, _ = pool(rs)
+        per = {r['bank']: _edge(r) for r in rs}
+        uppers.append((hi, zid))
+        emit('vseven%sEdge' % ZTAG[zid], _sg(m), 'P5-B4eval.jsonl %s: fitted adversary edge over FROZEN' % zid)
+        emit('vseven%sLo' % ZTAG[zid], _sg(lo), 'P5-B4eval.jsonl %s: lower bound' % zid)
+        emit('vseven%sHi' % ZTAG[zid], _sg(hi), 'P5-B4eval.jsonl %s: upper bound' % zid)
+        emit('vseven%sKpi' % ZTAG[zid], _tex(rs[0]['kpi']), 'P5-B4eval.jsonl %s: search objective' % zid)
+        emit('vseven%sCls' % ZTAG[zid], _tex(rs[0]['cls']), 'P5-B4eval.jsonl %s: adversary class' % zid)
+        lines.append('%s & %s & %s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & %s \\\\' %
+                     (zid, _tex(rs[0]['cls']), _tex(rs[0]['kpi']), _sg(m), _sg(lo), _sg(hi),
+                      BANK1, _sg(per[BANK1]), BANK2, _sg(per[BANK2]),
+                      'yes' if replicates(rs) else 'no'))
+    TABLE_SPEC['adversaries.tex'] = ('lllrrll',
+        'ID & Class & Objective & Edge over Frozen & 95\\% CI & Per bank & Sign replicates')
+    writeTable('adversaries.tex', lines)
+    for f in fits.values():
+        a = f.get('argv') or []
+        for flag, tag in (('--gens=', 'Gens'), ('--pop=', 'Pop'), ('--games=', 'Deals')):
+            v = [x[len(flag):] for x in a if x.startswith(flag)]
+            if v:
+                emit('vsevenBfour%s' % tag, v[0], 'P5-B4fits.jsonl: %s in the search argv' % flag.strip('-='))
+        break
+    hi, zid = max(uppers)
+    emit('vsevenBfourArms', str(len(uppers)), 'P5-B4eval.jsonl: independent adversary searches evaluated')
+    emit('vsevenBfourFits', str(sum(1 for f in fits.values() if f.get('ok'))),
+         'P5-B4fits.jsonl: searches that produced a weight vector')
+    emit('vsevenBfourWorstUpper', _sg(hi), 'P5-B4eval.jsonl: largest upper bound over all arms')
+    emit('vsevenBfourWorstUpperId', ZTAG[zid], 'P5-B4eval.jsonl: arm attaining that upper bound')
+    emit('vsevenBfourFloorGap', _n(1.53 - hi), 'P5-B4eval.jsonl: 1.53 floor minus the largest upper bound')
+    lo_all = min(pool([r for r in rows if r['cell'] == z])[0] for z in {r['cell'] for r in rows})
+    emit('vsevenBfourWorstLoss', _n(-lo_all), 'P5-B4eval.jsonl: largest loss any arm takes, in points')
+    emit('vsevenBfourBestLoss', _n(-max(pool([r for r in rows if r['cell'] == z])[0]
+                                        for z in {r['cell'] for r in rows})),
+         'P5-B4eval.jsonl: smallest loss any arm takes, in points')
+
+
+# ---------------------------------------------------------------- B5, attribution
+B5TAG = {'A-search': 'Search', 'A-rtie': 'Rtie', 'A-urgoff': 'Urgoff', 'A-stall': 'Stall',
+         'A-r12': 'Rtwelve', 'A-m2': 'Mtwo', 'L-search': 'Search', 'L-rtie': 'Rtie',
+         'L-urgoff': 'Urgoff', 'L-stall': 'Stall', 'L-r12': 'Rtwelve'}
+COMPONENTS = [('Rtwelve', 'r12=25'), ('Search', 'the search'), ('Rtie', 'rtie=1'),
+              ('Urgoff', 'urgency-off'), ('Stall', 'stall=12')]
+
+def b5_attribution():
+    rows = _rows('P5-B5.jsonl')
+    by = {}
+    for cid in {r['cell'] for r in rows}:
+        by[cid] = [r for r in rows if r['cell'] == cid]
+    ref = by['REF-FROZEN']
+    rm, rlo, rhi, _ = pool(ref)
+    emit('vsevenBfiveWhole', _sg(rm), 'P5-B5.jsonl REF-FROZEN: FROZEN vs INCUMBENT on the lattice banks')
+    emit('vsevenBfiveWholeLo', _sg(rlo), 'P5-B5.jsonl REF-FROZEN: lower bound')
+    emit('vsevenBfiveWholeHi', _sg(rhi), 'P5-B5.jsonl REF-FROZEN: upper bound')
+    lines, addins = [], []
+    for tag, name in COMPONENTS:
+        a = [c for c in by if c.startswith('A-') and B5TAG[c] == tag][0]
+        am, alo, ahi, _ = pool(by[a])
+        emit('vsevenAddIn%s' % tag, _sg(am), 'P5-B5.jsonl %s: add-one-in from v06' % a)
+        emit('vsevenAddIn%sLo' % tag, _sg(alo), 'P5-B5.jsonl %s: lower bound' % a)
+        emit('vsevenAddIn%sHi' % tag, _sg(ahi), 'P5-B5.jsonl %s: upper bound' % a)
+        addins.append(am)
+        l = [c for c in by if c.startswith('L-') and B5TAG[c] == tag]
+        if l:
+            d, dlo, dhi = delta(ref, by[l[0]])
+            emit('vsevenLoo%s' % tag, _sg(d), 'P5-B5.jsonl %s: leave-one-out drop from FROZEN' % l[0])
+            emit('vsevenLoo%sLo' % tag, _sg(dlo), 'P5-B5.jsonl %s: lower bound' % l[0])
+            emit('vsevenLoo%sHi' % tag, _sg(dhi), 'P5-B5.jsonl %s: upper bound' % l[0])
+            loo = '$%s$ & $[%s, %s]$' % (_sg(d), _sg(dlo), _sg(dhi))
+        else:
+            loo = '--- & ---'
+        lines.append('%s & $%s$ & $[%s, %s]$ & %s \\\\' % (_tex(name), _sg(am), _sg(alo), _sg(ahi), loo))
+    # m2=0 is preregistered as a B5 cell although the freeze does not carry it
+    mm, mlo, mhi, _ = pool(by['A-m2'])
+    emit('vsevenAddInMtwo', _sg(mm), 'P5-B5.jsonl A-m2: add-one-in, NOT carried by the freeze')
+    emit('vsevenAddInMtwoLo', _sg(mlo), 'P5-B5.jsonl A-m2: lower bound')
+    emit('vsevenAddInMtwoHi', _sg(mhi), 'P5-B5.jsonl A-m2: upper bound')
+    lines.append('\\textit{m2=0} \\textit{(not in the freeze)} & $%s$ & $[%s, %s]$ & --- & --- \\\\'
+                 % (_sg(mm), _sg(mlo), _sg(mhi)))
+    TABLE_SPEC['attribution.tex'] = ('lrrrr',
+        'Component & Add-one-in from v0.6 & 95\\% CI & Leave-one-out drop & 95\\% CI')
+    writeTable('attribution.tex', lines)
+    naive = sum(addins)
+    emit('vsevenBfiveSum', _sg(naive), 'P5-B5.jsonl: naive sum of the FIVE add-one-in cells the freeze carries')
+    emit('vsevenBfiveSumSix', _sg(naive + mm), 'P5-B5.jsonl: the six-term sum including A-m2, printed for D12')
+    emit('vsevenSubAdditivity', _n(rm / naive, 3), 'P5-B5.jsonl: measured whole / naive sum')
+    emit('vsevenSubAdditivityOverstate', _n(naive - rm), 'P5-B5.jsonl: points the naive sum overstates by')
+    # the location test of PREREGISTRATION 6 item 3, which must be read per bank
+    loc = []
+    for bank in (BANK1, BANK3):
+        w = _edge([r for r in ref if r['bank'] == bank][0])
+        drops = [(w - _edge([r for r in by[c] if r['bank'] == bank][0]), c)
+                 for c in by if c.startswith('L-')]
+        big, at = max(drops)
+        located = big >= w / 3.0
+        b = 'One' if bank == BANK1 else 'Three'
+        emit('vsevenLocWhole%s' % b, _n(w, 3), 'P5-B5.jsonl: whole on bank %d' % bank)
+        emit('vsevenLocThird%s' % b, _n(w / 3.0, 3), 'P5-B5.jsonl: one third of the whole on bank %d' % bank)
+        emit('vsevenLocBiggest%s' % b, _sg(big, 3), 'P5-B5.jsonl: largest single leave-one-out drop on bank %d' % bank)
+        emit('vsevenLocAt%s' % b, _tex(at), 'P5-B5.jsonl: component attaining it on bank %d' % bank)
+        emit('vsevenLocVerdict%s' % b, 'LOCATED' if located else 'NOT LOCATED',
+             'P5-B5.jsonl: PREREGISTRATION 6 item 3 verdict on bank %d' % bank)
+        loc.append((w, big, located))
+    emit('vsevenLocReplicates', 'yes' if loc[0][2] == loc[1][2] else 'no',
+         'P5-B5.jsonl: whether the location verdict agrees across banks')
+    emit('vsevenLocSplit', _n(abs(loc[0][1] - loc[1][1]), 3),
+         'P5-B5.jsonl: difference between the two banks largest drops')
+
+
+# ---------------------------------------------------------------- B6, partner regimes
+# The partner-regime table is emitted WITH intervals on every delta.  The
+# phase-5 results document compresses them out of its markdown; the artifact
+# carries a clustered interval on every cell, so the paper prints them.
+PTAG = {'itself': 'Itself', 'v06': 'Vsix', 'v05': 'Vfive', 'v04': 'Vfour', 'v03': 'Vthree',
+        'detective': 'Detective', 'withholder': 'Withholder', 'lockout': 'Lockout'}
+PORDER = ['itself', 'v06', 'v05', 'v04', 'v03', 'detective', 'withholder', 'lockout']
+
+def b6_partners():
+    rows = _rows('P5-B6.jsonl')
+    out = {}
+    for opp in ('v05', 'v06'):
+        lines = []
+        parts = [p for p in PORDER if any(r['opp'] == opp and r['partners'] == p for r in rows)]
+        for p in parts:
+            fr = [r for r in rows if r['opp'] == opp and r['arm'] == 'FROZEN' and r['partners'] == p]
+            inc = [r for r in rows if r['opp'] == opp and r['arm'] == 'INCUMBENT' and r['partners'] == p]
+            if len(fr) != 2 or len(inc) != 2: continue
+            d, dlo, dhi = delta(fr, inc)
+            per = {r['bank']: _edge(r) - _edge([x for x in inc if x['bank'] == r['bank']][0]) for r in fr}
+            rep = (per[BANK1] > 0) == (per[BANK2] > 0) and per[BANK1] != 0 and per[BANK2] != 0
+            tag = 'Opp%s%s' % ('Five' if opp == 'v05' else 'Six', PTAG[p])
+            emit('vseven%s' % tag, _sg(d), 'P5-B6.jsonl: FROZEN-INCUMBENT delta, opponent %s, partners %s' % (opp, p))
+            emit('vseven%sLo' % tag, _sg(dlo), 'P5-B6.jsonl: lower bound, opponent %s, partners %s' % (opp, p))
+            emit('vseven%sHi' % tag, _sg(dhi), 'P5-B6.jsonl: upper bound, opponent %s, partners %s' % (opp, p))
+            emit('vseven%sRepl' % tag, 'yes' if rep else 'NO',
+                 'P5-B6.jsonl: sign of the delta agrees on both banks, opponent %s, partners %s' % (opp, p))
+            lines.append('%s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & %s \\\\' %
+                         (_tex(p), _sg(d), _sg(dlo), _sg(dhi), BANK1, _sg(per[BANK1]),
+                          BANK2, _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
+            out[(opp, p)] = d
+        TABLE_SPEC['partners_%s.tex' % opp] = ('lrrlc',
+            'Partners & Frozen $-$ Incumbent & 95\\% CI & Per bank & Sign replicates')
+        writeTable('partners_%s.tex' % opp, lines)
+    # S1 as PREREGISTRATION 5.2 draft 3 states it: min, median, self, ratio, and
+    # the incumbent's own baseline over v05 on the same eight rows.
+    ch = [out[('v05', p)] for p in PORDER if p != 'itself' and ('v05', p) in out]
+    self7 = out[('v05', 'itself')]
+    med = sorted(ch)[len(ch) // 2] if len(ch) % 2 else (sorted(ch)[len(ch)//2-1] + sorted(ch)[len(ch)//2]) / 2
+    emit('vsevenSoneMin', _sg(min(ch)), 'P5-B6.jsonl: minimum FROZEN-INCUMBENT delta over changed-partner rows')
+    emit('vsevenSoneMedian', _sg(med), 'P5-B6.jsonl: median changed-partner delta')
+    emit('vsevenSoneSelf', _sg(self7), 'P5-B6.jsonl: self-play delta')
+    emit('vsevenSoneRatio', _n(med / self7, 3), 'P5-B6.jsonl: median/self ratio for v0.7 over v0.6')
+    emit('vsevenSoneRows', str(len(ch)), 'P5-B6.jsonl: changed-partner rows against a v05 opponent')
+    emit('vsevenSonePositive', str(sum(1 for x in ch if x > 0)), 'P5-B6.jsonl: changed-partner rows with a positive delta')
+    emit('vsevenSoneThreshold', '-1.00', 'PREREGISTRATION 5.2: the S1 collapse threshold')
+    emit('vsevenSoneVerdict', 'PASS' if min(ch) >= -1.0 and sum(1 for x in ch if x > 0) >= 5 else 'FAIL',
+         'PREREGISTRATION 5.2: S1 verdict, no row below -1.0 and at least five positive')
+    # the incumbent as its own control -- v0.6 over v0.5, the same eight settings
+    base = {}
+    for p in PORDER:
+        inc = [r for r in rows if r['opp'] == 'v05' and r['arm'] == 'INCUMBENT' and r['partners'] == p]
+        v5 = [r for r in rows if r['opp'] == 'v05' and r['arm'] == 'v05' and r['partners'] == p]
+        if len(inc) == 2 and len(v5) == 2:
+            base[p] = delta(inc, v5)[0]
+    bch = [base[p] for p in base if p != 'itself']
+    bmed = sorted(bch)[len(bch)//2] if len(bch) % 2 else (sorted(bch)[len(bch)//2-1] + sorted(bch)[len(bch)//2]) / 2
+    emit('vsevenBaseMin', _sg(min(bch)), 'P5-B6.jsonl: v0.6 over v0.5, minimum changed-partner delta')
+    emit('vsevenBaseMedian', _sg(bmed), 'P5-B6.jsonl: v0.6 over v0.5, median changed-partner delta')
+    emit('vsevenBaseSelf', _sg(base['itself']), 'P5-B6.jsonl: v0.6 over v0.5, self-play delta')
+    emit('vsevenBaseRatio', _n(bmed / base['itself'], 3), 'P5-B6.jsonl: v0.6 over v0.5 median/self ratio')
+    TABLE_SPEC['regimes.tex'] = ('lrrrr', 'Comparison & Min & Median & Self & Median/self')
+    writeTable('regimes.tex', [
+        'v0.7 over v0.6 --- holdout & $%s$ & $%s$ & $%s$ & %s \\\\' %
+        (_sg(min(ch)), _sg(med), _sg(self7), _n(med / self7, 3)),
+        'v0.6 over v0.5 --- holdout & $%s$ & $%s$ & $%s$ & %s \\\\' %
+        (_sg(min(bch)), _sg(bmed), _sg(base['itself']), _n(bmed / base['itself'], 3)),
+        'v0.7 over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\\\',
+        'v0.6 over v0.5 --- training, stated in advance & $-0.61$ & $+0.64$ & $+1.35$ & 0.472 \\\\'])
+    emit('vsevenOneSeatFive', _sg(out[('v05', 'v06')]),
+         'P5-B6.jsonl: a one-seat upgrade among v06 partners, v05 opponent')
+    emit('vsevenOneSeatSix', _sg(out[('v06', 'v06')]),
+         'P5-B6.jsonl: a one-seat upgrade among v06 partners, v06 opponent')
+
+
+# ---------------------------------------------------------------- B7, cross-play
+def b7_crossplay():
+    rows = _rows('P5-B7.jsonl')
+    xp = [r for r in rows if r['kind'] == 'crossplay']
+    grid, diag, off = {}, [], []
+    for i in range(1, 4):
+        for j in range(1, 4):
+            rs = [r for r in xp if r['arm'] == 'xp%d' % i and r['partners'] == 'xp%d' % j]
+            if len(rs) != 2: continue
+            m, lo, hi, _ = pool(rs)
+            grid[(i, j)] = (m, lo, hi)
+            (diag if i == j else off).append(m)
+    lines = []
+    for i in range(1, 4):
+        lines.append('\\textbf{xp%d} & %s \\\\' % (i, ' & '.join(
+            '$%s$ $[%s, %s]$' % (_sg(grid[(i, j)][0]), _sg(grid[(i, j)][1]), _sg(grid[(i, j)][2]))
+            for j in range(1, 4))))
+    TABLE_SPEC['crossplay.tex'] = ('lccc', 'Run \\textbackslash\\ partners & xp1 & xp2 & xp3')
+    writeTable('crossplay.tex', lines)
+    dm, om = sum(diag) / len(diag), sum(off) / len(off)
+    emit('vsevenXpDiagonal', _sg(dm), 'P5-B7.jsonl: mean of the three self-partnered cells')
+    emit('vsevenXpOffDiagonal', _sg(om), 'P5-B7.jsonl: mean of the six cross-partnered cells')
+    # The sign convention has to be stated, because S2 asks whether the
+    # OFF-diagonal collapses relative to the diagonal, so the informative
+    # direction is off minus diag: negative means cross-play is worse.
+    # docs/v07/FINAL-RESULTS.md prints this quantity as "gap -0.01", which is
+    # diag minus off; under the convention that answers S2 it is positive.
+    # Nothing turns on it -- |gap| is 76x inside the 1.5-point threshold either
+    # way -- but the paper states the direction rather than the magnitude alone.
+    emit('vsevenXpGap', _sg(om - dm), 'P5-B7.jsonl: OFF-DIAGONAL MINUS DIAGONAL; negative means cross-play is worse')
+    emit('vsevenXpGapRecorded', '-0.01',
+         'docs/v07/FINAL-RESULTS.md: the same quantity printed with the opposite sign convention')
+    emit('vsevenXpGapAbs', _n(abs(om - dm)), 'P5-B7.jsonl: magnitude of the cross-play gap')
+    emit('vsevenXpWorstOff', _sg(min(off)), 'P5-B7.jsonl: worst off-diagonal cell')
+    emit('vsevenXpBestOff', _sg(max(off)), 'P5-B7.jsonl: best off-diagonal cell')
+    emit('vsevenXpWeakestDiag', _sg(min(diag)), 'P5-B7.jsonl: weakest diagonal cell')
+    emit('vsevenXpWorstOffShortfall', _n(min(diag) - min(off)),
+         'P5-B7.jsonl: weakest diagonal cell minus worst off-diagonal cell')
+    emit('vsevenXpHalfWidth', _n((grid[(1, 1)][2] - grid[(1, 1)][1]) / 2), 'P5-B7.jsonl: per-cell half-width')
+    emit('vsevenStwoThreshold', '1.50', 'PREREGISTRATION 5.2: the S2 threshold, points')
+    emit('vsevenStwoVerdict', 'PASS' if abs(om - dm) < 1.5 else 'FAIL', 'PREREGISTRATION 5.2: S2 verdict')
+    h2h = [r for r in rows if r['kind'] == 'h2h']
+    hl, sep = [], 0
+    PAIRTAG = {(1, 2): 'OneTwo', (1, 3): 'OneThree', (2, 3): 'TwoThree'}
+    for a, b in ((1, 2), (1, 3), (2, 3)):
+        rs = [r for r in h2h if r['arm'] == 'xp%d' % a and r['opp'] == 'xp%d' % b]
+        if len(rs) != 2: continue
+        m, lo, hi, _ = pool(rs)
+        if lo > 0 or hi < 0: sep += 1
+        emit('vsevenHtwoh%s' % PAIRTAG[(a, b)], _sg(m), 'P5-B7.jsonl: xp%d vs xp%d head to head' % (a, b))
+        emit('vsevenHtwoh%sLo' % PAIRTAG[(a, b)], _sg(lo), 'P5-B7.jsonl: lower bound')
+        emit('vsevenHtwoh%sHi' % PAIRTAG[(a, b)], _sg(hi), 'P5-B7.jsonl: upper bound')
+        hl.append('xp%d vs xp%d & $%s$ & $[%s, %s]$ \\\\' % (a, b, _sg(m), _sg(lo), _sg(hi)))
+    TABLE_SPEC['crossh2h.tex'] = ('lrr', 'Pair & Edge (pts) & 95\\% CI')
+    writeTable('crossh2h.tex', hl)
+    emit('vsevenHtwohSeparated', str(sep), 'P5-B7.jsonl: head-to-head pairs whose interval excludes zero')
+
+
+# ---------------------------------------------------------------- B8, rule dialects
+DTAG = {'default': 'Default', 'no-out-of-turn': 'NoOutOfTurn',
+        'no-cardless-declare': 'NoCardless', 'maxasks=360': 'Maxasks',
+        'arb=high': 'ArbHigh', 'arb=turn': 'ArbTurn', 'sets=8': 'SetsEight', 'legacy': 'Legacy'}
+
+def b8_dialects():
+    rows = _rows('P5-B8.jsonl')
+    base = pool([r for r in rows if r['row'] == 'default'])[0]
+    lines, exc = [], []
+    for name in ['default', 'no-out-of-turn', 'no-cardless-declare', 'maxasks=360',
+                 'arb=high', 'arb=turn', 'sets=8', 'legacy']:
+        rs = [r for r in rows if r['row'] == name]
+        if len(rs) != 2: continue
+        m, lo, hi, _ = pool(rs)
+        per = {r['bank']: _edge(r) for r in rs}
+        t = DTAG[name]
+        emit('vsevenDia%s' % t, _sg(m), 'P5-B8.jsonl %s: FROZEN vs INCUMBENT in this dialect' % name)
+        emit('vsevenDia%sLo' % t, _sg(lo), 'P5-B8.jsonl %s: lower bound' % name)
+        emit('vsevenDia%sHi' % t, _sg(hi), 'P5-B8.jsonl %s: upper bound' % name)
+        emit('vsevenDia%sVsDefault' % t, _sg(m - base), 'P5-B8.jsonl %s: excursion from the default row' % name)
+        if name != 'default': exc.append((abs(m - base), name, m - base))
+        lines.append('%s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & $%s$ \\\\' %
+                     (_tex(name), _sg(m), _sg(lo), _sg(hi), BANK3, _sg(per[BANK3]),
+                      BANK1, _sg(per[BANK1]), _sg(m - base)))
+    TABLE_SPEC['dialects.tex'] = ('lrrlr',
+        'Dialect & Edge (pts) & 95\\% CI & Per bank & vs default')
+    writeTable('dialects.tex', lines)
+    mx = max(exc)
+    emit('vsevenDiaMaxExcursion', _sg(mx[2]), 'P5-B8.jsonl: largest excursion from the default row')
+    emit('vsevenDiaMaxExcursionRow', _tex(mx[1]), 'P5-B8.jsonl: dialect attaining it')
+    emit('vsevenDiaRows', str(len(lines)), 'P5-B8.jsonl: dialect rows measured')
+    emit('vsevenSfiveTolerance', '2.00', 'PREREGISTRATION 5.2: the S5 tolerance, points')
+    emit('vsevenSfiveVerdict', 'PASS' if mx[0] <= 2.0 else 'FAIL', 'PREREGISTRATION 5.2: S5 verdict')
+    # the legacy residual: legacy minus the isolable components.  --maxasks=360
+    # is bit-identical to default, so the residual is legacy minus TWO effective
+    # components and not three, which is why it is printed with that caveat.
+    comp = sum(pool([r for r in rows if r['row'] == n])[0] - base
+               for n in ('no-out-of-turn', 'no-cardless-declare', 'maxasks=360'))
+    leg = pool([r for r in rows if r['row'] == 'legacy'])[0] - base
+    ses = []
+    for n in ('legacy', 'no-out-of-turn', 'no-cardless-declare', 'maxasks=360', 'default'):
+        _, _, _, s = pool([r for r in rows if r['row'] == n])
+        ses.append(s)
+    h = 1.96 * math.sqrt(sum(s * s for s in ses))
+    emit('vsevenLegacyResidual', _sg(leg - comp, 3), 'P5-B8.jsonl: legacy minus its isolable components')
+    emit('vsevenLegacyResidualLo', _sg(leg - comp - h), 'P5-B8.jsonl: lower bound')
+    emit('vsevenLegacyResidualHi', _sg(leg - comp + h), 'P5-B8.jsonl: upper bound')
+    emit('vsevenLegacyResidualRatio', _n(2 * h / abs(leg - comp), 1),
+         'P5-B8.jsonl: interval width as a multiple of the residual')
+    ident = [r for r in rows if r['row'] == 'maxasks=360']
+    dflt = [r for r in rows if r['row'] == 'default']
+    same = all(_edge(a) == _edge(b) for a in ident for b in dflt if a['bank'] == b['bank'])
+    emit('vsevenMaxasksIdentical', 'yes' if same else 'no',
+         'P5-B8.jsonl: whether --maxasks=360 is bit-identical to default')
+
+
+# ---------------------------------------------------------------- B9, negative controls
+def b9_controls():
+    rows = _rows('P5-B9.jsonl')
+    lines = []
+    for h in ('0.05', '0.08', '0.11', '0.15'):
+        plant = [r for r in rows if r.get('kind') == 'planted-cost' and r.get('hstr') == h]
+        hcap = [r for r in rows if r.get('kind') == 'responder-vs-handicapped' and r.get('hstr') == h]
+        clean = [r for r in rows if r.get('kind') == 'responder-vs-frozen' and r.get('hstr') == h]
+        if len(plant) != 2 or len(hcap) != 2 or len(clean) != 2: continue
+        t = {'0.05': 'Hfive', '0.08': 'Height', '0.11': 'Heleven', '0.15': 'Hfifteen'}[h]
+        pm, plo, phi, _ = pool(plant)
+        hm, hlo, hhi, _ = pool(hcap)
+        cm, clo, chi, _ = pool(clean)
+        d, dlo, dhi = delta(hcap, clean)
+        for nm, (a, b, c) in (('Cost', (pm, plo, phi)), ('Hcap', (hm, hlo, hhi)),
+                              ('Clean', (cm, clo, chi)), ('Excess', (d, dlo, dhi))):
+            emit('vsevenB9%s%s' % (t, nm), _sg(a), 'P5-B9.jsonl hstr=%s: %s' % (h, nm))
+            emit('vsevenB9%s%sLo' % (t, nm), _sg(b), 'P5-B9.jsonl hstr=%s: %s lower bound' % (h, nm))
+            emit('vsevenB9%s%sHi' % (t, nm), _sg(c), 'P5-B9.jsonl hstr=%s: %s upper bound' % (h, nm))
+        emit('vsevenB9%sRecovered' % t, 'yes' if dlo > 1.53 else 'no',
+             'P5-B9.jsonl hstr=%s: is the planted edge recovered above the 1.53 floor' % h)
+        lines.append('%s%s & $%s$ $[%s, %s]$ & $%s$ $[%s, %s]$ & $%s$ $[%s, %s]$ & $\\mathbf{%s}$ $[%s, %s]$ \\\\' %
+                     (h, ' \\textit{(sub-floor)}' if h == '0.05' else '',
+                      _sg(pm), _sg(plo), _sg(phi), _sg(hm), _sg(hlo), _sg(hhi),
+                      _sg(cm), _sg(clo), _sg(chi), _sg(d), _sg(dlo), _sg(dhi)))
+    TABLE_SPEC['controls.tex'] = ('lrrrr',
+        'Planted \\texttt{hstr} & Planted cost & Responder vs handicapped & Responder vs Frozen & Recovered excess')
+    writeTable('controls.tex', lines)
+    ident = [r for r in rows if r.get('kind') == 'identity']
+    wr = {r['match']['winRateA'] for r in ident}
+    ci = {tuple(r['match']['ci']) for r in ident}
+    emit('vsevenIdentityRate', '%.6f' % list(wr)[0], 'P5-B9.jsonl B9.4: FROZEN against itself, win rate')
+    emit('vsevenIdentityExact', 'yes' if wr == {0.5} and ci == {(0.5, 0.5)} else 'no',
+         'P5-B9.jsonl B9.4: exactly 50.000%% with a zero-width interval on both banks')
+    emit('vsevenIdentityN', _commafy(ident[0]['match']['games']), 'P5-B9.jsonl B9.4: games per bank')
+    # B9.5, the calibrated side channels
+    side = _rows('P5-B9side.jsonl')
+    sl = []
+    for cheat in ('seed', 'shared', 'conv'):
+        rs = [r for r in side if r['cheat'] == cheat]
+        res = {}
+        for t in ('s3', 's4', 's5', 's6'):
+            st = []
+            for r in rs:
+                sd = r.get('side') or {}
+                if t == 's6':
+                    # S6 is emitted as a count, not as a named test row, and its
+                    # gate condition is the --freshagents pass.  Zero is a pass.
+                    if 's6' in sd and isinstance(sd['s6'], dict) and r.get('freshagents'):
+                        st.append('PASS' if sd['s6'].get('mismatch', 0) == 0 else 'FAIL')
+                    continue
+                for k, v in (sd.get('tests') or {}).items():
+                    if k.lower().startswith(t):
+                        st.append(v.get('status'))
+            res[t] = ('FAIL' if 'FAIL' in st else ('PASS' if st else '---'))
+            emit('vsevenCheat%s%s' % (cheat.capitalize(), t.upper()), res[t],
+                 'P5-B9side.jsonl: cheat=%s, test %s' % (cheat, t.upper()))
+        sl.append('\\texttt{v07x:cheat=%s} & %s \\\\' % (cheat, ' & '.join(res[t] for t in ('s3', 's4', 's5', 's6'))))
+    TABLE_SPEC['sidechannel.tex'] = ('lcccc', 'Planted channel & S3 & S4 & S5 & S6')
+    writeTable('sidechannel.tex', sl)
+    emit('vsevenSideCells', str(len(side)), 'P5-B9side.jsonl: side-channel control cells')
+
+
+# ---------------------------------------------------------------- B10, the S6 residual
+def b10_residual():
+    rows = _rows('P5-B10.jsonl')
+    lines, gate_nonzero, plain_nonzero = [], 0, 0
+    for arm in ('FROZEN', 'INCUMBENT', 'F-cheap', 'composite'):
+        for bank in (BANK1, BANK2):
+            g = [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1-freshagents']
+            p = [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1']
+            if not g or not p: continue
+            gm, gn = g[0]['side']['s6']['mismatch'], g[0]['side']['s6']['nodes']
+            pm, pn = p[0]['side']['s6']['mismatch'], p[0]['side']['s6']['nodes']
+            gate_nonzero += (gm != 0); plain_nonzero += (pm != 0)
+            lines.append('%s & %d & %d / %s & \\textbf{%d} / %s \\\\' %
+                         (_tex(arm), bank, pm, _commafy(pn), gm, _commafy(gn)))
+    TABLE_SPEC['residual.tex'] = ('llrr',
+        'Arm & Bank & \\texttt{--threads=1} & \\texttt{--threads=1 --freshagents}')
+    writeTable('residual.tex', lines)
+    emit('vsevenSsixGateNonzero', str(gate_nonzero), 'P5-B10.jsonl: gate-condition cells with a nonzero mismatch')
+    emit('vsevenSsixPlainNonzero', str(plain_nonzero), 'P5-B10.jsonl: one-thread cells with a nonzero mismatch')
+    emit('vsevenSsixCells', str(len(rows)), 'P5-B10.jsonl: audited cells')
+    emit('vsevenSsixDeals', _commafy(sum(r['side']['deals'] for r in rows)),
+         'P5-B10.jsonl: deals audited in total')
+    searching = {'FROZEN', 'F-cheap', 'composite'}
+    nz = {r['arm'] for r in rows if r['cond'] == 'threads1' and r['side']['s6']['mismatch']}
+    emit('vsevenSsixAllSearching', 'yes' if nz and nz <= searching else 'no',
+         'P5-B10.jsonl: whether every nonzero one-thread count belongs to a searching arm')
+    # the denominators move between conditions -- that is --freshagents changing play
+    moved = sum(1 for arm in ('FROZEN', 'INCUMBENT', 'F-cheap', 'composite') for bank in (BANK1, BANK2)
+                if [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1']
+                and [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1-freshagents']
+                and [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1'][0]['side']['s6']['nodes']
+                != [r for r in rows if r['arm'] == arm and r['bank'] == bank and r['cond'] == 'threads1-freshagents'][0]['side']['s6']['nodes'])
+    emit('vsevenSsixDenomMoved', str(moved),
+         'P5-B10.jsonl: cells whose audited-decision denominator changes under --freshagents')
+
+
+# ---------------------------------------------------------------- B0, verification
+def b0_verification():
+    d = json.load(open(os.path.join(_RES, 'P5-B0.json')))
+    emit('vsevenBinarySha', d['binary']['sha256'], 'P5-B0.json: sha256 of the binary that played every cell')
+    emit('vsevenBinaryShaShort', d['binary']['sha256'][:16], 'P5-B0.json: first 16 of that hash')
+    emit('vsevenBinaryBytes', _commafy(d['binary']['bytes']), 'P5-B0.json: binary size')
+    emit('vsevenB0Commit', d['commit'][:7], 'P5-B0.json: commit the B0 block was generated at')
+    bd = d['B0_1_bankDigests']
+    emit('vsevenBanks', str(len(bd['rows'])), 'P5-B0.json: deal banks whose digest was reproduced')
+    emit('vsevenBanksMatch', 'all' if bd['allMatch'] else 'NOT ALL', 'P5-B0.json: bank digests matching commitment')
+    emit('vsevenBankDeals', _commafy(bd['rows'][0]['deals']), 'P5-B0.json: deals folded into each digest')
+    lines = ['%d & %s & \\texttt{%s} & %s \\\\' % (r['seed'], _commafy(r['deals']), r['digest'],
+                                                   '\\checkmark' if r['match'] else '\\textbf{MISMATCH}')
+             for r in bd['rows']]
+    TABLE_SPEC['banks.tex'] = ('lrll', 'Bank & Deals & Digest reproduced & Matches commitment')
+    writeTable('banks.tex', lines)
+    sa = d['B0_2_sealedAdversaries']
+    emit('vsevenSealedRows', str(sa['rows']), 'P5-B0.json: rows decoded from the sealed adversary half')
+    emit('vsevenSealedSha', sa['sha256'][:16], 'P5-B0.json: sha256 of the decoded plaintext, first 16')
+    emit('vsevenSealedMatch', 'yes' if sa['match'] else 'NO', 'P5-B0.json: plaintext matches SEAL.json')
+    emit('vsevenSealCommit', sa['sealCommit'][:7], 'P5-B0.json: commit at which the material was sealed')
+    fv = d['B0_3_freezeVerify']
+    emit('vsevenFreezeVerify', 'PASS' if fv['rc'] == 0 else 'FAIL', 'P5-B0.json: freeze_config_v07.py --verify-only')
+    emit('vsevenMirrorDigest', fv['mirrorDigest'], 'P5-B0.json: R3 mirror pathology digest')
+    emit('vsevenCoordinates', str(fv['coordinates']), 'P5-B0.json: coordinates in the frozen vector')
+    emit('vsevenFrozenSpec', _tex(fv['reconstructedSpec']), 'P5-B0.json: spec reconstructed from the freeze artifact')
+    r2 = fv.get('R2a_vector_search', {})
+    emit('vsevenRtwoaIdentical', 'yes' if r2.get('identical') else 'no',
+         'P5-B0.json: R2a round-trip with the search on is identical')
+    emit('vsevenRtwoaGames', _commafy(r2.get('games', 0)), 'P5-B0.json: games in the R2a comparison')
+    eng = d['B0_5_engine']
+    vtxt = eng['verify']['stdout']
+    m = _re.search(r'audit violations:\s*(\d+)\s*/\s*(\d+)', vtxt)
+    emit('vsevenVerifyViolations', m.group(1), 'P5-B0.json: fish7 verify, audit violations')
+    emit('vsevenVerifyChecks', _commafy(m.group(2)), 'P5-B0.json: fish7 verify, checks')
+    m = _re.search(r'checks\s+(\d+)', eng['selftest']['stdout'])
+    emit('vsevenSelftestChecks', _commafy(m.group(1)), 'P5-B0.json: fish7 selftest, checks')
+    emit('vsevenSelftest', 'PASS' if eng['selftest']['pass_'] else 'FAIL', 'P5-B0.json: fish7 selftest verdict')
+    rep = d['reproducibility']
+    emit('vsevenReproRuns', str(len(rep['runs'])), 'P5-B0.json: repeat runs of one training cell')
+    emit('vsevenReproIdentical', 'yes' if rep['identical'] else 'no',
+         'P5-B0.json: whether all repeat runs were bit-identical at 400 deals')
+    emit('vsevenSeedViolations', str(len(d['B0_4_seeds']['registryViolations'])),
+         'P5-B0.json: pre-existing seed-registry violations reported')
+
+
+# ---------------------------------------------------------------- B1, the commit gate
+GTAG = ['G1 dead asks', 'G2 longest dead run', 'G3 games w/ run>=6', 'G4 action-limit',
+        'G5 mirror tail', 'G6 late declarations', 'G7a S3/S4/S5', 'G7b S6 seat-isolation']
+GNAME = {'G1 dead asks': 'provably-dead asks $\\le 0.10\\%$',
+         'G2 longest dead run': 'longest dead run $\\le 5$',
+         'G3 games w/ run>=6': 'games with a run $\\ge 6$ = 0',
+         'G4 action-limit': 'action-limit games = 0',
+         'G5 mirror tail': 'mirror tail max $< 220$, p99 $\\le 150$',
+         'G6 late declarations': 'declarations at/after event 220 = 0',
+         'G7a S3/S4/S5': 'S3/S4/S5 certified, zero tolerance',
+         'G7b S6 seat-isolation': 'S6 = 0 at \\texttt{--threads=1 --freshagents}'}
+CTAG = {'FROZEN': 'Frozen', 'INCUMBENT': 'Incumbent', 'F-cheap': 'Fcheap', 'NEGCONTROL': 'Neg'}
+RTAG = {'G1': 'Gone', 'G2': 'Gtwo', 'G3': 'Gthree', 'G4': 'Gfour', 'G5': 'Gfive',
+        'G6': 'Gsix', 'G7a': 'Gsevena', 'G7b': 'Gsevenb'}
+
+def b1_gate():
+    rows = load_jsonl(os.path.join(_RES, 'P5-gate.jsonl'))
+    by = {r['id']: r for r in rows}
+    order = ['FROZEN', 'INCUMBENT', 'F-cheap', 'NEGCONTROL']
+    lines = []
+    for g in GTAG:
+        cells = []
+        for c in order:
+            ok = by[c]['rules'].get(g)
+            cells.append('ok' if ok else '\\textbf{fail}')
+            emit('vsevenGate%s%s' % (CTAG[c], RTAG[g.split()[0]]), 'ok' if ok else 'fail',
+                 'P5-gate.jsonl: %s, rule %s' % (c, g.split()[0]))
+        lines.append('%s & %s \\\\' % (GNAME[g], ' & '.join(cells)))
+    lines.append('\\midrule\n\\textbf{verdict} & %s \\\\' %
+                 ' & '.join('\\textbf{%s}' % by[c]['verdict'] for c in order))
+    TABLE_SPEC['gate.tex'] = ('lcccc', 'Rule & Frozen & Incumbent & F-cheap & Negative control')
+    writeTable('gate.tex', lines)
+    for c in order:
+        emit('vsevenGate%sVerdict' % CTAG[c], by[c]['verdict'], 'P5-gate.jsonl: %s gate verdict' % c)
+    fz = by['FROZEN']
+    emit('vsevenGateRules', str(len(GTAG)), 'P5-gate.jsonl: rules in the commit gate')
+    emit('vsevenGateGames', _commafy(fz['games']), 'P5-gate.jsonl: mirror games per configuration')
+    emit('vsevenGateDeadAsks', '%.5f' % fz['stats']['deadAskPct'], 'P5-gate.jsonl FROZEN: provably-dead asks, percent')
+    emit('vsevenGateLongestDead', str(fz['stats']['longestDead']), 'P5-gate.jsonl FROZEN: longest dead run')
+    emit('vsevenGateEvents', _n(fz['stats']['eventsMean'], 3), 'P5-gate.jsonl FROZEN: events per game')
+    emit('vsevenGateTailMax', str(fz['stats']['eventsMax']), 'P5-gate.jsonl FROZEN: mirror tail maximum')
+    emit('vsevenGateTailPnn', str(fz['stats']['eventsP99']), 'P5-gate.jsonl FROZEN: mirror tail p99')
+    emit('vsevenGateAskHit', _n(fz['stats']['askHit'], 3), 'P5-gate.jsonl FROZEN: ask hit rate, percent')
+    emit('vsevenGateMisdecl', _n(fz['stats']['declPct'], 3), 'P5-gate.jsonl FROZEN: misdeclaration, percent')
+    emit('vsevenGateSsix', str(fz['s6']['mismatch']), 'P5-gate.jsonl FROZEN: S6 mismatches at one thread, fresh agents')
+    emit('vsevenGateSsixNodes', _commafy(fz['s6']['nodes']), 'P5-gate.jsonl FROZEN: S6 audited decisions')
+    neg = by['NEGCONTROL']
+    failed = [g.split()[0] for g in GTAG if not neg['rules'].get(g)]
+    emit('vsevenNegFails', ', '.join(failed), 'P5-gate.jsonl: rules the negative control fails')
+    emit('vsevenNegFailCount', str(len(failed)), 'P5-gate.jsonl: how many rules the negative control fails')
+    emit('vsevenNegDeadAsks', _n(neg['stats']['deadAskPct'], 5), 'P5-gate.jsonl NEGCONTROL: provably-dead asks, percent')
+    emit('vsevenNegLongestDead', str(neg['stats']['longestDead']), 'P5-gate.jsonl NEGCONTROL: longest dead run')
+    emit('vsevenNegTailMax', str(neg['stats']['eventsMax']), 'P5-gate.jsonl NEGCONTROL: mirror tail maximum')
+
+
+# ---------------------------------------------------------------- B11, selection bias
+def b11_selection():
+    # K configurations were scored against v06 before the freeze; at the lattice
+    # cell size the expected maximum of K draws under the null that none differs
+    # is sigma*sqrt(2 ln K).  PREREGISTRATION B11 fixes K and the cell size.
+    K, N = 15, 24000
+    sigma = 98.0 / 2.0 / math.sqrt(N)
+    emit('vsevenSelK', str(K), 'PREREGISTRATION B11: configurations scored against v06 before the freeze')
+    emit('vsevenSelSigma', _n(sigma, 4), 'PREREGISTRATION B11: per-cell sigma at the lattice cell size')
+    emit('vsevenSelExpectedMax', _n(sigma * math.sqrt(2 * math.log(K)), 2),
+         'PREREGISTRATION B11: sigma * sqrt(2 ln K), the expected maximum under the null')
+    emit('vsevenSelOnHoldout', '0.00',
+         'PREREGISTRATION B11: selection term on holdout, zero by construction -- the banks were never available to select on')
+    # the third clause: is the holdout estimate short of the training one, and where.
+    b2 = _rows('P5-B2.jsonl')
+    grp = pool([r for r in b2 if r['cell'] == 'B2.4'])[0]
+    b6 = _rows('P5-B6.jsonl')
+    fr = [r for r in b6 if r['opp'] == 'v05' and r['arm'] == 'FROZEN' and r['partners'] == 'itself']
+    inc = [r for r in b6 if r['opp'] == 'v05' and r['arm'] == 'INCUMBENT' and r['partners'] == 'itself']
+    b6self = delta(fr, inc)[0]
+    b7 = _rows('P5-B7.jsonl')
+    xp = [r for r in b7 if r['kind'] == 'crossplay']
+    dg = [pool([r for r in xp if r['arm'] == 'xp%d' % i and r['partners'] == 'xp%d' % i])[0] for i in range(1, 4)]
+    og = [pool([r for r in xp if r['arm'] == 'xp%d' % i and r['partners'] == 'xp%d' % j])[0]
+          for i in range(1, 4) for j in range(1, 4) if i != j]
+    # the training column is TRANSCRIBED from the protocol, which states these in
+    # advance for exactly this comparison.  Its source is named so the provenance
+    # check can see it.
+    SRC = 'docs/v07/PREREGISTRATION.md'
+    train = [('B2.4 --- \\texttt{rtie} + urgency-off + \\texttt{stall}, as a group', 0.78, grp, 'Group'),
+             ('B6 self-play row, opponent \\texttt{v05}', 2.94, b6self, 'Bsix'),
+             ('B7 diagonal (self-play)', 4.51, sum(dg) / 3, 'BsevenDiag'),
+             ('B7 off-diagonal (cross-play)', 4.48, sum(og) / 6, 'BsevenOff')]
+    lines, short = [], []
+    for label, tr, ho, tag in train:
+        emit('vsevenSelTrain%s' % tag, _sg(tr), '%s: training figure stated in advance' % SRC)
+        emit('vsevenSelHold%s' % tag, _sg(ho), 'P5-B2/B6/B7: the holdout measurement of the same quantity')
+        emit('vsevenSelShort%s' % tag, _sg(ho - tr), 'holdout minus training')
+        if ho - tr < 0: short.append((ho - tr, label, tag))
+        lines.append('%s & $%s$ & $%s$ & $%s$ \\\\' % (label, _sg(tr), _sg(ho), _sg(ho - tr)))
+    TABLE_SPEC['selection.tex'] = ('lrrr', 'Quantity & Training & Holdout & Shortfall')
+    writeTable('selection.tex', lines)
+    emit('vsevenSelShortCount', str(len(short)), 'how many of the four quantities fall short of their training value')
+    emit('vsevenSelReproduce', str(len(train) - len(short)), 'how many reproduce or exceed their training value')
+    if short:
+        s = min(short)
+        emit('vsevenSelWorstShortfall', _n(-s[0]), 'the largest shortfall, in points')
+        emit('vsevenSelWorstTag', s[2], 'which quantity attains it')
+
+
+# ---------------------------------------------------------------- throughput
+def throughput_paper():
+    """gamesPerSec is WHOLE-MATCH throughput and carries the opponent's cost on
+    both sides of the ratio, so INCUMBENT_gps / ARM_gps is strictly below
+    t_arm/t_inc.  Every figure emitted here is therefore a LOWER BOUND, and the
+    tightest bound is against the cheapest opponent."""
+    rows = _rows('P5-B3.jsonl')
+    gps = {}
+    for r in rows:
+        gps.setdefault((r['arm'], r['opp']), []).append(r['match']['gamesPerSec'])
+    def med(v):
+        v = sorted(v)
+        n = len(v)
+        return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2.0
+    cls = {r['opp']: r['cls'] for r in rows}
+    lines = []
+    for arm, tag in (('FROZEN', 'Frozen'), ('F-cheap', 'Fcheap'), ('composite', 'Composite')):
+        ratios = {}
+        for (a, p), v in gps.items():
+            if a != arm: continue
+            inc = gps.get(('INCUMBENT', p))
+            if inc: ratios[p] = med(inc) / med(v)
+        tight = ratios.get('random')
+        far = med([r for p, r in ratios.items() if cls[p] == 'far'])
+        allm = med(list(ratios.values()))
+        emit('vsevenCost%sTight' % tag, _n(tight), 'P5-B3.jsonl: gamesPerSec ratio against random, the tightest lower bound')
+        emit('vsevenCost%sFar' % tag, _n(far), 'P5-B3.jsonl: median ratio over the far archetypes')
+        emit('vsevenCost%sPanel' % tag, _n(allm), 'P5-B3.jsonl: median ratio over the whole panel, the most diluted')
+        lines.append('%s & %s$\\times$ & %s$\\times$ & %s$\\times$ \\\\' % (_tex(arm), _n(tight), _n(far), _n(allm)))
+    TABLE_SPEC['cost.tex'] = ('lrrr',
+        'Arm & vs \\texttt{random} (tightest) & Far archetypes (median) & Whole panel (median)')
+    writeTable('cost.tex', lines)
+    emit('vsevenCostRecorded', '3.2', 'docs/v07/PREREGISTRATION.md: the cost multiple the record carried')
+
+
+# ---------------------------------------------------------------- deviations
+def deviations():
+    """The deviation register is READ OUT of docs/v07/FINAL-RESULTS.md rather
+    than retyped, so the paper's appendix cannot drift from the results
+    document it reports."""
+    p = os.path.join(_ROOT, 'docs', 'v07', 'FINAL-RESULTS.md')
+    txt = open(p).read()
+    # the kind may itself name a deviation ("CORRECTION TO D8"), so digits are
+    # allowed inside it; without that, D18 is silently dropped from the register.
+    ds = _re.findall(r'\*\*(D\d+)\*\*\s+([A-Z][A-Z \-0-9]*?)\s+--\s+(.*?)(?=\n\n\*\*D\d+\*\*|\n\n---)',
+                     txt, _re.S)
+    lines = []
+    kinds = {}
+    for did, kind, body in ds:
+        kind = kind.strip()
+        kinds[kind] = kinds.get(kind, 0) + 1
+        body = ' '.join(body.split())
+        body = body.replace('\\', '').replace('&', '\\&').replace('%', '\\%').replace('_', '\\_')
+        body = body.replace('#', '\\#').replace('$', '\\$')
+        if len(body) > 460:
+            body = body[:457].rsplit(' ', 1)[0] + '\\,\\ldots'
+        lines.append('\\textbf{%s} & %s & %s \\\\' % (did, _tex(kind).title(), body))
+    writeTable('deviations.tex', lines, 'llp{0.62\\linewidth}',
+               'ID & Kind & Deviation, addition or correction', longtable=True)
+    emit('vsevenDeviations', str(len(ds)), 'docs/v07/FINAL-RESULTS.md section 15: recorded deviations')
+    emit('vsevenDeviationCorrections', str(kinds.get('CORRECTION', 0) + kinds.get('CORRECTION TO D8', 0)),
+         'docs/v07/FINAL-RESULTS.md section 15: entries that are corrections')
+    emit('vsevenDeviationAdded', str(kinds.get('ADDED CELL', 0) + kinds.get('ADDED CELLS', 0) + kinds.get('ADDED CHECK', 0)),
+         'docs/v07/FINAL-RESULTS.md section 15: entries that add a cell or a check')
+
+
+# ---------------------------------------------------------------- battery totals
+def totals():
+    files = ['P5-B2.jsonl', 'P5-B3.jsonl', 'P5-B4eval.jsonl', 'P5-B5.jsonl', 'P5-B6.jsonl',
+             'P5-B7.jsonl', 'P5-B8.jsonl', 'P5-B9.jsonl']
+    cells, games, viol, limit = 0, 0, 0, 0
+    for fn in files:
+        for r in _rows(fn):
+            cells += 1
+            games += r['match']['games']
+            viol += r['match'].get('auditViolations', 0)
+            limit += 1 if r['match'].get('limitHitRate', 0) else 0
+    emit('vsevenScoredCells', str(cells), 'P5-B2..B9: scored match cells')
+    emit('vsevenScoredGames', _commafy(games), 'P5-B2..B9: games played in scored cells')
+    emit('vsevenAuditViolations', str(viol), 'P5-B2..B9: audit violations across the whole battery')
+    emit('vsevenLimitCells', str(limit), 'P5-B2..B9: cells with any action-limit hit')
+    # the cell counts per battery, against the preregistered design
+    design = [('B2', 'headline strength against the frontier', 'P5-B2.jsonl', 10),
+              ('B3', 'the shared 31-member panel', 'P5-B3.jsonl', 248),
+              ('B4', 'a fresh adversary search', 'P5-B4eval.jsonl', 16),
+              ('B5', 'the attribution lattice', 'P5-B5.jsonl', 24),
+              ('B6', 'the partner-regime table', 'P5-B6.jsonl', 64),
+              ('B7', 'cross-play between independent runs', 'P5-B7.jsonl', 24),
+              ('B8', 'the rule-dialect table', 'P5-B8.jsonl', 16),
+              ('B9', 'the negative controls', 'P5-B9.jsonl', 26),
+              ('B10', 'the S6 residual', 'P5-B10.jsonl', 16)]
+    lines, dropped = [], 0
+    for bid, what, fn, exp in design:
+        got = len(_rows(fn))
+        dropped += max(0, exp - got)
+        lines.append('%s & %s & %d & %d & %s \\\\' % (bid, what, exp, got,
+                     'complete' if got >= exp else '\\textbf{INCOMPLETE}'))
+    TABLE_SPEC['battery.tex'] = ('llrrl', 'Battery & What it measures & Preregistered & Measured & Status')
+    writeTable('battery.tex', lines)
+    emit('vsevenCellsDropped', str(dropped), 'preregistered cells not measured')
+    # CORRECTION.  docs/v07/FINAL-RESULTS.md states "409 scored match cells" in
+    # three places; the figure is hand-typed at engine/p5_analyse.py:1135 and is
+    # not computed from the artifacts.  Counting rows that carry a `match`
+    # object across B2, B3, B4eval, B5, B6, B7, B8 and B9 gives the number
+    # emitted above.  No verdict depends on it -- it is a denominator for D22 --
+    # but the paper prints the counted figure and says so.
+    emit('vsevenScoredCellsRecorded', '409',
+         'docs/v07/FINAL-RESULTS.md: the hand-typed cell count this generator corrects')
+
+
+def manifest_table():
+    man = json.load(open(os.path.join(_RES, 'MANIFEST-P5.json')))
+    emit('vsevenManifestRuns', str(len(man['runs'])), 'MANIFEST-P5.json: digested artifacts')
+    ok = 0
+    for r in man['runs']:
+        fp = os.path.join(_ROOT, r['artifact']) if os.path.exists(os.path.join(_ROOT, r['artifact'])) \
+             else os.path.join(_RES, os.path.basename(r['artifact']))
+        if os.path.exists(fp) and hashlib.sha256(open(fp, 'rb').read()).hexdigest() == r['sha256']:
+            ok += 1
+    emit('vsevenManifestVerified', str(ok), 'MANIFEST-P5.json: artifacts whose sha256 re-verifies on disk')
+    emit('vsevenManifestFrozenSpec', _tex(man['frozen_spec']), 'MANIFEST-P5.json: the frozen spec')
+
+
+# ---------------------------------------------------------------- the verdict table
+def verdicts():
+    """PREREGISTRATION section 6's seven conditions and section 5's claims, each
+    with the artifact that settles it.  Emitted as a table so the paper cannot
+    quietly restate a threshold."""
+    b2 = _rows('P5-B2.jsonl')
+    fc = [r for r in b2 if r['cell'] == 'B2.2']
+    m, lo, hi, _ = pool(fc)
+    certified = lo > 1.53 and replicates(fc)
+    emit('vsevenPrimaryVerdict',
+         'CERTIFIED advancement' if certified else ('measured advancement' if lo > 0 and replicates(fc)
+                                                    else 'not an advancement'),
+         'PREREGISTRATION 5.1 applied to P5-B2.jsonl B2.2')
+    emit('vsevenPrimaryFloor', '1.53', 'PREREGISTRATION 5.1: the phase-2 C1-class detection floor')
+    emit('vsevenDeclFloor', '2.13', 'PREREGISTRATION 3 correction 4: the declaration-family floor')
+    comp = [r for r in b2 if r['cell'] == 'B2.4']
+    cm, clo, chi, _ = pool(comp)
+    emit('vsevenItemTwoMet', 'MET' if clo <= 0 <= chi else 'not met',
+         'PREREGISTRATION 6 item 2 applied to P5-B2.jsonl B2.4')
+
+
+def paper_main():
+    os.makedirs(_TBL, exist_ok=True)
+    b3_panel_table()          # the headline: worst case and minimax regret, first
+    b2_frontier()
+    b4_adversaries()
+    b5_attribution()
+    b6_partners()
+    b7_crossplay()
+    b8_dialects()
+    b9_controls()
+    b10_residual()
+    b11_selection()
+    b0_verification()
+    b1_gate()
+    throughput_paper()
+    deviations()
+    totals()
+    manifest_table()
+    verdicts()
+    emit('vsevenBuildDate', _time.strftime('%Y-%m-%d'), 'build_tables_v07.py --paper run date')
+    # provenance counts, which the reproducibility appendix quotes
+    try:
+        secs = os.path.join(_PAPER, 'sections_v07')
+        used7, usedold = set(), set()
+        for fn in os.listdir(secs):
+            if not fn.endswith('.tex'): continue
+            tx = open(os.path.join(secs, fn)).read()
+            used7 |= set(_re.findall(r'\\(vseven[A-Za-z]+)', tx))
+            usedold |= set(_re.findall(r'\\(vsix[A-Za-z]+|num[A-Za-z]+)', tx))
+        gen = set(_re.findall(r'renewcommand\{\\(vseven[A-Za-z]+)\}', '\n'.join(OUT)))
+        # emitted below, so they belong to `gen` for the completeness check
+        gen |= {'vsevenProvGenerated', 'vsevenProvTranscribed'}
+        emit('vsevenProvGenerated', str(len(used7 & gen)),
+             'macros used in sections_v07 that this script generates from artifacts')
+        emit('vsevenProvTranscribed', str(len(usedold)),
+             'macros used in sections_v07 transcribed from an earlier study')
+        # A macro that numbers_v07.tex declares under a source header is
+        # TRANSCRIBED from an earlier phase on purpose, so it is not missing.
+        # Only a \vseven macro that nothing declares is a typesetting bug.
+        declared = set()
+        ph = os.path.join(_PAPER, 'numbers_v07.tex')
+        if os.path.exists(ph):
+            declared = set(_re.findall(r'providecommand\{\\(vseven[A-Za-z]+)\}', open(ph).read()))
+        missing = sorted(used7 - gen - declared)
+        if missing:
+            print('WARNING: %d \\vseven macro(s) used in sections_v07 are NOT generated: %s'
+                  % (len(missing), ', '.join(missing[:20])), file=sys.stderr)
+    except FileNotFoundError:
+        pass
+    path = os.path.join(_PAPER, 'numbers_v07_generated.tex')
+    with open(path, 'w') as f:
+        f.write('% GENERATED by engine/build_tables_v07.py --paper -- do not edit.\n')
+        f.write('% Every macro names the artifact and field it came from; paper/check_provenance.py\n'
+                '% reads those comments.  No number in sections_v07/ is typed by hand.\n\n')
+        f.write('\n'.join(OUT) + '\n')
+    print('wrote %d macros to %s' % (len(OUT), path))
+    print('wrote %d tables to %s' % (len(os.listdir(_TBL)), _TBL))
+
 
 if __name__ == '__main__':
     main()

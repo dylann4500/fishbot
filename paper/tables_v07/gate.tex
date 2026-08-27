@@ -1,0 +1,16 @@
+\begin{tabular}{lcccc}
+\toprule
+Rule & Frozen & Incumbent & F-cheap & Negative control \\
+\midrule
+provably-dead asks $\le 0.10\%$ & ok & ok & ok & \textbf{fail} \\
+longest dead run $\le 5$ & ok & ok & ok & \textbf{fail} \\
+games with a run $\ge 6$ = 0 & ok & ok & ok & \textbf{fail} \\
+action-limit games = 0 & ok & ok & ok & \textbf{fail} \\
+mirror tail max $< 220$, p99 $\le 150$ & ok & ok & ok & \textbf{fail} \\
+declarations at/after event 220 = 0 & ok & ok & ok & ok \\
+S3/S4/S5 certified, zero tolerance & ok & ok & ok & ok \\
+S6 = 0 at \texttt{--threads=1 --freshagents} & ok & ok & ok & ok \\
+\midrule
+\textbf{verdict} & \textbf{PASS} & \textbf{PASS} & \textbf{PASS} & \textbf{FAIL} \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,135 @@
+\section{The hypotheses that were explored and rejected}
+\label{sec:rejected}
+
+Five candidate architectures were built in isolated worktrees, gated before they were scored, and
+certified against the side-channel definition by the harness of \S\ref{sec:instrument-side} rather
+than by inspection. \textbf{One survived, and it is the configuration change of
+\S\ref{sec:configuration} rather than an architecture.} The four that died are set out here with the
+measurements that killed them, because each closes a standing entry in the project's design register
+with a number instead of an argument, and because a closed direction is the part of this cycle that
+does not depreciate.
+
+Every figure in this section is on \emph{training} material, at the budget stated with it, and none
+of it is certified: every pooled interval reported below has a lower bound under the
+\vsevenPrimaryFloor{}-point floor of \S\ref{sec:instrument-floor}. They are measured edges, and the
+distinction is kept.
+
+\subsection{The declaration-allocation channel closes at exactly zero}
+\label{sec:rejected-alloc}
+
+The register's second-ranked entry, priority \vsevenLonePriority{}, held that the whole of \vsix{}'s
+margin lives in the declaration channel and that roughly two points of it remained. Its named
+mechanism was that the deployed allocator --- a product of marginals --- picks a different allocation
+from the joint posterior's argmax often enough to matter.
+
+\textbf{It does not.} Over $\sim$\vsevenLoneDecls{} recorded voluntary declarations, across two banks
+and both urgency arms, the joint argmax and the marginal-product argmax select \emph{the same
+allocation at every one}, with the joint score holding a strict opinion on \vsevenLoneStrictLo\%--\vsevenLoneStrictHi\% of genuinely ambiguous cases. The reason is algebraic rather than statistical: the sequential joint's first
+chain-rule factor \emph{is} the marginal, and the re-normalisation that follows reweights the
+survivors without reordering them.
+
+Two further measurements close the direction rather than merely the mechanism. First, the
+\emph{exact} joint maximiser is a worse decision rule than the deployed approximation on the
+declaration decision itself: paired, it fixes \vsevenJointFixed{} declarations and breaks \vsevenJointBroken{}, a net
+\vsevenJointWorseNet{}~pp, which converts to about \vsevenJointWorseWin{}~win-rate points. This is the
+second independent instance in this corpus of the project's standing habit paying off --- ``exact
+Bayesian inference'' is an assumption to test, not a property to assume --- the first being \vsix{}'s
+finding that the exact posterior is a worse predictor of card location than the approximation the
+policy deploys. Second, \vsevenJointFlatLo\%--\vsevenJointFlatHi\% of the error class sits in
+flat-posterior states where the exact object is provably a coin flip, so most of what looked like
+headroom is an information limit and not a policy defect.
+
+\textbf{And the channel is largely downstream of a defect that the configuration change removes
+anyway.} Deleting the urgency escalation removes \vsevenLoneUrgencyShare\% of the entire
+allocation-error class and drops the oracle ceiling for a \emph{perfect} allocator from
+\vsevenLoneCeilingBefore{} win-rate points to \vsevenLoneCeilingAfter{} --- below the detection floor.
+The consequence is a composition constraint that this report honours: a declaration-channel gain and
+the urgency-off gain may never be added, because they are the same defect counted twice.
+
+\subsection{A leaf evaluator fitted 74$\times$ better buys nothing}
+\label{sec:rejected-leaf}
+
+The inherited conditional held that the test-time search cannot be judged until its leaf evaluator is
+rebuilt, because the shipped one is algebraically close to a rescaling of the hit probability. A leaf
+was fitted for the purpose, and the statistic that matters --- \emph{between-candidate} $R^2$, the
+only component a paired deviation rule can consume --- improved from \vsevenKoneRsqBefore{} to
+\vsevenKoneRsqAfter{}, a \vsevenKoneFold$\times$ gain replicated out of sample on $\sim$\vsevenKoneLeaves{} leaves.
+
+In play it is worth \vsevenKoneInPlay{} against the material control's \vsevenKoneControl{}, losing on
+both banks individually. The diagnosis is conversion failure, not fit failure: the rule's deviation
+rate is \vsevenKoneChangeLo{} for the material leaf and \vsevenKoneChangeHi{} for the retuned one, so
+the deviation rule at the shipped shrinkage is \textbf{nearly leaf-invariant}. A better leaf is not
+the lever.
+
+The conditional itself is discharged separately, and by re-measurement rather than by the new
+evaluator. The single underpowered cell the conditional rested on --- one \vsevenFullGameOldN{}-game cell at \vsevenFullGameOld{} --- re-runs at \vsevenTruncatedEndgame{} replicated in the endgame regime with
+\vsix{}'s \emph{own} leaf. Full-game truncated search already works with the leaf the conclusion said
+could not support it; it is simply at a dominated operating point.
+
+\subsection{Fitting against a per-decision objective produces a worse policy}
+\label{sec:rejected-perdecision}
+
+The register's enabling entry held that a per-decision objective is necessary because the scoreboard
+is too noisy to resolve small effects. \textbf{Its precision claim is confirmed and its fitting form
+is killed}, and the two halves are independent.
+
+The design effect of deal clustering was measured for the first time in this cycle, and a
+one-point-equivalent effect resolves in \vsevenPerDecisionGamesLo{}--\vsevenPerDecisionGamesHi{} games
+on the declaration channel against \vsevenScoreboardGames{} on the scoreboard: the precision claim
+confirmed at \vsevenDesignEffectLo$\times$--\vsevenDesignEffectHi$\times$.
+
+But all three self-oriented per-decision objectives, fitted at matched budget against a per-game
+control, produced \emph{worse} policies: \vsevenKfourSelfDecl{}, \vsevenKfourSelfAsk{} and
+\vsevenKfourSelfAlloc{}~points, every one replicated in sign and two of them clearing the floor as
+certified negatives. Each fit moved its own proxy in the intended direction and lost anyway:
+the declaration-oriented fit bought \vsevenKfourTradeGain{}~pp of declaration accuracy by paying
+\vsevenKfourTradeCost{}~pp of ask accuracy, and the ask-oriented fit did the reverse. The two
+per-decision channels trade against each other, so a fitter holding fifty-five coordinates buys one
+out of the other. Keep the estimator; drop the objective.
+
+\subsection{Nothing learned survives a free random tie-break}
+\label{sec:rejected-tie}
+
+\vsevenTieContested\% of contested ask decisions in \vsix{} tie bit-for-bit. The open question was
+whether anything can be \emph{selected} inside that group, as opposed to merely randomised. A learned
+re-ranker was built --- the corpus's first learned agent --- restricted to the tie group.
+
+Against the deployed policy it scores \vsevenKfiveTieOnly{} pooled, which is indistinguishable from the free hash tie-break's \vsevenKfiveFreeTie{}; head to head against that free tie-break at 48{,}000 games it is
+\vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{}, replicated. \textbf{Nothing learned survives the free
+random tie-break.} The correct control for anything operating inside the tie group is the
+decorrelated policy and not the deployed one, which is a methodological point this report inherits
+and applies.
+
+The same capture explains why. Setting every candidate's true advantage to exactly zero and feeding
+the capture's real standard errors through the engine's real deviation rule reproduces the search's observed deviation rate to a \vsevenCurseRelErr\% relative error on a quantity the null was never fitted to: the
+search's per-decision selection signal is $\sim$\vsevenCurseShare\% winner's curse on its own
+Monte-Carlo draw, and $\sim$\vsevenCurseTieShare\% inside the tie group, where the rule applies no
+shrinkage at all.
+
+\subsection{Two directions closed on arithmetic before they were built}
+\label{sec:rejected-arithmetic}
+
+\paragraph{Forced-endgame allocation.} The register priced closing the entire forced-endgame accuracy
+gap. Re-derived from this cycle's own capture it is worth \vsevenLthirteenClose{}~win-rate points ---
+the register's own figure corrected \emph{upward} by a factor of two and still a fiftieth of the
+detection floor. The one route by which it could have returned, an adversary driving incidence up, was measured and costs the adversary \vsevenLthirteenAdvCost{}~points.
+
+\paragraph{A stochastic policy bought to reduce readability.} The brief made this conditional on the
+white-box inverter biting. Transcript inversion contracts the deal posterior by
+$\sim$\vsevenBitsPerAsk{} bits per observed ask --- the first such measurement anywhere --- and
+converting those bits into play is worth \vsevenInversionUnfitted{}~points unfitted. But the excess
+tracks planted-edge size within $\pm$\vsevenInversionTrack{} on all eight rungs, which is the
+signature of a general strength gain and not of an exploitation instrument. And no linear handicap
+adds more than \vsevenHandicapBits{}~bits per ask, so within this policy family \textbf{there is no
+readability handicap for a stochastic policy to buy.} The antecedent fails and the limb is closed
+rather than skipped.
+
+\subsection{What the four kills leave}
+\label{sec:rejected-leaves}
+
+The register the cycle inherited described a policy with several points of accessible headroom in
+four named places. Three of them are now closed with measurements and the fourth is confirmed as an
+instrument rather than a lever. What remains as the located gain is a single coordinate found by an
+unfitted sweep --- not by any of the architecture work --- and \S\ref{sec:results-attribution}
+measures it on holdout. That is the barrier this report names, and \S\ref{sec:conclusion} states it
+as such.

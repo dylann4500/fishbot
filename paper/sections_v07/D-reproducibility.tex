@@ -1,0 +1,69 @@
+\section{Reproduction}
+\label{app:repro}
+
+\subsection*{The run is identified by its binary, not by a commit}
+
+Five commits landed in the repository while the battery was running, so no single commit describes the
+tree for the whole of it. Every one of the \vsevenScoredCells{} scored cells was played by
+\filepath{engine/fish7}, SHA-256 \texttt{\vsevenBinarySha{}}, \vsevenBinaryBytes{} bytes, and that
+binary was never rebuilt between the first bank digest and the last cell. The five later commits touch
+the interactive browser table and not the policy; \S\ref{sec:corrections-self} records the executed
+check --- rebuilding the engine from the tree as it stood at the end of the battery and recomputing the
+mirror digest --- that establishes the frozen policy is unmoved by them.
+
+\subsection*{The battery}
+
+\begin{table}[h]\centering
+\caption{Every preregistered battery against what was measured. No cell was dropped.}
+\label{tab:battery}
+\input{tables_v07/battery}
+\end{table}
+
+\subsection*{Where the raw output is}
+
+Under \filepath{research/v07/results/}, digested in
+\filepath{research/v07/results/MANIFEST-P5.json}: \vsevenManifestRuns{} artifacts, of which
+\vsevenManifestVerified{} re-verify against their recorded SHA-256 and byte count on disk at the time
+this document was generated.
+
+\begin{itemize}
+\item \filepath{P5-B0.json} --- the verification block: seven bank digests, the sealed plaintext hash,
+  the freeze round-trips, the seed registry, the engine self-audit, and the reproducibility runs.
+\item \filepath{P5-gate.jsonl} --- the commit gate for all four configurations, rule by rule.
+\item \filepath{P5-B2.jsonl} \ldots\ \filepath{P5-B10.jsonl} --- one JSON row per cell, each carrying
+  the literal argument vector it was produced by and the complete match object the harness emitted.
+\item \filepath{P5-Z01.jsonl} \ldots\ \filepath{P5-Z08.jsonl}, \filepath{P5-B9-h*.jsonl} --- the
+  fitting traces: header, one record per generation, and the final weight vector each adversary spec
+  was rebuilt from.
+\item \filepath{P5-TABLES.txt} --- the phase-5 reduction, produced by \filepath{engine/p5\_analyse.py}.
+\end{itemize}
+
+Every row carries its own argument vector, so any single cell can be re-run by hand from the artifact
+without reference to this document or to the driver that produced it.
+
+\subsection*{How the numbers in this document were produced}
+
+\begin{enumerate}
+\item \filepath{engine/build\_tables\_v07.py --paper} reads the artifacts above and writes
+  \filepath{paper/numbers\_v07\_generated.tex} and \filepath{paper/tables\_v07/*.tex}. Every macro it
+  emits carries a comment naming the artifact and field it came from, and re-emitting a name with a
+  different value raises rather than silently winning.
+\item \filepath{paper/check\_provenance.py --version v07} audits the result: a number used in a section
+  must either be generated from an artifact or sit under a comment header naming an artifact that
+  exists on disk. Of the numbers this manuscript uses, \vsevenProvGenerated{} are generated from the
+  phase-5 artifacts and \vsevenProvTranscribed{} are transcribed from the earlier phases of this
+  programme, each attributed.
+\item \filepath{paper/inline.py} flattens the modular source into a single self-contained file.
+\end{enumerate}
+
+The generated file is \verb|\input| after the placeholder file, so a value in the placeholder can never
+reach a PDF built after the battery has been run. Generated on \vsevenBuildDate{}.
+
+\subsection*{Sample sizes}
+
+The project's power rule is a $95\%$ half-width of $98/\sqrt{N}$ points at parity, computed by the
+harness and emitted with every cell. At \vsevenBtwoFcheapN{} games that is about $0.45$ points; the
+frontier cells are sized so that the primary claim's half-width is small against the
+\vsevenPrimaryFloor{}-point reference bar rather than against the effect. Far-class panel members are
+sized at a quarter of the near class deliberately: they are decided by twenty-five to fifty points and
+do not need the resolution.

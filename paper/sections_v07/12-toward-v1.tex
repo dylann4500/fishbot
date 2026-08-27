@@ -1,0 +1,107 @@
+\section{What v1.0 would have to show}
+\label{sec:towardone}
+
+Two sentences a future release might want to write are ``FishBot v1.0 is near-optimal'' and ``FishBot
+v1.0 is the strongest known Fish-playing team''. Neither is supportable by anything in this corpus
+today, and neither is close. This section states what evidence each would require, so that the gap is
+a list of experiments rather than a matter of taste. Nothing here has been measured; every item is
+open.
+
+\subsection{For ``near-optimal''}
+\label{sec:towardone-optimal}
+
+Near-optimality is a claim about distance to a benchmark, so the first requirement is a benchmark.
+The corpus has none.
+
+\begin{enumerate}
+
+\item \textbf{An upper bound on exploitability, not a lower one.} Every exploitability figure in this
+  corpus, including all eight arms of \S\ref{sec:exploit}, is a lower bound produced by a search: it
+  says what \emph{this} search found, and computing the true value is NP-hard even white-box. A
+  near-optimality claim needs a bound in the other direction --- an argument or a computation showing
+  that no adversary in a stated class can exceed some $\varepsilon$. No such bound exists here for any
+  class, and producing one for even a restricted class would be the single most valuable result the
+  next cycle could return.
+
+\item \textbf{A team analogue of local best response, and the rollout policy it needs.} The
+  poker line's standard exploitability probe rests on a cheap, correct-enough passive continuation ---
+  ``what if nobody does anything clever from here''. Fish has no passive continuation: a player must
+  ask or declare. Until a defensible rollout policy for that role is named and calibrated, the probe
+  cannot be ported, and the literature's own warning that choosing a value function is the hard part
+  applies directly.
+
+\item \textbf{An adversary that is genuinely ex-ante correlated.} The threat model names three
+  correlation regimes and makes the correlated one the headline. What has been built and measured is
+  the synchronized regime, plus one correlated fit that reached \vsevenCorrelatedFit{} against a class
+  floor of \vsevenCorrelatedFloor{} --- i.e. nothing. Whether a genuinely correlated three-seat
+  responder is buildable at all for a game this size is open, and the honest position is that the
+  headline regime has fallen back to a weaker one.
+
+\item \textbf{A detection floor low enough for the claim.} The instrument's floor is
+  \vsevenPrimaryFloor{} points and \S\ref{sec:corrections-corpus} records that it does not buy down
+  with evaluation games. ``Near-optimal'' is not a statement compatible with an instrument that cannot
+  distinguish a policy from one a point and a half weaker. Lowering the floor is not an evaluation-power
+  problem --- it is a search-power problem, and phase~2 established that by measurement.
+
+\item \textbf{The sum of small effects, addressed.} This report and its predecessor both conclude that
+  no \emph{individual} mechanism on the register is large. Neither addresses whether a dozen
+  quarter-point mechanisms exist and compound. Resolving a quarter of a point on the scoreboard needs
+  roughly \vsevenScoreboardGames{} games a cell; the per-decision estimator of
+  \S\ref{sec:rejected-perdecision} does it in
+  \vsevenPerDecisionGamesLo{}--\vsevenPerDecisionGamesHi{}. That estimator is confirmed and unused,
+  because fitting against it fails. Using it as an \emph{estimator} while fitting against the
+  scoreboard is the obvious unattempted experiment.
+
+\end{enumerate}
+
+\subsection{For ``the strongest known Fish-playing team''}
+\label{sec:towardone-strongest}
+
+This is a comparative claim and it is currently unfalsifiable, because the comparison class has one
+member.
+
+\begin{enumerate}
+
+\item \textbf{An opponent this project did not write.} Every arm, archetype and adversary in this
+  corpus was built inside it. The panel's deception archetypes are stylised implementations of
+  manoeuvres one person reported from live play. A claim to be strongest known requires at least one
+  independently authored opponent, and ideally a published rule dialect other people can implement
+  against.
+
+\item \textbf{Play against people, measured.} The corpus has no human-play measurement of any kind.
+  What it has is a partner-regime table in which ``a foreign partner'' is another bot
+  (\S\ref{sec:results-partners}). The project owner's standing decision --- never headline the
+  self-play configuration as the one a person will meet --- exists precisely because the substitute is
+  not the thing. A strongest-known claim needs a duplicate-style human battery with enough deals to
+  resolve a point, and the six-seat duplicate design for it has not been settled.
+
+\item \textbf{A stated, published dialect.} Fish is played in many house dialects, and
+  \S\ref{sec:results-dialects} shows the arm ordering is stable across eight of them --- which is
+  evidence the claim could survive dialect variation, and also evidence that ``Fish'' names a family
+  rather than a game. Any comparative claim has to name the dialect it holds in.
+
+\item \textbf{Somebody else's evaluation.} Every number in this report was produced by one engine,
+  written by this project, audited by tests this project wrote. The strongest available substitute for
+  external replication was used --- material sealed before the configuration existed, digests computed
+  by a second build, a protocol committed in advance --- and it is not the same thing.
+
+\end{enumerate}
+
+\subsection{The next cycle's first three jobs}
+\label{sec:towardone-next}
+
+Stated concretely, because a barrier report should hand over work rather than a mood.
+
+\begin{enumerate}
+\item \textbf{Fix the cross-deal agent residue, and re-measure everything the fix moves.} The carrier
+  is named (\texttt{\vsevenSsixCarrier{}}); the member is not. The repair changes the play of every
+  searching configuration by about one deal in \vsevenSsixIncidence{}. It is the first maintenance
+  item after this freeze, and it must precede the next freeze rather than follow it.
+\item \textbf{Test whether the small effects compound.} Per-decision estimation, per-game objective,
+  on a lattice of mechanisms each individually below the floor. This is the one hypothesis both this
+  cycle and the last explicitly declined to test, and both said so.
+\item \textbf{Build an upper bound for one restricted adversary class.} Even a loose bound over a
+  small class would convert every exploitability sentence in this corpus from ``we did not find one''
+  to ``there is not one larger than $\varepsilon$'', which is a different kind of claim and the only
+  kind that supports the word near-optimal.
+\end{enumerate}

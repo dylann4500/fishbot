@@ -1,0 +1,168 @@
+% ---------------------------------------------------------------------------
+% numbers_v07.tex -- PLACEHOLDERS and TRANSCRIBED numbers for the v0.7 report.
+%
+% Two kinds of macro live here.
+%
+%   * Placeholders for quantities `engine/build_tables_v07.py --paper` settles
+%     from the phase-5 artifacts.  Those are \renewcommand'd by
+%     numbers_v07_generated.tex, which is \input after this file, so the value
+%     written here can never reach a PDF built after the battery has been run.
+%     They exist so the manuscript compiles before the battery does.
+%
+%   * TRANSCRIBED numbers: measurements from phases 1-4 of the v0.7 programme,
+%     which this report quotes but did not itself produce.  Each sits under a
+%     comment header naming the document that records it.
+%     `paper/check_provenance.py --version v07` fails if any transcribed macro
+%     has no such header or names an artifact that is not on disk.
+%
+% Phase-5 numbers are never transcribed.  If a \vseven macro used in
+% sections_v07/ is not in numbers_v07_generated.tex, the generator prints a
+% warning naming it and the provenance check reports it as undeclared.
+% ---------------------------------------------------------------------------
+
+% =========================== PHASE 1 -- the instrument =====================
+% docs/v07/INSTRUMENT.md
+\providecommand{\vsevenFloorPhaseOne}{1.68}
+\providecommand{\vsevenBitsPerAsk}{2.0}
+\providecommand{\vsevenInversionUnfitted}{+1.52}
+\providecommand{\vsevenInversionTrack}{0.4}
+\providecommand{\vsevenHandicapBits}{0.07}
+\providecommand{\vsevenFmidHeadToHead}{+2.52}
+\providecommand{\vsevenTruncatedEndgame}{+2.19}
+\providecommand{\vsevenFullGameOld}{+0.08}
+
+% =========================== PHASE 2 -- the adversaries ====================
+% docs/v07/ADVERSARIES.md
+\providecommand{\vsevenBestExploit}{+0.79}
+\providecommand{\vsevenBestExploitLo}{+0.48}
+\providecommand{\vsevenBestExploitHi}{+1.10}
+\providecommand{\vsevenBestExploitN}{96,000}
+\providecommand{\vsevenUrgencyCeiling}{+0.38}
+\providecommand{\vsevenUrgencyCeilingLo}{-0.06}
+\providecommand{\vsevenUrgencyCeilingHi}{+0.81}
+\providecommand{\vsevenUrgencyWorthLo}{+1.23}
+\providecommand{\vsevenUrgencyWorthHi}{+1.62}
+\providecommand{\vsevenCliff}{15.18}
+\providecommand{\vsevenCliffTail}{405}
+\providecommand{\vsevenCliffIncumbentTail}{149}
+\providecommand{\vsevenCorrelatedFit}{+0.70}
+\providecommand{\vsevenCorrelatedFloor}{2.31}
+\providecommand{\vsevenSubAddPhaseTwo}{0.83}
+\providecommand{\vsevenOneSwitchArm}{+2.71}
+\providecommand{\vsevenOneSwitchArmVsFmid}{-0.99}
+\providecommand{\vsevenSearchAsExploit}{+1.89}
+
+% =========================== PHASE 3 -- the candidates =====================
+% docs/v07/CANDIDATES.md
+\providecommand{\vsevenLoneDecls}{210,000}
+\providecommand{\vsevenLoneCeilingBefore}{2.45}
+\providecommand{\vsevenLoneCeilingAfter}{0.84}
+\providecommand{\vsevenLoneUrgencyShare}{71}
+\providecommand{\vsevenJointWorseNet}{-1.313}
+\providecommand{\vsevenJointWorseWin}{-1.58}
+\providecommand{\vsevenJointFlatLo}{72.4}
+\providecommand{\vsevenJointFlatHi}{74.4}
+\providecommand{\vsevenKoneRsqBefore}{0.00108}
+\providecommand{\vsevenKoneRsqAfter}{0.07976}
+\providecommand{\vsevenKoneFold}{74}
+\providecommand{\vsevenKoneInPlay}{+1.84}
+\providecommand{\vsevenKoneControl}{+2.01}
+\providecommand{\vsevenKoneChangeLo}{0.3205}
+\providecommand{\vsevenKoneChangeHi}{0.3237}
+\providecommand{\vsevenKfourSelfDecl}{-2.26}
+\providecommand{\vsevenKfourSelfAsk}{-1.59}
+\providecommand{\vsevenKfourSelfAlloc}{-1.20}
+\providecommand{\vsevenKfourTradeGain}{+0.39}
+\providecommand{\vsevenKfourTradeCost}{-2.33}
+\providecommand{\vsevenDesignEffectLo}{17}
+\providecommand{\vsevenDesignEffectHi}{39}
+\providecommand{\vsevenPerDecisionGamesLo}{284}
+\providecommand{\vsevenPerDecisionGamesHi}{560}
+\providecommand{\vsevenScoreboardGames}{9,604}
+\providecommand{\vsevenKfiveHeadToHead}{-0.01}
+\providecommand{\vsevenKfivePm}{0.45}
+\providecommand{\vsevenCurseShare}{84}
+\providecommand{\vsevenCurseTieShare}{95.5}
+\providecommand{\vsevenTieContested}{53.80}
+\providecommand{\vsevenLthirteenClose}{0.030}
+\providecommand{\vsevenKthreeOverVsix}{+1.91}
+\providecommand{\vsevenKthreeOverVsixLo}{+1.28}
+\providecommand{\vsevenKthreeOverVsixHi}{+2.53}
+\providecommand{\vsevenKthreeOverComposite}{+1.42}
+\providecommand{\vsevenKthreeOverCompositeLo}{+0.18}
+\providecommand{\vsevenKthreeOverCompositeHi}{+2.68}
+\providecommand{\vsevenStallFrozenRun}{326}
+\providecommand{\vsevenStallIncumbentRun}{6}
+\providecommand{\vsevenMisdeclBefore}{2.556}
+\providecommand{\vsevenMisdeclAfter}{1.028}
+\providecommand{\vsevenCorpusCost}{242}
+
+% =========================== PHASE 4 -- the freeze =========================
+% docs/v07/RESEARCH-LOG.md
+\providecommand{\vsevenTrainFcheap}{+3.18}
+\providecommand{\vsevenTrainFcheapLo}{+2.55}
+\providecommand{\vsevenTrainFcheapHi}{+3.81}
+\providecommand{\vsevenTrainSubAdd}{63}
+\providecommand{\vsevenSsixCarrier}{V06Agent::roll}
+\providecommand{\vsevenSsixIncidence}{800}
+
+% docs/v07/PREREGISTRATION.md
+\providecommand{\vsevenTrainGroup}{+0.78}
+\providecommand{\vsevenTrainGroupLo}{+0.33}
+\providecommand{\vsevenTrainGroupHi}{+1.22}
+\providecommand{\vsevenTrainRtwelveLoo}{+2.10}
+\providecommand{\vsevenTrainSearchLoo}{+0.77}
+\providecommand{\vsevenTrainRtieLoo}{+0.20}
+\providecommand{\vsevenTrainUrgoffLoo}{+0.02}
+\providecommand{\vsevenXpDistanceLo}{6.3}
+\providecommand{\vsevenXpDistanceHi}{9.6}
+\providecommand{\vsevenTrainOneSeatFive}{+1.26}
+\providecommand{\vsevenTrainOneSeatSix}{+2.88}
+
+% =========================== THE LEDGER ====================================
+% docs/v07/SUBOPTIMALITY-LEDGER.md
+\providecommand{\vsevenLtwoPriority}{0.61}
+\providecommand{\vsevenLonePriority}{0.48}
+\providecommand{\vsevenLthreeDeadAsks}{11.7}
+\providecommand{\vsevenLelevenBits}{1.30}
+\providecommand{\vsevenLedgerOpen}{5}
+
+% ---- further transcribed measurements, phase 3 ----
+% docs/v07/CANDIDATES.md
+\providecommand{\vsevenLoneStrictLo}{95.6}
+\providecommand{\vsevenLoneStrictHi}{100}
+\providecommand{\vsevenJointFixed}{218}
+\providecommand{\vsevenJointBroken}{454}
+\providecommand{\vsevenKoneLeaves}{1.3M}
+\providecommand{\vsevenKfiveTieOnly}{+1.19}
+\providecommand{\vsevenKfiveFreeTie}{+1.14}
+\providecommand{\vsevenCurseRelErr}{0.4}
+\providecommand{\vsevenLthirteenAdvCost}{17}
+\providecommand{\vsevenFullGameOldN}{4,000}
+\providecommand{\vsevenZeightInert}{18}
+\providecommand{\vsevenZeightLive}{37}
+\providecommand{\vsevenZoneFitMargin}{+6.67}
+\providecommand{\vsevenVsixCoords}{37}
+
+% ---- further transcribed measurements, the phase-5 recording ----
+% docs/v07/FINAL-RESULTS.md
+\providecommand{\vsevenDriftChanged}{five}
+\providecommand{\vsevenDriftTotal}{78}
+\providecommand{\vsevenResidueGames}{12,000}
+\providecommand{\vsevenResidueRatio}{76}
+\providecommand{\vsevenDriftCommits}{five}
+
+% ---- the v0.4 exploitability figure the record misreads ----
+% paper/sections_v06/11-results.tex
+\providecommand{\vsevenVfourLbr}{51.19}
+
+% =========================== PLACEHOLDERS ==================================
+% These are all settled by engine/build_tables_v07.py --paper.  The values below
+% are never correct and are never meant to be: they exist only so that a
+% checkout without numbers_v07_generated.tex still typesets.  Each is listed so
+% that a missing generator run is visible in the PDF as a zero rather than as an
+% empty box.
+% research/v07/results/MANIFEST-P5.json
+\providecommand{\vsevenScoredCells}{0}
+\providecommand{\vsevenBinaryShaShort}{0000000000000000}
+\providecommand{\vsevenBinaryBytes}{0}

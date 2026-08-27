@@ -1,0 +1,86 @@
+\section{Introduction}
+\label{sec:intro}
+
+Six-player Canadian Fish is a team game of pure public information flow. Fifty-four cards are dealt
+nine each into two alternating teams of three; a player asks a named opponent for a named card, must
+already hold another card of that card's six-card half-suit, must not hold the card itself, and keeps
+the turn on a hit and loses it on a miss; a team scores a half-suit by naming, correctly and in full,
+which of its members holds each of the six cards. Every ask, every hit, every miss and every
+declaration is seen by all six players, which makes the entire hidden state the initial deal and the
+posterior over that deal exactly computable.
+
+The \vsix{} study ended with a policy that beat its predecessor by about nine tenths of a point and
+with a design register most of whose entries it had just closed as worth nothing. It named the
+binding constraint plainly: at the budget the project had always used, this policy class looks flat.
+The v0.7 programme was built to find out whether it \emph{is} flat, and it was organised so that the
+answer could not be argued into being positive. Five phases ran under separate briefs: rebuild the
+measuring instrument and characterise what it can see; generate adversaries in the open and find what
+actually beats the \vsix{} frontier; build candidate architectures; run a bake-off and freeze exactly
+one configuration; and then --- from a cleared context, reading only a protocol committed before any
+holdout deal had been played --- measure the frozen configuration on sealed material.
+
+This report is phase 6. It is written after the numbers are in, and it is bound by what the protocol
+said before they were.
+
+\paragraph{The result in one paragraph.}
+The preregistered primary claim passes and is certified: against \fcheap{}, the cheapest point of the
+\vsix{} frontier, the frozen configuration scores \vsevenBtwoFcheap{}~points
+$[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over \vsevenBtwoFcheapN{} games of sealed material, with
+the sign replicating on both banks and a lower bound above the pre-committed detection floor. Nothing
+built to exploit it succeeds. It is not a self-play convention. But it does \emph{not} beat
+\composite{} --- \vsevenBtwoComposite{}~points
+$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$ --- and the protocol states in advance what that
+means: the increment that phases~3 and~4 added to what phase~2 already had did not replicate, and on
+that cell the release reduces to a phase-2 result. The strength gain in this cycle is real, it is
+located in a single coordinate found by an unfitted sweep in phase~2, and the three phases of
+architecture work that followed added no measurable strength on top of it.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item \textbf{A preregistered evaluation with a stated failure condition}
+  (\S\ref{sec:protocol}). The protocol names the bar (\fcheap{}, not the deployed policy), the
+  thresholds, the seven conditions that would mean v0.7 is not an advancement, and the sentence the
+  report must use if the partner-regime ordering survives. Two of the seven conditions came out
+  against the release and are reported as such (\S\ref{sec:against}).
+
+\item \textbf{The worst case and the minimax regret lead, and they disagree}
+  (\S\ref{sec:results-panel}). On a \vsevenPanelMembers{}-member panel scored identically for four
+  arms, \frozen{} has the best worst cell (\vsevenWorstFrozen{} against \vsevenWorstIncumbent{}) and
+  is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
+  labelled a diagnostic, because the project's standing rule forbids leading with an aggregate.
+
+\item \textbf{Four architectures killed with measurements} (\S\ref{sec:rejected}). The
+  declaration-allocation channel --- the corpus's second-largest quantified opportunity --- closes at
+  exactly zero, and its proposed fix is shown not to be a fix. A leaf evaluator fitted
+  \vsevenKoneFold$\times$ better in the only statistic its consumer can use buys nothing in play.
+  Every self-oriented per-decision objective produces a worse policy while moving its own proxy in
+  the intended direction. A learned re-ranker inside the exchangeable tie group is worth
+  \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break.
+
+\item \textbf{A mechanical side-channel gate with calibrated positive controls}
+  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the test built to catch them
+  and pass the other three, on holdout material, across \vsevenSideCells{} cells.
+
+\item \textbf{A fresh adversary search that finds nothing} (\S\ref{sec:exploit}). Eight independent
+  searches over four objectives and three classes, each evaluated on banks disjoint from the stream it
+  was fitted on. Every arm loses; the largest upper bound anywhere is \vsevenBfourWorstUpper{}.
+
+\item \textbf{The selection signature, isolated} (\S\ref{sec:against-selection}). Of four quantities
+  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and one falls
+  short --- the one measuring the group of keys the freeze was selected over.
+
+\item \textbf{Corrections to the record} (\S\ref{sec:corrections}), including a freeze-verification
+  step that could not fire because its own baseline had been refreshed, a scored-cell count that the
+  artifacts do not support, and a cost figure the corpus understated by more than a third.
+\end{enumerate}
+
+\paragraph{What this paper does not claim.}
+It does not claim that v0.7 is stronger than the best configuration available before phase~3 began;
+the cell that would show that is \vsevenBtwoComposite{}~points with an interval containing zero. It
+does not claim that the frozen configuration is hard to exploit --- only that eight searches at a
+stated budget, in stated classes, did not exploit it, which is a lower bound within a searched class
+and nothing more (\S\ref{sec:limitations-lbr}). It does not claim the gain is located: the protocol's
+own location test does not replicate across the two banks (\S\ref{sec:against-location}). And it does
+not claim that any policy in this corpus is near-optimal. \S\ref{sec:towardone} states what would
+have to be measured before that sentence could be written about \emph{any} Fish-playing team, and
+none of it has been.

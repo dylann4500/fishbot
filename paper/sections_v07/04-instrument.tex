@@ -1,0 +1,83 @@
+\section{The instrument, and what it can see}
+\label{sec:instrument}
+
+Every claim in \S\ref{sec:results} and \S\ref{sec:exploit} is a claim about what an instrument
+resolved. This section states the instrument's floor, its side-channel gate, and the arithmetic that
+governs every interval in the report.
+
+\subsection{Two floors, and they are different objects}
+\label{sec:instrument-floor}
+
+A \textbf{detection floor} is the effect size below which this instrument's fitted responders are
+\emph{empty} rather than unresolved. Phase~1 measured it at \vsevenFloorPhaseOne{} points and
+predicted it would buy down as (evaluation games)$^{-1/2}$. Phase~2 refuted that prediction at its own
+predicted value: at exactly four times the games the floor is \vsevenPrimaryFloor{}, and the
+sub-floor rung is still undetected --- not because the interval is wide but because the excess
+resolves \emph{to} zero. \S\ref{sec:results-controls} reproduces that on holdout material.
+
+The floor therefore does \textbf{not} buy down with games, and a 96,000-game cell does not lower it.
+Two values are in force, and they are not interchangeable:
+
+\begin{itemize}
+\item \textbf{\vsevenPrimaryFloor{}} is the in-class detection floor. Applied to an
+  \emph{exploitability} number it is a detection floor in its original sense. Applied to the primary
+  claim of \S\ref{sec:results-frontier} --- a directly measured paired duplicate win-rate difference,
+  with no responder, no fit and no maximisation in it --- it is a \emph{fixed pre-committed reference
+  bar} and nothing more. The protocol does not claim a responder-recovery floor bounds that quantity,
+  and neither does this report.
+\item \textbf{\vsevenDeclFloor{}} is the declaration-family floor. It applies to exactly two things:
+  the declaration-objective adversary of \S\ref{sec:exploit}, and the declaration-accuracy column of
+  \S\ref{sec:results-frontier}.
+\end{itemize}
+
+\subsection{How every interval in this report is computed}
+\label{sec:instrument-arithmetic}
+
+\begin{description}
+\item[Edge.] A cell's win-rate advantage in points, $100 \times (\text{winRate}_A - 0.5)$. Every cell
+  is a paired duplicate: the same deal bank, the same deal indices, and two rotations so each deal is
+  played with the teams swapped, so the deal's intrinsic luck cancels.
+\item[Interval.] The \textbf{deal-clustered bootstrap}, 20{,}000 resamples over deals. A Wilson
+  interval is never quoted anywhere in this report: the two rotations of one deal are one correlated
+  unit, and treating them as independent understates the width.
+\item[Pooled.] Two banks of equal size: the mean of the two edges with
+  $\text{se}_{\text{pooled}} = \sqrt{\text{se}_1^2 + \text{se}_2^2}/2$. Both per-bank values are
+  printed beside every pooled figure in this report.
+\item[Delta.] A difference between two \emph{pooled} cells: the difference of the estimates with the
+  two pooled half-widths combined \textbf{in quadrature}. This is conservative --- the arms are paired
+  on deals and the harness gives no paired delta across two separate cells --- and the protocol fixes
+  it and says so.
+\item[Replication.] A claim whose \textbf{sign} does not agree on both banks is reported as NOT
+  REPLICATED whatever its pooled interval says. \S\ref{sec:against-location} is the case where that
+  rule bites.
+\end{description}
+
+\subsection{The mechanical side-channel gate}
+\label{sec:instrument-side}
+
+The homogeneity constraint of \S\ref{sec:threat} had never been checked by anything but inspection.
+\texttt{fish7 v7side} implements it: a listening-substitution test, a stream-independence test, a
+posterior-invariance test, and a seat-isolation reconstruction test that replays every decision from
+(own hand, public event stream, rules, reset seed) and counts what it cannot reproduce.
+
+The gate is only worth its output if it is calibrated, so three positive controls were built, each a
+policy carrying one planted cheat. Table~\ref{tab:sidechannel} is the holdout result:
+each planted channel is caught by exactly the test built to catch it and by no other, identically on
+both banks, over \vsevenSideCells{} cells.
+
+\begin{table}[t]\centering
+\caption{The calibrated side-channel positive controls, on holdout material. A cheat that failed the
+wrong test, or more than one, would mean the gate does not discriminate and no seat-isolation
+statement in this report could be read as a measurement.}
+\label{tab:sidechannel}
+\input{tables_v07/sidechannel}
+\end{table}
+
+\paragraph{The seat-isolation test measures a mode no scored cell uses, and that is stated rather
+than buried.} Its zero-tolerance form requires one thread --- the audit depends on the deal-to-thread
+partition, and work-stealing does not fix that partition at any higher count --- and agents rebuilt
+per deal. Rebuilding agents per deal \emph{changes play}. What the gate certifies is therefore ``with
+the cross-deal residue removed, nothing else depends on anything it should not''. The residue itself
+is not removed from the shipped mode. \S\ref{sec:results-residual} measures it on holdout material and
+reports the denominators moving between the two conditions, which is the same point restated as
+data.

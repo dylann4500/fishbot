@@ -1,0 +1,114 @@
+\section{Corrections to the record}
+\label{sec:corrections}
+
+This project's convention is that corrections are stated as corrections, in their own section, and not
+silently patched into the artifacts they correct. The \vsix{} study opened a register against the
+\vfour{} and \vfive{} record; this cycle adds the entries below. Each names the measurement that forces
+it.
+
+\subsection{Corrections to the v0.4--v0.6 record}
+\label{sec:corrections-corpus}
+
+\begin{description}
+
+\item[The cost of the frontier's search, wrong in both directions.] The corpus recorded the searching configuration at \vsevenCorpusCost$\times$ the
+  blueprint, and the \vsix{} paper at ``three orders of magnitude''. Both figures describe the
+  \emph{unrestricted} configuration, which is not the point of the frontier anything was measured at.
+  The endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$ during
+  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the
+  correction}: measured on the shared panel at a fixed thread count, the frozen configuration costs at
+  least \vsevenCostFrozenTight$\times$ the blueprint (\S\ref{sec:results-cost}), and every figure in
+  that table is a lower bound. The record has now been wrong in both directions and the reason is the
+  same both times --- a ratio quoted without the basis it was computed on.
+
+\item[The corpus's exploitability figure is a lower bound, and has been read as more.] The v0.4 findings document reports that a policy fitted
+  specifically against v0.4 fails to reach parity with it; the same study's own table records the
+  response reaching $\vsevenVfourLbr\%$ with an interval spanning parity. The \vsix{} study corrected this. It is
+  repeated here because this cycle's own strongest result --- \S\ref{sec:exploit}, eight searches, all
+  losing --- is a number of exactly the same kind, and the correction is what stops this report making
+  the same claim.
+
+\item[The declaration-allocation channel is worth zero, not two points.] The
+  register ranked it second by priority, at \vsevenLonePriority{}. \S\ref{sec:rejected-alloc} closes it
+  at exactly zero over $\sim$\vsevenLoneDecls{} recorded declarations, shows its proposed fix is worse
+  than the object it would replace, and shows most of the residual error class is an information limit
+  rather than a defect.
+
+\item[The forced-endgame entry's own number was wrong.]
+  Re-derived from this cycle's capture, closing the entire accuracy gap is worth
+  \vsevenLthirteenClose{}~win-rate points --- the register's figure corrected \emph{upward} by a factor
+  of two, and still a fiftieth of the detection floor. The entry is closed either way.
+
+\item[The detection floor does not buy down with evaluation games.] Phase~1 measured
+  \vsevenFloorPhaseOne{} and predicted the floor would fall as the inverse square root of evaluation
+  games. At exactly four times the games it is \vsevenPrimaryFloor{}, and the sub-floor rung is still
+  undetected because the excess resolves \emph{to} zero rather than because the interval is wide. Below
+  roughly a point and a half the responder is empty, not unresolved. This report reproduces that on
+  holdout material (\S\ref{sec:results-controls}).
+
+\end{description}
+
+\subsection{Corrections this cycle makes to its own record}
+\label{sec:corrections-self}
+
+\begin{description}
+
+\item[A freeze-verification step could not fire, and its silence was not a pass.] The freeze checker reads its source-drift baseline out of the freeze artifact's own
+  provenance field, and that artifact was rewritten twice after the freeze commit, each rewrite
+  refreshing the baseline to the then-current tree. The check therefore compared the tree against a
+  baseline taken from the tree, and the sources the protocol predicted would be listed as changed no
+  longer differed from it. Measured against the actual freeze commit, \vsevenDriftChanged{} of the
+  \vsevenDriftTotal{} sources differ. \textbf{What is not weakened is the policy identity}: the round-trip assertions and the
+  mirror digest are computed by \emph{running} the engine, not by comparing file hashes, and all of
+  them round-trip. Because the hash-based check was vacuous it was replaced by an executed one --- the
+  engine was rebuilt from the tree as it stood at the end of the battery and the mirror digest
+  recomputed with the fresh binary. It is \texttt{\vsevenMirrorDigest{}}, identical to the frozen
+  artifact and to the binary that played every cell.
+
+\item[A scored cell is not bit-reproducible for a searching arm.]
+  \label{sec:corrections-reproducibility}
+  Before any holdout material was spent, one training cell was checked to be bit-identical over
+  \vsevenReproRuns{} runs across three thread counts, and it was
+  (\vsevenReproIdentical{}). \textbf{That check was too small.} The panel contains three policies
+  twice, so twenty-four pairs of byte-identical commands were run twice each; one pair disagreed, by
+  one game in \vsevenResidueGames{}. That is the cross-deal agent residue of \S\ref{sec:results-residual}
+  reaching the \emph{scored} mode, which four hundred deals was not large enough to expose. The
+  magnitude is roughly \vsevenResidueRatio$\times$ below a cell half-width and no verdict in this report turns on
+  it, but the earlier claim should be read as ``reproducible at four hundred deals'', not
+  ``reproducible''.
+
+\item[The scored-cell count is not the count the artifacts support.]
+  That document states \vsevenScoredCellsRecorded{} scored match cells in three places; the figure is
+  hand-typed in the reduction script rather than computed. Counting rows that carry a match object
+  across every scored battery gives \textbf{\vsevenScoredCells{}}. Nothing turns on it --- it is the
+  denominator of an observation about a single action-limit hit --- but a corpus whose standing rule is
+  that no number is hand-typed should not carry a hand-typed total, and the generator for this report
+  now computes it.
+
+\item[The partner-regime table was published without its own intervals.]
+  \label{sec:corrections-intervals}
+  The phase-5 results document prints the partner deltas as bare point estimates with a
+  replication flag. Every underlying cell carries a deal-clustered interval, and the delta arithmetic
+  is fixed by the protocol, so the intervals are computable and were simply compressed out of a
+  markdown table. Table~\ref{tab:partners} restores them. No verdict changes; a reader's ability to
+  judge the verdict does.
+
+\item[The cross-play gap was printed under the reversed sign convention.] The phase-5 document reports the gap as \vsevenXpGapRecorded{}, which is diagonal minus
+  off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative
+  direction is off-diagonal minus diagonal, which is \vsevenXpGap{}: cross-play is marginally
+  \emph{above} self-play, not below it. The magnitude is \vsevenXpGapAbs{}~points against a
+  \vsevenStwoThreshold{}-point threshold, so no verdict moves either way --- but the sign as printed
+  implies a small collapse where the data show a small lift.
+
+\end{description}
+
+\subsection{A note on comparability}
+\label{sec:corrections-comparability}
+
+Two things about this cycle's evidence standard are not the corpus's, and a reader comparing across
+versions should have them. Every claim here is measured on material sealed before the configuration
+existed, under a protocol committed before any of it was played, with a stated failure condition ---
+which no previous study in this corpus did. And every claim is replicated across two disjoint banks
+with the sign rule of \S\ref{sec:instrument-arithmetic} applied, which is why
+\S\ref{sec:against-location} reports a non-replication that a pooled-interval convention would have
+reported as a pass.
