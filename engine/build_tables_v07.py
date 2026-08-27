@@ -478,24 +478,43 @@ def replicates(rs):
 # Display names.  Harness identifiers (FROZEN, INCUMBENT) are how the artifacts
 # label the arms; the paper names them consistently as the agents they are, and
 # uses the harness spelling only where a command has to be reproduced.
-DISPLAY = {'FROZEN': 'FishBot v0.7', 'INCUMBENT': 'v0.6 deployed',
+DISPLAY = {'FROZEN': 'FishBot v0.7', 'INCUMBENT': 'v0.6 deployed', 'v06': 'v0.6',
            'F-cheap': '\\texttt{F-cheap}', 'F-mid': '\\texttt{F-mid}',
            'composite': 'phase-2 composite', 'v05': 'v0.5', 'v04': 'v0.4',
-           'v03': 'v0.3', 'v02': 'v0.2', 'F-fast': '\\texttt{F-fast}'}
+           'v03': 'v0.3', 'v02': 'v0.2', 'F-fast': '\\texttt{F-fast}',
+           'itself': 'itself'}
 
 def disp(name):
     return DISPLAY.get(name, _tex(name))
 
 TABLE_SPEC = {}
 
-def writeTable(fn, lines, spec=None, header=None, longtable=False):
+def writeTable(fn, lines, spec=None, header=None, longtable=False, xtab=False):
+    """Emit one table body.
+
+    `xtab` selects the X-column form: `tabularx` at \\linewidth, or `xltabular`
+    when `longtable` is also set.  Nothing this script emits may be wider than
+    the text block, and the wide tables get there by wrapping text in X columns
+    rather than by shrinking the type or reaching into the margin.
+    """
     os.makedirs(_TBL, exist_ok=True)
     spec, header = (spec, header) if spec else TABLE_SPEC[fn]
     with open(os.path.join(_TBL, fn), 'w') as f:
-        if longtable:
+        if longtable and xtab:
+            f.write('\\begin{xltabular}{\\linewidth}{%s}\n\\toprule\n%s \\\\\n\\midrule\n'
+                    '\\endfirsthead\n\\toprule\n%s \\\\\n\\midrule\n\\endhead\n'
+                    '\\midrule\n\\multicolumn{%d}{r@{}}{\\footnotesize\\itshape continued overleaf}\\\\\n'
+                    '\\endfoot\n\\bottomrule\n\\endlastfoot\n'
+                    % (spec, header, header, header.count('&') + 1))
+            f.write('\n'.join(lines) + '\n\\end{xltabular}\n')
+        elif longtable:
             f.write('\\begin{longtable}{%s}\n\\toprule\n%s \\\\\n\\midrule\n\\endfirsthead\n'
                     '\\toprule\n%s \\\\\n\\midrule\n\\endhead\n' % (spec, header, header))
             f.write('\n'.join(lines) + '\n\\bottomrule\n\\end{longtable}\n')
+        elif xtab:
+            f.write('\\begin{tabularx}{\\linewidth}{%s}\n\\toprule\n%s \\\\\n\\midrule\n'
+                    % (spec, header))
+            f.write('\n'.join(lines) + '\n\\bottomrule\n\\end{tabularx}\n')
         else:
             f.write('\\begin{tabular}{%s}\n\\toprule\n%s \\\\\n\\midrule\n' % (spec, header))
             f.write('\n'.join(lines) + '\n\\bottomrule\n\\end{tabular}\n')
@@ -585,11 +604,11 @@ def b3_panel_table():
         w2, wp2 = min(nonself)
         emit('vsevenWorst%sExSelf' % t, _sg(w2), 'P5-B3.jsonl: %s worst cell excluding its own self-cells' % a)
         emit('vsevenWorst%sExSelfOpp' % t, _tex(wp2), 'P5-B3.jsonl: %s worst non-self cell opponent' % a)
-        worst_lines.append('%s & %s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s \\\\' %
+        worst_lines.append('%s & %s & $%s$ & $[%s, %s]$ & $%s$ / $%s$ \\\\' %
                            (disp(a), disp(wp), _sg(w), _sg(lo), _sg(hi),
-                            per[0][0], _sg(per[0][1]), per[1][0], _sg(per[1][1])))
-    TABLE_SPEC['worstcase.tex'] = ('llrrl', 'Configuration & Worst cell & Edge (pp) & 95\\% CI & Per bank')
-    writeTable('worstcase.tex', worst_lines)
+                            _sg(per[0][1]), _sg(per[1][1])))
+    writeTable('worstcase.tex', worst_lines, '@{}L l r c r@{}',
+               'Configuration & Worst cell & Edge (pp) & 95\\% CI & Per bank', xtab=True)
 
     # ---- minimax regret: for each member, the best arm on it; an arm's regret
     # is its largest shortfall from that best, maximised over members.
@@ -661,8 +680,9 @@ def b3_panel_table():
     for p in panel:
         full.append('%s & %s & %s \\\\' % (disp(p), cls[p], ' & '.join(
             ('$%s$' % _sg(cell[(a, p)][0])) if (a, p) in cell else '---' for a in arms)))
-    writeTable('panelfull.tex', full, 'llrrrr',
-               'Panel member & Class & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite', longtable=True)
+    writeTable('panelfull.tex', full, '@{}L l r r r r@{}',
+               'Panel member & Class & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite',
+               longtable=True, xtab=True)
     return cell, panel, cls
 
 
@@ -730,13 +750,12 @@ def b4_adversaries():
         emit('vseven%sHi' % ZTAG[zid], _sg(hi), 'P5-B4eval.jsonl %s: upper bound' % zid)
         emit('vseven%sKpi' % ZTAG[zid], _tex(rs[0]['kpi']), 'P5-B4eval.jsonl %s: search objective' % zid)
         emit('vseven%sCls' % ZTAG[zid], _tex(rs[0]['cls']), 'P5-B4eval.jsonl %s: adversary class' % zid)
-        lines.append('%s & %s & %s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & %s \\\\' %
+        lines.append('%s & %s & %s & $%s$ & $[%s, %s]$ & $%s$ / $%s$ & %s \\\\' %
                      (zid, _tex(rs[0]['cls']), _tex(rs[0]['kpi']), _sg(m), _sg(lo), _sg(hi),
-                      BANK1, _sg(per[BANK1]), BANK2, _sg(per[BANK2]),
+                      _sg(per[BANK1]), _sg(per[BANK2]),
                       'yes' if replicates(rs) else 'no'))
-    TABLE_SPEC['adversaries.tex'] = ('lllrrll',
-        'ID & Class & Objective & Edge over v0.7 & 95\\% CI & Per bank & Sign replicates')
-    writeTable('adversaries.tex', lines)
+    writeTable('adversaries.tex', lines, '@{}l L l r c r c@{}',
+               'ID & Class & Objective & Edge (pp) & 95\\% CI & Per bank & Repl.', xtab=True)
     for f in fits.values():
         a = f.get('argv') or []
         for flag, tag in (('--gens=', 'Gens'), ('--pop=', 'Pop'), ('--games=', 'Deals')):
@@ -810,9 +829,8 @@ def b5_attribution():
     emit('vsevenAddInMtwoHi', _sg(mhi), 'P5-B5.jsonl A-m2: upper bound')
     lines.append('\\textit{m2=0} \\textit{(not in the freeze)} & $%s$ & $[%s, %s]$ & --- & --- \\\\'
                  % (_sg(mm), _sg(mlo), _sg(mhi)))
-    TABLE_SPEC['attribution.tex'] = ('lrrrr',
-        'Component & Add-one-in from v0.6 & 95\\% CI & Leave-one-out drop & 95\\% CI')
-    writeTable('attribution.tex', lines)
+    writeTable('attribution.tex', lines, '@{}L r c r c@{}',
+               'Component & Add-one-in & 95\\% CI & Leave-one-out & 95\\% CI', xtab=True)
     naive = sum(addins)
     emit('vsevenBfiveSum', _sg(naive), 'P5-B5.jsonl: naive sum of the FIVE add-one-in cells the freeze carries')
     emit('vsevenBfiveSumSix', _sg(naive + mm), 'P5-B5.jsonl: the six-term sum including A-m2, printed for D12')
@@ -878,13 +896,13 @@ def b6_partners():
             emit('vseven%sHi' % tag, _sg(dhi), 'P5-B6.jsonl: upper bound, opponent %s, partners %s' % (opp, p))
             emit('vseven%sRepl' % tag, 'yes' if rep else 'NO',
                  'P5-B6.jsonl: sign of the delta agrees on both banks, opponent %s, partners %s' % (opp, p))
-            lines.append('%s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s & %s \\\\' %
-                         (_tex(p), _sg(d), _sg(dlo), _sg(dhi), BANK1, _sg(per[BANK1]),
-                          BANK2, _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
+            lines.append('%s & $%s$ & $[%s, %s]$ & $%s$ / $%s$ & %s \\\\' %
+                         (disp(p) if p in DISPLAY else '\\texttt{%s}' % _tex(p),
+                          _sg(d), _sg(dlo), _sg(dhi), _sg(per[BANK1]),
+                          _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
             out[(opp, p)] = d
-        TABLE_SPEC['partners_%s.tex' % opp] = ('lrrlc',
-            'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Sign replicates')
-        writeTable('partners_%s.tex' % opp, lines)
+        writeTable('partners_%s.tex' % opp, lines, '@{}L r c r c@{}',
+                   'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Repl.', xtab=True)
     # S1 as PREREGISTRATION 5.2 draft 3 states it: min, median, self, ratio, and
     # the incumbent's own baseline over v05 on the same eight rows.
     ch = [out[('v05', p)] for p in PORDER if p != 'itself' and ('v05', p) in out]
@@ -1009,7 +1027,7 @@ def b8_dialects():
                      (_tex(name), _sg(m), _sg(lo), _sg(hi), BANK3, _sg(per[BANK3]),
                       BANK1, _sg(per[BANK1]), _sg(m - base)))
     TABLE_SPEC['dialects.tex'] = ('lrrlr',
-        'Dialect & Edge (pts) & 95\\% CI & Per bank & vs default')
+        'Dialect & Edge (pp) & 95\\% CI & Per bank & vs default')
     writeTable('dialects.tex', lines)
     mx = max(exc)
     emit('vsevenDiaMaxExcursion', _sg(mx[2]), 'P5-B8.jsonl: largest excursion from the default row')
@@ -1061,13 +1079,14 @@ def b9_controls():
             emit('vsevenB9%s%sHi' % (t, nm), _sg(c), 'P5-B9.jsonl hstr=%s: %s upper bound' % (h, nm))
         emit('vsevenB9%sRecovered' % t, 'yes' if dlo > 1.53 else 'no',
              'P5-B9.jsonl hstr=%s: is the planted edge recovered above the 1.53 floor' % h)
-        lines.append('%s%s & $%s$ $[%s, %s]$ & $%s$ $[%s, %s]$ & $%s$ $[%s, %s]$ & $\\mathbf{%s}$ $[%s, %s]$ \\\\' %
+        lines.append('%s%s & \\ci{$%s$}{%s, %s} & \\ci{$%s$}{%s, %s} & '
+                     '\\ci{$%s$}{%s, %s} & \\ci{$\\mathbf{%s}$}{%s, %s} \\\\[0.4ex]' %
                      (h, ' \\textit{(sub-floor)}' if h == '0.05' else '',
                       _sg(pm), _sg(plo), _sg(phi), _sg(hm), _sg(hlo), _sg(hhi),
                       _sg(cm), _sg(clo), _sg(chi), _sg(d), _sg(dlo), _sg(dhi)))
-    TABLE_SPEC['controls.tex'] = ('lrrrr',
-        'Planted handicap & Planted cost & Responder vs handicapped & Responder vs v0.7 & Recovered excess')
-    writeTable('controls.tex', lines)
+    writeTable('controls.tex', lines, '@{}l C C C C@{}',
+               'Planted handicap & Planted cost & vs.\\ handicapped & vs.\\ v0.7 & Recovered excess',
+               xtab=True)
     ident = [r for r in rows if r.get('kind') == 'identity']
     wr = {r['match']['winRateA'] for r in ident}
     ci = {tuple(r['match']['ci']) for r in ident}
@@ -1235,7 +1254,7 @@ def b0_verification():
         ('Declaration urgency escalation', 'event-count clock at 220 events',
          'disabled (\\texttt{pool}, \\texttt{oppfloor}, \\texttt{force}, \\texttt{askfloor})',
          '\\S\\ref{sec:agent-urgency}'),
-        ('Termination guarantee', 'the urgency clock',
+        ('Termination safeguard', 'the urgency clock',
          'deduction-state stall detector (\\texttt{stall})', '\\S\\ref{sec:agent-stall}'),
         ('Test-time search', 'built and measured, deployed disabled',
          'enabled, endgame-truncated, paired LCB guard', '\\S\\ref{sec:agent-search}'),
@@ -1475,8 +1494,8 @@ def deviations():
         if len(body) > 460:
             body = body[:457].rsplit(' ', 1)[0] + '\\,\\ldots'
         lines.append('\\textbf{%s} & %s & %s \\\\' % (did, _tex(kind).title(), body))
-    writeTable('deviations.tex', lines, 'llp{0.62\\linewidth}',
-               'ID & Kind & Deviation, addition or correction', longtable=True)
+    writeTable('deviations.tex', lines, '@{}l l L@{}',
+               'ID & Kind & Deviation, addition or correction', longtable=True, xtab=True)
     emit('vsevenDeviations', str(len(ds)), 'docs/v07/FINAL-RESULTS.md section 15: recorded deviations')
     emit('vsevenDeviationCorrections', str(sum(v for k, v in kinds.items() if k.startswith('CORRECTION'))),
          'docs/v07/FINAL-RESULTS.md section 15: entries that are corrections')
@@ -1537,9 +1556,8 @@ def totals():
             bid, what, exp, got - exp if got > exp else 0, got,
             ('complete' if got >= exp else '\\textbf{INCOMPLETE}') + (' (%s)' % dev if dev else '')))
     emit('vsevenCellsAdded', str(added), 'cells added beyond the preregistered design, per D1 and D2')
-    TABLE_SPEC['battery.tex'] = ('llrrrl',
-        'Battery & What it measures & Preregistered & Added & Measured & Status')
-    writeTable('battery.tex', lines)
+    writeTable('battery.tex', lines, '@{}l L r r r l@{}',
+               'Battery & What it measures & Registered & Added & Measured & Status', xtab=True)
     emit('vsevenCellsDropped', str(dropped), 'preregistered cells not measured')
     # CORRECTION.  docs/v07/FINAL-RESULTS.md states "409 scored match cells" in
     # three places; the figure is hand-typed at engine/p5_analyse.py:1135 and is
@@ -1617,7 +1635,7 @@ def forest_plot():
     lo_ax = min(r[2] for r in rows) - 0.6
     hi_ax = max(r[3] for r in rows) + 0.6
     span = hi_ax - lo_ax
-    W = 11.0
+    W = 9.8
     x = lambda v: (v - lo_ax) / span * W
     out = ['\\begin{tikzpicture}[x=1cm,y=1cm]']
     n = len(rows)

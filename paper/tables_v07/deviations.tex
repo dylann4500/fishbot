@@ -1,4 +1,4 @@
-\begin{longtable}{llp{0.62\linewidth}}
+\begin{xltabular}{\linewidth}{@{}l l L@{}}
 \toprule
 ID & Kind & Deviation, addition or correction \\
 \midrule
@@ -7,6 +7,11 @@ ID & Kind & Deviation, addition or correction \\
 ID & Kind & Deviation, addition or correction \\
 \midrule
 \endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape continued overleaf}\\
+\endfoot
+\bottomrule
+\endlastfoot
 \textbf{D1} & Added Cell & B5 REF-FROZEN. The eleven cells B5 names cannot yield a leave-one-out DROP: the drop is FROZEN's edge minus the variant's, and FROZEN's own edge on the lattice banks is not one of the eleven. A twelfth cell was added at the lattice size on both lattice banks. B5 therefore cost 288,000 games rather than the preregistered 264,000. \\
 \textbf{D2} & Added Cells & B9 planted cost and responder-vs-unhandicapped. B9.2 requires that "the recovered size tracks the planted size", which needs the planted size; B9.3 speaks of the planted excess "resolving TO zero", which is the responder's edge against the handicapped target MINUS its edge against the unhandicapped one. Four rungs x 2 banks x 6,000 deals were added for each, 192,000 games in total. \\
 \textbf{D3} & Unspecified Bank & B8. Section 2.1 assigns 7090003 the role "the ablation lattice and the dialect table" but names no replicate for the dialect rows. 7090001 was used, by symmetry with B5, which the protocol does specify as 7090003 primary and 7090001 replicate. \\
@@ -34,5 +39,4 @@ ID & Kind & Deviation, addition or correction \\
 \textbf{D26} & Substitution & B11's third clause is not computable as written. It asks phase 5 to confirm "that the holdout estimate is not systematically smaller than the training estimate by about that amount", where the estimate B11 is about is the measured holdout gain -- but the protocol supplies no training figure for B2.1 or B2.2. Phase 5 substituted the three quantities the protocol DOES state in advance (the B2.4 group at +0.78, the B6 self-play row at +2.94, and B7's\,\ldots \\
 \textbf{D27} & Added Artifact & research/v07/results/P5-drift.json. D19's executed replacement for the vacuous hash-based drift check was performed but not initially recorded, which made it an assertion rather than evidence. It is now an artifact: the build command, both binaries' SHA-256 and byte counts, the pathology argv, the two recomputed digests, and the source sets differing from the artifact's own baseline and from the freeze commit. \\
 \textbf{D24} & Correction & per-bank columns were printed unlabelled and sorted by seed NUMBER, which inverts the attribution for B5 and B8, whose primary bank is 7090003 and whose replicate is 7090001. Every per-bank column in P5-TABLES.txt is now printed as `seed:value`. In THIS document the bank order is given in each table's first row and the pairs that follow keep it: section 5's B4 table is (7090001, 7090002) and section 9's B8 table is (7090003, 7090001). A reader\,\ldots \\
-\bottomrule
-\end{longtable}
+\end{xltabular}

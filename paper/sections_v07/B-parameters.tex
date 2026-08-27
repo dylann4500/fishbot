@@ -32,7 +32,7 @@ inverter), and each \texttt{key=value} sets one option on it. Two properties of 
 \vsevenFrozenSpecWrapped{}
 \end{quote}
 
-\begin{center}\small
+\begin{center}\tabfont
 \input{tables_v07/options}
 \end{center}
 
@@ -44,16 +44,22 @@ compare strings.
 
 \subsection*{The parameter vector}
 
-\begin{center}\small
+\begin{center}\tabfont
 \input{tables_v07/layout}
 \end{center}
 
 \noindent
 \vsevenLayoutNote{}
 
-The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit,
-whose provenance is recorded in the freeze artifact as \texttt{\vsevenInheritedVector{}\ldots}. No
-fit of any kind was applied to the frozen configuration in this cycle
+The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit.
+The freeze artifact records its provenance as
+
+\begin{quote}\ttfamily\footnotesize\raggedright
+\vsevenInheritedVector{}\ldots
+\end{quote}
+
+\noindent
+No fit of any kind was applied to the frozen configuration in this cycle
 (\S\ref{sec:agent-policy}).
 
 \subsection*{Coordinates known to be inert}

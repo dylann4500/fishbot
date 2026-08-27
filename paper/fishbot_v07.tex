@@ -8,6 +8,9 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{xltabular}   % longtable with an X column, for the deviation register
+\usepackage[section]{placeins} % floats may not drift across a section boundary
 \usepackage[dvipsnames]{xcolor}
 \usepackage{graphicx}
 % hyperref is loaded BEFORE tikz on purpose.  hyperref pulls in url, which
@@ -16,11 +19,14 @@
 % behaviour as \filepath first and then let tikz take \path back.
 \usepackage{hyperref}
 \DeclareUrlCommand\filepath{\urlstyle{tt}}
+\usepackage{xurl}        % break long URLs anywhere, so none reaches the margin
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+\captionsetup[table]{position=above,skip=6pt}
+\captionsetup[figure]{position=below,skip=8pt}
 
 \definecolor{fishgreen}{HTML}{0B5D46}
 \definecolor{fishlight}{HTML}{EAF4EF}
@@ -31,8 +37,47 @@
             pdfauthor={Dylan Nguyen}}
 \setlist{nosep,leftmargin=*}
 \setlength{\parindent}{1.2em}
-\setlength{\tabcolsep}{4.5pt}
 \setlength{\parskip}{0pt plus 1pt}
+% Agent names are \mbox'ed and confidence intervals are unbreakable math, so a
+% few paragraphs contain runs TeX cannot break.  A little emergency stretch lets
+% it resolve them by loosening inter-word space rather than by letting a line
+% protrude into the margin, which is the outcome this document does not permit.
+\setlength{\emergencystretch}{3em}
+
+% ---------------------------------------------------------------------------
+% Table house style.  Every table in this document is set at \tabfont, with the
+% same column padding, the same row spacing and the same booktabs rule weights,
+% and none uses a vertical rule.  Nothing may exceed \linewidth: the wide
+% tables are built from X columns rather than pushed into the margin, which is
+% why tabularx and xltabular are loaded above.
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\heavyrulewidth}{0.08em}
+\setlength{\lightrulewidth}{0.05em}
+\setlength{\aboverulesep}{0.5ex}
+\setlength{\belowrulesep}{0.6ex}
+\newcommand{\tabfont}{\small}
+% X-column variants: L ragged-left, R ragged-right for numbers, C centred.
+% \arraybackslash restores \\ after \raggedright, which redefines it.
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+% A numeric cell whose confidence interval is stacked under its estimate, so a
+% five-column interval table fits the text block without shrinking the type.
+\newcommand{\ci}[2]{#1\newline{\scriptsize $[#2]$}}
+
+% Float placement.  The results section declares sixteen tables, and with LaTeX's
+% default allowances (one float per page top, 70% of a page) they queue up and
+% surface pages later, in the middle of prose they have nothing to do with.
+% Raising the allowances lets a float settle on or near the page that first
+% refers to it; \FloatBarrier at each subsection stops any that still cannot.
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.72}
 \pagestyle{fancy}
 \fancyhf{}
 \lhead{\small FishBot v0.7}

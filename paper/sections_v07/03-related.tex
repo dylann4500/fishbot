@@ -24,11 +24,10 @@ learner for it, and no coverage in RLCard \cite{rlcard}. The one agent located, 
 not raise the six-player allocation problem, and publishes no strength numbers; a closed-source
 mobile application advertises bots with no stated methodology \cite{playstore}. Every novelty
 statement in this paper therefore takes the form ``we found no prior published work that \ldots{}''
-and should be read against that scope. One recent item is worth naming because it may become the
-external calibration this line of work lacks: Valet packages twenty-one traditional
-imperfect-information card games in a common description language with measured branching factors
-and durations \cite{goadrich2026valet}, though its abstract does not state whether any of the twenty-one is a team game, so no
-comparison is drawn against it here.
+and should be read against that scope. One recent item is worth naming because a shared testbed is the kind of external calibration this
+line of work lacks: Valet packages twenty-one traditional imperfect-information card games in a
+common description language with measured branching factors and durations
+\cite{goadrich2026valet}. No comparison against it is attempted here.
 
 \subsection{Determinization, and why double-dummy analysis fails here}
 \label{sec:related-determinization}
@@ -59,7 +58,7 @@ statistic}. One determinization's value is the final half-suit differential, who
 order of magnitude larger than the differences between the leading candidates, so an argmax over
 sampled means selects on residual noise, and does so more confidently the more candidates it is
 offered. That is the optimiser's curse rather than strategy fusion, and \S\ref{sec:background-vsix}
-reports it measured at \vsixCurseGap{}~points by a control that forces the same code to return the
+reports it measured at \vsixCurseGap{}~pp by a control that forces the same code to return the
 blueprint's own pick. The transferable claim from that result is the guard, not the search.
 
 \subsection{Search in imperfect-information and cooperative games}
@@ -131,7 +130,8 @@ parameters and no learned opponent model.
 
 This is the only literature that has measured the same trade-off, and it is where
 \S\ref{sec:background-vsix}'s central negative result belongs. What is new there is the margin and
-its direction: in this game the exact conditional posterior is computable in closed form and cheap,
+its direction: in this game the exact conditional posterior is computable exactly by a tractable
+factorised dynamic program and is cheap,
 so the usual excuse for approximating does not apply, and yet substituting the exact posterior
 into an otherwise identical policy \emph{loses}, on two independent seed banks.
 

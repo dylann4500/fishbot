@@ -9,8 +9,8 @@ played and before the sealed adversary half had been decoded. The verdicts are
 
 \fishseven{} beats \fcheap{} on both primary holdout banks, pooled over \vsevenBtwoFcheapN{} games.
 
-\begin{center}\small
-\begin{tabular}{ll}
+\begin{center}\tabfont
+\begin{tabularx}{\linewidth}{@{}l L@{}}
 \toprule
 Verdict & Condition \\
 \midrule
@@ -18,14 +18,18 @@ CERTIFIED advancement & pooled lower bound above \vsevenPrimaryFloor{}, sign rep
 measured advancement & pooled lower bound above 0 but under \vsevenPrimaryFloor{}, sign replicates, gate passes \\
 not an advancement & the pooled interval contains zero, or the sign does not replicate, or the gate fails \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
-\noindent Result: the comparison \textbf{\vsevenPrimaryVerdict{}}.
+\noindent
+The verdict labels above are the protocol's own. This paper does not use the word \emph{certified},
+which suggests verification by a third party, and reports the top outcome instead as what was
+actually satisfied (\S\ref{sec:design-protocol}). Result: the comparison
+\textbf{\vsevenPrimaryVerdict{}}.
 
 \subsection*{The secondary claims}
 
-\begin{center}\small
+\begin{center}\tabfont
 \begin{tabular}{llp{0.40\linewidth}l}
 \toprule
 \# & Claim & Passes if & Result \\
@@ -35,7 +39,7 @@ and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
 S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{} points of the diagonal & \vsevenStwoVerdict{} \\
 S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
 S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
-S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{} points below default & \vsevenSfiveVerdict{} \\
+S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{}~pp below default & \vsevenSfiveVerdict{} \\
 S6 & the worst case is not catastrophic & \fishseven{}'s worst panel cell no worse than the deployed \vsix{} policy's & PASS \\
 S7 & the instrument is intact & the planted edges recover, the sub-floor rung does not, the cheats fail exactly their own tests & PASS \\
 \bottomrule

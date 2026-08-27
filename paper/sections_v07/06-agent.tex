@@ -7,7 +7,7 @@ evaluation did not disturb it. This section describes the agent conceptually. Th
 configuration string, its option map, the parameter vector layout and the freeze artifact's hashes
 are in Appendix~\ref{app:parameters}.
 
-\begin{figure}[t]\centering
+\begin{figure}[tbp]\centering
 \begin{tikzpicture}[
   font=\small,
   box/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=9mm},
@@ -36,11 +36,11 @@ justifies it (\S\ref{sec:agent-search}).}
 \label{fig:pipeline}
 \end{figure}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
 are used in the paper only where a command must be reproduced.}
 \label{tab:components}
-{\small\input{tables_v07/components}}
+{\tabfont\input{tables_v07/components}}
 \end{table}
 
 \subsection{Inference and the ask and declaration policy}
@@ -61,9 +61,9 @@ Appendix~\ref{app:parameters} lists which and why.
 \subsection{Tie-breaking that preserves common knowledge}
 \label{sec:agent-tiebreak}
 
-At \vsevenTieContested\% of contested ask decisions two or more candidates score bit-for-bit
-identically (\S\ref{sec:background-vsix}), and in \vsix{} the winner was whichever the enumerator
-emitted first, under an unstable sort. That is a correctness problem rather than a strength problem:
+In the \vsix{} mirror, \vsevenTieContested\% of contested ask decisions end with two or more
+candidates scoring bit-for-bit identically (\S\ref{sec:background-vsix}), and the winner was
+whichever the enumerator emitted first, under an unstable sort. That is a correctness problem rather than a strength problem:
 the choice is arbitrary, but it is also unpredictable, and \S\ref{sec:game-why} explains why
 unpredictability of the wrong kind is expensive here. Three identical deterministic teammates
 coordinate for free only if each can compute what the others will do; a tie broken by an
@@ -104,10 +104,10 @@ reaches it, since the longest game any adversarial search produced against an un
 entire declaration allocation-error class. \fishseven{} disables it
 (\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}).
 
-The escalation was, however, also the policy's termination guarantee, so removing it creates an
+The escalation was, however, also the policy's termination safeguard, so removing it creates an
 obligation.
 
-\subsection{A stall detector as the replacement termination guarantee}
+\subsection{A stall detector as the replacement termination safeguard}
 \label{sec:agent-stall}
 
 \fishseven{} escalates after twelve consecutive public events in which this seat's hard-certificate
