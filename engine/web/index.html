@@ -415,8 +415,12 @@ const RANKL={J:'Jack',Q:'Queen',K:'King',A:'Ace'};
 // them.  These are the same strings `fish match --a=` takes, so anything you can
 // measure on the command line you can also sit down opposite.
 const SEARCH_SPEC='v06:s1=1,det=12,cand=4,kappa=2.5,roll=v06';
+// The frozen v0.7 configuration, verbatim from engine/fishbot_v07.json -- the
+// certified strongest FishBot (phase-5 sealed evaluation).
+const V07_SPEC='v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26';
 const POLICY_GROUPS=[
   ['FishBot',[
+    [V07_SPEC,'FishBot v0.7'],
     ['v06','FishBot v0.6'],
     [SEARCH_SPEC,'FishBot v0.6-Search'],
     ['v06:s1=1,det=16,cand=6,kappa=2.0,maxq=26','FishBot v0.6-Search-Max'],

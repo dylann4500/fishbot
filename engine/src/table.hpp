@@ -22,7 +22,7 @@ struct SeatCfg {
 inline bool knownPolicy(const std::string& spec) {
   std::string base;
   parseOpts(spec, base);
-  static const char* ok[] = {"v06", "fishbot_v06", "v05", "fishbot_v05",
+  static const char* ok[] = {"v07", "fishbot_v07", "v06", "fishbot_v06", "v05", "fishbot_v05",
                              "v04", "fishbot_v04", "v03", "fishbot_v03", "v02", "fishbot_v02",
                              "random", "hunter", "diversifier", "detective", "lockout", "bluffer",
                              "silent", "feint", "withholder"};
@@ -52,6 +52,7 @@ inline std::string policyLabel(const std::string& spec) {
     else if (optI(o, "legacy", 0)) name = "FishBot v0.6-legacy";
     name += beliefSuffix("fast");
   }
+  else if (base == "v07" || base == "fishbot_v07") name = "FishBot v0.7";
   else if (base == "v05" || base == "fishbot_v05") name = "FishBot v0.5" + beliefSuffix("fast");
   else if (base == "v04" || base == "fishbot_v04") {
     auto it = o.find("belief");
