@@ -1,9 +1,9 @@
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccll}
 \toprule
-Planted channel & S3 & S4 & S5 & S6 \\
+Planted channel & S3 & S4 & S5 & S6 & Must fail & As required \\
 \midrule
-\texttt{v07x:cheat=seed} & PASS & FAIL & FAIL & PASS \\
-\texttt{v07x:cheat=shared} & PASS & PASS & PASS & FAIL \\
-\texttt{v07x:cheat=conv} & FAIL & PASS & PASS & PASS \\
+\texttt{v07x:cheat=seed} & PASS & FAIL & FAIL & PASS & S4, S5 & \checkmark \\
+\texttt{v07x:cheat=shared} & PASS & PASS & PASS & FAIL & S6 & \checkmark \\
+\texttt{v07x:cheat=conv} & FAIL & PASS & PASS & PASS & S3 & \checkmark \\
 \bottomrule
 \end{tabular}

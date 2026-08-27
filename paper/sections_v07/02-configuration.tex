@@ -3,12 +3,12 @@
 
 v0.7 is \textbf{a configuration of the \vsix{} policy family, not a new architecture}. That sentence
 is the protocol's, written before the evaluation ran, and the evaluation did not disturb it. The
-frozen object is \vsix{}'s fitted 37-coordinate vector, one hand-set extended coordinate, three
+frozen object is \vsix{}'s fitted \vsevenVsixCoords{}-coordinate vector, one hand-set extended coordinate, three
 switches that turn off machinery an earlier phase measured as defective, one new mechanism, and the
 truncated test-time search that \vsix{} shipped switched off:
 
 \begin{quote}\small\ttfamily\raggedright
-\vsevenFrozenSpec{}
+\vsevenFrozenSpecWrapped{}
 \end{quote}
 
 \noindent
@@ -26,7 +26,7 @@ the spec from that file and never typed it. The artifact carries
 \item[\texttt{r12=25} --- half-suit contestation.] The information-denial coordinate
   \texttt{oppCertDonate}, found by an \emph{unfitted} coordinate sweep in phase~2 rather than by any
   architecture work. Phase~2 measured a single hand-set setting of it at \vsevenOneSwitchArm{}~points
-  against the deployed policy over 48,000 games with no fit at all. The protocol states in advance
+  against the deployed policy over \vsevenPhaseTwoCell{} games with no fit at all. The protocol states in advance
   that this key carries the gain and that a holdout leave-one-out drop of roughly two points is the
   check: \vsevenTrainRtwelveLoo{} on training material. \S\ref{sec:results-attribution} reports what
   holdout gives.
@@ -51,11 +51,11 @@ the spec from that file and never typed it. The artifact carries
   leave-one-out \vsevenTrainUrgoffLoo{}.
 
 \item[\texttt{stall=12} --- the replacement termination guarantee.] Escalate after twelve consecutive
-  public events in which this seat's hard-certificate hash does not change. The threshold has a
-  fifty-fold margin established at zero game cost: over 800 mirror games \vsix{} never produces a
-  no-progress run longer than \vsevenStallIncumbentRun{}, and a frozen configuration produces
-  \vsevenStallFrozenRun{}. Any threshold in $[12, 60]$ is simultaneously unreachable in ordinary play
-  and immediate in a freeze. Armed, its mirror digest is byte-identical to the same configuration
+  public events in which this seat's hard-certificate hash does not change. The threshold is established at zero game cost: over \vsevenStallMirrorGames{} mirror games \vsix{} never produces a no-progress run longer than
+  \vsevenStallIncumbentRun{}, and a \emph{deadlocked} configuration --- the gate's negative control,
+  not \frozen{} --- produces \vsevenStallFrozenRun{}. Any threshold in $[12, 60]$ is simultaneously
+  unreachable in ordinary play and immediate in a deadlock; the separation between the two regimes is
+  fifty-fold, though the threshold's own margin over observed ordinary play is twelve against six. Armed, its mirror digest is byte-identical to the same configuration
   without it: the rule's cost in ordinary play is not small, it is identically zero, because it never
   runs.
 

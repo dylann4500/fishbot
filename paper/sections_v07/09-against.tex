@@ -92,14 +92,18 @@ smaller than the training estimate by about that amount.
 \caption{Every quantity for which the protocol states a training figure in advance, against its
 holdout measurement. Three reproduce or exceed; one falls short.}
 \label{tab:selection}
-\input{tables_v07/selection}
+{\small\input{tables_v07/selection}}
 \end{table}
 
 \vsevenSelReproduce{} of the four reproduce or exceed their training values. The one that falls short
 is the composite cell, by \vsevenSelWorstShortfall{} points against an expected-maximum-under-the-null
 of \vsevenSelExpectedMax{} --- \textbf{and that cell is precisely the one measuring the group of keys
-the freeze was selected over.} The signature appears where selection happened and nowhere else, at
-about the size the null predicts. The training interval for that group was
+the freeze was selected over.} The shortfall is the largest of the four and it falls on the cell measuring what the freeze was
+chosen over, at about the size the null predicts. It is not the only shortfall the protocol's
+advance figures produce --- the one-seat upgrade against a \vsix{} opponent comes in at
+\vsevenOneSeatSix{} against a predicted \vsevenTrainOneSeatSix{}, which \S\ref{sec:results-partners}
+prints --- so the correct statement is that the largest shortfall is where selection happened, not
+that it is the only one. The training interval for that group was
 $[\vsevenTrainGroupLo, \vsevenTrainGroupHi]$; the holdout interval is
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$.
 

@@ -30,7 +30,8 @@ not an advancement & the pooled interval contains zero, or the sign does not rep
 \toprule
 \# & Claim & Passes if & Result \\
 \midrule
-S1 & no collapse under partner change & at least five of the eight changed-partner deltas positive, and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
+S1 & no collapse under partner change & at least five of the eight changed-partner deltas positive,
+and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
 S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{} points of the diagonal & \vsevenStwoVerdict{} \\
 S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
 S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
@@ -40,6 +41,10 @@ S7 & the instrument is intact & the planted edges recover, the sub-floor rung do
 \bottomrule
 \end{tabular}
 \end{center}
+
+The protocol's ``eight changed-partner rows'' counts the self-play row among them; \S\ref{sec:results-partners}
+reports \vsevenSonePositive{} of the \vsevenSoneRows{} genuinely changed rows. Both readings pass, and
+the phase-5 recording carries the ambiguity as deviation D9.
 
 A failure of S1, S2 or S6 would have been a substantive failure and the report would say the release is
 brittle in that named way. A failure of S7 would have been procedural and the evaluation would have

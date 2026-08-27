@@ -37,8 +37,9 @@ scripted or frontier cell is used as a free determinism check
 \label{sec:protocol-gate}
 
 A configuration that scores higher while failing the pathology rules is rejected, and the ordering is
-not a formality: the corpus contains a configuration that scores 56.6\% against \vfour{} while
-carrying 44.8\% dead asks and losing 14\% of its games to the action limit. Win rate and soundness are
+not a formality: the corpus contains a configuration that scores
+\vsevenScoreboardTrapWin\% against \vfour{} while carrying \vsevenScoreboardTrapDead\% dead asks and
+losing \vsevenScoreboardTrapLimit\% of its games to the action limit. Win rate and soundness are
 dissociable in this family.
 
 \begin{table}[t]\centering
@@ -46,7 +47,7 @@ dissociable in this family.
 on self-play behaviour, not a strength claim. The negative control is the configuration the corpus
 built to be rejected; a gate that could not reject it would certify nothing about the one it accepts.}
 \label{tab:gate}
-\input{tables_v07/gate}
+{\small\input{tables_v07/gate}}
 \end{table}
 
 \frozen{} passes all \vsevenGateRules{} rules: \vsevenGateDeadAsks\% provably-dead asks against a
@@ -83,5 +84,7 @@ The protocol requires a deviation for anything the evaluation did that it does n
 dropped, a cell added, a threshold read a particular way, a command whose flags differ. There are
 \vsevenDeviations{} of them, \vsevenDeviationAdded{} adding cells or checks the protocol's own
 questions turn out not to be computable without, and \vsevenDeviationCorrections{} of them
-corrections. Appendix~\ref{app:deviations} is the full register, read out of the results document
-rather than retyped. \vsevenCellsDropped{} preregistered cells were dropped.
+corrections. Appendix~\ref{app:deviations} is the full register, read out of the results
+document rather than retyped. \vsevenCellsDropped{} preregistered cells were dropped and
+\vsevenCellsAdded{} were added --- the added ones because two of the protocol's own questions are not
+computable from the cells it names (Table~\ref{tab:battery}).

@@ -16,8 +16,10 @@ also a configuration with a single point of failure, and this battery does not r
 it is.
 
 \paragraph{The worst-case improvement and the minimax regret point in opposite directions.}
-\frozen{} has the best worst cell of the four arms and is \vsevenRegretFrozenRank{}rd of four on
-minimax regret (\S\ref{sec:results-panel}). The regret difference is bought against far archetypes that
+\frozen{} has a far better worst cell than \incumbent{} but not the best of the four ---
+\composite{} is ahead on both readings --- and \frozen{} is \vsevenRegretFrozenRank{}rd of four on
+minimax regret (\S\ref{sec:results-panel}). Its worst cell does not even replicate in sign
+(\vsevenWorstFrozenBankOne{} / \vsevenWorstFrozenBankTwo{}, at different members). The regret difference is bought against far archetypes that
 every arm already beats by \vsevenFarSpanLo{} to \vsevenFarSpanHi{} points, which is a reason to
 weigh it less --- but it
 is a reason, not a dismissal, and a reader who cares about regret over this panel should prefer
@@ -53,12 +55,16 @@ gate condition removes it by rebuilding agents per deal, and \emph{that mode is 
 the defect made visible rather than argued about. Every strength number in this report is measured
 under it.
 
-\paragraph{Three sealed banks were digest-verified and never played as deal banks.}
+\paragraph{Four of the seven sealed banks were digest-verified and never played as deal banks.}
 The fitting driver derives its own per-generation deal stream from its seed rather than constructing
-the named bank's deals, so the banks reserved for fitting are verified and then unused as deals. What
-the protocol relies on survives --- the fitting streams are mutually disjoint and disjoint from the
-evaluation banks --- but the material accounting in this report should be read as ``two evaluation banks
-plus a derived fitting stream'', not ``seven banks played''.
+the named bank's deals, so \texttt{7090004}, \texttt{7090005} and \texttt{7091002} are verified and
+then unused as deals. \texttt{7091001} is unused for a different reason: the sealed panel members
+were scored on the two primary banks with the rest of the panel, so that minimax regret is computed
+over one shared pair. What the protocol relies on survives --- the fitting streams are mutually
+disjoint and disjoint from the evaluation banks --- but the material accounting here should be read
+as ``three evaluation banks played (\texttt{7090001} and \texttt{7090002} for most cells,
+\texttt{7090003} for the lattice and the dialects) plus a derived fitting stream'', not ``seven
+banks played''.
 
 \paragraph{One dialect row measures nothing, and the residual it feeds is correspondingly weaker.}
 \texttt{--maxasks=360} is bit-identical to the default, so the legacy residual is legacy minus two
@@ -79,8 +85,9 @@ diagonal and the off-diagonal alike and would be invisible to this test. What th
 convention formed \emph{during} each run's own fit.
 
 \paragraph{Termination remains empirical.}
-No configuration here hits the action cap in any scored cell but one game in
-\vsevenResidueGames{}, and the
-stall rung's fifty-fold margin is a measurement over eight hundred mirror games rather than a theorem.
+No configuration here hits the action cap in any scored cell but one --- \vsevenLimitCellArm{}
+against \texttt{\vsevenLimitCellOpp{}}, one game in \vsevenLimitCellGames{} --- and the
+stall rung's separation between ordinary play and a deadlock is a measurement over
+\vsevenStallMirrorGames{} mirror games rather than a theorem.
 What is not proved is that the stall rule plus the stopping rule terminates on every reachable
 position.

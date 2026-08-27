@@ -9,9 +9,11 @@ frontier, named as the bar rather than the deployed policy --- \frozen{} scores
 \textbf{\vsevenBtwoFcheap{} points} $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over
 \vsevenBtwoFcheapN{} games with the sign replicating on both banks, a lower bound above the
 pre-committed \vsevenPrimaryFloor{}-point detection floor, and a clean commit gate:
-\textbf{\vsevenPrimaryVerdict{}}. On the \vsevenPanelMembers{}-member shared panel its worst cell is
-\vsevenWorstFrozen{} $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the incumbent's
-\vsevenWorstIncumbent{}, and it is the only arm that beats the hardest sealed adversary. Eight
+\textbf{\vsevenPrimaryVerdict{}}. On the \vsevenPanelMembers{}-member shared panel its worst cell is \vsevenWorstFrozen{}
+$[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the incumbent's \vsevenWorstIncumbent{} ---
+though that cell's sign does not replicate across banks (\vsevenWorstFrozenBankOne{} /
+\vsevenWorstFrozenBankTwo{}) --- and it is one of \vsevenHardBeaters{} arms that beat the hardest
+sealed adversary. Eight
 independent fresh adversary searches, the white-box inverter included, all lose; the largest upper
 bound anywhere is \vsevenBfourWorstUpper{}, which is \vsevenBfourFloorGap{} points below the floor.
 The advantage is not a self-play convention: it survives partner substitution with a minimum of
@@ -29,8 +31,7 @@ way. \frozen{} is \emph{third of four} on minimax regret over the shared panel
 best worst case is not the arm with the best regret. And the one quantity that falls short of its
 training value is the group of keys the freeze was \emph{selected over}, by
 \vsevenSelWorstShortfall{} points against an expected maximum under the null of
-\vsevenSelExpectedMax{} --- the selection signature appearing exactly where selection happened and
-nowhere else.
+\vsevenSelExpectedMax{} --- the largest shortfall of the four falling exactly where selection happened.
 
 The value of the cycle is therefore the negative half. Five candidate architectures were built and
 four died with measurements rather than arguments: the declaration-allocation channel, the corpus's
@@ -41,8 +42,9 @@ leaf-invariant; every self-oriented per-decision objective produces a \emph{wors
 moving its own proxy in the intended direction; and a learned re-ranker inside the exchangeable tie
 group is worth \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break. What
 remains is a policy class in which the only located gain is a single coordinate found by an
-unfitted sweep, and an evaluation that costs \vsevenCostFrozenTight$\times$ the blueprint --- not
-the \vsevenCostRecorded$\times$ the record carried --- to resolve it. This report states the barrier,
+unfitted sweep, and a configuration that costs at least \vsevenCostFrozenTight$\times$ the blueprint to run --- where
+the frontier point the record priced at \vsevenCostRecorded$\times$ measures
+\vsevenCostFcheapTight$\times$ on the same basis. This report states the barrier,
 lists what would have to be measured before any Fish-playing team could credibly be called
 near-optimal, and records \vsevenDeviations{} deviations and
 \vsevenDeviationCorrections{} corrections against its own protocol and the corpus's record.

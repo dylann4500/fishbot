@@ -2736,3 +2736,101 @@ Stated plainly rather than smoothed over, because it bears on how §4's claims s
   (6 generations × 12 population × 150 deals against a four-member panel). Those runs exist to be
   *independent*, not to be strong, and they should not be read as an attempt to improve the frozen
   vector. No fit of any kind was applied to the frozen configuration.
+
+---
+
+# 5. Phase 6 — the technical report, and the adversarial pass against it
+
+## 5.0 What phase 6 built
+
+`paper/fishbot_v07.tex`, thirteen sections and four appendices under `paper/sections_v07/`, with
+every number a macro. `engine/build_tables_v07.py --paper` generates 230 of them straight from the
+phase-5 artifacts into `paper/numbers_v07_generated.tex` and 22 tables into `paper/tables_v07/`; the
+remaining 91 are transcribed from phases 1–4 under a comment header naming the document that records
+them. `paper/check_provenance.py` was generalised to take `--version` and passes on v05, v06 and v07
+alike; on v07 it reports the 230/91 split and no unattributed number.
+
+The generator refuses two failure modes the corpus has hit before. `emit()` raises if a macro name is
+re-emitted with a different value, and `_mac()` spells digits out of macro names and asserts the
+result is alphabetic — because `\vsevenB2Fcheap` is not one control sequence, it is `\vsevenB`
+followed by the text "2Fcheap", and a digit in a macro name is therefore a silent typesetting bug
+rather than an error.
+
+## 5.1 The adversarial pass
+
+One adversarial reader was run against the finished draft with a single instruction: attack every
+claim against the artifacts and flag each place the prose outruns the evidence. It returned 25
+findings, four of them blocking. **Twenty-three were accepted and fixed.** The pass is the reason
+this report's headline is weaker than its first draft's, and the four blocking findings are all of
+one kind — a true comparison against the incumbent quietly widened into a claim about all four arms.
+
+**The blocking four.**
+
+1. *"FROZEN has the best worst cell of the four arms"* is false. On both readings the phase-2
+   composite is ahead (+0.00 with its free self-cell, +1.23 without). The preregistered claim S6 is
+   only that FROZEN's worst cell is no worse than the incumbent's, and §7 stated that correctly; the
+   introduction, the limitations and the conclusion had all escalated it. Fixed in all three.
+2. *"the only arm that beats the hardest sealed adversary"* is false: the composite also beats
+   `SEALED:X01xC3f`, at +1.23 [+0.60, +1.86]. The generator computes that number and the sentence
+   listed the other three arms. The count is now computed rather than asserted.
+3. The provenance count in the reproducibility appendix printed **0 transcribed numbers**, because
+   it counted by the `\vsix`/`\num` prefixes that a v0.7 macro never carries. The manuscript was
+   asserting that nothing in it was transcribed — the opposite of what the two-file scheme exists to
+   disclose, and in the flattering direction. Now computed as used-minus-generated: 91.
+4. The side-channel caption claimed each planted cheat fails exactly one test, with "or more than
+   one" named as the failure condition; `cheat=seed` fails two, which is exactly what the protocol
+   *requires* of it. The table now carries the protocol's own **Must fail** column.
+
+**The most useful non-blocking finding** is that FROZEN's headline worst cell does not replicate:
++1.62 on 7090001 and −1.75 on 7090002, attained at different members, so on one bank FROZEN has no
+negative cell anywhere on the panel. This report's own replication rule says to report that as not
+replicated, and the report was applying that rule to the location test while exempting its own
+headline. §7 now says so, and says that what survives replication is the comparison the protocol
+gated on rather than the value −0.04.
+
+Also accepted: the 0.08 planted rung is recovered above the floor only on a point estimate (its
+lower bound is 1.496), and reading a floor on the point estimate for a control while reading it on
+the lower bound for the primary claim is a switch that has to be disclosed; the sub-additivity ratio
+was quoted with an interval nothing in the manuscript computed (now propagated and printed); `m2=0`'s
+zero leave-one-out drop was presented as a holdout reproduction when no `L-m2` cell exists or could;
+the battery table's "preregistered" column was the as-run count, so D1's and D2's 18 added cells were
+being presented as preregistered ones; the bank accounting said three unplayed banks and two
+evaluation banks where the artifacts show four and three; a "quarter of a point" that is a
+one-point figure (98²/1² = 9,604); "a different objective" for the B9 responders, which maximise win
+rate exactly as four of the eight adversary searches do.
+
+## 5.2 What was not accepted, and why
+
+**The claim that transcript inversion's ~2.0 bits per ask is "the first such measurement anywhere".**
+The reader asked for it to be scoped to the corpus for want of a citation. It was scoped — but not
+only to the corpus, because the claim is not bare: `THREAT-MODEL.md` §9 records a literature review
+that looked for exactly this and found no precedent, and §9 exists precisely so that a priority claim
+can be stated or dropped without embarrassment. The report now says "the first such measurement in
+this corpus, and one the threat model's literature review found no external precedent for", which
+attributes the claim to the thing that supports it rather than deleting a supported claim.
+
+**The reader's own arithmetic on the cost-table divergence.** It reported the two aggregations
+differing "by up to 0.05×" on five of nine cells. Recomputed, the largest divergence across the six
+median cells is **0.029×**, and the draft had repeated the 0.05 figure. It is now generated by the
+same script that builds the table, which is the only way a number like that stays true.
+
+**One correction the reader offered was itself a fudge and was rejected in the writing.** A first
+attempt at generating that divergence wrote `max(worst, 0.05)` so that the computed value could not
+contradict the prose already written. That is the defect this whole apparatus exists to prevent, and
+it was removed before the number reached the paper.
+
+## 5.3 What the reader tried hardest to break and could not
+
+Every pooled edge, delta, interval and per-bank value in B2 through B10, reimplemented from the raw
+`ci` fields and compared against the generated macros — no arithmetic error. Both allegations this
+report makes against `FINAL-RESULTS.md` hold: the "409 scored cells" is a string literal at
+`engine/p5_analyse.py:1135` and the artifacts carry 428, with no alternative definition yielding 409;
+and the cross-play gap is printed under the diagonal-minus-off convention. The determinism
+correction, reconstructed independently from the panel's three duplicated members, finds exactly one
+disagreement in 24 pairs — one game in 12,000, as claimed. `stall=12`'s bit-identity holds to six
+decimals on four separate statistics.
+
+The cross-play gap correction was itself softened as a result of the pass: the report had said the
+data "show a small lift", from a difference of 0.0055 points against a per-cell half-width of 0.63.
+That is the same over-reading of a sign the correction was written to criticise, committed inside the
+correction. It now says neither sign is resolved.

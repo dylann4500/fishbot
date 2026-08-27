@@ -15,7 +15,7 @@ predicted value: at exactly four times the games the floor is \vsevenPrimaryFloo
 sub-floor rung is still undetected --- not because the interval is wide but because the excess
 resolves \emph{to} zero. \S\ref{sec:results-controls} reproduces that on holdout material.
 
-The floor therefore does \textbf{not} buy down with games, and a 96,000-game cell does not lower it.
+The floor therefore does \textbf{not} buy down with games, and a \vsevenBestExploitN{}-game cell does not lower it.
 Two values are in force, and they are not interchangeable:
 
 \begin{itemize}
@@ -62,12 +62,15 @@ posterior-invariance test, and a seat-isolation reconstruction test that replays
 
 The gate is only worth its output if it is calibrated, so three positive controls were built, each a
 policy carrying one planted cheat. Table~\ref{tab:sidechannel} is the holdout result:
-each planted channel is caught by exactly the test built to catch it and by no other, identically on
-both banks, over \vsevenSideCells{} cells.
+each planted channel fails exactly the tests the protocol
+names for it in advance and no others, identically on both banks, over \vsevenSideCells{} cells.
+The required sets are not one test each --- the seed cheat is visible to two of them --- so the
+protocol's own \emph{Must fail} column is printed beside the measurement rather than summarised.
 
 \begin{table}[t]\centering
-\caption{The calibrated side-channel positive controls, on holdout material. A cheat that failed the
-wrong test, or more than one, would mean the gate does not discriminate and no seat-isolation
+\caption{The calibrated side-channel positive controls, on holdout material. \emph{Must fail} is the
+set the protocol names for each planted channel in advance. A cheat failing a test outside its own
+set, or missing one inside it, would mean the gate does not discriminate and no seat-isolation
 statement in this report could be read as a measurement.}
 \label{tab:sidechannel}
 \input{tables_v07/sidechannel}

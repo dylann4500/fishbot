@@ -224,13 +224,28 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCurseRelErr}{0.4}
 \providecommand{\vsevenLthirteenAdvCost}{17}
 \providecommand{\vsevenFullGameOldN}{4,000}
-\providecommand{\vsevenZeightInert}{18}
-\providecommand{\vsevenZeightLive}{37}
-\providecommand{\vsevenZoneFitMargin}{+6.67}
-\providecommand{\vsevenVsixCoords}{37}
+
+% ---- the phase-2 and phase-3 cell sizes these sections quote ----
+% docs/v07/ADVERSARIES.md
+\providecommand{\vsevenPhaseTwoCell}{48,000}
+\providecommand{\vsevenSubFloorExcess}{-0.01}
+\providecommand{\vsevenSubFloorExcessLo}{-0.45}
+\providecommand{\vsevenSubFloorExcessHi}{+0.42}
+
+% docs/v07/CANDIDATES.md
+\providecommand{\vsevenStallMirrorGames}{800}
+
+% ---- the scoreboard-selected configuration the commit-gate ordering exists for ----
+% docs/v07/SUBOPTIMALITY-LEDGER.md
+\providecommand{\vsevenScoreboardTrapWin}{56.60}
+\providecommand{\vsevenScoreboardTrapDead}{44.83}
+\providecommand{\vsevenScoreboardTrapLimit}{14}
 
 % ---- further transcribed measurements, the phase-5 recording ----
 % docs/v07/FINAL-RESULTS.md
+\providecommand{\vsevenZeightInert}{18}
+\providecommand{\vsevenZeightLive}{37}
+\providecommand{\vsevenVsixCoords}{37}
 \providecommand{\vsevenDriftChanged}{five}
 \providecommand{\vsevenDriftTotal}{78}
 \providecommand{\vsevenResidueGames}{12,000}
@@ -286,6 +301,18 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenWorstFrozenHi}{}\renewcommand{\vsevenWorstFrozenHi}{+1.33}
 % P5-B3.jsonl: FROZEN worst cell opponent
 \providecommand{\vsevenWorstFrozenOpp}{}\renewcommand{\vsevenWorstFrozenOpp}{composite}
+% P5-B3.jsonl: FROZEN worst cell on bank 7090001
+\providecommand{\vsevenWorstFrozenBankOne}{}\renewcommand{\vsevenWorstFrozenBankOne}{+1.62}
+% P5-B3.jsonl: FROZEN worst cell on bank 7090002
+\providecommand{\vsevenWorstFrozenBankTwo}{}\renewcommand{\vsevenWorstFrozenBankTwo}{-1.75}
+% P5-B3.jsonl: FROZEN worst-cell member on bank 7090001
+\providecommand{\vsevenWorstFrozenBankOneOpp}{}\renewcommand{\vsevenWorstFrozenBankOneOpp}{SEALED:X01xC3f}
+% P5-B3.jsonl: FROZEN worst-cell member on bank 7090002
+\providecommand{\vsevenWorstFrozenBankTwoOpp}{}\renewcommand{\vsevenWorstFrozenBankTwoOpp}{composite}
+% P5-B3.jsonl: FROZEN worst cell, sign agrees on both banks
+\providecommand{\vsevenWorstFrozenRepl}{}\renewcommand{\vsevenWorstFrozenRepl}{NO}
+% P5-B3.jsonl: FROZEN worst cell attained at the same member on both banks
+\providecommand{\vsevenWorstFrozenSameOpp}{}\renewcommand{\vsevenWorstFrozenSameOpp}{NO}
 % P5-B3.jsonl: FROZEN worst cell excluding its own self-cells
 \providecommand{\vsevenWorstFrozenExSelf}{}\renewcommand{\vsevenWorstFrozenExSelf}{-0.04}
 % P5-B3.jsonl: FROZEN worst non-self cell opponent
@@ -298,6 +325,18 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenWorstIncumbentHi}{}\renewcommand{\vsevenWorstIncumbentHi}{-3.62}
 % P5-B3.jsonl: INCUMBENT worst cell opponent
 \providecommand{\vsevenWorstIncumbentOpp}{}\renewcommand{\vsevenWorstIncumbentOpp}{SEALED:X01xC3f}
+% P5-B3.jsonl: INCUMBENT worst cell on bank 7090001
+\providecommand{\vsevenWorstIncumbentBankOne}{}\renewcommand{\vsevenWorstIncumbentBankOne}{-3.86}
+% P5-B3.jsonl: INCUMBENT worst cell on bank 7090002
+\providecommand{\vsevenWorstIncumbentBankTwo}{}\renewcommand{\vsevenWorstIncumbentBankTwo}{-4.63}
+% P5-B3.jsonl: INCUMBENT worst-cell member on bank 7090001
+\providecommand{\vsevenWorstIncumbentBankOneOpp}{}\renewcommand{\vsevenWorstIncumbentBankOneOpp}{SEALED:X01xC3f}
+% P5-B3.jsonl: INCUMBENT worst-cell member on bank 7090002
+\providecommand{\vsevenWorstIncumbentBankTwoOpp}{}\renewcommand{\vsevenWorstIncumbentBankTwoOpp}{SEALED:X01xC3f}
+% P5-B3.jsonl: INCUMBENT worst cell, sign agrees on both banks
+\providecommand{\vsevenWorstIncumbentRepl}{}\renewcommand{\vsevenWorstIncumbentRepl}{yes}
+% P5-B3.jsonl: INCUMBENT worst cell attained at the same member on both banks
+\providecommand{\vsevenWorstIncumbentSameOpp}{}\renewcommand{\vsevenWorstIncumbentSameOpp}{yes}
 % P5-B3.jsonl: INCUMBENT worst cell excluding its own self-cells
 \providecommand{\vsevenWorstIncumbentExSelf}{}\renewcommand{\vsevenWorstIncumbentExSelf}{-4.24}
 % P5-B3.jsonl: INCUMBENT worst non-self cell opponent
@@ -310,6 +349,18 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenWorstFcheapHi}{}\renewcommand{\vsevenWorstFcheapHi}{-0.69}
 % P5-B3.jsonl: F-cheap worst cell opponent
 \providecommand{\vsevenWorstFcheapOpp}{}\renewcommand{\vsevenWorstFcheapOpp}{composite}
+% P5-B3.jsonl: F-cheap worst cell on bank 7090001
+\providecommand{\vsevenWorstFcheapBankOne}{}\renewcommand{\vsevenWorstFcheapBankOne}{-2.21}
+% P5-B3.jsonl: F-cheap worst cell on bank 7090002
+\providecommand{\vsevenWorstFcheapBankTwo}{}\renewcommand{\vsevenWorstFcheapBankTwo}{-1.96}
+% P5-B3.jsonl: F-cheap worst-cell member on bank 7090001
+\providecommand{\vsevenWorstFcheapBankOneOpp}{}\renewcommand{\vsevenWorstFcheapBankOneOpp}{composite}
+% P5-B3.jsonl: F-cheap worst-cell member on bank 7090002
+\providecommand{\vsevenWorstFcheapBankTwoOpp}{}\renewcommand{\vsevenWorstFcheapBankTwoOpp}{composite}
+% P5-B3.jsonl: F-cheap worst cell, sign agrees on both banks
+\providecommand{\vsevenWorstFcheapRepl}{}\renewcommand{\vsevenWorstFcheapRepl}{yes}
+% P5-B3.jsonl: F-cheap worst cell attained at the same member on both banks
+\providecommand{\vsevenWorstFcheapSameOpp}{}\renewcommand{\vsevenWorstFcheapSameOpp}{yes}
 % P5-B3.jsonl: F-cheap worst cell excluding its own self-cells
 \providecommand{\vsevenWorstFcheapExSelf}{}\renewcommand{\vsevenWorstFcheapExSelf}{-2.08}
 % P5-B3.jsonl: F-cheap worst non-self cell opponent
@@ -322,6 +373,18 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenWorstCompositeHi}{}\renewcommand{\vsevenWorstCompositeHi}{+0.00}
 % P5-B3.jsonl: composite worst cell opponent
 \providecommand{\vsevenWorstCompositeOpp}{}\renewcommand{\vsevenWorstCompositeOpp}{composite}
+% P5-B3.jsonl: composite worst cell on bank 7090001
+\providecommand{\vsevenWorstCompositeBankOne}{}\renewcommand{\vsevenWorstCompositeBankOne}{+0.00}
+% P5-B3.jsonl: composite worst cell on bank 7090002
+\providecommand{\vsevenWorstCompositeBankTwo}{}\renewcommand{\vsevenWorstCompositeBankTwo}{+0.00}
+% P5-B3.jsonl: composite worst-cell member on bank 7090001
+\providecommand{\vsevenWorstCompositeBankOneOpp}{}\renewcommand{\vsevenWorstCompositeBankOneOpp}{composite}
+% P5-B3.jsonl: composite worst-cell member on bank 7090002
+\providecommand{\vsevenWorstCompositeBankTwoOpp}{}\renewcommand{\vsevenWorstCompositeBankTwoOpp}{composite}
+% P5-B3.jsonl: composite worst cell, sign agrees on both banks
+\providecommand{\vsevenWorstCompositeRepl}{}\renewcommand{\vsevenWorstCompositeRepl}{yes}
+% P5-B3.jsonl: composite worst cell attained at the same member on both banks
+\providecommand{\vsevenWorstCompositeSameOpp}{}\renewcommand{\vsevenWorstCompositeSameOpp}{yes}
 % P5-B3.jsonl: composite worst cell excluding its own self-cells
 \providecommand{\vsevenWorstCompositeExSelf}{}\renewcommand{\vsevenWorstCompositeExSelf}{+1.23}
 % P5-B3.jsonl: composite worst non-self cell opponent
@@ -354,6 +417,10 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenFarSpanHi}{}\renewcommand{\vsevenFarSpanHi}{50.00}
 % P5-B3.jsonl: sealed member on which INCUMBENT is worst
 \providecommand{\vsevenHardSealed}{}\renewcommand{\vsevenHardSealed}{SEALED:X01xC3f}
+% P5-B3.jsonl: arms beating that member with a lower bound above zero
+\providecommand{\vsevenHardBeaters}{}\renewcommand{\vsevenHardBeaters}{2}
+% P5-B3.jsonl: which arms they are
+\providecommand{\vsevenHardBeaterNames}{}\renewcommand{\vsevenHardBeaterNames}{FROZEN, composite}
 % P5-B3.jsonl: FROZEN against SEALED:X01xC3f
 \providecommand{\vsevenHardFrozen}{}\renewcommand{\vsevenHardFrozen}{+1.43}
 % P5-B3.jsonl: FROZEN against SEALED:X01xC3f, lower bound
@@ -466,6 +533,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenBtwoVfiveRepl}{}\renewcommand{\vsevenBtwoVfiveRepl}{yes}
 % P5-B2.jsonl B2.5: FROZEN declaration accuracy, a bare rate with no interval
 \providecommand{\vsevenBtwoVfiveDeclA}{}\renewcommand{\vsevenBtwoVfiveDeclA}{0.981}
+% P5-B2.jsonl B2.2: pooled half-width of the primary claim, in points
+\providecommand{\vsevenBtwoFcheapHalfWidth}{}\renewcommand{\vsevenBtwoFcheapHalfWidth}{0.45}
 % P5-B2.jsonl: lowest FROZEN declaration accuracy over the five cells
 \providecommand{\vsevenDeclFrozenLo}{}\renewcommand{\vsevenDeclFrozenLo}{0.970}
 % P5-B2.jsonl: highest FROZEN declaration accuracy
@@ -560,6 +629,10 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenBfourPop}{}\renewcommand{\vsevenBfourPop}{12}
 % P5-B4fits.jsonl: games in the search argv
 \providecommand{\vsevenBfourDeals}{}\renewcommand{\vsevenBfourDeals}{120}
+% P5-Z01.jsonl: paired margin of the final generation, on its own fitting stream
+\providecommand{\vsevenZoneFitMargin}{}\renewcommand{\vsevenZoneFitMargin}{+6.67}
+% P5-Z01.jsonl: best paired margin any generation reached on its fitting stream
+\providecommand{\vsevenZoneFitPeak}{}\renewcommand{\vsevenZoneFitPeak}{+8.33}
 % P5-B4eval.jsonl: independent adversary searches evaluated
 \providecommand{\vsevenBfourArms}{}\renewcommand{\vsevenBfourArms}{8}
 % P5-B4fits.jsonl: searches that produced a weight vector
@@ -652,6 +725,10 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenBfiveSumSix}{}\renewcommand{\vsevenBfiveSumSix}{+6.94}
 % P5-B5.jsonl: measured whole / naive sum
 \providecommand{\vsevenSubAdditivity}{}\renewcommand{\vsevenSubAdditivity}{0.766}
+% P5-B5.jsonl: ratio lower bound
+\providecommand{\vsevenSubAdditivityLo}{}\renewcommand{\vsevenSubAdditivityLo}{0.599}
+% P5-B5.jsonl: ratio upper bound
+\providecommand{\vsevenSubAdditivityHi}{}\renewcommand{\vsevenSubAdditivityHi}{0.933}
 % P5-B5.jsonl: points the naive sum overstates by
 \providecommand{\vsevenSubAdditivityOverstate}{}\renewcommand{\vsevenSubAdditivityOverstate}{1.45}
 % P5-B5.jsonl: whole on bank 7090001
@@ -1048,6 +1125,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCheatSeedSfive}{}\renewcommand{\vsevenCheatSeedSfive}{FAIL}
 % P5-B9side.jsonl: cheat=seed, test S6
 \providecommand{\vsevenCheatSeedSsix}{}\renewcommand{\vsevenCheatSeedSsix}{PASS}
+% P5-B9side.jsonl: cheat=seed fails exactly the tests B9.5 requires
+\providecommand{\vsevenCheatSeedAsRequired}{}\renewcommand{\vsevenCheatSeedAsRequired}{yes}
 % P5-B9side.jsonl: cheat=shared, test S3
 \providecommand{\vsevenCheatSharedSthree}{}\renewcommand{\vsevenCheatSharedSthree}{PASS}
 % P5-B9side.jsonl: cheat=shared, test S4
@@ -1056,6 +1135,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCheatSharedSfive}{}\renewcommand{\vsevenCheatSharedSfive}{PASS}
 % P5-B9side.jsonl: cheat=shared, test S6
 \providecommand{\vsevenCheatSharedSsix}{}\renewcommand{\vsevenCheatSharedSsix}{FAIL}
+% P5-B9side.jsonl: cheat=shared fails exactly the tests B9.5 requires
+\providecommand{\vsevenCheatSharedAsRequired}{}\renewcommand{\vsevenCheatSharedAsRequired}{yes}
 % P5-B9side.jsonl: cheat=conv, test S3
 \providecommand{\vsevenCheatConvSthree}{}\renewcommand{\vsevenCheatConvSthree}{FAIL}
 % P5-B9side.jsonl: cheat=conv, test S4
@@ -1064,6 +1145,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCheatConvSfive}{}\renewcommand{\vsevenCheatConvSfive}{PASS}
 % P5-B9side.jsonl: cheat=conv, test S6
 \providecommand{\vsevenCheatConvSsix}{}\renewcommand{\vsevenCheatConvSsix}{PASS}
+% P5-B9side.jsonl: cheat=conv fails exactly the tests B9.5 requires
+\providecommand{\vsevenCheatConvAsRequired}{}\renewcommand{\vsevenCheatConvAsRequired}{yes}
 % P5-B9side.jsonl: side-channel control cells
 \providecommand{\vsevenSideCells}{}\renewcommand{\vsevenSideCells}{12}
 % P5-B10.jsonl: gate-condition cells with a nonzero mismatch
@@ -1148,6 +1231,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCoordinates}{}\renewcommand{\vsevenCoordinates}{55}
 % P5-B0.json: spec reconstructed from the freeze artifact
 \providecommand{\vsevenFrozenSpec}{}\renewcommand{\vsevenFrozenSpec}{v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26}
+% P5-B0.json: the same spec, with a discretionary break after each comma
+\providecommand{\vsevenFrozenSpecWrapped}{}\renewcommand{\vsevenFrozenSpecWrapped}{v07:r12=25,\allowbreak{}rtie=1,\allowbreak{}pool=-1,\allowbreak{}oppfloor=-1,\allowbreak{}force=1000000,\allowbreak{}askfloor=-1,\allowbreak{}stall=12,\allowbreak{}s1=1,\allowbreak{}det=12,\allowbreak{}cand=4,\allowbreak{}kappa=2.5,\allowbreak{}rbelief=indep,\allowbreak{}depth=12,\allowbreak{}maxq=26}
 % P5-B0.json: R2a round-trip with the search on is identical
 \providecommand{\vsevenRtwoaIdentical}{}\renewcommand{\vsevenRtwoaIdentical}{yes}
 % P5-B0.json: games in the R2a comparison
@@ -1288,6 +1373,8 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenCostCompositeFar}{}\renewcommand{\vsevenCostCompositeFar}{4.51}
 % P5-B3.jsonl: median ratio over the whole panel, the most diluted
 \providecommand{\vsevenCostCompositePanel}{}\renewcommand{\vsevenCostCompositePanel}{2.69}
+% P5-B3.jsonl: largest divergence between this table's aggregation and a median of per-bank ratios
+\providecommand{\vsevenCostAggDelta}{}\renewcommand{\vsevenCostAggDelta}{0.029}
 % docs/v07/PREREGISTRATION.md: the cost multiple the record carried
 \providecommand{\vsevenCostRecorded}{}\renewcommand{\vsevenCostRecorded}{3.2}
 % docs/v07/FINAL-RESULTS.md section 15: recorded deviations
@@ -1304,6 +1391,14 @@ and what it would take to call any Fish-playing team near-optimal}
 \providecommand{\vsevenAuditViolations}{}\renewcommand{\vsevenAuditViolations}{0}
 % P5-B2..B9: cells with any action-limit hit
 \providecommand{\vsevenLimitCells}{}\renewcommand{\vsevenLimitCells}{1}
+% P5-B3.jsonl: games in the one cell carrying an action-limit hit
+\providecommand{\vsevenLimitCellGames}{}\renewcommand{\vsevenLimitCellGames}{12,000}
+% P5-B3.jsonl: its arm
+\providecommand{\vsevenLimitCellArm}{}\renewcommand{\vsevenLimitCellArm}{composite}
+% P5-B3.jsonl: its opponent
+\providecommand{\vsevenLimitCellOpp}{}\renewcommand{\vsevenLimitCellOpp}{SEALED:S-ask-1}
+% cells added beyond the preregistered design, per D1 and D2
+\providecommand{\vsevenCellsAdded}{}\renewcommand{\vsevenCellsAdded}{18}
 % preregistered cells not measured
 \providecommand{\vsevenCellsDropped}{}\renewcommand{\vsevenCellsDropped}{0}
 % docs/v07/FINAL-RESULTS.md: the hand-typed cell count this generator corrects
@@ -1325,9 +1420,9 @@ and what it would take to call any Fish-playing team near-optimal}
 % build_tables_v07.py --paper run date
 \providecommand{\vsevenBuildDate}{}\renewcommand{\vsevenBuildDate}{2026-08-26}
 % macros used in sections_v07 that this script generates from artifacts
-\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{196}
-% macros used in sections_v07 transcribed from an earlier study
-\providecommand{\vsevenProvTranscribed}{}\renewcommand{\vsevenProvTranscribed}{0}
+\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{230}
+% macros used in sections_v07 that this script does NOT generate, i.e. transcribed
+\providecommand{\vsevenProvTranscribed}{}\renewcommand{\vsevenProvTranscribed}{91}
 %% --- end numbers_v07_generated ---
 
 \begin{document}
@@ -1347,9 +1442,11 @@ frontier, named as the bar rather than the deployed policy --- \frozen{} scores
 \textbf{\vsevenBtwoFcheap{} points} $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over
 \vsevenBtwoFcheapN{} games with the sign replicating on both banks, a lower bound above the
 pre-committed \vsevenPrimaryFloor{}-point detection floor, and a clean commit gate:
-\textbf{\vsevenPrimaryVerdict{}}. On the \vsevenPanelMembers{}-member shared panel its worst cell is
-\vsevenWorstFrozen{} $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the incumbent's
-\vsevenWorstIncumbent{}, and it is the only arm that beats the hardest sealed adversary. Eight
+\textbf{\vsevenPrimaryVerdict{}}. On the \vsevenPanelMembers{}-member shared panel its worst cell is \vsevenWorstFrozen{}
+$[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the incumbent's \vsevenWorstIncumbent{} ---
+though that cell's sign does not replicate across banks (\vsevenWorstFrozenBankOne{} /
+\vsevenWorstFrozenBankTwo{}) --- and it is one of \vsevenHardBeaters{} arms that beat the hardest
+sealed adversary. Eight
 independent fresh adversary searches, the white-box inverter included, all lose; the largest upper
 bound anywhere is \vsevenBfourWorstUpper{}, which is \vsevenBfourFloorGap{} points below the floor.
 The advantage is not a self-play convention: it survives partner substitution with a minimum of
@@ -1367,8 +1464,7 @@ way. \frozen{} is \emph{third of four} on minimax regret over the shared panel
 best worst case is not the arm with the best regret. And the one quantity that falls short of its
 training value is the group of keys the freeze was \emph{selected over}, by
 \vsevenSelWorstShortfall{} points against an expected maximum under the null of
-\vsevenSelExpectedMax{} --- the selection signature appearing exactly where selection happened and
-nowhere else.
+\vsevenSelExpectedMax{} --- the largest shortfall of the four falling exactly where selection happened.
 
 The value of the cycle is therefore the negative half. Five candidate architectures were built and
 four died with measurements rather than arguments: the declaration-allocation channel, the corpus's
@@ -1379,8 +1475,9 @@ leaf-invariant; every self-oriented per-decision objective produces a \emph{wors
 moving its own proxy in the intended direction; and a learned re-ranker inside the exchangeable tie
 group is worth \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break. What
 remains is a policy class in which the only located gain is a single coordinate found by an
-unfitted sweep, and an evaluation that costs \vsevenCostFrozenTight$\times$ the blueprint --- not
-the \vsevenCostRecorded$\times$ the record carried --- to resolve it. This report states the barrier,
+unfitted sweep, and a configuration that costs at least \vsevenCostFrozenTight$\times$ the blueprint to run --- where
+the frontier point the record priced at \vsevenCostRecorded$\times$ measures
+\vsevenCostFcheapTight$\times$ on the same basis. This report states the barrier,
 lists what would have to be measured before any Fish-playing team could credibly be called
 near-optimal, and records \vsevenDeviations{} deviations and
 \vsevenDeviationCorrections{} corrections against its own protocol and the corpus's record.
@@ -1435,8 +1532,10 @@ architecture work that followed added no measurable strength on top of it.
 
 \item \textbf{The worst case and the minimax regret lead, and they disagree}
   (\S\ref{sec:results-panel}). On a \vsevenPanelMembers{}-member panel scored identically for four
-  arms, \frozen{} has the best worst cell (\vsevenWorstFrozen{} against \vsevenWorstIncumbent{}) and
-  is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
+  arms, \frozen{}'s worst cell is \vsevenWorstFrozen{} against \incumbent{}'s
+  \vsevenWorstIncumbent{} --- but \composite{}'s is better still on both readings
+  (\vsevenWorstComposite{} with its free self-cell, \vsevenWorstCompositeExSelf{} without), and
+  \frozen{} is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
   labelled a diagnostic, because the project's standing rule forbids leading with an aggregate.
 
 \item \textbf{Four architectures killed with measurements} (\S\ref{sec:rejected}). The
@@ -1448,20 +1547,23 @@ architecture work that followed added no measurable strength on top of it.
   \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break.
 
 \item \textbf{A mechanical side-channel gate with calibrated positive controls}
-  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the test built to catch them
-  and pass the other three, on holdout material, across \vsevenSideCells{} cells.
+  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the tests the
+  protocol requires of them --- two for one of the three, not one each --- and pass every other test,
+  on holdout material, across \vsevenSideCells{} cells.
 
 \item \textbf{A fresh adversary search that finds nothing} (\S\ref{sec:exploit}). Eight independent
   searches over four objectives and three classes, each evaluated on banks disjoint from the stream it
   was fitted on. Every arm loses; the largest upper bound anywhere is \vsevenBfourWorstUpper{}.
 
-\item \textbf{The selection signature, isolated} (\S\ref{sec:against-selection}). Of four quantities
-  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and one falls
-  short --- the one measuring the group of keys the freeze was selected over.
+\item \textbf{The selection signature, located} (\S\ref{sec:against-selection}). Of four quantities
+  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and the
+  largest shortfall falls on the one measuring the group of keys the freeze was selected over.
 
 \item \textbf{Corrections to the record} (\S\ref{sec:corrections}), including a freeze-verification
   step that could not fire because its own baseline had been refreshed, a scored-cell count that the
-  artifacts do not support, and a cost figure the corpus understated by more than a third.
+  artifacts do not support, and a cost figure the corpus understated --- by
+  \vsevenCostFcheapTight$\times$ against \vsevenCostRecorded$\times$ for the configuration the
+  record was describing.
 \end{enumerate}
 
 \paragraph{What this paper does not claim.}
@@ -1481,12 +1583,12 @@ none of it has been.
 
 v0.7 is \textbf{a configuration of the \vsix{} policy family, not a new architecture}. That sentence
 is the protocol's, written before the evaluation ran, and the evaluation did not disturb it. The
-frozen object is \vsix{}'s fitted 37-coordinate vector, one hand-set extended coordinate, three
+frozen object is \vsix{}'s fitted \vsevenVsixCoords{}-coordinate vector, one hand-set extended coordinate, three
 switches that turn off machinery an earlier phase measured as defective, one new mechanism, and the
 truncated test-time search that \vsix{} shipped switched off:
 
 \begin{quote}\small\ttfamily\raggedright
-\vsevenFrozenSpec{}
+\vsevenFrozenSpecWrapped{}
 \end{quote}
 
 \noindent
@@ -1504,7 +1606,7 @@ the spec from that file and never typed it. The artifact carries
 \item[\texttt{r12=25} --- half-suit contestation.] The information-denial coordinate
   \texttt{oppCertDonate}, found by an \emph{unfitted} coordinate sweep in phase~2 rather than by any
   architecture work. Phase~2 measured a single hand-set setting of it at \vsevenOneSwitchArm{}~points
-  against the deployed policy over 48,000 games with no fit at all. The protocol states in advance
+  against the deployed policy over \vsevenPhaseTwoCell{} games with no fit at all. The protocol states in advance
   that this key carries the gain and that a holdout leave-one-out drop of roughly two points is the
   check: \vsevenTrainRtwelveLoo{} on training material. \S\ref{sec:results-attribution} reports what
   holdout gives.
@@ -1529,11 +1631,11 @@ the spec from that file and never typed it. The artifact carries
   leave-one-out \vsevenTrainUrgoffLoo{}.
 
 \item[\texttt{stall=12} --- the replacement termination guarantee.] Escalate after twelve consecutive
-  public events in which this seat's hard-certificate hash does not change. The threshold has a
-  fifty-fold margin established at zero game cost: over 800 mirror games \vsix{} never produces a
-  no-progress run longer than \vsevenStallIncumbentRun{}, and a frozen configuration produces
-  \vsevenStallFrozenRun{}. Any threshold in $[12, 60]$ is simultaneously unreachable in ordinary play
-  and immediate in a freeze. Armed, its mirror digest is byte-identical to the same configuration
+  public events in which this seat's hard-certificate hash does not change. The threshold is established at zero game cost: over \vsevenStallMirrorGames{} mirror games \vsix{} never produces a no-progress run longer than
+  \vsevenStallIncumbentRun{}, and a \emph{deadlocked} configuration --- the gate's negative control,
+  not \frozen{} --- produces \vsevenStallFrozenRun{}. Any threshold in $[12, 60]$ is simultaneously
+  unreachable in ordinary play and immediate in a deadlock; the separation between the two regimes is
+  fifty-fold, though the threshold's own margin over observed ordinary play is twelve against six. Armed, its mirror digest is byte-identical to the same configuration
   without it: the rule's cost in ordinary play is not small, it is identically zero, because it never
   runs.
 
@@ -1574,8 +1676,8 @@ under it, and \S\ref{sec:results-residual} measures it again on holdout material
 The project's standing reporting rule is that the worst case over the opponent panel leads and an
 aggregate never does. That rule is correct and it had run out of discriminating power for the
 comparison v0.7 has to make: a panel of hand-built archetypes measures robustness to the behaviours
-someone thought to build, and every arm in this corpus beats most of them by twenty-five to fifty
-points. A definition was therefore written before any v0.7 measurement was taken, and this section
+someone thought to build, and every arm in this corpus beats most of them by
+\vsevenFarSpanLo{} to \vsevenFarSpanHi{} points. A definition was therefore written before any v0.7 measurement was taken, and this section
 states the parts of it that constrain how the numbers in \S\ref{sec:results} and \S\ref{sec:exploit}
 may be read.
 
@@ -1640,7 +1742,7 @@ predicted value: at exactly four times the games the floor is \vsevenPrimaryFloo
 sub-floor rung is still undetected --- not because the interval is wide but because the excess
 resolves \emph{to} zero. \S\ref{sec:results-controls} reproduces that on holdout material.
 
-The floor therefore does \textbf{not} buy down with games, and a 96,000-game cell does not lower it.
+The floor therefore does \textbf{not} buy down with games, and a \vsevenBestExploitN{}-game cell does not lower it.
 Two values are in force, and they are not interchangeable:
 
 \begin{itemize}
@@ -1687,22 +1789,25 @@ posterior-invariance test, and a seat-isolation reconstruction test that replays
 
 The gate is only worth its output if it is calibrated, so three positive controls were built, each a
 policy carrying one planted cheat. Table~\ref{tab:sidechannel} is the holdout result:
-each planted channel is caught by exactly the test built to catch it and by no other, identically on
-both banks, over \vsevenSideCells{} cells.
+each planted channel fails exactly the tests the protocol
+names for it in advance and no others, identically on both banks, over \vsevenSideCells{} cells.
+The required sets are not one test each --- the seed cheat is visible to two of them --- so the
+protocol's own \emph{Must fail} column is printed beside the measurement rather than summarised.
 
 \begin{table}[t]\centering
-\caption{The calibrated side-channel positive controls, on holdout material. A cheat that failed the
-wrong test, or more than one, would mean the gate does not discriminate and no seat-isolation
+\caption{The calibrated side-channel positive controls, on holdout material. \emph{Must fail} is the
+set the protocol names for each planted channel in advance. A cheat failing a test outside its own
+set, or missing one inside it, would mean the gate does not discriminate and no seat-isolation
 statement in this report could be read as a measurement.}
 \label{tab:sidechannel}
 %% --- begin tables_v07/sidechannel ---
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccll}
 \toprule
-Planted channel & S3 & S4 & S5 & S6 \\
+Planted channel & S3 & S4 & S5 & S6 & Must fail & As required \\
 \midrule
-\texttt{v07x:cheat=seed} & PASS & FAIL & FAIL & PASS \\
-\texttt{v07x:cheat=shared} & PASS & PASS & PASS & FAIL \\
-\texttt{v07x:cheat=conv} & FAIL & PASS & PASS & PASS \\
+\texttt{v07x:cheat=seed} & PASS & FAIL & FAIL & PASS & S4, S5 & \checkmark \\
+\texttt{v07x:cheat=shared} & PASS & PASS & PASS & FAIL & S6 & \checkmark \\
+\texttt{v07x:cheat=conv} & FAIL & PASS & PASS & PASS & S3 & \checkmark \\
 \bottomrule
 \end{tabular}
 %% --- end tables_v07/sidechannel ---
@@ -1766,7 +1871,7 @@ allocation-error class and drops the oracle ceiling for a \emph{perfect} allocat
 The consequence is a composition constraint that this report honours: a declaration-channel gain and
 the urgency-off gain may never be added, because they are the same defect counted twice.
 
-\subsection{A leaf evaluator fitted 74$\times$ better buys nothing}
+\subsection{A leaf evaluator fitted \vsevenKoneFold$\times$ better buys nothing}
 \label{sec:rejected-leaf}
 
 The inherited conditional held that the test-time search cannot be judged until its leaf evaluator is
@@ -1804,8 +1909,7 @@ control, produced \emph{worse} policies: \vsevenKfourSelfDecl{}, \vsevenKfourSel
 certified negatives. Each fit moved its own proxy in the intended direction and lost anyway:
 the declaration-oriented fit bought \vsevenKfourTradeGain{}~pp of declaration accuracy by paying
 \vsevenKfourTradeCost{}~pp of ask accuracy, and the ask-oriented fit did the reverse. The two
-per-decision channels trade against each other, so a fitter holding fifty-five coordinates buys one
-out of the other. Keep the estimator; drop the objective.
+per-decision channels trade against each other, so a fitter holding \vsevenCoordinates{} coordinates buys one out of the other. Keep the estimator; drop the objective.
 
 \subsection{Nothing learned survives a free random tie-break}
 \label{sec:rejected-tie}
@@ -1814,7 +1918,7 @@ out of the other. Keep the estimator; drop the objective.
 whether anything can be \emph{selected} inside that group, as opposed to merely randomised. A learned
 re-ranker was built --- the corpus's first learned agent --- restricted to the tie group.
 
-Against the deployed policy it scores \vsevenKfiveTieOnly{} pooled, which is indistinguishable from the free hash tie-break's \vsevenKfiveFreeTie{}; head to head against that free tie-break at 48{,}000 games it is
+Against the deployed policy it scores \vsevenKfiveTieOnly{} pooled, which is indistinguishable from the free hash tie-break's \vsevenKfiveFreeTie{}; head to head against that free tie-break at \vsevenPhaseTwoCell{} games it is
 \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{}, replicated. \textbf{Nothing learned survives the free
 random tie-break.} The correct control for anything operating inside the tie group is the
 decorrelated policy and not the deployed one, which is a methodological point this report inherits
@@ -1835,8 +1939,9 @@ the register's own figure corrected \emph{upward} by a factor of two and still a
 detection floor. The one route by which it could have returned, an adversary driving incidence up, was measured and costs the adversary \vsevenLthirteenAdvCost{}~points.
 
 \paragraph{A stochastic policy bought to reduce readability.} The brief made this conditional on the
-white-box inverter biting. Transcript inversion contracts the deal posterior by
-$\sim$\vsevenBitsPerAsk{} bits per observed ask --- the first such measurement anywhere --- and
+white-box inverter biting. Transcript inversion contracts the deal posterior by $\sim$\vsevenBitsPerAsk{} bits per observed
+ask --- the first such measurement in this corpus, and one the threat model's literature review
+found no external precedent for --- and
 converting those bits into play is worth \vsevenInversionUnfitted{}~points unfitted. But the excess
 tracks planted-edge size within $\pm$\vsevenInversionTrack{} on all eight rungs, which is the
 signature of a general strength gain and not of an exploitation instrument. And no linear handicap
@@ -1908,8 +2013,9 @@ scripted or frontier cell is used as a free determinism check
 \label{sec:protocol-gate}
 
 A configuration that scores higher while failing the pathology rules is rejected, and the ordering is
-not a formality: the corpus contains a configuration that scores 56.6\% against \vfour{} while
-carrying 44.8\% dead asks and losing 14\% of its games to the action limit. Win rate and soundness are
+not a formality: the corpus contains a configuration that scores
+\vsevenScoreboardTrapWin\% against \vfour{} while carrying \vsevenScoreboardTrapDead\% dead asks and
+losing \vsevenScoreboardTrapLimit\% of its games to the action limit. Win rate and soundness are
 dissociable in this family.
 
 \begin{table}[t]\centering
@@ -1917,8 +2023,7 @@ dissociable in this family.
 on self-play behaviour, not a strength claim. The negative control is the configuration the corpus
 built to be rejected; a gate that could not reject it would certify nothing about the one it accepts.}
 \label{tab:gate}
-%% --- begin tables_v07/gate ---
-\begin{tabular}{lcccc}
+{\small\begin{tabular}{lcccc}
 \toprule
 Rule & Frozen & Incumbent & F-cheap & Negative control \\
 \midrule
@@ -1933,8 +2038,7 @@ S6 = 0 at \texttt{--threads=1 --freshagents} & ok & ok & ok & ok \\
 \midrule
 \textbf{verdict} & \textbf{PASS} & \textbf{PASS} & \textbf{PASS} & \textbf{FAIL} \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/gate ---
+\end{tabular}}
 \end{table}
 
 \frozen{} passes all \vsevenGateRules{} rules: \vsevenGateDeadAsks\% provably-dead asks against a
@@ -1971,16 +2075,19 @@ The protocol requires a deviation for anything the evaluation did that it does n
 dropped, a cell added, a threshold read a particular way, a command whose flags differ. There are
 \vsevenDeviations{} of them, \vsevenDeviationAdded{} adding cells or checks the protocol's own
 questions turn out not to be computable without, and \vsevenDeviationCorrections{} of them
-corrections. Appendix~\ref{app:deviations} is the full register, read out of the results document
-rather than retyped. \vsevenCellsDropped{} preregistered cells were dropped.
+corrections. Appendix~\ref{app:deviations} is the full register, read out of the results
+document rather than retyped. \vsevenCellsDropped{} preregistered cells were dropped and
+\vsevenCellsAdded{} were added --- the added ones because two of the protocol's own questions are not
+computable from the cells it names (Table~\ref{tab:battery}).
 %% --- end sections_v07/06-protocol ---
 %% --- begin sections_v07/07-results ---
 \section{Results}
 \label{sec:results}
 
-Every number in this section comes from the artifacts listed in
-Appendix~\ref{app:repro} and is emitted into this document by
-\filepath{engine/build\_tables\_v07.py --paper}; none is typed by hand. The battery is
+Every measurement in this section comes from the artifacts listed in Appendix~\ref{app:repro} and is
+emitted into this document by \filepath{engine/build\_tables\_v07.py --paper}. The one exception is
+labelled where it occurs: the two \emph{training} rows of Table~\ref{tab:regimes} are quoted from the
+protocol, which states them in advance, and are the only hand-entered numbers in the section. The battery is
 \vsevenScoredCells{} scored cells over \vsevenScoredGames{} games with
 \vsevenAuditViolations{} audit violations and \vsevenLimitCells{} cell carrying any action-limit hit.
 
@@ -2001,8 +2108,7 @@ regret defined at all.
 \begin{table}[t]\centering
 \caption{Worst cell per arm over the shared panel. This is the headline and it is printed first.}
 \label{tab:worstcase}
-%% --- begin tables_v07/worstcase ---
-\begin{tabular}{llrrl}
+{\small\begin{tabular}{llrrl}
 \toprule
 Arm & Worst cell & Edge (pts) & 95\% CI & Per bank \\
 \midrule
@@ -2011,8 +2117,7 @@ INCUMBENT & SEALED:X01xC3f & $-4.24$ & $[-4.86, -3.62]$ & 7090001:-3.86\ \ 70900
 F-cheap & composite & $-2.08$ & $[-3.48, -0.69]$ & 7090001:-2.21\ \ 7090002:-1.96 \\
 composite & composite & $+0.00$ & $[+0.00, +0.00]$ & 7090001:+0.00\ \ 7090002:+0.00 \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/worstcase ---
+\end{tabular}}
 \end{table}
 
 \frozen{}'s worst cell is \vsevenWorstFrozen{}
@@ -2020,12 +2125,27 @@ $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$, against \incumbent{}'s \vsevenWo
 $[\vsevenWorstIncumbentLo, \vsevenWorstIncumbentHi]$. The preregistered secondary claim that the worst
 case is not catastrophic passes.
 
+\textbf{That cell does not replicate, and this report's own rule says to say so.} \frozen{}'s worst
+cell is \vsevenWorstFrozenBankOne{} on \texttt{7090001} and \vsevenWorstFrozenBankTwo{} on
+\texttt{7090002}, and it is attained at a different member on each
+(\texttt{\vsevenWorstFrozenBankOneOpp{}} and \texttt{\vsevenWorstFrozenBankTwoOpp{}}). On one bank
+\frozen{} has no negative cell anywhere on the panel. Under \S\ref{sec:instrument-arithmetic}'s sign
+rule the pooled \vsevenWorstFrozen{} is \emph{not replicated}
+(\vsevenWorstFrozenRepl{}), and the same criticism this report makes of \incumbent{}'s
+regret-attaining member below applies to its own headline cell. What survives replication is the
+comparison the protocol actually gated on --- \frozen{}'s worst cell is far above \incumbent{}'s on
+both banks --- not the value \vsevenWorstFrozen{} itself.
+
 One caveat belongs beside that comparison rather than beneath it. \incumbent{}, \fcheap{} and
 \composite{} each meet \emph{themselves} in the panel and so carry a free $0.00$ cell, which can only
 lower a worst case; \frozen{} is not a panel member and carries none. Excluding self-cells,
-\composite{}'s worst becomes \vsevenWorstCompositeExSelf{} against
-\vsevenWorstCompositeExSelfOpp{} and the other three are unchanged, so the claim survives on that
-reading too. Both readings are printed because only printing the flattering one would be a choice.
+\composite{}'s worst becomes
+\vsevenWorstCompositeExSelf{} against \vsevenWorstCompositeExSelfOpp{} and the other three are
+unchanged, so the S6 claim survives on that reading too. \textbf{But \composite{} has the better
+worst cell on both readings} --- \vsevenWorstComposite{} with its free self-cell and
+\vsevenWorstCompositeExSelf{} without --- so \frozen{} does not have the best worst case of the four
+arms, only a far better one than the arm the protocol asked it to be compared against. Both readings
+are printed because only printing the flattering one would be a choice.
 
 \begin{table}[t]\centering
 \caption{Minimax regret over the shared panel, best first. The protocol sets no threshold on this
@@ -2055,15 +2175,15 @@ on opponents every arm already beats by \vsevenFarSpanLo{} to \vsevenFarSpanHi{}
 (Table~\ref{tab:farpanel}). Against
 the hardest sealed adversary the ordering reverses: on \vsevenHardSealed{}, \frozen{} is
 \vsevenHardFrozen{} $[\vsevenHardFrozenLo, \vsevenHardFrozenHi]$ where \incumbent{} is
-\vsevenHardIncumbent{} and \fcheap{} is \vsevenHardFcheap{}. It is the only arm of the four that beats
-that member.
+\vsevenHardIncumbent{} and \fcheap{} is \vsevenHardFcheap{}. \vsevenHardBeaters{} of the four arms beat that member with a lower bound above zero
+(\vsevenHardBeaterNames{}); \composite{} takes \vsevenHardComposite{}
+$[\vsevenHardCompositeLo, \vsevenHardCompositeHi]$.
 
 \begin{table}[t]\centering
 \caption{The far archetypes, where the regret difference lives. Every arm beats every one of these by between
 \vsevenFarSpanLo{} and \vsevenFarSpanHi{} points; the differences between arms are what minimax regret is measuring.}
 \label{tab:farpanel}
-%% --- begin tables_v07/farpanel ---
-\begin{tabular}{lrrrr}
+{\small\begin{tabular}{lrrrr}
 \toprule
 Far archetype & Frozen & Incumbent & F-cheap & Composite \\
 \midrule
@@ -2078,8 +2198,7 @@ silent & +32.75 & +34.23 & +34.05 & +30.92 \\
 withholder & +25.35 & +29.88 & +29.55 & +25.80 \\
 random & +50.00 & +50.00 & +50.00 & +50.00 \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/farpanel ---
+\end{tabular}}
 \end{table}
 
 \incumbent{}'s attaining member is decided by \vsevenRegretIncumbentGap{} points over the
@@ -2102,8 +2221,7 @@ report's word for which it is.
 \caption{Headline strength against the \vsix{} frontier, paired duplicate, both primary banks. The
 preregistered primary claim is the \fcheap{} row.}
 \label{tab:frontier}
-%% --- begin tables_v07/frontier ---
-\begin{tabular}{llrrrr}
+{\small\begin{tabular}{llrrrr}
 \toprule
 Cell & Opponent & Edge (pts) & 95\% CI & Games & Sign replicates \\
 \midrule
@@ -2113,8 +2231,7 @@ B2.3 & F-mid & $+2.89$ & $[+2.00, +3.78]$ & 12,000 & yes \\
 B2.4 & the phase-2 composite & $+0.15$ & $[-0.29, +0.59]$ & 48,000 & yes \\
 B2.5 & v05 & $+5.18$ & $[+4.56, +5.81]$ & 24,000 & yes \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/frontier ---
+\end{tabular}}
 \end{table}
 
 The primary claim: \frozen{} against \fcheap{} is \textbf{\vsevenBtwoFcheap{}}~points
@@ -2149,8 +2266,7 @@ rule; clearing a bar is not.
 the drop from \frozen{}. Reference cell \frozen{} against \incumbent{} on the lattice banks:
 \vsevenBfiveWhole{} $[\vsevenBfiveWholeLo, \vsevenBfiveWholeHi]$.}
 \label{tab:attribution}
-%% --- begin tables_v07/attribution ---
-\begin{tabular}{lrrrr}
+{\small\begin{tabular}{lrrrr}
 \toprule
 Component & Add-one-in from v0.6 & 95\% CI & Leave-one-out drop & 95\% CI \\
 \midrule
@@ -2161,25 +2277,31 @@ urgency-off & $+1.37$ & $[+1.12, +1.63]$ & $+0.64$ & $[-0.25, +1.53]$ \\
 stall=12 & $+0.00$ & $[+0.00, +0.00]$ & $+0.00$ & $[-0.89, +0.89]$ \\
 \textit{m2=0} \textit{(not in the freeze)} & $+0.77$ & $[+0.66, +0.88]$ & --- & --- \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/attribution ---
+\end{tabular}}
 \end{table}
 
-The protocol's first advance prediction holds: \textbf{\texttt{r12=25} carries the gain}, with a
-holdout leave-one-out drop of \vsevenLooRtwelve{} $[\vsevenLooRtwelveLo, \vsevenLooRtwelveHi]$ against
-the ``roughly two points'' the protocol demanded, and the training figure \vsevenTrainRtwelveLoo{}
-inside the interval. Its add-one-in is \vsevenAddInRtwelve{}.
+The protocol's first advance prediction --- that \texttt{r12=25} carries the gain, checkable as a
+leave-one-out drop of ``roughly two points'' --- \textbf{holds on that check}: the holdout drop is
+\vsevenLooRtwelve{} $[\vsevenLooRtwelveLo, \vsevenLooRtwelveHi]$, with the training figure
+\vsevenTrainRtwelveLoo{} inside the interval, and an add-one-in of \vsevenAddInRtwelve{}. The
+stronger sentence --- that this coordinate \emph{is} where the gain lives --- is not supported: the
+drop's lower bound is \vsevenLooRtwelveLo{}, and \S\ref{sec:against-location} shows the
+protocol's own one-third location test failing on the lattice's primary bank.
 
 The second holds exactly: \texttt{stall=12} is worth \vsevenAddInStall{}
 $[\vsevenAddInStallLo, \vsevenAddInStallHi]$ added and \vsevenLooStall{} removed --- bit-identical,
-reproduced on holdout, in win rate and in events per game alike. The rung did not fire. The third
-holds too: \texttt{m2=0} is worth \vsevenAddInMtwo{} alone and was dropped from the freeze for a zero
-leave-one-out drop, and both remain true.
+reproduced on holdout, in win rate and in events per game alike. The rung did not fire. The third is only half testable here: \texttt{m2=0} is worth \vsevenAddInMtwo{}
+$[\vsevenAddInMtwoLo, \vsevenAddInMtwoHi]$ added to the blueprint on holdout --- an interval
+excluding zero, and larger than \texttt{rtie=1}'s add-one-in --- while its \emph{zero leave-one-out
+drop} was measured on training material and is not re-measured here, because the freeze does not
+carry the key and the protocol says in terms not to add it back. There is no \texttt{L-m2} cell and
+there could not be one.
 
 The naive sum of the five components the freeze carries is \vsevenBfiveSum{}; the measured whole is
-\vsevenBfiveWhole{}. The sub-additivity ratio is \vsevenSubAdditivity{}, and the phase-2 composition
-figure \vsevenSubAddPhaseTwo{} lies inside its interval, so the two phases' composition is not
-distinguishable here. \textbf{Quoting the sum would overstate the configuration by
+\vsevenBfiveWhole{}. The sub-additivity ratio is \vsevenSubAdditivity{}
+$[\vsevenSubAdditivityLo, \vsevenSubAdditivityHi]$ --- propagating the reference cell's half-width
+and the five add-one-in half-widths in quadrature --- and the phase-2 composition figure
+\vsevenSubAddPhaseTwo{} lies inside it, so the two phases' composition is not distinguishable here. \textbf{Quoting the sum would overstate the configuration by
 \vsevenSubAdditivityOverstate{} points.} The preregistered attribution claim passes: the components are
 sub-additive and no single leave-one-out drop exceeds the whole.
 
@@ -2196,8 +2318,7 @@ This table appears whether or not it flatters the release, and it does not entir
 copies of the opponent. Every delta carries an interval; the phase-5 results document compresses these
 out of its own table and they are restored here (\S\ref{sec:corrections-intervals}).}
 \label{tab:partners}
-%% --- begin tables_v07/partners_v05 ---
-\begin{tabular}{lrrlc}
+{\small\begin{tabular}{lrrlc}
 \toprule
 Partners & Frozen $-$ Incumbent & 95\% CI & Per bank & Sign replicates \\
 \midrule
@@ -2210,8 +2331,7 @@ detective & $+1.83$ & $[+0.97, +2.68]$ & 7090001:+1.35\ \ 7090002:+2.30 & yes \\
 withholder & $-0.19$ & $[-1.04, +0.67]$ & 7090001:+0.00\ \ 7090002:-0.38 & \textbf{no} \\
 lockout & $+1.89$ & $[+1.04, +2.74]$ & 7090001:+1.39\ \ 7090002:+2.39 & yes \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/partners_v05 ---
+\end{tabular}}
 \end{table}
 
 \vsevenSonePositive{} of \vsevenSoneRows{} changed-partner rows are positive and the minimum is
@@ -2224,8 +2344,7 @@ opponent, where the protocol predicts more stability, all four rows are positive
 \begin{table}[t]\centering
 \caption{The same table against a \vsix{} opponent.}
 \label{tab:partnerssix}
-%% --- begin tables_v07/partners_v06 ---
-\begin{tabular}{lrrlc}
+{\small\begin{tabular}{lrrlc}
 \toprule
 Partners & Frozen $-$ Incumbent & 95\% CI & Per bank & Sign replicates \\
 \midrule
@@ -2234,8 +2353,7 @@ v06 & $+2.75$ & $[+2.14, +3.37]$ & 7090001:+2.97\ \ 7090002:+2.54 & yes \\
 v03 & $+1.46$ & $[+0.63, +2.29]$ & 7090001:+1.25\ \ 7090002:+1.67 & yes \\
 detective & $+2.34$ & $[+1.49, +3.19]$ & 7090001:+2.42\ \ 7090002:+2.26 & yes \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/partners_v06 ---
+\end{tabular}}
 \end{table}
 
 \paragraph{The sentence the protocol pre-committed to, and it applies.}
@@ -2246,11 +2364,14 @@ The ordering survived (Table~\ref{tab:regimes}): \vsevenSoneRatio{} against
 \vsevenBaseRatio{}. So that sentence stands as this report's.
 
 \begin{table}[t]\centering
-\caption{Transfer across partners, v0.7 over \vsix{} against \vsix{} over \vfive{}, on the same eight
-settings and the same banks. Reported and \emph{not} gated, as the protocol requires.}
+\caption{Transfer across partners, v0.7 over \vsix{} against \vsix{} over \vfive{}. The two holdout
+rows are the same eight settings on the same two banks and are generated from the artifacts. The two
+training rows are quoted from the protocol, which states them in advance; they are on training banks,
+and the protocol records that its \vsix{}-over-\vfive{} training row is computed on three of the seven
+changed settings only, so that row is not like-for-like with the holdout one above it. Reported and
+\emph{not} gated, as the protocol requires.}
 \label{tab:regimes}
-%% --- begin tables_v07/regimes ---
-\begin{tabular}{lrrrr}
+{\small\begin{tabular}{lrrrr}
 \toprule
 Comparison & Min & Median & Self & Median/self \\
 \midrule
@@ -2259,8 +2380,7 @@ v0.6 over v0.5 --- holdout & $-0.40$ & $+0.26$ & $+0.69$ & 0.380 \\
 v0.7 over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\
 v0.6 over v0.5 --- training, stated in advance & $-0.61$ & $+0.64$ & $+1.35$ & 0.472 \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/regimes ---
+\end{tabular}}
 \end{table}
 
 Beside it belongs the fact the ratio omits: v0.7's absolute changed-partner median is
@@ -2281,8 +2401,7 @@ strongest evidence in this report that the gain is individual rather than conven
 banks with different search trajectories and, for one, a different starting basin; pairwise parameter
 distance \vsevenXpDistanceLo{}--\vsevenXpDistanceHi{} over \vsevenCoordinates{} coordinates.}
 \label{tab:crossplay}
-%% --- begin tables_v07/crossplay ---
-\begin{tabular}{lccc}
+{\small\begin{tabular}{lccc}
 \toprule
 Run \textbackslash\ partners & xp1 & xp2 & xp3 \\
 \midrule
@@ -2290,8 +2409,7 @@ Run \textbackslash\ partners & xp1 & xp2 & xp3 \\
 \textbf{xp2} & $+4.93$ $[+4.29, +5.56]$ & $+4.91$ $[+4.29, +5.54]$ & $+4.83$ $[+4.20, +5.46]$ \\
 \textbf{xp3} & $+5.15$ $[+4.52, +5.78]$ & $+4.06$ $[+3.44, +4.69]$ & $+4.20$ $[+3.56, +4.83]$ \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/crossplay ---
+\end{tabular}}
 \end{table}
 
 Diagonal mean \vsevenXpDiagonal{}, off-diagonal mean \vsevenXpOffDiagonal{}, gap
@@ -2331,8 +2449,7 @@ xp2 vs xp3 & $+1.05$ & $[+0.43, +1.68]$ \\
 first dialect sweep of its kind in the corpus and has no training-bank counterpart to be checked
 against.}
 \label{tab:dialects}
-%% --- begin tables_v07/dialects ---
-\begin{tabular}{lrrlr}
+{\small\begin{tabular}{lrrlr}
 \toprule
 Dialect & Edge (pts) & 95\% CI & Per bank & vs default \\
 \midrule
@@ -2345,8 +2462,7 @@ arb=turn & $+5.51$ & $[+4.88, +6.14]$ & 7090003:+5.26\ \ 7090001:+5.77 & $+0.78$
 sets=8 & $+4.13$ & $[+3.52, +4.73]$ & 7090003:+3.77\ \ 7090001:+4.48 & $-0.60$ \\
 legacy & $+5.12$ & $[+4.50, +5.75]$ & 7090003:+4.62\ \ 7090001:+5.63 & $+0.40$ \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/dialects ---
+\end{tabular}}
 \end{table}
 
 Every row keeps its sign, every row replicates, and the largest excursion from the default row is
@@ -2373,8 +2489,7 @@ If these misbehave, nothing else in this report is a measurement.
 \caption{Planted-edge recovery. The recovered excess is the responder's edge against the handicapped
 target minus its edge against the unhandicapped one. The sub-floor rung must \emph{not} be recovered.}
 \label{tab:controls}
-%% --- begin tables_v07/controls ---
-\begin{tabular}{lrrrr}
+{\small\begin{tabular}{lrrrr}
 \toprule
 Planted \texttt{hstr} & Planted cost & Responder vs handicapped & Responder vs Frozen & Recovered excess \\
 \midrule
@@ -2383,29 +2498,35 @@ Planted \texttt{hstr} & Planted cost & Responder vs handicapped & Responder vs F
 0.11 & $+8.52$ $[+7.93, +9.12]$ & $+2.52$ $[+1.89, +3.16]$ & $-6.90$ $[-7.52, -6.28]$ & $\mathbf{+9.42}$ $[+8.54, +10.31]$ \\
 0.15 & $+11.44$ $[+10.85, +12.03]$ & $+7.30$ $[+6.68, +7.93]$ & $-5.34$ $[-5.97, -4.71]$ & $\mathbf{+12.64}$ $[+11.75, +13.53]$ \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/controls ---
+\end{tabular}}
 \end{table}
 
-All three supra-floor rungs are recovered above the \vsevenPrimaryFloor{} floor and the recovered size
-tracks the planted size monotonically; the ladder is sharply non-linear, with most of the damage
-arriving between the second and third rungs. The sub-floor rung is \textbf{not} recovered ---
+Two of the three supra-floor rungs are recovered with a \emph{lower bound} above the
+\vsevenPrimaryFloor{} floor. The third, the \texttt{0.08} rung, recovers \vsevenBnineHeightExcess{}
+$[\vsevenBnineHeightExcessLo, \vsevenBnineHeightExcessHi]$ --- above the floor on the point estimate
+but with an interval that straddles it, so on the lower-bound reading this report applies to its own
+primary claim it is \emph{not} recovered (\vsevenBnineHeightRecovered{}). Its planted cost,
+\vsevenBnineHeightCost{} $[\vsevenBnineHeightCostLo, \vsevenBnineHeightCostHi]$, straddles the floor
+too, so the rung is only supra-floor on a point estimate in the first place. The recovered size does
+track the planted size monotonically across all four rungs, and the ladder is sharply non-linear,
+with most of the damage arriving between the second and third. The sub-floor rung is \textbf{not} recovered ---
 \vsevenBnineHfiveExcess{} $[\vsevenBnineHfiveExcessLo, \vsevenBnineHfiveExcessHi]$, below the floor with an
 interval containing zero --- which is the control that has to fail and does.
 
-Two qualifications belong beside it. An earlier phase measured this same excess at $-0.01$
-$[-0.45, +0.42]$ and this evaluation gets \vsevenBnineHfiveExcess{}: the same conclusion from a point
+Two qualifications belong beside it. An earlier phase measured this same excess at \vsevenSubFloorExcess{}
+$[\vsevenSubFloorExcessLo, \vsevenSubFloorExcessHi]$ and this evaluation gets
+\vsevenBnineHfiveExcess{}: the same conclusion from a point
 estimate seven tenths of a point higher. And its upper bound \emph{grazes} the floor. The verdict is
 unchanged --- the test is whether the edge is recovered, and it is not --- but the margin is thinner
 than the earlier phase's, and a reader entitled to the caveat is entitled to it here rather than in a
 footnote.
 
 The identity control is exact: \frozen{} against itself is \vsevenIdentityRate{} with a zero-width
-interval on both banks over \vsevenIdentityN{} games each (\vsevenIdentityExact{}). The fitted
-responders lose to \emph{unhandicapped} \frozen{} in all four rows, independently reproducing
-\S\ref{sec:exploit}'s finding from a different fitting bank and a different objective. And the three
-planted side channels each fail exactly the test built to catch them
-(Table~\ref{tab:sidechannel}).
+interval on both banks over \vsevenIdentityN{} games each (\vsevenIdentityExact{}). The fitted responders lose to \emph{unhandicapped} \frozen{} in all four rows, reproducing
+\S\ref{sec:exploit}'s finding from a different fitting bank and against a handicapped target. The
+objective is \emph{not} independent --- these responders and four of the eight adversary searches
+both maximise win rate --- so this is a second sample, not a second method. And the three planted side channels each fail exactly the
+tests the protocol names for them and no others (Table~\ref{tab:sidechannel}).
 
 \subsection{The seat-isolation residual on holdout material}
 \label{sec:results-residual}
@@ -2414,8 +2535,7 @@ planted side channels each fail exactly the test built to catch them
 \caption{The seat-isolation residual, \vsevenSsixCells{} cells over \vsevenSsixDeals{} audited deals.
 The gate column is the preregistered zero-tolerance condition; the first column is the shipped mode.}
 \label{tab:residual}
-%% --- begin tables_v07/residual ---
-\begin{tabular}{llrr}
+{\small\begin{tabular}{llrr}
 \toprule
 Arm & Bank & \texttt{--threads=1} & \texttt{--threads=1 --freshagents} \\
 \midrule
@@ -2428,8 +2548,7 @@ F-cheap & 7090002 & 2 / 795,218 & \textbf{0} / 795,224 \\
 composite & 7090001 & 2 / 814,702 & \textbf{0} / 814,726 \\
 composite & 7090002 & 0 / 816,225 & \textbf{0} / 816,225 \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/residual ---
+\end{tabular}}
 \end{table}
 
 \textbf{The gate column is zero for every arm on both banks} (\vsevenSsixGateNonzero{} nonzero cells).
@@ -2456,10 +2575,13 @@ game on a separate benchmark.
 \begin{table}[t]\centering
 \caption{Cost relative to the blueprint. Every figure is a \emph{lower bound}: the harness reports
 whole-match throughput, which carries the opponent's cost on both sides of the ratio, so the measured
-ratio is strictly below the true one. The bound is tightest against the cheapest opponent.}
+ratio is strictly below the true one. The bound is tightest against the cheapest opponent. No figure
+here carries an interval --- these are wall-clock timings taken across a battery that ran over two
+days --- and the aggregation is a ratio of medians, which differs from a median of per-bank ratios --- the aggregation the
+phase-5 reduction uses --- by at most $\vsevenCostAggDelta\times$ across the six median cells, and
+not at all on the \texttt{random} column that carries the claim.}
 \label{tab:cost}
-%% --- begin tables_v07/cost ---
-\begin{tabular}{lrrr}
+{\small\begin{tabular}{lrrr}
 \toprule
 Arm & vs \texttt{random} (tightest) & Far archetypes (median) & Whole panel (median) \\
 \midrule
@@ -2467,13 +2589,13 @@ FROZEN & 4.52$\times$ & 4.72$\times$ & 2.72$\times$ \\
 F-cheap & 4.10$\times$ & 4.36$\times$ & 2.63$\times$ \\
 composite & 4.20$\times$ & 4.51$\times$ & 2.69$\times$ \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/cost ---
+\end{tabular}}
 \end{table}
 
-\textbf{The record understates the cost.} \frozen{} costs at least
-\vsevenCostFrozenTight$\times$ the blueprint, and both tight bounds exceed
-\vsevenCostRecorded$\times$. The whole-panel column is lower only because the expensive panel members
+\textbf{The record understates the cost.} The \vsevenCostRecorded$\times$ the record carried is a
+figure for \fcheap{}, so the like-for-like comparison is \fcheap{}'s own
+\vsevenCostFcheapTight$\times$; \frozen{} costs at least \vsevenCostFrozenTight$\times$. All three
+tight bounds exceed \vsevenCostRecorded$\times$. The whole-panel column is lower only because the expensive panel members
 put a large common term on both sides of the ratio; it is the most diluted of the three and is printed
 last for that reason.
 %% --- end sections_v07/07-results ---
@@ -2490,8 +2612,7 @@ the exploit is the headline''. Eight independent searches were run to find out.
 adversary beats the target; every one is negative. Each arm was fitted on a stream disjoint from the
 banks it is evaluated on.}
 \label{tab:adversaries}
-%% --- begin tables_v07/adversaries ---
-\begin{tabular}{lllrrll}
+{\small\begin{tabular}{lllrrll}
 \toprule
 ID & Class & Objective & Edge over Frozen & 95\% CI & Per bank & Sign replicates \\
 \midrule
@@ -2504,8 +2625,7 @@ Z06 & C2 wide sigma & win & $-5.25$ & $[-5.88, -4.62]$ & 7090001:-4.93\ \ 709000
 Z07 & C1 v05 basin & win & $-5.21$ & $[-5.84, -4.58]$ & 7090001:-4.85\ \ 7090002:-5.58 & yes \\
 Z08 & C5 white-box & win & $-3.56$ & $[-4.19, -2.92]$ & 7090001:-3.95\ \ 7090002:-3.17 & yes \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/adversaries ---
+\end{tabular}}
 \end{table}
 
 \vsevenBfourFits{} of \vsevenBfourArms{} searches produced a weight vector and all
@@ -2554,13 +2674,15 @@ this is the exact place the corpus has previously turned a null result into a wi
 \label{sec:exploit-curse}
 
 The gap between fitting performance and holdout performance is large and in the expected direction:
-the in-class arm reached \vsevenZoneFitMargin{}~points of paired margin on its own fitting material and lands at
+the in-class arm reached \vsevenZoneFitMargin{}~points of paired margin in its final generation on
+its own fitting stream --- \vsevenZoneFitPeak{} at its best generation --- and lands at
 \vsevenZoneEdge{} on disjoint banks. That is the arithmetic the disjointness rule exists to expose,
 and it is why an exploitability number measured on its own fitting stream is not a measurement.
 
-An independent reproduction of the same finding sits in \S\ref{sec:results-controls}: the responders
-fitted for the planted-edge controls, on a different bank and against a different objective, also lose
-to unhandicapped \frozen{} in every row.
+A second sample of the same finding sits in \S\ref{sec:results-controls}: the responders fitted for
+the planted-edge controls, on a different bank and against a handicapped target, also lose to
+unhandicapped \frozen{} in every row. They maximise win rate, as four of these eight arms do, so it
+is not an independent \emph{method}.
 %% --- end sections_v07/08-exploitability ---
 %% --- begin sections_v07/09-against ---
 \section{What went against the release}
@@ -2657,8 +2779,7 @@ smaller than the training estimate by about that amount.
 \caption{Every quantity for which the protocol states a training figure in advance, against its
 holdout measurement. Three reproduce or exceed; one falls short.}
 \label{tab:selection}
-%% --- begin tables_v07/selection ---
-\begin{tabular}{lrrr}
+{\small\begin{tabular}{lrrr}
 \toprule
 Quantity & Training & Holdout & Shortfall \\
 \midrule
@@ -2667,15 +2788,18 @@ B6 self-play row, opponent \texttt{v05} & $+2.94$ & $+4.49$ & $+1.55$ \\
 B7 diagonal (self-play) & $+4.51$ & $+4.55$ & $+0.04$ \\
 B7 off-diagonal (cross-play) & $+4.48$ & $+4.55$ & $+0.07$ \\
 \bottomrule
-\end{tabular}
-%% --- end tables_v07/selection ---
+\end{tabular}}
 \end{table}
 
 \vsevenSelReproduce{} of the four reproduce or exceed their training values. The one that falls short
 is the composite cell, by \vsevenSelWorstShortfall{} points against an expected-maximum-under-the-null
 of \vsevenSelExpectedMax{} --- \textbf{and that cell is precisely the one measuring the group of keys
-the freeze was selected over.} The signature appears where selection happened and nowhere else, at
-about the size the null predicts. The training interval for that group was
+the freeze was selected over.} The shortfall is the largest of the four and it falls on the cell measuring what the freeze was
+chosen over, at about the size the null predicts. It is not the only shortfall the protocol's
+advance figures produce --- the one-seat upgrade against a \vsix{} opponent comes in at
+\vsevenOneSeatSix{} against a predicted \vsevenTrainOneSeatSix{}, which \S\ref{sec:results-partners}
+prints --- so the correct statement is that the largest shortfall is where selection happened, not
+that it is the only one. The training interval for that group was
 $[\vsevenTrainGroupLo, \vsevenTrainGroupHi]$; the holdout interval is
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$.
 
@@ -2724,10 +2848,11 @@ it.
   blueprint, and the \vsix{} paper at ``three orders of magnitude''. Both figures describe the
   \emph{unrestricted} configuration, which is not the point of the frontier anything was measured at.
   The endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$ during
-  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the
-  correction}: measured on the shared panel at a fixed thread count, the frozen configuration costs at
-  least \vsevenCostFrozenTight$\times$ the blueprint (\S\ref{sec:results-cost}), and every figure in
-  that table is a lower bound. The record has now been wrong in both directions and the reason is the
+  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the correction}: measured on the shared panel at a fixed thread count,
+  \fcheap{} --- the configuration the \vsevenCostRecorded$\times$ describes --- costs at least
+  \vsevenCostFcheapTight$\times$ the blueprint, and \frozen{} at least
+  \vsevenCostFrozenTight$\times$ (\S\ref{sec:results-cost}). Every figure in that table is a lower
+  bound and none carries an interval. The record has now been wrong in both directions and the reason is the
   same both times --- a ratio quoted without the basis it was computed on.
 
 \item[The corpus's exploitability figure is a lower bound, and has been read as more.] The v0.4 findings document reports that a policy fitted
@@ -2803,11 +2928,11 @@ it.
   judge the verdict does.
 
 \item[The cross-play gap was printed under the reversed sign convention.] The phase-5 document reports the gap as \vsevenXpGapRecorded{}, which is diagonal minus
-  off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative
-  direction is off-diagonal minus diagonal, which is \vsevenXpGap{}: cross-play is marginally
-  \emph{above} self-play, not below it. The magnitude is \vsevenXpGapAbs{}~points against a
-  \vsevenStwoThreshold{}-point threshold, so no verdict moves either way --- but the sign as printed
-  implies a small collapse where the data show a small lift.
+  off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative direction is off-diagonal minus diagonal, which is \vsevenXpGap{}.
+  \emph{Neither sign is resolved}: the magnitude is \vsevenXpGapAbs{}~points against a per-cell
+  half-width of \vsevenXpHalfWidth{} and a \vsevenStwoThreshold{}-point threshold, so no verdict
+  moves and this report reads no lift out of it either. What the correction is worth is only this:
+  the sign as printed \emph{implies} a small collapse, and the data support no direction at all.
 
 \end{description}
 
@@ -2841,8 +2966,10 @@ also a configuration with a single point of failure, and this battery does not r
 it is.
 
 \paragraph{The worst-case improvement and the minimax regret point in opposite directions.}
-\frozen{} has the best worst cell of the four arms and is \vsevenRegretFrozenRank{}rd of four on
-minimax regret (\S\ref{sec:results-panel}). The regret difference is bought against far archetypes that
+\frozen{} has a far better worst cell than \incumbent{} but not the best of the four ---
+\composite{} is ahead on both readings --- and \frozen{} is \vsevenRegretFrozenRank{}rd of four on
+minimax regret (\S\ref{sec:results-panel}). Its worst cell does not even replicate in sign
+(\vsevenWorstFrozenBankOne{} / \vsevenWorstFrozenBankTwo{}, at different members). The regret difference is bought against far archetypes that
 every arm already beats by \vsevenFarSpanLo{} to \vsevenFarSpanHi{} points, which is a reason to
 weigh it less --- but it
 is a reason, not a dismissal, and a reader who cares about regret over this panel should prefer
@@ -2878,12 +3005,16 @@ gate condition removes it by rebuilding agents per deal, and \emph{that mode is 
 the defect made visible rather than argued about. Every strength number in this report is measured
 under it.
 
-\paragraph{Three sealed banks were digest-verified and never played as deal banks.}
+\paragraph{Four of the seven sealed banks were digest-verified and never played as deal banks.}
 The fitting driver derives its own per-generation deal stream from its seed rather than constructing
-the named bank's deals, so the banks reserved for fitting are verified and then unused as deals. What
-the protocol relies on survives --- the fitting streams are mutually disjoint and disjoint from the
-evaluation banks --- but the material accounting in this report should be read as ``two evaluation banks
-plus a derived fitting stream'', not ``seven banks played''.
+the named bank's deals, so \texttt{7090004}, \texttt{7090005} and \texttt{7091002} are verified and
+then unused as deals. \texttt{7091001} is unused for a different reason: the sealed panel members
+were scored on the two primary banks with the rest of the panel, so that minimax regret is computed
+over one shared pair. What the protocol relies on survives --- the fitting streams are mutually
+disjoint and disjoint from the evaluation banks --- but the material accounting here should be read
+as ``three evaluation banks played (\texttt{7090001} and \texttt{7090002} for most cells,
+\texttt{7090003} for the lattice and the dialects) plus a derived fitting stream'', not ``seven
+banks played''.
 
 \paragraph{One dialect row measures nothing, and the residual it feeds is correspondingly weaker.}
 \texttt{--maxasks=360} is bit-identical to the default, so the legacy residual is legacy minus two
@@ -2904,9 +3035,10 @@ diagonal and the off-diagonal alike and would be invisible to this test. What th
 convention formed \emph{during} each run's own fit.
 
 \paragraph{Termination remains empirical.}
-No configuration here hits the action cap in any scored cell but one game in
-\vsevenResidueGames{}, and the
-stall rung's fifty-fold margin is a measurement over eight hundred mirror games rather than a theorem.
+No configuration here hits the action cap in any scored cell but one --- \vsevenLimitCellArm{}
+against \texttt{\vsevenLimitCellOpp{}}, one game in \vsevenLimitCellGames{} --- and the
+stall rung's separation between ordinary play and a deadlock is a measurement over
+\vsevenStallMirrorGames{} mirror games rather than a theorem.
 What is not proved is that the stall rule plus the stopping rule terminates on every reachable
 position.
 %% --- end sections_v07/11-limitations ---
@@ -2958,9 +3090,9 @@ The corpus has none.
 
 \item \textbf{The sum of small effects, addressed.} This report and its predecessor both conclude that
   no \emph{individual} mechanism on the register is large. Neither addresses whether a dozen
-  quarter-point mechanisms exist and compound. Resolving a quarter of a point on the scoreboard needs
-  roughly \vsevenScoreboardGames{} games a cell; the per-decision estimator of
-  \S\ref{sec:rejected-perdecision} does it in
+  quarter-point mechanisms exist and compound. Resolving \emph{one} point on the scoreboard needs roughly \vsevenScoreboardGames{} games a cell,
+  and a quarter of a point sixteen times that; the per-decision estimator of
+  \S\ref{sec:rejected-perdecision} resolves the same one-point effect in
   \vsevenPerDecisionGamesLo{}--\vsevenPerDecisionGamesHi{}. That estimator is confirmed and unused,
   because fitting against it fails. Using it as an \emph{estimator} while fitting against the
   scoreboard is the obvious unattempted experiment.
@@ -3033,12 +3165,13 @@ failure.
 
 One configuration is a certified advancement over the \vsix{} frontier:
 \vsevenBtwoFcheap{}~points $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ against \fcheap{} over
-\vsevenBtwoFcheapN{} games of sealed material, replicating on both banks, gate-clean, with the best
-worst case of four arms on a shared \vsevenPanelMembers{}-member panel. Nothing built to exploit it
+\vsevenBtwoFcheapN{} games of sealed material, replicating on both banks, gate-clean, and with a
+worst cell on the shared \vsevenPanelMembers{}-member panel (\vsevenWorstFrozen{}) far better than
+the incumbent's \vsevenWorstIncumbent{}. Nothing built to exploit it
 succeeds --- eight independent searches, the white-box inverter included, every one losing, the largest
-upper bound \vsevenBfourWorstUpper{}. It is not a private convention: a single seat's upgrade buys
-\vsevenOneSeatFive{} of the three-seat gain, partner substitution leaves a minimum of
-\vsevenSoneMin{}, and three independently-trained runs cross-play within
+upper bound \vsevenBfourWorstUpper{}. It is not a private convention: a single seat's upgrade is worth
+\vsevenOneSeatFive{}~points of the \vsevenSoneSelf{}-point three-seat gain, partner substitution
+leaves a minimum of \vsevenSoneMin{}, and three independently-trained runs cross-play within
 \vsevenXpGapAbs{}~points of their own diagonal.
 
 \textbf{And it adds nothing measurable to the configuration phase~2 already had}
@@ -3148,7 +3281,8 @@ not an advancement & the pooled interval contains zero, or the sign does not rep
 \toprule
 \# & Claim & Passes if & Result \\
 \midrule
-S1 & no collapse under partner change & at least five of the eight changed-partner deltas positive, and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
+S1 & no collapse under partner change & at least five of the eight changed-partner deltas positive,
+and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
 S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{} points of the diagonal & \vsevenStwoVerdict{} \\
 S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
 S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
@@ -3158,6 +3292,10 @@ S7 & the instrument is intact & the planted edges recover, the sub-floor rung do
 \bottomrule
 \end{tabular}
 \end{center}
+
+The protocol's ``eight changed-partner rows'' counts the self-play row among them; \S\ref{sec:results-partners}
+reports \vsevenSonePositive{} of the \vsevenSoneRows{} genuinely changed rows. Both readings pass, and
+the phase-5 recording carries the ambiguity as deviation D9.
 
 A failure of S1, S2 or S6 would have been a substantive failure and the report would say the release is
 brittle in that named way. A failure of S7 would have been procedural and the evaluation would have
@@ -3231,7 +3369,8 @@ primary banks. It is printed in full so that a reader can take the worst cell th
 take \S\ref{sec:results-panel}'s word for which it is, and so that the minimax regret of
 Table~\ref{tab:regret} can be recomputed by hand.
 
-Class \texttt{near} is 6{,}000 deals a bank, \texttt{far} 1{,}500, \texttt{expensive} 1{,}200. A
+Class \texttt{near} is \vsevenDealsNear{} deals a bank, \texttt{far} \vsevenDealsFar{},
+\texttt{expensive} \vsevenDealsExpensive{}. A
 positive number means the arm beats that member.
 
 {\small\begin{longtable}{llrrrr}
@@ -3294,22 +3433,26 @@ mirror digest --- that establishes the frozen policy is unmoved by them.
 \subsection*{The battery}
 
 \begin{table}[h]\centering
-\caption{Every preregistered battery against what was measured. No cell was dropped.}
+\caption{Every preregistered battery against what was measured. \emph{Preregistered} is the count the
+protocol names, not the count that ran: deviations D1 and D2 add a B5 reference cell and sixteen B9
+cells, because without them ``no single leave-one-out drop exceeds the whole, ``the recovered size
+tracks the planted size and ``the planted excess resolves to zero are not computable from the
+cells the protocol lists. No cell was dropped.}
 \label{tab:battery}
 %% --- begin tables_v07/battery ---
-\begin{tabular}{llrrl}
+\begin{tabular}{llrrrl}
 \toprule
-Battery & What it measures & Preregistered & Measured & Status \\
+Battery & What it measures & Preregistered & Added & Measured & Status \\
 \midrule
-B2 & headline strength against the frontier & 10 & 10 & complete \\
-B3 & the shared 31-member panel & 248 & 248 & complete \\
-B4 & a fresh adversary search & 16 & 16 & complete \\
-B5 & the attribution lattice & 24 & 24 & complete \\
-B6 & the partner-regime table & 64 & 64 & complete \\
-B7 & cross-play between independent runs & 24 & 24 & complete \\
-B8 & the rule-dialect table & 16 & 16 & complete \\
-B9 & the negative controls & 26 & 26 & complete \\
-B10 & the S6 residual & 16 & 16 & complete \\
+B2 & headline strength against the frontier & 10 & 0 & 10 & complete \\
+B3 & the shared 31-member panel & 248 & 0 & 248 & complete \\
+B4 & a fresh adversary search & 16 & 0 & 16 & complete \\
+B5 & the attribution lattice & 22 & 2 & 24 & complete (D1) \\
+B6 & the partner-regime table & 64 & 0 & 64 & complete \\
+B7 & cross-play between independent runs & 24 & 0 & 24 & complete \\
+B8 & the rule-dialect table & 16 & 0 & 16 & complete \\
+B9 & the negative controls & 10 & 16 & 26 & complete (D2) \\
+B10 & the S6 residual & 16 & 0 & 16 & complete \\
 \bottomrule
 \end{tabular}
 %% --- end tables_v07/battery ---
@@ -3326,8 +3469,11 @@ this document was generated.
 \item \filepath{P5-B0.json} --- the verification block: seven bank digests, the sealed plaintext hash,
   the freeze round-trips, the seed registry, the engine self-audit, and the reproducibility runs.
 \item \filepath{P5-gate.jsonl} --- the commit gate for all four configurations, rule by rule.
-\item \filepath{P5-B2.jsonl} \ldots\ \filepath{P5-B10.jsonl} --- one JSON row per cell, each carrying
+\item \filepath{P5-B2.jsonl} \ldots\ \filepath{P5-B9.jsonl} --- one JSON row per cell, each carrying
   the literal argument vector it was produced by and the complete match object the harness emitted.
+\item \filepath{P5-B10.jsonl} --- one row per audited cell. These are seat-isolation audits rather
+  than matches and carry a \texttt{side} object with the mismatch count and its denominator, not a
+  match object.
 \item \filepath{P5-Z01.jsonl} \ldots\ \filepath{P5-Z08.jsonl}, \filepath{P5-B9-h*.jsonl} --- the
   fitting traces: header, one record per generation, and the final weight vector each adversary spec
   was rebuilt from.
@@ -3358,11 +3504,12 @@ reach a PDF built after the battery has been run. Generated on \vsevenBuildDate{
 \subsection*{Sample sizes}
 
 The project's power rule is a $95\%$ half-width of $98/\sqrt{N}$ points at parity, computed by the
-harness and emitted with every cell. At \vsevenBtwoFcheapN{} games that is about $0.45$ points; the
+harness and emitted with every cell. At \vsevenBtwoFcheapN{} games the primary claim's pooled half-width is
+\vsevenBtwoFcheapHalfWidth{} points; the
 frontier cells are sized so that the primary claim's half-width is small against the
 \vsevenPrimaryFloor{}-point reference bar rather than against the effect. Far-class panel members are
-sized at a quarter of the near class deliberately: they are decided by twenty-five to fifty points and
-do not need the resolution.
+sized at a quarter of the near class deliberately: they are decided by \vsevenFarSpanLo{} to \vsevenFarSpanHi{} points
+and do not need the resolution.
 %% --- end sections_v07/D-reproducibility ---
 
 \end{document}

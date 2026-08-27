@@ -45,8 +45,10 @@ architecture work that followed added no measurable strength on top of it.
 
 \item \textbf{The worst case and the minimax regret lead, and they disagree}
   (\S\ref{sec:results-panel}). On a \vsevenPanelMembers{}-member panel scored identically for four
-  arms, \frozen{} has the best worst cell (\vsevenWorstFrozen{} against \vsevenWorstIncumbent{}) and
-  is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
+  arms, \frozen{}'s worst cell is \vsevenWorstFrozen{} against \incumbent{}'s
+  \vsevenWorstIncumbent{} --- but \composite{}'s is better still on both readings
+  (\vsevenWorstComposite{} with its free self-cell, \vsevenWorstCompositeExSelf{} without), and
+  \frozen{} is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
   labelled a diagnostic, because the project's standing rule forbids leading with an aggregate.
 
 \item \textbf{Four architectures killed with measurements} (\S\ref{sec:rejected}). The
@@ -58,20 +60,23 @@ architecture work that followed added no measurable strength on top of it.
   \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break.
 
 \item \textbf{A mechanical side-channel gate with calibrated positive controls}
-  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the test built to catch them
-  and pass the other three, on holdout material, across \vsevenSideCells{} cells.
+  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the tests the
+  protocol requires of them --- two for one of the three, not one each --- and pass every other test,
+  on holdout material, across \vsevenSideCells{} cells.
 
 \item \textbf{A fresh adversary search that finds nothing} (\S\ref{sec:exploit}). Eight independent
   searches over four objectives and three classes, each evaluated on banks disjoint from the stream it
   was fitted on. Every arm loses; the largest upper bound anywhere is \vsevenBfourWorstUpper{}.
 
-\item \textbf{The selection signature, isolated} (\S\ref{sec:against-selection}). Of four quantities
-  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and one falls
-  short --- the one measuring the group of keys the freeze was selected over.
+\item \textbf{The selection signature, located} (\S\ref{sec:against-selection}). Of four quantities
+  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and the
+  largest shortfall falls on the one measuring the group of keys the freeze was selected over.
 
 \item \textbf{Corrections to the record} (\S\ref{sec:corrections}), including a freeze-verification
   step that could not fire because its own baseline had been refreshed, a scored-cell count that the
-  artifacts do not support, and a cost figure the corpus understated by more than a third.
+  artifacts do not support, and a cost figure the corpus understated --- by
+  \vsevenCostFcheapTight$\times$ against \vsevenCostRecorded$\times$ for the configuration the
+  record was describing.
 \end{enumerate}
 
 \paragraph{What this paper does not claim.}

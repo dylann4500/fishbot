@@ -15,10 +15,11 @@ it.
   blueprint, and the \vsix{} paper at ``three orders of magnitude''. Both figures describe the
   \emph{unrestricted} configuration, which is not the point of the frontier anything was measured at.
   The endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$ during
-  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the
-  correction}: measured on the shared panel at a fixed thread count, the frozen configuration costs at
-  least \vsevenCostFrozenTight$\times$ the blueprint (\S\ref{sec:results-cost}), and every figure in
-  that table is a lower bound. The record has now been wrong in both directions and the reason is the
+  this cycle, and that correction was carried into the protocol. \textbf{This report corrects the correction}: measured on the shared panel at a fixed thread count,
+  \fcheap{} --- the configuration the \vsevenCostRecorded$\times$ describes --- costs at least
+  \vsevenCostFcheapTight$\times$ the blueprint, and \frozen{} at least
+  \vsevenCostFrozenTight$\times$ (\S\ref{sec:results-cost}). Every figure in that table is a lower
+  bound and none carries an interval. The record has now been wrong in both directions and the reason is the
   same both times --- a ratio quoted without the basis it was computed on.
 
 \item[The corpus's exploitability figure is a lower bound, and has been read as more.] The v0.4 findings document reports that a policy fitted
@@ -94,11 +95,11 @@ it.
   judge the verdict does.
 
 \item[The cross-play gap was printed under the reversed sign convention.] The phase-5 document reports the gap as \vsevenXpGapRecorded{}, which is diagonal minus
-  off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative
-  direction is off-diagonal minus diagonal, which is \vsevenXpGap{}: cross-play is marginally
-  \emph{above} self-play, not below it. The magnitude is \vsevenXpGapAbs{}~points against a
-  \vsevenStwoThreshold{}-point threshold, so no verdict moves either way --- but the sign as printed
-  implies a small collapse where the data show a small lift.
+  off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative direction is off-diagonal minus diagonal, which is \vsevenXpGap{}.
+  \emph{Neither sign is resolved}: the magnitude is \vsevenXpGapAbs{}~points against a per-cell
+  half-width of \vsevenXpHalfWidth{} and a \vsevenStwoThreshold{}-point threshold, so no verdict
+  moves and this report reads no lift out of it either. What the correction is worth is only this:
+  the sign as printed \emph{implies} a small collapse, and the data support no direction at all.
 
 \end{description}
 

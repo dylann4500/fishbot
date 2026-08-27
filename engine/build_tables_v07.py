@@ -536,6 +536,30 @@ def b3_panel_table():
         emit('vsevenWorst%sLo' % t, _sg(lo), 'P5-B3.jsonl: %s worst cell, pooled lower bound' % a)
         emit('vsevenWorst%sHi' % t, _sg(hi), 'P5-B3.jsonl: %s worst cell, pooled upper bound' % a)
         emit('vsevenWorst%sOpp' % t, _tex(wp), 'P5-B3.jsonl: %s worst cell opponent' % a)
+        # Whether the WORST CELL replicates is a separate question from whether
+        # the arm's edge on it does, and the report's own rule (a claim whose
+        # sign does not agree on both banks is NOT REPLICATED) applies to it.
+        # For an arm whose worst cell straddles zero the attaining member can
+        # differ by bank too, so both are emitted.
+        perbank = {}
+        for bank in (BANK1, BANK2):
+            cand = []
+            for p in panel:
+                rs = [r for r in rows if r['arm'] == a and r['opp'] == p and r['bank'] == bank]
+                if rs:
+                    cand.append((_edge(rs[0]), p))
+            if cand:
+                perbank[bank] = min(cand)
+        if len(perbank) == 2:
+            (e1, p1), (e2, p2) = perbank[BANK1], perbank[BANK2]
+            emit('vsevenWorst%sBankOne' % t, _sg(e1), 'P5-B3.jsonl: %s worst cell on bank 7090001' % a)
+            emit('vsevenWorst%sBankTwo' % t, _sg(e2), 'P5-B3.jsonl: %s worst cell on bank 7090002' % a)
+            emit('vsevenWorst%sBankOneOpp' % t, _tex(p1), 'P5-B3.jsonl: %s worst-cell member on bank 7090001' % a)
+            emit('vsevenWorst%sBankTwoOpp' % t, _tex(p2), 'P5-B3.jsonl: %s worst-cell member on bank 7090002' % a)
+            emit('vsevenWorst%sRepl' % t, 'yes' if (e1 > 0) == (e2 > 0) else 'NO',
+                 'P5-B3.jsonl: %s worst cell, sign agrees on both banks' % a)
+            emit('vsevenWorst%sSameOpp' % t, 'yes' if p1 == p2 else 'NO',
+                 'P5-B3.jsonl: %s worst cell attained at the same member on both banks' % a)
         nonself = [(v, p) for v, p in vals if p not in SELFCELL[a]]
         w2, wp2 = min(nonself)
         emit('vsevenWorst%sExSelf' % t, _sg(w2), 'P5-B3.jsonl: %s worst cell excluding its own self-cells' % a)
@@ -594,6 +618,11 @@ def b3_panel_table():
     hard = min(((cell[('INCUMBENT', p)][0], p) for p in panel if p.startswith('SEALED')))
     hp = hard[1]
     emit('vsevenHardSealed', _tex(hp), 'P5-B3.jsonl: sealed member on which INCUMBENT is worst')
+    beat = [a for a in arms if cell[(a, hp)][1] > 0]
+    emit('vsevenHardBeaters', str(len(beat)),
+         'P5-B3.jsonl: arms beating that member with a lower bound above zero')
+    emit('vsevenHardBeaterNames', ', '.join(_tex(a) for a in beat),
+         'P5-B3.jsonl: which arms they are')
     for a in arms:
         m, lo, hi, _ = cell[(a, hp)][:4]
         emit('vsevenHard%s' % ARMTAG[a], _sg(m), 'P5-B3.jsonl: %s against %s' % (a, hp))
@@ -648,6 +677,9 @@ def b2_frontier():
              'P5-B2.jsonl %s: FROZEN declaration accuracy, a bare rate with no interval' % cellid)
     TABLE_SPEC['frontier.tex'] = ('llrrrr', 'Cell & Opponent & Edge (pts) & 95\\% CI & Games & Sign replicates')
     writeTable('frontier.tex', lines)
+    fc = [r for r in rows if r['cell'] == 'B2.2']
+    emit('vsevenBtwoFcheapHalfWidth', _n(pool(fc)[3] * 1.96),
+         'P5-B2.jsonl B2.2: pooled half-width of the primary claim, in points')
     das = [r['match']['declAccA'] for r in rows]
     dbs = [r['match']['declAccB'] for r in rows]
     emit('vsevenDeclFrozenLo', _n(min(das), 3), 'P5-B2.jsonl: lowest FROZEN declaration accuracy over the five cells')
@@ -689,6 +721,16 @@ def b4_adversaries():
             if v:
                 emit('vsevenBfour%s' % tag, v[0], 'P5-B4fits.jsonl: %s in the search argv' % flag.strip('-='))
         break
+    # The fitting-to-holdout gap needs the fitting side, and it is in the trace
+    # rather than in any prose document.  bestScore is a paired margin in win-rate
+    # units; the final generation is the one whose vector was evaluated.
+    z1 = load_jsonl(os.path.join(_RES, 'P5-Z01.jsonl'))
+    gens = [r for r in z1 if 'bestScore' in r]
+    if gens:
+        emit('vsevenZoneFitMargin', _sg(100.0 * gens[-1]['bestScore']),
+             'P5-Z01.jsonl: paired margin of the final generation, on its own fitting stream')
+        emit('vsevenZoneFitPeak', _sg(100.0 * max(g['bestScore'] for g in gens)),
+             'P5-Z01.jsonl: best paired margin any generation reached on its fitting stream')
     hi, zid = max(uppers)
     emit('vsevenBfourArms', str(len(uppers)), 'P5-B4eval.jsonl: independent adversary searches evaluated')
     emit('vsevenBfourFits', str(sum(1 for f in fits.values() if f.get('ok'))),
@@ -751,7 +793,18 @@ def b5_attribution():
     naive = sum(addins)
     emit('vsevenBfiveSum', _sg(naive), 'P5-B5.jsonl: naive sum of the FIVE add-one-in cells the freeze carries')
     emit('vsevenBfiveSumSix', _sg(naive + mm), 'P5-B5.jsonl: the six-term sum including A-m2, printed for D12')
-    emit('vsevenSubAdditivity', _n(rm / naive, 3), 'P5-B5.jsonl: measured whole / naive sum')
+    # The ratio is whole/sum.  The sum is five independent add-one-in cells, so
+    # its half-width is theirs in quadrature; the ratio's interval follows from
+    # propagating both.  Without this the paper cannot say what lies inside it.
+    ses = [pool(by[[c for c in by if c.startswith('A-') and B5TAG[c] == t][0]])[3]
+           for t, _ in COMPONENTS]
+    s_sum = math.sqrt(sum(x * x for x in ses))
+    _, _, _, s_ref = pool(ref)
+    r = rm / naive
+    s_r = abs(r) * math.sqrt((s_ref / rm) ** 2 + (s_sum / naive) ** 2)
+    emit('vsevenSubAdditivity', _n(r, 3), 'P5-B5.jsonl: measured whole / naive sum')
+    emit('vsevenSubAdditivityLo', _n(r - 1.96 * s_r, 3), 'P5-B5.jsonl: ratio lower bound')
+    emit('vsevenSubAdditivityHi', _n(r + 1.96 * s_r, 3), 'P5-B5.jsonl: ratio upper bound')
     emit('vsevenSubAdditivityOverstate', _n(naive - rm), 'P5-B5.jsonl: points the naive sum overstates by')
     # the location test of PREREGISTRATION 6 item 3, which must be read per bank
     loc = []
@@ -1001,6 +1054,11 @@ def b9_controls():
     emit('vsevenIdentityN', _commafy(ident[0]['match']['games']), 'P5-B9.jsonl B9.4: games per bank')
     # B9.5, the calibrated side channels
     side = _rows('P5-B9side.jsonl')
+    # PREREGISTRATION B9.5 names which tests each planted cheat MUST fail, and
+    # they are not one each: cheat=seed must fail S4 AND S5.  Printing the
+    # required set beside the measured one is what makes the row a control
+    # rather than a claim that every cheat trips exactly one test.
+    REQUIRED = {'seed': ('S4', 'S5'), 'shared': ('S6',), 'conv': ('S3',)}
     sl = []
     for cheat in ('seed', 'shared', 'conv'):
         rs = [r for r in side if r['cheat'] == cheat]
@@ -1021,8 +1079,16 @@ def b9_controls():
             res[t] = ('FAIL' if 'FAIL' in st else ('PASS' if st else '---'))
             emit('vsevenCheat%s%s' % (cheat.capitalize(), t.upper()), res[t],
                  'P5-B9side.jsonl: cheat=%s, test %s' % (cheat, t.upper()))
-        sl.append('\\texttt{v07x:cheat=%s} & %s \\\\' % (cheat, ' & '.join(res[t] for t in ('s3', 's4', 's5', 's6'))))
-    TABLE_SPEC['sidechannel.tex'] = ('lcccc', 'Planted channel & S3 & S4 & S5 & S6')
+        req = REQUIRED[cheat]
+        got = tuple(t.upper() for t in ('s3', 's4', 's5', 's6') if res[t] == 'FAIL')
+        ok = got == req
+        emit('vsevenCheat%sAsRequired' % cheat.capitalize(), 'yes' if ok else 'NO',
+             'P5-B9side.jsonl: cheat=%s fails exactly the tests B9.5 requires' % cheat)
+        sl.append('\\texttt{v07x:cheat=%s} & %s & %s & %s \\\\' % (
+            cheat, ' & '.join(res[t] for t in ('s3', 's4', 's5', 's6')),
+            ', '.join(req), '\\checkmark' if ok else '\\textbf{no}'))
+    TABLE_SPEC['sidechannel.tex'] = ('lccccll',
+        'Planted channel & S3 & S4 & S5 & S6 & Must fail & As required')
     writeTable('sidechannel.tex', sl)
     emit('vsevenSideCells', str(len(side)), 'P5-B9side.jsonl: side-channel control cells')
 
@@ -1089,6 +1155,12 @@ def b0_verification():
     emit('vsevenMirrorDigest', fv['mirrorDigest'], 'P5-B0.json: R3 mirror pathology digest')
     emit('vsevenCoordinates', str(fv['coordinates']), 'P5-B0.json: coordinates in the frozen vector')
     emit('vsevenFrozenSpec', _tex(fv['reconstructedSpec']), 'P5-B0.json: spec reconstructed from the freeze artifact')
+    # The spec is one unbreakable control word to TeX, so setting it verbatim
+    # overflows the column by ~260pt.  A copy with a discretionary break after
+    # every comma typesets; the characters are identical.
+    emit('vsevenFrozenSpecWrapped',
+         _tex(fv['reconstructedSpec']).replace(',', ',\\allowbreak{}'),
+         'P5-B0.json: the same spec, with a discretionary break after each comma')
     r2 = fv.get('R2a_vector_search', {})
     emit('vsevenRtwoaIdentical', 'yes' if r2.get('identical') else 'no',
          'P5-B0.json: R2a round-trip with the search on is identical')
@@ -1243,6 +1315,27 @@ def throughput_paper():
         emit('vsevenCost%sFar' % tag, _n(far), 'P5-B3.jsonl: median ratio over the far archetypes')
         emit('vsevenCost%sPanel' % tag, _n(allm), 'P5-B3.jsonl: median ratio over the whole panel, the most diluted')
         lines.append('%s & %s$\\times$ & %s$\\times$ & %s$\\times$ \\\\' % (_tex(arm), _n(tight), _n(far), _n(allm)))
+    # This table aggregates as a ratio of medians (per panel member, the
+    # incumbent's median throughput over the arm's, then the median of those).
+    # engine/p5_analyse.py medians the per-bank ratios instead.  Neither is
+    # canonical and they differ; a report that records divergences from the
+    # phase-5 recording as corrections has to measure this one rather than
+    # eyeball it, so the largest divergence across the six median cells is
+    # computed and printed.
+    worst = 0.0
+    for arm in ('FROZEN', 'F-cheap', 'composite'):
+        for sel in (lambda p: cls[p] == 'far', lambda p: True):
+            rom, per_bank = [], []
+            for (a, p), v in gps.items():
+                if a != arm or not sel(p) or ('INCUMBENT', p) not in gps:
+                    continue
+                inc = gps[('INCUMBENT', p)]
+                rom.append(med(inc) / med(v))
+                per_bank += [i / j for i, j in zip(sorted(inc), sorted(v))]
+            if rom:
+                worst = max(worst, abs(med(rom) - med(per_bank)))
+    emit('vsevenCostAggDelta', _n(worst, 3),
+         'P5-B3.jsonl: largest divergence between this table\'s aggregation and a median of per-bank ratios')
     TABLE_SPEC['cost.tex'] = ('lrrr',
         'Arm & vs \\texttt{random} (tightest) & Far archetypes (median) & Whole panel (median)')
     writeTable('cost.tex', lines)
@@ -1295,23 +1388,40 @@ def totals():
     emit('vsevenScoredGames', _commafy(games), 'P5-B2..B9: games played in scored cells')
     emit('vsevenAuditViolations', str(viol), 'P5-B2..B9: audit violations across the whole battery')
     emit('vsevenLimitCells', str(limit), 'P5-B2..B9: cells with any action-limit hit')
+    lim = [r for fn in files for r in _rows(fn) if r['match'].get('limitHitRate', 0)]
+    if lim:
+        emit('vsevenLimitCellGames', _commafy(lim[0]['match']['games']),
+             'P5-B3.jsonl: games in the one cell carrying an action-limit hit')
+        emit('vsevenLimitCellArm', _tex(lim[0].get('arm', '?')), 'P5-B3.jsonl: its arm')
+        emit('vsevenLimitCellOpp', _tex(lim[0].get('opp', '?')), 'P5-B3.jsonl: its opponent')
     # the cell counts per battery, against the preregistered design
-    design = [('B2', 'headline strength against the frontier', 'P5-B2.jsonl', 10),
-              ('B3', 'the shared 31-member panel', 'P5-B3.jsonl', 248),
-              ('B4', 'a fresh adversary search', 'P5-B4eval.jsonl', 16),
-              ('B5', 'the attribution lattice', 'P5-B5.jsonl', 24),
-              ('B6', 'the partner-regime table', 'P5-B6.jsonl', 64),
-              ('B7', 'cross-play between independent runs', 'P5-B7.jsonl', 24),
-              ('B8', 'the rule-dialect table', 'P5-B8.jsonl', 16),
-              ('B9', 'the negative controls', 'P5-B9.jsonl', 26),
-              ('B10', 'the S6 residual', 'P5-B10.jsonl', 16)]
-    lines, dropped = [], 0
-    for bid, what, fn, exp in design:
+    # The PREREGISTERED column is the count the protocol names, NOT the count
+    # that ran.  B5 and B9 differ: deviation D1 adds a twelfth B5 cell (the
+    # FROZEN reference the leave-one-out drops are taken from, without which no
+    # drop is computable) and D2 adds sixteen B9 cells (the planted cost and the
+    # responder-vs-unhandicapped cell, without which "tracks the planted size"
+    # and "resolves to zero" are not computable).  Printing the as-run count in
+    # both columns would make every battery look complete by construction.
+    design = [('B2', 'headline strength against the frontier', 'P5-B2.jsonl', 10, ''),
+              ('B3', 'the shared 31-member panel', 'P5-B3.jsonl', 248, ''),
+              ('B4', 'a fresh adversary search', 'P5-B4eval.jsonl', 16, ''),
+              ('B5', 'the attribution lattice', 'P5-B5.jsonl', 22, 'D1'),
+              ('B6', 'the partner-regime table', 'P5-B6.jsonl', 64, ''),
+              ('B7', 'cross-play between independent runs', 'P5-B7.jsonl', 24, ''),
+              ('B8', 'the rule-dialect table', 'P5-B8.jsonl', 16, ''),
+              ('B9', 'the negative controls', 'P5-B9.jsonl', 10, 'D2'),
+              ('B10', 'the S6 residual', 'P5-B10.jsonl', 16, '')]
+    lines, dropped, added = [], 0, 0
+    for bid, what, fn, exp, dev in design:
         got = len(_rows(fn))
         dropped += max(0, exp - got)
-        lines.append('%s & %s & %d & %d & %s \\\\' % (bid, what, exp, got,
-                     'complete' if got >= exp else '\\textbf{INCOMPLETE}'))
-    TABLE_SPEC['battery.tex'] = ('llrrl', 'Battery & What it measures & Preregistered & Measured & Status')
+        added += max(0, got - exp)
+        lines.append('%s & %s & %d & %d & %s & %s \\\\' % (
+            bid, what, exp, got - exp if got > exp else 0, got,
+            ('complete' if got >= exp else '\\textbf{INCOMPLETE}') + (' (%s)' % dev if dev else '')))
+    emit('vsevenCellsAdded', str(added), 'cells added beyond the preregistered design, per D1 and D2')
+    TABLE_SPEC['battery.tex'] = ('llrrrl',
+        'Battery & What it measures & Preregistered & Added & Measured & Status')
     writeTable('battery.tex', lines)
     emit('vsevenCellsDropped', str(dropped), 'preregistered cells not measured')
     # CORRECTION.  docs/v07/FINAL-RESULTS.md states "409 scored match cells" in
@@ -1392,8 +1502,12 @@ def paper_main():
         gen |= {'vsevenProvGenerated', 'vsevenProvTranscribed'}
         emit('vsevenProvGenerated', str(len(used7 & gen)),
              'macros used in sections_v07 that this script generates from artifacts')
-        emit('vsevenProvTranscribed', str(len(usedold)),
-             'macros used in sections_v07 transcribed from an earlier study')
+        # A v0.7 transcribed number carries the \vseven prefix like every other
+        # macro in this manuscript, so counting by prefix returns zero and
+        # asserts that nothing is transcribed.  The count is used-minus-generated,
+        # which is what paper/check_provenance.py reports.
+        emit('vsevenProvTranscribed', str(len((used7 | usedold) - gen)),
+             'macros used in sections_v07 that this script does NOT generate, i.e. transcribed')
         # A macro that numbers_v07.tex declares under a source header is
         # TRANSCRIBED from an earlier phase on purpose, so it is not missing.
         # Only a \vseven macro that nothing declares is a typesetting bug.
