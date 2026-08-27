@@ -1,0 +1,158 @@
+\section{FishBot v0.7}
+\label{sec:agent}
+
+\fishseven{} is a configuration of the \vsix{} policy family rather than a new architecture. That
+sentence was written into the evaluation protocol before any holdout result was known, and the
+evaluation did not disturb it. This section describes the agent conceptually. The literal
+configuration string, its option map, the parameter vector layout and the freeze artifact's hashes
+are in Appendix~\ref{app:parameters}.
+
+\begin{figure}[t]\centering
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=9mm},
+  pub/.style={box,fill=fishlight,draw=fishgreen},
+  arr/.style={-{Stealth[length=2mm]},fishgray,thick}]
+\node[pub] (hist) at (0,1.15) {public event stream\\{\scriptsize asks, answers, transfers,}\\[-1pt]{\scriptsize declarations, card counts}};
+\node[box] (hand) at (0,-1.05) {own hand\\{\scriptsize nine cards}};
+\node[box] (bel)  at (4.3,0.05) {deal posterior\\{\scriptsize exact block DP,}\\[-1pt]{\scriptsize fitted policy prior}};
+\node[box] (pol)  at (8.2,0.05) {linear ask and\\declaration score\\{\scriptsize + public-history tie-break}};
+\node[box] (srch) at (12.1,0.05) {guarded search\\{\scriptsize endgame only,}\\[-1pt]{\scriptsize paired LCB deviation}};
+\node[align=center] (act) at (12.1,-1.75) {\textbf{action}};
+\draw[arr] (hist) -- (bel); \draw[arr] (hand) -- (bel);
+\draw[arr] (bel) -- (pol); \draw[arr] (pol) -- (srch); \draw[arr] (srch) -- (act);
+\draw[arr,dashed] (pol.south) .. controls +(0,-1.2) and +(-2,-1.2) .. (act.west);
+\node[font=\scriptsize,fishgray,align=center] at (10.15,-1.25) {blueprint action\\if search declines};
+\draw[fishgreen,dashed,rounded corners=3pt] (-1.75,-1.9) rectangle (1.75,2.0);
+\node[font=\scriptsize,fishgreen] at (0,-2.15) {information set};
+\end{tikzpicture}
+\caption{The information structure of a Fish seat and the \fishseven{} decision pipeline. A seat
+observes the public event stream and its own hand, and nothing else; there is no path from a policy to
+the deal or to another seat's hand (\S\ref{sec:inference-engine}). Because every card movement is
+public, that information set determines an exact posterior over the initial deal
+(\S\ref{sec:inference}), which the deployed path reweights by a fitted policy prior. The search runs
+only in the endgame and departs from the blueprint's choice only when a paired lower-confidence bound
+justifies it (\S\ref{sec:agent-search}).}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{table}[t]\centering
+\caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
+are used in the paper only where a command must be reproduced.}
+\label{tab:components}
+{\small\input{tables_v07/components}}
+\end{table}
+
+\subsection{Inference and the ask and declaration policy}
+\label{sec:agent-policy}
+
+Inference is unchanged from \vsix{} and is the object of \S\ref{sec:inference}: the exact
+observer-conditioned deal posterior, with the deployed path applying a fitted policy prior over it.
+
+The acting policy is a fitted linear score over features of the belief and the public state. An ask
+decision scores each legal (target, card) pair and takes the maximum; a declaration decision consults
+the named-allocation probability the inference object supplies and commits when a value rule judges
+the claim worth making. \fishseven{} inherits the \vsix{} parameter vector unchanged, and
+\textbf{no fit of any kind was applied to it during this cycle}. The vector was found by \vsix{}'s
+repaired optimiser under a minimax-regret objective over a four-member opponent panel. Of the
+\vsevenCoordinates{} coordinates in the extended vector, a number are known to be inert, and
+Appendix~\ref{app:parameters} lists which and why.
+
+\subsection{Tie-breaking that preserves common knowledge}
+\label{sec:agent-tiebreak}
+
+At \vsevenTieContested\% of contested ask decisions two or more candidates score bit-for-bit
+identically (\S\ref{sec:background-vsix}), and in \vsix{} the winner was whichever the enumerator
+emitted first, under an unstable sort. That is a correctness problem rather than a strength problem:
+the choice is arbitrary, but it is also unpredictable, and \S\ref{sec:game-why} explains why
+unpredictability of the wrong kind is expensive here. Three identical deterministic teammates
+coordinate for free only if each can compute what the others will do; a tie broken by an
+implementation detail is not something a teammate can reconstruct.
+
+\fishseven{} replaces enumeration order with a hash of the public event stream
+(\texttt{rtie}). Every teammate observes that stream, so every teammate can compute the same
+tie-break, and no seat's private hand influences it. The mechanism is a coordination repair that
+happens to be free, and \S\ref{sec:development-tie} reports what happened when a later experiment
+tried to do better than randomising within the tied set.
+
+\subsection{Half-suit contestation and information denial}
+\label{sec:agent-contest}
+
+The one component that carries measurable strength is a single coordinate weighting how willing the
+agent is to contest a half-suit in which an opponent has demonstrated certainty
+(\texttt{r12}, internally \texttt{oppCertDonate}). Raising it makes the agent less willing to ask into
+positions where the ask would confirm information the opponents can use, and more willing to
+contest half-suits whose ownership is still genuinely open.
+
+Two facts about its provenance matter for how the results in \S\ref{sec:results-attribution} should
+be read. It was found by an \emph{unfitted} coordinate sweep during the adversary-generation phase,
+not by architecture work: a single hand-set value, with no fitting, measured at
+\vsevenOneSwitchArm{}~pp against the deployed policy over \vsevenPhaseTwoCell{} games. And its edge
+against the more expensive frontier configuration \fmid{} is \vsevenOneSwitchArmVsFmid{}~pp, which is
+negative, so it is a strength gain with a worst case rather than an exploit
+(\S\ref{sec:development-adversaries}).
+
+\subsection{Removing the urgency escalation}
+\label{sec:agent-urgency}
+
+\vsix{} inherited a declaration-urgency escalation keyed to an event counter. Past a threshold of 220
+public events the declaration rule lowers its team-ownership floor and begins cashing half-suits at
+close to a coin flip, which costs \vsevenCliff{}~pp to a policy held in that regime. No adversary
+reaches it, since the longest game any adversarial search produced against an unmodified opponent is
+\vsevenCliffIncumbentTail{} events, but the machinery is defective in ordinary play as well:
+\S\ref{sec:development-alloc} reports that removing it eliminates \vsevenLoneUrgencyShare\% of the
+entire declaration allocation-error class. \fishseven{} disables it
+(\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}).
+
+The escalation was, however, also the policy's termination guarantee, so removing it creates an
+obligation.
+
+\subsection{A stall detector as the replacement termination guarantee}
+\label{sec:agent-stall}
+
+\fishseven{} escalates after twelve consecutive public events in which this seat's hard-certificate
+hash has not changed (\texttt{stall}). The quantity being watched is the seat's own deduction state,
+so the rule fires exactly when the game has stopped making progress from that seat's point of view,
+which is the condition the event counter was a proxy for.
+
+The threshold was set from a measurement rather than by taste. Over \vsevenStallMirrorGames{} mirror
+games, \vsix{} never produces a no-progress run longer than \vsevenStallIncumbentRun{}, while a
+deliberately deadlocked configuration, the negative control of \S\ref{sec:evaluation-gate}, produces
+\vsevenStallFrozenRun{}. Any threshold between 12 and 60 is therefore simultaneously unreachable in
+ordinary play and immediate in a deadlock. Armed, the rule's mirror transcript digest is byte
+identical to the same configuration without it: its cost in ordinary play is not small but identically
+zero, because it never runs. \S\ref{sec:results-attribution} confirms that on holdout material.
+
+\subsection{Guarded determinized test-time search}
+\label{sec:agent-search}
+
+\fishseven{} enables the search that \vsix{} built, measured and then deployed switched off
+(\texttt{s1}, with \texttt{det}, \texttt{cand}, \texttt{kappa}, \texttt{rbelief}, \texttt{depth},
+\texttt{maxq}). At a searched decision the agent samples twelve full deals from its own posterior and
+plays each forward with all six continuation players reconstructed at their own information sets,
+rather than made clairvoyant.
+
+Two design choices are what make it usable. First, the deviation rule is a \emph{paired
+lower-confidence bound}: the search departs from the blueprint's choice only when the sampled
+advantage of an alternative clears a shrinkage threshold, which is what converts the
+\vsixCurseGap{}~pp optimiser's curse of \S\ref{sec:background-vsix} into a usable mechanism. Second,
+the search is endgame-truncated, running only when at most a set number of cards remain unresolved,
+which is what keeps its cost at a small multiple of the blueprint rather than the orders of magnitude
+the unrestricted configuration costs (\S\ref{sec:results-cost}).
+
+\subsection{Coordination assumptions, and one defect the evaluation runs under}
+\label{sec:agent-coordination}
+
+\fishseven{} deploys as three identical agents with no shared secret and no communication beyond
+public actions. Its coordination is therefore common knowledge by the argument of
+\S\ref{sec:game-why}, provided every component is deterministic given public state and own hand,
+which the tie-break repair of \S\ref{sec:agent-tiebreak} is what secures.
+
+One engine defect is present in every number in this paper and is stated rather than buried. Agents
+are constructed once per worker thread and reused across the deals that thread is given, and some
+per-agent state survives the inter-deal reset, reachable only under the search. The carrier was
+identified as the rollout engine, which the reset never touches, but the specific field was not.
+It was deliberately not repaired, because the one-line fix changes the play of every searching
+configuration by roughly one deal in \vsevenSsixIncidence{}, and applying it after the configuration
+was frozen would defeat the purpose of freezing. \S\ref{sec:results-controls} measures its magnitude
+on holdout material.

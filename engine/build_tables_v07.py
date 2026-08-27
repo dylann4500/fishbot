@@ -475,6 +475,17 @@ def replicates(rs):
     es = [_edge(r) for r in rs]
     return all(e > 0 for e in es) or all(e < 0 for e in es)
 
+# Display names.  Harness identifiers (FROZEN, INCUMBENT) are how the artifacts
+# label the arms; the paper names them consistently as the agents they are, and
+# uses the harness spelling only where a command has to be reproduced.
+DISPLAY = {'FROZEN': 'FishBot v0.7', 'INCUMBENT': 'v0.6 deployed',
+           'F-cheap': '\\texttt{F-cheap}', 'F-mid': '\\texttt{F-mid}',
+           'composite': 'phase-2 composite', 'v05': 'v0.5', 'v04': 'v0.4',
+           'v03': 'v0.3', 'v02': 'v0.2', 'F-fast': '\\texttt{F-fast}'}
+
+def disp(name):
+    return DISPLAY.get(name, _tex(name))
+
 TABLE_SPEC = {}
 
 def writeTable(fn, lines, spec=None, header=None, longtable=False):
@@ -575,9 +586,9 @@ def b3_panel_table():
         emit('vsevenWorst%sExSelf' % t, _sg(w2), 'P5-B3.jsonl: %s worst cell excluding its own self-cells' % a)
         emit('vsevenWorst%sExSelfOpp' % t, _tex(wp2), 'P5-B3.jsonl: %s worst non-self cell opponent' % a)
         worst_lines.append('%s & %s & $%s$ & $[%s, %s]$ & %d:%s\\ \\ %d:%s \\\\' %
-                           (_tex(a), _tex(wp), _sg(w), _sg(lo), _sg(hi),
+                           (disp(a), disp(wp), _sg(w), _sg(lo), _sg(hi),
                             per[0][0], _sg(per[0][1]), per[1][0], _sg(per[1][1])))
-    TABLE_SPEC['worstcase.tex'] = ('llrrl', 'Arm & Worst cell & Edge (pts) & 95\\% CI & Per bank')
+    TABLE_SPEC['worstcase.tex'] = ('llrrl', 'Configuration & Worst cell & Edge (pp) & 95\\% CI & Per bank')
     writeTable('worstcase.tex', worst_lines)
 
     # ---- minimax regret: for each member, the best arm on it; an arm's regret
@@ -597,7 +608,7 @@ def b3_panel_table():
         t = ARMTAG[a]
         emit('vsevenRegret%s' % t, _n(best_shortfall), 'P5-B3.jsonl: %s minimax regret over the shared panel' % a)
         emit('vsevenRegret%sOpp' % t, _tex(at), 'P5-B3.jsonl: member at which %s attains its regret' % a)
-        reg_lines.append('%s & %s & %s \\\\' % (_tex(a), _n(best_shortfall), _tex(at)))
+        reg_lines.append('%s & %s & %s \\\\' % (disp(a), _n(best_shortfall), disp(at)))
     # how close the incumbent's attaining member is to its runner-up: the regret
     # VALUE is stable and the name attached to it is not, and that is only worth
     # saying if the margin is printed.
@@ -609,19 +620,19 @@ def b3_panel_table():
     emit('vsevenRegretBest', _tex(order[0]), 'P5-B3.jsonl: arm with the lowest minimax regret')
     emit('vsevenRegretFrozenRank', {a: i + 1 for i, a in enumerate(order)}['FROZEN'],
          'P5-B3.jsonl: FROZEN rank of four on minimax regret, 1 = best')
-    TABLE_SPEC['regret.tex'] = ('llr', 'Arm & Minimax regret (pts) & Attained against')
-    writeTable('regret.tex', ['%s & %s & %s \\\\' % (_tex(a), _n(regret[a][0]), _tex(regret[a][1]))
+    TABLE_SPEC['regret.tex'] = ('llr', 'Configuration & Minimax regret (pp) & Attained against')
+    writeTable('regret.tex', ['%s & %s & %s \\\\' % (disp(a), _n(regret[a][0]), disp(regret[a][1]))
                               for a in order])
 
     # the far archetypes, where the regret is concentrated
     far_lines = []
     for p in [x for x in panel if cls[x] == 'far']:
-        far_lines.append('%s & %s \\\\' % (_tex(p), ' & '.join(
+        far_lines.append('%s & %s \\\\' % (disp(p), ' & '.join(
             _sg(cell[(a, p)][0]) for a in arms if (a, p) in cell)))
     fars = [cell[(a, p)][0] for p in panel if cls[p] == 'far' for a in arms if (a, p) in cell]
     emit('vsevenFarSpanLo', _n(min(fars)), 'P5-B3.jsonl: smallest edge any arm takes on a far archetype')
     emit('vsevenFarSpanHi', _n(max(fars)), 'P5-B3.jsonl: largest edge any arm takes on a far archetype')
-    TABLE_SPEC['farpanel.tex'] = ('lrrrr', 'Far archetype & Frozen & Incumbent & F-cheap & Composite')
+    TABLE_SPEC['farpanel.tex'] = ('lrrrr', 'Far archetype & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite')
     writeTable('farpanel.tex', far_lines)
 
     # the hardest sealed adversary, where the ordering reverses
@@ -648,10 +659,10 @@ def b3_panel_table():
     # ---- the full 31 x 4 table, so a reader can take the worst cell themselves
     full = []
     for p in panel:
-        full.append('%s & %s & %s \\\\' % (_tex(p), cls[p], ' & '.join(
+        full.append('%s & %s & %s \\\\' % (disp(p), cls[p], ' & '.join(
             ('$%s$' % _sg(cell[(a, p)][0])) if (a, p) in cell else '---' for a in arms)))
     writeTable('panelfull.tex', full, 'llrrrr',
-               'Panel member & Class & Frozen & Incumbent & F-cheap & Composite', longtable=True)
+               'Panel member & Class & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite', longtable=True)
     return cell, panel, cls
 
 
@@ -675,17 +686,19 @@ def b2_frontier():
         emit('vsevenBtwo%sN' % tag, _commafy(n), 'P5-B2.jsonl %s: games' % cellid)
         emit('vsevenBtwo%sBankOne' % tag, _sg(per[BANK1]), 'P5-B2.jsonl %s: bank 7090001' % cellid)
         emit('vsevenBtwo%sBankTwo' % tag, _sg(per[BANK2]), 'P5-B2.jsonl %s: bank 7090002' % cellid)
+        emit('vsevenBtwo%sMag' % tag, _n(abs(m)),
+             'P5-B2.jsonl %s: pooled edge, unsigned, for prose that supplies its own direction' % cellid)
         emit('vsevenBtwo%sRepl' % tag, 'yes' if replicates(rs) else 'no',
              'P5-B2.jsonl %s: sign agrees on both banks' % cellid)
         lines.append('%s & %s & $%s$ & $[%s, %s]$ & %s & %s \\\\' %
-                     (cellid, _tex(name), _sg(m), _sg(lo), _sg(hi),
+                     (cellid, disp(name) if name in DISPLAY else _tex(name), _sg(m), _sg(lo), _sg(hi),
                       _commafy(n), 'yes' if replicates(rs) else 'no'))
         # declaration accuracy is emitted as a bare rate: match --json gives it no
         # interval of any kind, which is what PREREGISTRATION 3 correction 4 and
         # deviation D11 turn on.  It is a diagnostic and carries no claim.
         emit('vsevenBtwo%sDeclA' % tag, _n(sum(r['match']['declAccA'] for r in rs) / len(rs), 3),
              'P5-B2.jsonl %s: FROZEN declaration accuracy, a bare rate with no interval' % cellid)
-    TABLE_SPEC['frontier.tex'] = ('llrrrr', 'Cell & Opponent & Edge (pts) & 95\\% CI & Games & Sign replicates')
+    TABLE_SPEC['frontier.tex'] = ('llrrrr', 'Cell & Opponent & Edge (pp) & 95\\% CI & Games & Sign replicates')
     writeTable('frontier.tex', lines)
     fc = [r for r in rows if r['cell'] == 'B2.2']
     emit('vsevenBtwoFcheapHalfWidth', _n(pool(fc)[3] * 1.96),
@@ -722,7 +735,7 @@ def b4_adversaries():
                       BANK1, _sg(per[BANK1]), BANK2, _sg(per[BANK2]),
                       'yes' if replicates(rs) else 'no'))
     TABLE_SPEC['adversaries.tex'] = ('lllrrll',
-        'ID & Class & Objective & Edge over Frozen & 95\\% CI & Per bank & Sign replicates')
+        'ID & Class & Objective & Edge over v0.7 & 95\\% CI & Per bank & Sign replicates')
     writeTable('adversaries.tex', lines)
     for f in fits.values():
         a = f.get('argv') or []
@@ -870,7 +883,7 @@ def b6_partners():
                           BANK2, _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
             out[(opp, p)] = d
         TABLE_SPEC['partners_%s.tex' % opp] = ('lrrlc',
-            'Partners & Frozen $-$ Incumbent & 95\\% CI & Per bank & Sign replicates')
+            'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Sign replicates')
         writeTable('partners_%s.tex' % opp, lines)
     # S1 as PREREGISTRATION 5.2 draft 3 states it: min, median, self, ratio, and
     # the incumbent's own baseline over v05 on the same eight rows.
@@ -966,7 +979,7 @@ def b7_crossplay():
         emit('vsevenHtwoh%sLo' % PAIRTAG[(a, b)], _sg(lo), 'P5-B7.jsonl: lower bound')
         emit('vsevenHtwoh%sHi' % PAIRTAG[(a, b)], _sg(hi), 'P5-B7.jsonl: upper bound')
         hl.append('xp%d vs xp%d & $%s$ & $[%s, %s]$ \\\\' % (a, b, _sg(m), _sg(lo), _sg(hi)))
-    TABLE_SPEC['crossh2h.tex'] = ('lrr', 'Pair & Edge (pts) & 95\\% CI')
+    TABLE_SPEC['crossh2h.tex'] = ('lrr', 'Pair & Edge (pp) & 95\\% CI')
     writeTable('crossh2h.tex', hl)
     emit('vsevenHtwohSeparated', str(sep), 'P5-B7.jsonl: head-to-head pairs whose interval excludes zero')
 
@@ -1053,7 +1066,7 @@ def b9_controls():
                       _sg(pm), _sg(plo), _sg(phi), _sg(hm), _sg(hlo), _sg(hhi),
                       _sg(cm), _sg(clo), _sg(chi), _sg(d), _sg(dlo), _sg(dhi)))
     TABLE_SPEC['controls.tex'] = ('lrrrr',
-        'Planted \\texttt{hstr} & Planted cost & Responder vs handicapped & Responder vs Frozen & Recovered excess')
+        'Planted handicap & Planted cost & Responder vs handicapped & Responder vs v0.7 & Recovered excess')
     writeTable('controls.tex', lines)
     ident = [r for r in rows if r.get('kind') == 'identity']
     wr = {r['match']['winRateA'] for r in ident}
@@ -1116,9 +1129,9 @@ def b10_residual():
             pm, pn = p[0]['side']['s6']['mismatch'], p[0]['side']['s6']['nodes']
             gate_nonzero += (gm != 0); plain_nonzero += (pm != 0)
             lines.append('%s & %d & %d / %s & \\textbf{%d} / %s \\\\' %
-                         (_tex(arm), bank, pm, _commafy(pn), gm, _commafy(gn)))
+                         (disp(arm), bank, pm, _commafy(pn), gm, _commafy(gn)))
     TABLE_SPEC['residual.tex'] = ('llrr',
-        'Arm & Bank & \\texttt{--threads=1} & \\texttt{--threads=1 --freshagents}')
+        'Configuration & Bank & \\texttt{--threads=1} & \\texttt{--threads=1 --freshagents}')
     writeTable('residual.tex', lines)
     emit('vsevenSsixGateNonzero', str(gate_nonzero), 'P5-B10.jsonl: gate-condition cells with a nonzero mismatch')
     emit('vsevenSsixPlainNonzero', str(plain_nonzero), 'P5-B10.jsonl: one-thread cells with a nonzero mismatch')
@@ -1208,6 +1221,29 @@ def b0_verification():
                          % (_tex(k), _tex(v), KEYDOC.get(k, '---')))
     writeTable('options.tex', opt_lines, 'llp{0.52\\linewidth}',
                'Key & Value & What it controls')
+    # The component table the agent section leads with: mechanism first, harness
+    # name second, so a reader meets the idea before the identifier.
+    COMPONENTS_TABLE = [
+        ('Deal inference', 'exact posterior with fitted policy prior',
+         'unchanged', '\\S\\ref{sec:inference}'),
+        ('Ask and declaration policy', 'fitted linear score, 37 coordinates',
+         'unchanged; no refit in this cycle', '\\S\\ref{sec:agent-policy}'),
+        ('Tie-breaking among equal-scoring asks', 'enumeration order (unstable sort)',
+         'hash of the public event stream (\\texttt{rtie})', '\\S\\ref{sec:agent-tiebreak}'),
+        ('Half-suit contestation', 'absent',
+         'information-denial weight (\\texttt{r12})', '\\S\\ref{sec:agent-contest}'),
+        ('Declaration urgency escalation', 'event-count clock at 220 events',
+         'disabled (\\texttt{pool}, \\texttt{oppfloor}, \\texttt{force}, \\texttt{askfloor})',
+         '\\S\\ref{sec:agent-urgency}'),
+        ('Termination guarantee', 'the urgency clock',
+         'deduction-state stall detector (\\texttt{stall})', '\\S\\ref{sec:agent-stall}'),
+        ('Test-time search', 'built and measured, deployed disabled',
+         'enabled, endgame-truncated, paired LCB guard', '\\S\\ref{sec:agent-search}'),
+    ]
+    writeTable('components.tex',
+               ['%s & %s & %s & %s \\\\' % r for r in COMPONENTS_TABLE],
+               'p{0.20\\linewidth}p{0.24\\linewidth}p{0.34\\linewidth}l',
+               'Component & v0.6 & FishBot v0.7 & Section')
     lay = fz['allparamsLayout']
     lay_lines = [('%s & %s \\\\' % (_tex(k), _tex(v)))
                  for k, v in lay.items() if k != 'note']
@@ -1274,7 +1310,7 @@ def b1_gate():
         lines.append('%s & %s \\\\' % (GNAME[g], ' & '.join(cells)))
     lines.append('\\midrule\n\\textbf{verdict} & %s \\\\' %
                  ' & '.join('\\textbf{%s}' % by[c]['verdict'] for c in order))
-    TABLE_SPEC['gate.tex'] = ('lcccc', 'Rule & Frozen & Incumbent & F-cheap & Negative control')
+    TABLE_SPEC['gate.tex'] = ('lcccc', 'Rule & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Negative control')
     writeTable('gate.tex', lines)
     for c in order:
         emit('vsevenGate%sVerdict' % CTAG[c], by[c]['verdict'], 'P5-gate.jsonl: %s gate verdict' % c)
@@ -1377,7 +1413,7 @@ def throughput_paper():
         emit('vsevenCost%sTight' % tag, _n(tight), 'P5-B3.jsonl: gamesPerSec ratio against random, the tightest lower bound')
         emit('vsevenCost%sFar' % tag, _n(far), 'P5-B3.jsonl: median ratio over the far archetypes')
         emit('vsevenCost%sPanel' % tag, _n(allm), 'P5-B3.jsonl: median ratio over the whole panel, the most diluted')
-        lines.append('%s & %s$\\times$ & %s$\\times$ & %s$\\times$ \\\\' % (_tex(arm), _n(tight), _n(far), _n(allm)))
+        lines.append('%s & %s$\\times$ & %s$\\times$ & %s$\\times$ \\\\' % (disp(arm), _n(tight), _n(far), _n(allm)))
     # This table aggregates as a ratio of medians (per panel member, the
     # incumbent's median throughput over the arm's, then the median of those).
     # engine/p5_analyse.py medians the per-bank ratios instead.  Neither is
@@ -1402,7 +1438,7 @@ def throughput_paper():
     emit('vsevenCostAggDelta', _n(worst, 3),
          'P5-B3.jsonl: largest divergence between this table\'s aggregation and a median of per-bank ratios')
     TABLE_SPEC['cost.tex'] = ('lrrr',
-        'Arm & vs \\texttt{random} (tightest) & Far archetypes (median) & Whole panel (median)')
+        'Configuration & vs \\texttt{random} (tightest) & Far archetypes (median) & Whole panel (median)')
     writeTable('cost.tex', lines)
     emit('vsevenCostRecorded', '3.2', 'docs/v07/PREREGISTRATION.md: the cost multiple the record carried')
 
@@ -1537,9 +1573,12 @@ def verdicts():
     fc = [r for r in b2 if r['cell'] == 'B2.2']
     m, lo, hi, _ = pool(fc)
     certified = lo > 1.53 and replicates(fc)
+    # The protocol's own label for the top outcome was "certified", which reads
+    # as third-party verification. The paper names what was actually satisfied.
     emit('vsevenPrimaryVerdict',
-         'CERTIFIED advancement' if certified else ('measured advancement' if lo > 0 and replicates(fc)
-                                                    else 'not an advancement'),
+         ('satisfies the registered primary criterion' if certified
+          else ('a measured but unconfirmed advance' if lo > 0 and replicates(fc)
+                else 'no advance')),
          'PREREGISTRATION 5.1 applied to P5-B2.jsonl B2.2')
     emit('vsevenPrimaryFloor', '1.53', 'PREREGISTRATION 5.1: the phase-2 C1-class detection floor')
     emit('vsevenDeclFloor', '2.13', 'PREREGISTRATION 3 correction 4: the declaration-family floor')
@@ -1547,6 +1586,67 @@ def verdicts():
     cm, clo, chi, _ = pool(comp)
     emit('vsevenItemTwoMet', 'MET' if clo <= 0 <= chi else 'not met',
          'PREREGISTRATION 6 item 2 applied to P5-B2.jsonl B2.4')
+
+
+def forest_plot():
+    """Figure 3: the principal comparisons as a forest plot, drawn from the
+    artifacts so the figure cannot drift from the tables.  TikZ coordinates are
+    computed here rather than typed into the .tex."""
+    rows = []
+    b2 = _rows('P5-B2.jsonl')
+    for cellid, label in (('B2.1', 'vs.\\ v0.6 (deployed)'),
+                          ('B2.2', 'vs.\\ F-cheap \\textit{(primary)}'),
+                          ('B2.3', 'vs.\\ F-mid'),
+                          ('B2.4', 'vs.\\ phase-2 composite'),
+                          ('B2.5', 'vs.\\ v0.5')):
+        rs = [r for r in b2 if r['cell'] == cellid]
+        m, lo, hi, _ = pool(rs)
+        rows.append((label, m, lo, hi, cellid == 'B2.2'))
+    # two robustness rows on the same axis, so the reader sees the scale
+    b6 = _rows('P5-B6.jsonl')
+    fr = [r for r in b6 if r['opp'] == 'v05' and r['arm'] == 'FROZEN' and r['partners'] == 'withholder']
+    inc = [r for r in b6 if r['opp'] == 'v05' and r['arm'] == 'INCUMBENT' and r['partners'] == 'withholder']
+    d, dlo, dhi = delta(fr, inc)
+    rows.append(('worst partner substitution', d, dlo, dhi, False))
+    b4 = _rows('P5-B4eval.jsonl')
+    worst = max(((pool([r for r in b4 if r['cell'] == z])[2], z) for z in {r['cell'] for r in b4}))
+    rs = [r for r in b4 if r['cell'] == worst[1]]
+    m, lo, hi, _ = pool(rs)
+    rows.append(('best adversary found', m, lo, hi, False))
+
+    lo_ax = min(r[2] for r in rows) - 0.6
+    hi_ax = max(r[3] for r in rows) + 0.6
+    span = hi_ax - lo_ax
+    W = 11.0
+    x = lambda v: (v - lo_ax) / span * W
+    out = ['\\begin{tikzpicture}[x=1cm,y=1cm]']
+    n = len(rows)
+    for i, (label, m, lo, hi, primary) in enumerate(rows):
+        y = -(i * 0.72)
+        col = 'fishgreen' if primary else 'fishgray'
+        w = 'ultra thick' if primary else 'thick'
+        out.append('  \\node[anchor=east,font=\\small] at (-0.25,%.3f) {%s};' % (y, label))
+        out.append('  \\draw[%s,%s] (%.3f,%.3f) -- (%.3f,%.3f);' % (col, w, x(lo), y, x(hi), y))
+        out.append('  \\draw[%s] (%.3f,%.3f) -- (%.3f,%.3f);' % (col, x(lo), y - 0.11, x(lo), y + 0.11))
+        out.append('  \\draw[%s] (%.3f,%.3f) -- (%.3f,%.3f);' % (col, x(hi), y - 0.11, x(hi), y + 0.11))
+        out.append('  \\fill[%s] (%.3f,%.3f) circle (0.075);' % (col, x(m), y))
+        out.append('  \\node[anchor=west,font=\\scriptsize\\ttfamily] at (%.3f,%.3f) {%+.2f};'
+                   % (W + 0.25, y, m))
+    ybot = -(n - 1) * 0.72 - 0.55
+    ytop = 0.55
+    out.append('  \\draw[densely dashed,fishgray] (%.3f,%.3f) -- (%.3f,%.3f);' % (x(0), ybot, x(0), ytop))
+    out.append('  \\draw[->,fishgray] (0,%.3f) -- (%.3f,%.3f);' % (ybot, W + 0.1, ybot))
+    step = 2 if span > 9 else 1
+    t = int(math.ceil(lo_ax / step) * step)
+    while t <= hi_ax:
+        out.append('  \\draw[fishgray] (%.3f,%.3f) -- (%.3f,%.3f) node[below,font=\\scriptsize] {%d};'
+                   % (x(t), ybot, x(t), ybot - 0.1, t))
+        t += step
+    out.append('  \\node[font=\\scriptsize,anchor=north] at (%.3f,%.3f) {win-rate edge (percentage points)};'
+               % (W / 2, ybot - 0.45))
+    out.append('\\end{tikzpicture}')
+    with open(os.path.join(_TBL, 'forest.tex'), 'w') as f:
+        f.write('\n'.join(out) + '\n')
 
 
 def paper_main():
@@ -1568,6 +1668,7 @@ def paper_main():
     totals()
     manifest_table()
     verdicts()
+    forest_plot()
     emit('vsevenBuildDate', _time.strftime('%Y-%m-%d'), 'build_tables_v07.py --paper run date')
     # provenance counts, which the reproducibility appendix quotes
     try:

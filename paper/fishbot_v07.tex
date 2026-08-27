@@ -23,10 +23,11 @@
 \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
 
 \definecolor{fishgreen}{HTML}{0B5D46}
+\definecolor{fishlight}{HTML}{EAF4EF}
 \definecolor{fishgray}{HTML}{4B5954}
 \hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen,
-            pdftitle={Exact Inference, Measurement, and Adversarial Evaluation in Six-Player
-                      Canadian Fish},
+            pdftitle={FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing
+                      in Six-Player Canadian Fish},
             pdfauthor={Dylan Nguyen}}
 \setlist{nosep,leftmargin=*}
 \setlength{\parindent}{1.2em}
@@ -34,7 +35,7 @@
 \setlength{\parskip}{0pt plus 1pt}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small Six-Player Canadian Fish}
+\lhead{\small FishBot v0.7}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.2pt}
 
@@ -44,37 +45,40 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{observation}[theorem]{Observation}
 
-% Consistent names for the policies compared.  These are prose commands, not
-% measurements; paper/check_provenance.py excludes anything declared here from
-% its number audit for exactly that reason.  They appear inside captions and
-% section titles, which are moving arguments, so they must be robust; and they
-% reach PDF bookmarks, so \texorpdfstring supplies a plain spelling.
-% Latin Modern has no bold small caps in any weight, so an arm name must never
-% be nested inside \textbf: bold the rest of the sentence instead.
-\DeclareRobustCommand{\vseven}{\texorpdfstring{\mbox{v0.7}}{v0.7}}
+% Names for the agents and configurations compared, defined once so that no
+% section invents a synonym; Table 3 defines what each one is.  These are prose
+% commands, not measurements, and paper/check_provenance.py excludes anything
+% declared here from its number audit for that reason.  They appear inside
+% captions and section titles, which are moving arguments, so they must be
+% robust, and they reach PDF bookmarks, so \texorpdfstring supplies a plain
+% spelling.  Latin Modern has no bold small caps in any weight, so an agent name
+% must never be nested inside \textbf: bold the rest of the sentence instead.
+\DeclareRobustCommand{\fishseven}{\texorpdfstring{\mbox{FishBot v0.7}}{FishBot v0.7}}
 \DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{v0.6}}{v0.6}}
 \DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{v0.5}}{v0.5}}
 \DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{v0.4}}{v0.4}}
 \DeclareRobustCommand{\vthree}{\texorpdfstring{\mbox{v0.3}}{v0.3}}
-% The four arms of the shared panel, named once so no section invents a synonym.
-\DeclareRobustCommand{\frozen}{\texorpdfstring{\textsc{Frozen}}{FROZEN}}
-\DeclareRobustCommand{\incumbent}{\texorpdfstring{\textsc{Incumbent}}{INCUMBENT}}
 \DeclareRobustCommand{\fcheap}{\texorpdfstring{\mbox{\texttt{F-cheap}}}{F-cheap}}
 \DeclareRobustCommand{\fmid}{\texorpdfstring{\mbox{\texttt{F-mid}}}{F-mid}}
 \DeclareRobustCommand{\composite}{\texorpdfstring{\mbox{the phase-2 composite}}{the phase-2 composite}}
+% Retained so that any surviving reference to the harness identifiers still
+% typesets as the agent it names.
+\DeclareRobustCommand{\frozen}{\fishseven{}}
+\DeclareRobustCommand{\incumbent}{\texorpdfstring{\mbox{v0.6 deployed}}{v0.6 deployed}}
+\DeclareRobustCommand{\vseven}{\fishseven{}}
 
-\title{\textbf{Exact Inference, Measurement, and Adversarial Evaluation\\
-in Six-Player Canadian Fish}}
+\title{\textbf{FishBot v0.7: Exact Inference, Robust Evaluation,\\
+and Adversarial Testing in Six-Player Canadian Fish}}
 \author{Dylan Nguyen}
 \date{\today}
 
 % Numbers.  numbers_v07.tex holds placeholders and the values transcribed from
-% this programme's earlier phases, each under a comment header naming its
-% source; numbers_v07_generated.tex is emitted straight from the experiment
-% artifacts by `engine/build_tables_v07.py --paper' and is \input AFTER it, so a
-% placeholder can never reach a built PDF.  The v0.5 and v0.6 files are loaded
-% because Sections 5 and 6 tell those cycles' results, and their numbers are
-% generated from their own artifacts rather than retyped here.
+% earlier phases, each under a comment header naming its source;
+% numbers_v07_generated.tex is emitted from the experiment artifacts by
+% `engine/build_tables_v07.py --paper' and is \input AFTER it, so a placeholder
+% cannot reach a built PDF.  The v0.5 and v0.6 files are loaded because Section 4
+% reports those cycles' results, and their numbers are generated from their own
+% artifacts rather than retyped here.
 \input{numbers_v05}
 \InputIfFileExists{numbers_v05_generated}{}{}
 \input{numbers_v06}
@@ -95,23 +99,17 @@ in Six-Player Canadian Fish}}
 
 \input{sections_v07/01-introduction}
 \input{sections_v07/02-game}
-\input{sections_v07/03-domain}
-\input{sections_v07/04-related}
-\input{sections_v07/05-engine}
-\input{sections_v07/06-arc}
-\input{sections_v07/07-methodology}
+\input{sections_v07/03-related}
+\input{sections_v07/04-background}
+\input{sections_v07/05-inference}
+\input{sections_v07/06-agent}
+\input{sections_v07/07-evaluation}
 \input{sections_v07/08-threat-model}
-\input{sections_v07/09-instrument}
-\input{sections_v07/10-rejected}
-\input{sections_v07/11-configuration}
-\input{sections_v07/12-protocol}
-\input{sections_v07/13-results}
-\input{sections_v07/14-exploitability}
-\input{sections_v07/15-against}
-\input{sections_v07/16-corrections}
-\input{sections_v07/17-limitations}
-\input{sections_v07/18-toward-v1}
-\input{sections_v07/19-conclusion}
+\input{sections_v07/09-development}
+\input{sections_v07/10-design}
+\input{sections_v07/11-results}
+\input{sections_v07/12-discussion}
+\input{sections_v07/13-conclusion}
 
 \clearpage
 \input{sections_v07/bibliography}
@@ -122,7 +120,8 @@ in Six-Player Canadian Fish}}
 \input{sections_v07/B-parameters}
 \input{sections_v07/C-thresholds}
 \input{sections_v07/D-panel}
-\input{sections_v07/E-deviations}
-\input{sections_v07/F-reproduction}
+\input{sections_v07/E-corrections}
+\input{sections_v07/F-deviations}
+\input{sections_v07/G-reproduction}
 
 \end{document}

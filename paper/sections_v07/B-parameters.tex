@@ -3,8 +3,8 @@
 
 \subsection*{The grammar}
 
-A configuration is named by a single string, and every policy in this paper --- every arm, every
-panel member, every fitted adversary --- is one of these strings. The grammar is
+A configuration is named by a single string, and every policy in this paper, every arm, every
+panel member, every fitted adversary, is one of these strings. The grammar is
 
 \begin{quote}\ttfamily
 base\,\textup{[}\,:key=value\,\textup{(}\,,key=value\,\textup{)}$^{*}$\,\textup{]}
@@ -13,8 +13,7 @@ base\,\textup{[}\,:key=value\,\textup{(}\,,key=value\,\textup{)}$^{*}$\,\textup{
 \noindent
 where \texttt{base} names a policy family (\texttt{v03} \ldots{} \texttt{v07}, a scripted archetype
 such as \texttt{withholder}, or an instrumented variant such as \texttt{v07i} for the white-box
-inverter), and each \texttt{key=value} sets one option on it. Two properties of the grammar are
-load-bearing for the evaluation:
+inverter), and each \texttt{key=value} sets one option on it. Two properties of the grammar matter for the evaluation:
 
 \begin{itemize}
 \item \textbf{It is total.} Any configuration this paper measures can be written as one string and
@@ -39,8 +38,8 @@ load-bearing for the evaluation:
 
 \noindent
 Three of these are switches that cannot be expressed as coordinates of the parameter vector at all
---- \vsevenNotVectorisable{} --- which is why the freeze artifact records the option map separately
-from the vector and why the round-trip check of \S\ref{sec:configuration} has to execute rather than
+(\vsevenNotVectorisable{}), which is why the freeze artifact records the option map separately
+from the vector and why the round-trip check of \S\ref{sec:agent} has to execute rather than
 compare strings.
 
 \subsection*{The parameter vector}
@@ -55,7 +54,7 @@ compare strings.
 The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit,
 whose provenance is recorded in the freeze artifact as \texttt{\vsevenInheritedVector{}\ldots}. No
 fit of any kind was applied to the frozen configuration in this cycle
-(\S\ref{sec:configuration-notchanged}).
+(\S\ref{sec:agent-policy}).
 
 \subsection*{Coordinates known to be inert}
 
@@ -64,15 +63,15 @@ Not every fitted coordinate does anything, and a paper that presented all
 this family:
 
 \begin{itemize}
-\item two v0.5 knobs unreachable under the shipped declaration branch --- setting them produces a
+\item two v0.5 knobs unreachable under the deployed declaration branch, so setting them produces a
       bit-identical transcript;
-\item three v0.5 ask terms belonging to a re-scoring pass that the shipped configuration does not
-      run;
+\item three v0.5 ask terms belonging to a re-scoring pass that the deployed configuration does
+      not run;
 \item \texttt{m2}, whose leave-one-out drop is exactly zero and which was dropped from the freeze
       for that reason (\S\ref{sec:results-attribution});
 \item \texttt{stall}, which is armed and never fires: its mirror digest is byte-identical to the
-      same configuration without it (\S\ref{sec:configuration-keys});
+      same configuration without it (\S\ref{sec:agent-stall});
 \item and, in the white-box adversary class specifically, \vsevenZeightInert{} of the
       \vsevenCoordinates{} fitted coordinates, because that base reads only the
-      \vsevenVsixCoords{}-coordinate v0.6 vector (\S\ref{sec:exploit-whitebox}).
+      \vsevenVsixCoords{}-coordinate v0.6 vector (\S\ref{sec:results-whitebox}).
 \end{itemize}

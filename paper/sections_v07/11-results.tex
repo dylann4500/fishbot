@@ -1,0 +1,507 @@
+\section{Results}
+\label{sec:results}
+
+Every measurement in this section is produced from the artifacts by the generator described in
+Appendix~\ref{app:repro} and emitted into this document mechanically. The section answers RQ1 in
+\S\ref{sec:results-primary}, RQ3 in \S\ref{sec:results-attribution}, and RQ2 in
+\S\ref{sec:results-partners} through \S\ref{sec:results-adversarial}, before reporting the validity
+controls and the computational cost.
+
+\subsection{RQ1: strength against the v0.6 frontier}
+\label{sec:results-primary}
+
+\begin{figure}[t]\centering
+{\small\input{tables_v07/forest}}
+\caption{Principal comparisons for \fishseven{}, pooled over both holdout banks with 95\%
+deal-clustered bootstrap confidence intervals. Positive values favour \fishseven{}. The registered
+primary comparison is highlighted. The bottom two rows place two robustness results on the same
+axis: the worst partner substitution of \S\ref{sec:results-partners}, and the most successful of the
+\vsevenBfourArms{} adversarial searches of \S\ref{sec:results-adversarial}.}
+\label{fig:forest}
+\end{figure}
+
+\begin{table}[t]\centering
+\caption{Strength against the \vsix{} frontier and lineage baselines, paired duplicate blocks, both
+holdout banks.}
+\label{tab:frontier}
+{\small\input{tables_v07/frontier}}
+\end{table}
+
+Against \fcheap{}, the registered primary target, \fishseven{} gains
+\textbf{\vsevenBtwoFcheapMag{}~pp} of win-rate edge $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over
+\vsevenBtwoFcheapN{} games, with the sign replicating on both banks
+(\vsevenBtwoFcheapBankOne{} and \vsevenBtwoFcheapBankTwo{}) and the lower bound above the registered
+\vsevenPrimaryFloor{}~pp threshold. The configuration passed the soundness gate
+(\S\ref{sec:design-gate}). All three conditions of the registered primary decision rule are therefore
+satisfied, and the comparison \vsevenPrimaryVerdict{}.
+
+Against lineage baselines, \fishseven{} gains \vsevenBtwoIncumbent{}~pp over the deployed \vsix{}
+policy $[\vsevenBtwoIncumbentLo, \vsevenBtwoIncumbentHi]$, \vsevenBtwoFmid{}~pp over \fmid{}
+$[\vsevenBtwoFmidLo, \vsevenBtwoFmidHi]$, and \vsevenBtwoVfive{}~pp over v0.5.
+
+\textbf{Against \composite{} it gains \vsevenBtwoComposite{}~pp
+$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$, an interval containing zero.}
+\S\ref{sec:results-composite} treats that result, which the protocol had named in advance as a
+condition of non-confirmation.
+
+\paragraph{Declaration accuracy is reported without a claim.} The declaration-family floor applies to
+the declaration-accuracy column. The harness emits declaration accuracy as a bare rate with no
+interval of any kind, so no interval can be quoted and no claim about the declaration channel is
+made. \fishseven{} runs \vsevenDeclFrozenLo{} to \vsevenDeclFrozenHi{} across the five cells against
+opponents' \vsevenDeclOppLo{} to \vsevenDeclOppHi{}. That is a diagnostic.
+
+\subsection{Non-confirmatory results}
+\label{sec:results-nonconfirm}
+
+The protocol named seven conditions in advance that would constitute non-confirmation, because after
+the data are in every one of them admits a reading that makes it sound like something else. Two arose,
+and they are reported here rather than in a discussion of caveats.
+
+\subsubsection{FishBot v0.7 does not measurably outperform the phase-2 composite}
+\label{sec:results-composite}
+
+\fishseven{} against \composite{} is \vsevenBtwoComposite{}~pp
+$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$ over \vsevenBtwoCompositeN{} games. Both banks are
+positive, so the sign replicates, but the interval contains zero.
+
+The registered interpretation is explicit, and this paper adopts it. The increment that an earlier
+phase had reported over the composite, \vsevenKthreeOverComposite{}
+$[\vsevenKthreeOverCompositeLo, \vsevenKthreeOverCompositeHi]$ on a single bank, did not replicate;
+on this comparison \fishseven{} reduces to a configuration that development phase 2 had already
+assembled.
+
+The arithmetic makes the cell interpretable rather than merely disappointing. \fishseven{} minus
+\composite{} is exactly the tie-break repair, the urgency removal and the stall detector added, with
+one further switch removed. \S\ref{sec:results-attribution} measures the stall detector's
+contribution as identically zero, and the removed switch's leave-one-out drop was zero on training
+material. The protocol states that group's training value in advance as \vsevenTrainGroup{}
+$[\vsevenTrainGroupLo, \vsevenTrainGroupHi]$; on holdout it is \vsevenBtwoComposite{}
+$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$.
+
+What this does and does not license is worth stating precisely, because \fcheap{} and \composite{}
+are different objects (Table~\ref{tab:configs}). It does not retract
+\S\ref{sec:results-primary}: \fcheap{} is a configuration of the \vsix{} frontier that existed before
+this cycle, and \fishseven{} improves on it by a replicated margin. What it licenses is the narrower
+statement that \textbf{the strength gain in this cycle is real and was produced in development phase
+2, and the architecture work that followed added no measurable strength on top of it}.
+
+\subsubsection{The attribution location test does not replicate}
+\label{sec:results-location}
+
+The protocol's third non-confirmation condition is that the lattice cannot locate the gain: if
+removing every single component in turn costs less than a third of the whole, the configuration has a
+gain it cannot explain. Read per bank, as \S\ref{sec:evaluation-replication} requires, the two banks
+disagree.
+
+\begin{center}\small
+\begin{tabular}{lrrlc}
+\toprule
+Bank & Whole & One third & Largest single drop & Verdict \\
+\midrule
+7090001 & \vsevenLocWholeOne{} & \vsevenLocThirdOne{} & \texttt{\vsevenLocAtOne{}} \vsevenLocBiggestOne{} & \vsevenLocVerdictOne{} \\
+7090003 & \vsevenLocWholeThree{} & \vsevenLocThirdThree{} & \texttt{\vsevenLocAtThree{}} \vsevenLocBiggestThree{} & \vsevenLocVerdictThree{} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The two banks' largest drops differ by \vsevenLocSplit{}~pp against a half-width on that difference of
+comparable size, so the split is real on the point estimates and is not itself statistically resolved.
+Under the replication criterion the pooled verdict is not replicated
+(\vsevenLocReplicates{}), and the honest reading is that this battery does not settle whether the gain
+is located by the protocol's one-third rule. Note that the disagreement is between verdict labels
+rather than between signs, which is itself a recorded extension of the criterion. The sub-additivity
+claim of \S\ref{sec:results-attribution} passes on both banks; it is the location test specifically
+that splits.
+
+\subsubsection{The selection check}
+\label{sec:results-selection}
+
+\vsevenSelK{} configurations were scored against the deployed policy during development. At the
+lattice cell size the per-cell standard deviation is \vsevenSelSigma{}~pp, so the expected maximum of
+\vsevenSelK{} draws under the null that none differs from the reference is
+$\sigma\sqrt{2\ln K} = \vsevenSelExpectedMax{}$~pp.
+
+The selection term on holdout material is \vsevenSelOnHoldout{}~pp \emph{by construction}: the holdout
+banks were never available for selection, so not one of the \vsevenSelK{} choices could have used any
+deal of them. That is a structural guarantee rather than a measurement.
+
+\begin{table}[t]\centering
+\caption{The four quantities the registered selection check tabulates, against their holdout
+measurements. Three reproduce or exceed; one falls short. These are not every figure the protocol
+states in advance, and two of the partner-regime predictions in \S\ref{sec:results-partners} also
+come in low.}
+\label{tab:selection}
+{\small\input{tables_v07/selection}}
+\end{table}
+
+\vsevenSelReproduce{} of the four reproduce or exceed their training values. The largest shortfall,
+\vsevenSelWorstShortfall{}~pp against an expected maximum under the null of \vsevenSelExpectedMax{},
+falls on the composite cell, which is precisely the quantity measuring the group of components the
+configuration was selected over. That is the pattern the check was written to look for and it appears
+where selection occurred. One quantity cannot establish that the group's training value was entirely
+selection effect, and the check is not a formal correction
+(\S\ref{sec:evaluation-multiplicity}); what it provides is a consistency test that the data pass in
+the direction \S\ref{sec:results-composite} indicates.
+
+\subsubsection{The seven conditions, answered}
+\label{sec:results-seven}
+
+\begin{center}\small
+\begin{tabular}{clp{0.50\linewidth}}
+\toprule
+\# & Condition & Result \\
+\midrule
+1 & the frontier comparison & not met. \vsevenBtwoFcheap{} $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$, sign replicates \\
+2 & the composite comparison & \textbf{met.} \vsevenBtwoComposite{} $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$ \\
+3 & attribution: the location test & \textbf{does not replicate.} \vsevenLocVerdictOne{} on one bank, \vsevenLocVerdictThree{} on the other \\
+4 & brittleness under partner change or cross-play & not met. Minimum \vsevenSoneMin{}; cross-play difference \vsevenXpGap{} \\
+5 & a successful adversary & not met. No search found a positive edge; largest upper bound \vsevenBfourWorstUpper{} \\
+6 & the soundness gate & not met. All \vsevenGateRules{} rules pass \\
+7 & the validity controls & not met. Every control behaves as specified \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two of the seven are met or unresolved, being condition 2 outright and condition 3 by
+non-replication. The other five are not met.
+
+\subsection{Worst case and minimax regret over a shared panel}
+\label{sec:results-panel}
+
+\vsevenPanelCells{} cells. Four configurations were scored against the same
+\vsevenPanelMembers{}-member panel on the same two banks: \vsevenPanelNear{} near-class members at
+\vsevenDealsNear{} deals per bank, \vsevenPanelFar{} far-class archetypes at \vsevenDealsFar{}, and
+\vsevenPanelExpensive{} expensive members at \vsevenDealsExpensive{}. All four carry a cell for every
+member, which is what makes minimax regret defined.
+
+\begin{table}[t]\centering
+\caption{Worst panel cell per configuration.}
+\label{tab:worstcase}
+{\small\input{tables_v07/worstcase}}
+\end{table}
+
+\fishseven{}'s worst cell is \vsevenWorstFrozen{}~pp
+$[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the deployed policy's \vsevenWorstIncumbent{}
+$[\vsevenWorstIncumbentLo, \vsevenWorstIncumbentHi]$, satisfying the registered secondary claim that
+the worst case not be catastrophic.
+
+Two qualifications belong with that number, and both go against \fishseven{}.
+
+First, \textbf{it does not replicate in sign}. \fishseven{}'s worst cell is
+\vsevenWorstFrozenBankOne{} on the first bank and \vsevenWorstFrozenBankTwo{} on the second, attained
+at a different panel member on each (\texttt{\vsevenWorstFrozenBankOneOpp{}} and
+\texttt{\vsevenWorstFrozenBankTwoOpp{}}); on one bank \fishseven{} has no negative cell anywhere on
+the panel. Under the criterion of \S\ref{sec:evaluation-replication} the pooled value is not
+replicated. What survives replication is the comparison the protocol actually gated on, since
+\fishseven{}'s worst cell is far above the deployed policy's on both banks, rather than the pooled
+value itself.
+
+Second, \textbf{it is not the best worst case of the four}. Configurations that are themselves panel
+members carry a free zero cell against themselves, so the worst case is printed both ways;
+\composite{} is ahead of \fishseven{} on both readings, at \vsevenWorstComposite{} with its self-cell
+and \vsevenWorstCompositeExSelf{} without.
+
+\begin{table}[t]\centering
+\caption{Minimax regret over the shared panel, best first. The protocol sets no threshold on this
+quantity and requires only that it be reported.}
+\label{tab:regret}
+{\small\input{tables_v07/regret}}
+\end{table}
+
+\fishseven{} is \textbf{\vsevenRegretFrozenRank{}rd of four} on minimax regret, at
+\vsevenRegretFrozen{} against \vsevenRegretBest{}'s \vsevenRegretFcheap{} and \composite{}'s
+\vsevenRegretComposite{}. The configuration with the best worst case is not the configuration with the
+best regret, and this paper does not resolve the tension by selecting whichever statistic favours the
+subject. The regret difference is concentrated in the far archetypes (Table~\ref{tab:farpanel}),
+opponents every configuration already beats by between \vsevenFarSpanLo{} and \vsevenFarSpanHi{}~pp,
+which is a reason to weight it less but not a reason to discount it.
+
+\begin{table}[t]\centering
+\caption{The far archetypes, where the minimax-regret differences are concentrated.}
+\label{tab:farpanel}
+{\small\input{tables_v07/farpanel}}
+\end{table}
+
+Against the hardest sealed adversary the ordering reverses: on
+\texttt{\vsevenHardSealed{}}, \fishseven{} scores \vsevenHardFrozen{}
+$[\vsevenHardFrozenLo, \vsevenHardFrozenHi]$ where the deployed policy scores
+\vsevenHardIncumbent{} and \fcheap{} scores \vsevenHardFcheap{}. \vsevenHardBeaters{} of the four
+configurations beat that member with a lower bound above zero, namely \vsevenHardBeaterNames{}.
+
+\paragraph{The panel mean, reported last and as a diagnostic.} Over the \vsevenPanelMembers{} shared
+cells, which comprise \vsevenPanelDistinct{} distinct policies since three are named twice and are
+therefore double-counted by any mean, the figures are \fishseven{} \vsevenPanelMeanFrozen{},
+\composite{} \vsevenPanelMeanComposite{}, \fcheap{} \vsevenPanelMeanFcheap{} and the deployed policy
+\vsevenPanelMeanIncumbent{}. The reporting rule of \S\ref{sec:evaluation-panel} forbids leading with
+this, and it points the opposite way from minimax regret. Appendix~\ref{app:panel} gives every cell.
+
+\subsection{RQ3: attribution of the gain}
+\label{sec:results-attribution}
+
+\begin{table}[t]\centering
+\caption{The attribution lattice. Add-one-in is measured from the deployed \vsix{} policy;
+leave-one-out is the drop from \fishseven{}. Reference cell \fishseven{} against the deployed policy
+on the lattice banks: \vsevenBfiveWhole{} $[\vsevenBfiveWholeLo, \vsevenBfiveWholeHi]$.}
+\label{tab:attribution}
+{\small\input{tables_v07/attribution}}
+\end{table}
+
+The registered prediction was that the contestation weight of \S\ref{sec:agent-contest} carries the
+gain, checkable as a leave-one-out drop of roughly two points. On that check it holds: the holdout
+drop is \vsevenLooRtwelve{}~pp $[\vsevenLooRtwelveLo, \vsevenLooRtwelveHi]$, with the training figure
+\vsevenTrainRtwelveLoo{} inside the interval, and an add-one-in of \vsevenAddInRtwelve{}. The stronger
+statement, that this coordinate is where the gain lives, is not supported at this power: the drop's
+lower bound is \vsevenLooRtwelveLo{}, and \S\ref{sec:results-location} reports the protocol's own
+location test failing to replicate.
+
+The stall detector behaves exactly as predicted. It is worth \vsevenAddInStall{}
+$[\vsevenAddInStallLo, \vsevenAddInStallHi]$ added and \vsevenLooStall{} removed, bit-identical on
+holdout in win rate and in events per game alike: the rule does not fire.
+
+The naive sum of the five components \fishseven{} carries is \vsevenBfiveSum{}~pp against a measured
+whole of \vsevenBfiveWhole{}~pp, a sub-additivity ratio of \vsevenSubAdditivity{}
+$[\vsevenSubAdditivityLo, \vsevenSubAdditivityHi]$, which contains the phase-2 composition figure of
+\vsevenSubAddPhaseTwo{}. Quoting the sum would overstate the configuration by
+\vsevenSubAdditivityOverstate{}~pp. The registered attribution claim, that components are
+sub-additive and no single leave-one-out drop exceeds the whole, is satisfied.
+
+One component was measured but is not carried by \fishseven{}. The \texttt{m2} switch is worth
+\vsevenAddInMtwo{} $[\vsevenAddInMtwoLo, \vsevenAddInMtwoHi]$ added to the blueprint, an interval
+excluding zero and larger than the tie-break's add-one-in. Its zero leave-one-out drop was measured
+on training material and is not re-measured here, because \fishseven{} does not carry the switch and
+the protocol directs that it not be added back; there is no leave-one-out cell for it and there could
+not be.
+
+\subsection{RQ2: partner substitution and one-seat upgrades}
+\label{sec:results-partners}
+
+\begin{table}[t]\centering
+\caption{Partner-regime table against a v0.5 opponent. Team A is the evaluated configuration plus two
+copies of the named partner; team B is three copies of the opponent.}
+\label{tab:partners}
+{\small\input{tables_v07/partners_v05}}
+\end{table}
+
+\vsevenSonePositive{} of \vsevenSoneRows{} changed-partner rows are positive. The minimum is
+\vsevenSoneMin{} $[\vsevenOppFiveWithholderLo, \vsevenOppFiveWithholderHi]$, which is above the
+registered $\vsevenSoneThreshold{}$ collapse threshold on the point estimate but \emph{not resolved
+against it}, since the interval's lower bound falls below the threshold. This battery does not
+separate a pass from a failure on the row that decides the claim, and reading a threshold from a
+point estimate is a move this paper declines elsewhere (\S\ref{sec:results-controls}) and declines
+here.
+
+Against a \vsix{} opponent all four rows are positive and clear zero
+(Table~\ref{tab:partnerssix}), and this is where the measurement disagrees with the registered
+expectation. The protocol states in advance \vsevenTrainOppSixSelf{} in self-play and
+\vsevenTrainOppSixLo{} to \vsevenTrainOppSixHi{} under partner change. Measured:
+\vsevenOppSixItself{} in self-play, and of the three changed rows two fall below the stated range,
+namely \vsevenOppSixVthree{} against \texttt{v03}, more than a point below its floor, and
+\vsevenOppSixDetective{} against \texttt{detective}.
+
+\begin{table}[t]\centering
+\caption{Partner-regime table against a \vsix{} opponent.}
+\label{tab:partnerssix}
+{\small\input{tables_v07/partners_v06}}
+\end{table}
+
+\begin{table}[t]\centering
+\caption{Transfer across partners: \fishseven{} over \vsix{} against \vsix{} over v0.5, on the same
+eight settings and the same banks. The two training rows are quoted from the registered protocol and
+are the only hand-entered numbers in this section; the protocol records that its v0.6-over-v0.5
+training row is computed on three of seven changed settings, so that row is not directly comparable
+with the holdout row above it. Reported and not gated.}
+\label{tab:regimes}
+{\small\input{tables_v07/regimes}}
+\end{table}
+
+The protocol stated in advance that if the ordering in Table~\ref{tab:regimes} survived, the
+appropriate summary is that \fishseven{}'s advantage transfers across partners about as well as
+\vsix{}'s did and, on the median-to-self-play ratio, slightly less well. The ordering survived
+(\vsevenSoneRatio{} against \vsevenBaseRatio{}), so that is the paper's summary. The fact it omits is
+that \fishseven{}'s absolute changed-partner median is \vsevenSoneMedian{} against \vsix{}'s
+\vsevenBaseMedian{}, and the ratio is smaller mainly because the self-play row it divides by is more
+than six times larger.
+
+A one-seat upgrade is worth \vsevenOneSeatFive{}~pp against a v0.5 opponent (registered expectation
+\vsevenTrainOneSeatFive{}) and \vsevenOneSeatSix{}~pp against a \vsix{} opponent (registered
+\vsevenTrainOneSeatSix{}). That a single seat purchases a large fraction of the three-seat gain is
+the strongest evidence in this paper that the advantage is individual rather than conventional.
+
+\subsection{RQ2: cross-play between independently trained runs}
+\label{sec:results-crossplay}
+
+\begin{table}[t]\centering
+\caption{Cross-play. Three runs of the same architecture, trained independently on disjoint fitting
+banks with different search trajectories and, for one, a different starting basin; pairwise parameter
+distance \vsevenXpDistanceLo{} to \vsevenXpDistanceHi{} over \vsevenCoordinates{} coordinates.}
+\label{tab:crossplay}
+{\small\input{tables_v07/crossplay}}
+\end{table}
+
+Diagonal mean \vsevenXpDiagonal{}, off-diagonal mean \vsevenXpOffDiagonal{}, difference
+\vsevenXpGap{}~pp against a per-cell half-width of \vsevenXpHalfWidth{}. The worst off-diagonal cell
+(\vsevenXpWorstOff{}) is \vsevenXpWorstOffShortfall{}~pp below the weakest diagonal cell
+(\vsevenXpWeakestDiag{}), and the best off-diagonal (\vsevenXpBestOff{}) exceeds every diagonal cell.
+The registered claim that the advantage is not a private convention between identical fits is
+satisfied against a threshold of \vsevenStwoThreshold{}~pp. For scale, the coordination literature's
+documented convention collapses run from self-play scores in the twenties to low single digits under
+cross-play \cite{bard-hanabi,hu-otherplay}; nothing of that kind is present.
+
+\begin{table}[t]\centering
+\caption{The three independently trained runs head to head. \vsevenHtwohSeparated{} of the three
+pairs separate from zero, which is what establishes that these are distinguishable policies rather
+than one policy three times.}
+\label{tab:crossh2h}
+{\small\input{tables_v07/crossh2h}}
+\end{table}
+
+\subsection{RQ2: robustness to rule dialects}
+\label{sec:results-dialects}
+
+\begin{table}[t]\centering
+\caption{The rule-dialect table. Both configurations play the same dialect in every row. This is the
+first dialect sweep of its kind in the corpus and has no training-bank counterpart.}
+\label{tab:dialects}
+{\small\input{tables_v07/dialects}}
+\end{table}
+
+Every row keeps its sign, every row replicates, and the largest excursion from the default row is
+\vsevenDiaMaxExcursion{}~pp on \vsevenDiaMaxExcursionRow{}, inside the registered
+\vsevenSfiveTolerance{}~pp tolerance. The advantage survives 48-card Literature, all three
+arbitration orders, both declaration-permission changes and the full legacy dialect.
+
+Two readings belong with the table. The \texttt{maxasks} row is bit-identical to the default
+(\vsevenMaxasksIdentical{}), because the 400-ask cap is never reached in this population, so it
+measures nothing. Consequently the legacy residual, which the protocol assigns to the forced-endgame
+willingness ladder for want of a flag of its own, is arithmetically legacy minus two effective
+components rather than three; it is \vsevenLegacyResidual{}
+$[\vsevenLegacyResidualLo, \vsevenLegacyResidualHi]$, an interval \vsevenLegacyResidualRatio{} times
+the size of the residual, so the data are equally consistent with the ladder contributing nothing.
+
+\subsection{RQ2: adversarial search against FishBot v0.7}
+\label{sec:results-adversarial}
+
+\begin{table}[t]\centering
+\caption{\vsevenBfourArms{} independently constructed adversarial searches against \fishseven{}. A
+positive edge would mean the adversary beats the target. Each was fitted on a deal stream disjoint
+from the banks it is evaluated on.}
+\label{tab:adversaries}
+{\small\input{tables_v07/adversaries}}
+\end{table}
+
+\vsevenBfourFits{} of \vsevenBfourArms{} searches produced a weight vector and all
+\vsevenBfourArms{} were evaluated. \textbf{None of the \vsevenBfourArms{} searches found a positive
+edge against \fishseven{} at the tested budgets.} Every one loses, by between
+\vsevenBfourBestLoss{} and \vsevenBfourWorstLoss{}~pp; every sign replicates; and the largest upper
+bound anywhere is \vsevenBfourWorstUpper{}, which is \vsevenBfourFloorGap{}~pp below the detection
+floor. The registered claim is satisfied.
+
+The searches control all three opposing seats, run in the synchronised correlation regime, and use a
+budget of \vsevenBfourGens{} generations of a \vsevenBfourPop{}-member population at
+\vsevenBfourDeals{} deals per candidate. They maximise four different objectives, being win rate,
+declaration error, event count and forced-endgame incidence, and two of them depart deliberately from
+the template, one using a wide search variance and one seeded in the v0.5 basin, so that the set is
+not one search repeated. The declaration-objective arm is read against the declaration-family floor of
+\vsevenDeclFloor{} rather than the general floor.
+
+This is a lower bound on exploitability and not an upper bound. It is evidence about these searches
+at these budgets in these classes, and \S\ref{sec:discussion-exploit} states what would be required
+to convert it into a statement about \fishseven{}.
+
+\subsubsection{The white-box transcript-inversion adversary}
+\label{sec:results-whitebox}
+
+\texttt{Zeight} is the adversary class the threat model of \S\ref{sec:threat} was written for: an
+opponent that reads the target's own deterministic policy and reconstructs the deal posterior from
+the public transcript, testing directly whether common-knowledge coordination among identical
+deterministic teammates exposes exploitable behavioural information. It reaches
+\vsevenZeightEdge{}~pp $[\vsevenZeightLo, \vsevenZeightHi]$, a replicated loss.
+
+Two limits belong with that cell, since it is the one a sceptical reader should weigh most heavily.
+\vsevenZeightInert{} of its fitted coordinates are inert, because the white-box base derives from the
+\vsix{} agent and reads only that policy's \vsevenVsixCoords{} coordinates while the search extends
+its vector to \vsevenCoordinates{}; the effective search is therefore over \vsevenZeightLive{} live
+coordinates plus the inverter the base fixes. And the budget is small. The result is evidence that
+this inverter, at this budget, does not exploit \fishseven{}; it is not evidence that no white-box
+attack can.
+
+\paragraph{Fitting performance is not evaluation performance.} The in-class arm reaches
+\vsevenZoneFitMargin{}~pp of paired margin in its final generation on its own fitting stream, and
+\vsevenZoneFitPeak{}~pp at its best generation, before landing at \vsevenZoneEdge{}~pp on disjoint
+banks. Most of that difference is not the change of bank: the same run re-scores its selected vector
+on the fitting stream and already falls below parity there, because the generation figure is a
+maximum over candidates at \vsevenBfourDeals{} deals each rather than a measurement of the vector
+that was retained. Re-evaluation closes most of the gap and disjoint banks close the rest.
+
+\subsection{Validity controls}
+\label{sec:results-controls}
+
+If these misbehave, nothing else in this section is interpretable.
+
+\begin{table}[t]\centering
+\caption{Planted-edge recovery. The recovered excess is the responder's edge against the handicapped
+target minus its edge against the unhandicapped one. The sub-floor rung must \emph{not} be recovered.}
+\label{tab:controls}
+{\small\input{tables_v07/controls}}
+\end{table}
+
+Two of the three supra-floor rungs are recovered with a lower bound above the
+\vsevenPrimaryFloor{}~pp floor. The third, the \texttt{0.08} rung, recovers
+\vsevenBnineHeightExcess{} $[\vsevenBnineHeightExcessLo, \vsevenBnineHeightExcessHi]$, above the floor
+on the point estimate but with an interval straddling it, so on the lower-bound reading this paper
+applies to its own primary claim it is not recovered. Its planted cost,
+\vsevenBnineHeightCost{} $[\vsevenBnineHeightCostLo, \vsevenBnineHeightCostHi]$, straddles the floor
+as well, so that rung is supra-floor only on a point estimate. Recovered size tracks planted size
+monotonically across all four rungs.
+
+The sub-floor rung is \textbf{not} recovered, at \vsevenBnineHfiveExcess{}
+$[\vsevenBnineHfiveExcessLo, \vsevenBnineHfiveExcessHi]$, which is the control that has to fail and
+does. Two qualifications belong with it: an earlier cycle measured the same excess at
+\vsevenSubFloorExcess{} $[\vsevenSubFloorExcessLo, \vsevenSubFloorExcessHi]$, so this cycle reaches
+the same conclusion from a point estimate seven tenths of a point higher, and the upper bound here
+grazes the floor.
+
+The identity control is exact: \fishseven{} against itself is \vsevenIdentityRate{} with a
+zero-width interval on both banks over \vsevenIdentityN{} games each. The responders fitted for these
+controls also lose to unhandicapped \fishseven{} in all four rows, a second sample of
+\S\ref{sec:results-adversarial}'s finding from a different bank and against a handicapped target;
+they maximise win rate as four of the eight adversarial searches do, so this is a second sample
+rather than an independent method.
+
+\begin{table}[t]\centering
+\caption{The seat-isolation residual on holdout material, \vsevenSsixCells{} cells over
+\vsevenSsixDeals{} audited deals. The right column is the registered zero-tolerance condition; the
+left column is the deployed mode.}
+\label{tab:residual}
+{\small\input{tables_v07/residual}}
+\end{table}
+
+The gate column is zero for every configuration on both banks
+(\vsevenSsixGateNonzero{} nonzero cells), so there is no side-channel finding. The left column
+reproduces the known engine defect of \S\ref{sec:agent-coordination} on holdout material and
+reproduces its shape: \vsevenSsixPlainNonzero{} cells are nonzero and every one belongs to a
+\emph{searching} configuration, with the non-searching blueprint zero on both banks. The audited
+decision counts move between the two columns in \vsevenSsixDenomMoved{} of the cells, which is the
+measured form of the statement in \S\ref{sec:evaluation-side} that rebuilding agents per deal changes
+play.
+
+\subsection{Computational cost}
+\label{sec:results-cost}
+
+\begin{table}[t]\centering
+\caption{Cost relative to the blueprint. Every figure is a \emph{lower bound}, because the harness
+reports whole-match throughput, which carries the opponent's cost on both sides of the ratio. The
+bound is tightest against the cheapest opponent. No figure carries an interval, these being wall-clock
+timings taken across a battery that ran over two days, and the aggregation is a ratio of medians,
+which differs from a median of per-bank ratios by at most \vsevenCostAggDelta{} across the six median
+cells.}
+\label{tab:cost}
+{\small\input{tables_v07/cost}}
+\end{table}
+
+The record priced the frontier's search at \vsevenCostRecorded$\times$ the blueprint, a figure that
+describes \fcheap{}. On a like-for-like basis \fcheap{} measures at least
+\vsevenCostFcheapTight$\times$, and \fishseven{} at least \vsevenCostFrozenTight$\times$. All three
+tight bounds exceed \vsevenCostRecorded$\times$, so the record understates the cost. The whole-panel
+column is lower only because expensive panel members place a large common term on both sides of the
+ratio, and it is the most diluted of the three.

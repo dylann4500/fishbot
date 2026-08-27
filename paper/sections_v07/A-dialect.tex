@@ -16,8 +16,8 @@ Out-of-turn declaration & \texttt{--no-out-of-turn} & permitted; the switch forb
 Cardless declaration & \texttt{--no-cardless-declare} & permitted; the switch forbids it \\
 Simultaneous declarers & \texttt{--arb=high}, \texttt{--arb=turn} & lowest seat index first;
 the switches arbitrate by stated confidence and by turn order \\
-Misdeclaration & --- & the half-suit is awarded to the opposing team \\
-Forced endgame & --- & eight-level willingness ladder when one whole team is cardless \\
+Misdeclaration &, & the half-suit is awarded to the opposing team \\
+Forced endgame &, & eight-level willingness ladder when one whole team is cardless \\
 Action cap & \texttt{--maxasks=N} & 400 asks; residue adjudicated by physical majority \\
 Legacy bundle & \texttt{--legacy} & the full v0.3-era dialect, bundling several of the above \\
 \bottomrule
@@ -39,6 +39,6 @@ default row is \vsevenDiaMaxExcursion{} points, on \vsevenDiaMaxExcursionRow{}.
 \item \textbf{Restarting the forced-endgame ladder sharpens nothing.} The argument is that restarting
   the willingness ladder after each declaration lets early, safer declarations resolve cards and so
   sharpen later ones. It is sound and inoperative: on every occasion a team went cardless with live
-  half-suits --- \numLadderOccasions{} of them at seed \numLadderSeed{} --- exactly
+  half-suits, \numLadderOccasions{} of them at seed \numLadderSeed{}, exactly
   \numLadderLiveSets{} half-suit was live, so there is no ordering to exploit.
 \end{enumerate}

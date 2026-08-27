@@ -1,0 +1,234 @@
+\section{Evaluation framework}
+\label{sec:evaluation}
+
+Roughly half of what this project has produced is its evaluation method, and it is presented here as
+method rather than as process, because each component was adopted in response to a specific measured
+failure and each is portable to another game. \S\ref{sec:background-vsix} describes the failures.
+
+\subsection{The outcome measure}
+\label{sec:evaluation-measure}
+
+The primary outcome is the team win rate, the proportion of games in which the evaluated
+configuration's team takes at least five of the nine half-suits. Comparisons are reported as an
+\textbf{edge in percentage points},
+\[
+  \text{edge} \;=\; 100 \times (\text{win rate} - 0.5),
+\]
+so that zero denotes indistinguishable configurations and the sign gives the direction. The paper
+writes \emph{pp} for percentage points of this quantity. Three other quantities appear and are never
+conflated with it: the mean number of half-suits a team takes, used for the search's internal return;
+predictive log loss and argmax hit rate, used to score posteriors as predictors
+(\S\ref{sec:background-vsix}); and the adversarial edge of \S\ref{sec:results-adversarial}, which is
+an edge in the same units but measured for a fitted opponent against the evaluated configuration.
+
+\subsection{Duplicate deal blocks}
+\label{sec:evaluation-duplicate}
+
+A \emph{cell} compares two configurations $A$ and $B$ over a \emph{bank} of deals identified by one
+integer seed. Every deal in the bank is played twice: once with $A$ in the odd seats and $B$ in the
+even seats, and once with the seats exchanged. Both configurations therefore play the identical deal
+from both sides.
+
+Fish has large per-deal variance, since a deal can be won or lost on the cards, and an unpaired
+comparison spends most of its sample resolving that variance rather than the difference between
+policies. The rotation cancels the deal's intrinsic advantage exactly, in the spirit of duplicate
+bridge and of the variance-reduction estimators developed for poker
+\cite{zinkevich-divat,burch-aivat}. The design requires reproducibility from the seed alone
+(\S\ref{sec:inference-engine}); without it the two rotations are not the same deal and the design
+degrades silently into an unpaired one.
+
+\subsection{Deal-clustered bootstrap confidence intervals}
+\label{sec:evaluation-intervals}
+
+The two rotations of one deal are not independent observations. They share a deal and their outcomes
+are negatively correlated by construction, so treating them as independent understates uncertainty.
+
+Every interval in this paper is a two-sided 95\% \textbf{deal-clustered bootstrap confidence
+interval}. The resampling unit is the \emph{deal}, carrying both of its rotations together; 20{,}000
+bootstrap resamples are drawn with replacement from the deals of the cell, the edge is recomputed on
+each resample, and the interval is the empirical 2.5th and 97.5th percentiles of that distribution.
+No Wilson or normal-approximation interval on the game count is quoted anywhere in this paper, and
+the substitution is not cosmetic: at these sample sizes it is the difference between a claim that
+replicates and one that does not.
+
+Two derived quantities are used throughout and are defined once here.
+
+\begin{description}
+\item[Pooling two banks.] Two banks of equal size pool as the mean of their two edges, with standard
+  error $\mathrm{se}_{\text{pooled}} = \sqrt{\mathrm{se}_1^2 + \mathrm{se}_2^2}/2$, where each
+  $\mathrm{se}$ is recovered from that bank's clustered interval as half-width divided by $1.96$. The
+  pooled interval is the estimate plus or minus $1.96\,\mathrm{se}_{\text{pooled}}$. Both per-bank
+  values are printed beside every pooled figure in this paper.
+\item[Differences between separately measured cells.] A difference between two pooled cells, such as
+  an ablation's leave-one-out drop, is the difference of the estimates with the two pooled half-widths
+  combined in quadrature. This is conservative. The configurations are paired on deals, so a genuine
+  paired difference would be narrower, but the harness produces no paired difference \emph{across} two
+  separately executed cells, and constructing one would assert more than the data structure supports.
+\end{description}
+
+\subsection{Power computed before a cell is run}
+\label{sec:evaluation-power}
+
+At parity a cell's 95\% half-width in percentage points is approximately $98/\sqrt{N}$ for $N$ games.
+The harness computes this for every cell and emits it with the result. The arithmetic is applied in
+advance because it determines what may be attempted: resolving one point requires roughly
+\vsevenScoreboardGames{} games, and a quarter of a point requires sixteen times that.
+
+The failure this prevents is the one \S\ref{sec:background-vsix} describes, in which five mechanisms
+cleared a 95\% paired interval at one budget and returned exactly zero at three times it. Sample
+sizes in this paper are chosen from the arithmetic before a cell is run, never after seeing its
+result.
+
+\subsection{Replication across disjoint banks as an advance-specified criterion}
+\label{sec:evaluation-replication}
+
+Every claim is measured on two disjoint deal banks, and the criterion was fixed before the data were
+seen:
+
+\begin{quote}
+A claim whose \textbf{sign} does not agree on both banks is reported as not replicated, whatever its
+pooled interval says.
+\end{quote}
+
+This is stricter than a pooled significance test, deliberately. A pooled interval can exclude zero
+while the two banks disagree, and that configuration has occurred in this corpus and has previously
+been published as a positive result. The criterion binds against this paper's own findings in
+\S\ref{sec:results-attribution} and again in \S\ref{sec:results-panel}, and both instances are
+reported.
+
+\subsection{Sealed material and advance registration}
+\label{sec:evaluation-seal}
+
+A programme that generates candidate configurations, scores them and selects the best is performing a
+maximisation, and the selected configuration's score is upward biased by the amount a maximum over
+$K$ draws exceeds the mean. No care taken in the final measurement removes that bias if the final
+measurement uses material the selection has seen.
+
+Before any candidate existed, deal banks were reserved by seed and their digests committed, a digest
+being a rolling hash over the six dealt hands and the dealer of every deal in the bank, computed
+without constructing a policy or playing a game. An adversary population was split in half by a rule
+fixed in advance, and one half was encrypted with the plaintext's SHA-256 committed, so that it could
+not be trained against even accidentally. The engine enforces the seal: a run naming a sealed seed
+fails unless an explicit environment variable is set, which was set once, at the start of the final
+evaluation, and recorded.
+
+The entire final battery, comprising every cell, its sample size, its threshold, the arithmetic
+behind the sample size and the conditions that would count as non-confirmation, was written down and
+committed before any holdout bank had been played and before the sealed half had been decoded. The
+evaluation was then executed from a cleared context, reading that document and nothing else from the
+project's records. Where it required a training figure for comparison it took it from the registered
+protocol, which states such expectations in advance for exactly this purpose, so that agreement
+constitutes a check and disagreement constitutes a finding.
+
+Anything the evaluation did that the protocol does not specify is recorded as a deviation, next to
+the affected result. There are \vsevenDeviations{}, listed in Appendix~\ref{app:deviations}.
+
+\subsection{Selection effects and multiple comparisons}
+\label{sec:evaluation-multiplicity}
+
+This study evaluates many candidate mechanisms, opponents, ablations, adversarial searches and
+configurations, and the inferential status of that needs stating precisely.
+
+\textbf{No formal family-wise or false-discovery correction was applied}, and no interval reported
+here is adjusted for multiplicity. What the design provides instead is structural.
+\emph{Registration} fixes the primary comparison, its threshold and its interpretation before the
+data exist, so the primary claim is a single pre-specified test rather than the best of many.
+\emph{Sealing} makes the holdout material unavailable to the selection process by construction rather
+than by discipline. \emph{Disjoint banks with a sign criterion} require a claim to appear twice
+before it is reported. \emph{Calibration} of the detection floor (\S\ref{sec:evaluation-floor})
+establishes what the instrument can resolve, so that a null is interpretable. And an explicit
+\emph{selection check} (\S\ref{sec:results-selection}) computes how much of the measured gain a
+maximum over $K$ candidates would produce under the null and compares advance-stated training figures
+against their holdout counterparts.
+
+Exploratory comparisons in \S\ref{sec:development} are reported as exploratory: they were run on
+training material during the development phase, none is treated as confirmatory, and none is used to
+support the paper's primary claim.
+
+\subsection{A soundness gate applied before any strength measurement}
+\label{sec:evaluation-gate}
+
+Win rate and soundness are dissociable in this policy family. The corpus contains a configuration
+that scores \vsevenScoreboardTrapWin\% against an earlier version while making
+\vsevenScoreboardTrapDead\% provably dead asks, asks for cards its own team demonstrably already
+owns, and losing \vsevenScoreboardTrapLimit\% of its games to the action cap. It is both stronger and
+broken.
+
+A configuration is therefore gated \emph{before} any strength number is computed for it, on eight
+rules covering dead asks, dead runs, action-limit games, the mirror game-length tail, late
+declarations, and the side-channel tests below. A configuration that fails is rejected regardless of
+its win rate. The gate runs on \emph{training} material by design, being a soundness check on
+self-play behaviour rather than a strength claim. It is accompanied by a negative control, a
+configuration constructed to be rejected, because a gate that cannot reject it would certify nothing
+about the configuration it accepts.
+
+\subsection{Calibrated detection floors}
+\label{sec:evaluation-floor}
+
+An exploitability figure is produced by a search, and a search that finds nothing admits two
+explanations: there is nothing to find, or the search is too weak. A \textbf{detection floor}
+separates them. An artificial handicap of known size is planted in a target, a responder is fitted
+against the handicapped target, and the \emph{excess} of that responder's edge over its edge against
+the unhandicapped target is measured. The smallest planted edge the procedure recovers is the floor.
+
+Two findings from that calibration shape every exploitability statement in this paper. First, the
+floor does not decrease with evaluation games. An early prediction that it would fall as
+(evaluation games)$^{-1/2}$ was refuted at its own predicted value: at four times the games the floor
+is \vsevenPrimaryFloor{}~pp, and the sub-floor rung remains undetected not because the interval is
+wide but because the measured excess resolves \emph{to} zero. Below roughly a point and a half a
+fitted responder is empty rather than merely unresolved, so the binding constraint is search power
+rather than evaluation power. Second, floors are family-specific: the declaration channel has its own
+and higher floor of \vsevenDeclFloor{}~pp, and reading a declaration-objective result against the
+general floor would overstate it.
+
+An adversary class contributes to an exploitability statement only after passing a planted-edge
+calibration at or below the effect size in question. That precondition is why the negative controls of
+\S\ref{sec:results-controls} are run: an instrument that cannot recover a planted edge of a given size
+cannot report the absence of a real one of that size.
+
+\subsection{Mechanical homogeneity and side-channel controls}
+\label{sec:evaluation-side}
+
+The evaluated team is three identical agents with no shared secret. That their coordination is common
+knowledge is legitimate (\S\ref{sec:game-why}), but it also means an implementation detail could
+become an unintended signalling channel. Before this cycle the constraint had only ever been checked
+by reading the source.
+
+Four mechanical tests now run over all four engine decision types. \textbf{S3, listening
+substitution} asks whether a seat's behaviour changes more when a teammate's hidden action changes
+than when an opponent's does, beyond what the rules explain. \textbf{S4, stream independence} asks
+whether the seat's private random stream is drawn independently of the deal. \textbf{S5, posterior
+invariance} asks whether the seat's action depends on true card locations beyond what its own
+posterior supports. \textbf{S6, seat isolation} replays every decision from own hand, public event
+stream, rules and reset seed alone, and counts the decisions the reconstruction cannot reproduce, at
+zero tolerance.
+
+The tests are calibrated by three positive controls, each a policy carrying one planted violation,
+and each must fail exactly the tests the protocol names for it in advance and no others.
+\S\ref{sec:design-material} reports the calibration on holdout material. Without those controls a
+clean report from the gate would be uninformative.
+
+One limitation is stated wherever the gate is used. The zero-tolerance form of S6 requires a single
+worker thread, because the audit depends on the deal-to-thread partition and work stealing does not
+fix that partition at higher counts, and it requires agents rebuilt for each deal. Rebuilding agents
+per deal \emph{changes play}. The gate therefore certifies that with cross-deal residue removed,
+nothing else depends on anything it should not. The residue itself is not removed from the deployed
+mode, and every strength number in this paper is measured under it
+(\S\ref{sec:results-controls}).
+
+\subsection{Worst case and minimax regret over a shared panel}
+\label{sec:evaluation-panel}
+
+The project's standing reporting rule is that the worst case leads and an aggregate never does, since
+a mean over an opponent panel rewards beating weak opponents by larger margins, which is not the
+quantity of interest. Two statistics are reported over a panel scored identically for every
+configuration: the \textbf{worst cell}, being the panel member on which a configuration does least
+well, and the \textbf{minimax regret}, being for each member the shortfall from the best configuration
+on that member, maximised over members. They can disagree, and in \S\ref{sec:results-panel} they do.
+Reporting both, and reporting the panel mean last and labelled as a diagnostic, is the discipline.
+
+Every configuration must carry a cell for every member or minimax regret is undefined, which is why
+the panel is fixed by name in advance and scored for all configurations on the same banks. One
+consequence of that design is recorded where it matters: a configuration that is itself a panel
+member meets itself and carries a free zero cell, which can only flatter its worst case, so
+\S\ref{sec:results-panel} prints the worst case both with and without self-cells.

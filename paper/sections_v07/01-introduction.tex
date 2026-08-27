@@ -1,100 +1,94 @@
 \section{Introduction}
 \label{sec:intro}
 
-This paper is the account of record for a research programme in six-player Canadian Fish, a team
-card game with a property that is rare and useful: \emph{every action is public}. Cards move only
-through asks whose target and outcome everyone observes, so the entire hidden state is the initial
-deal, and the posterior over it is exactly computable in closed form. A domain in which inference
-can be made provably correct is a domain in which every remaining loss is attributable to policy ---
-and that separation is what the programme has spent six versions exploiting.
+Six-player Canadian Fish, also called Literature, is a team card game with an unusual combination of
+properties. Every action is public, so the entire hidden state is the initial deal and the posterior
+over that deal is exactly computable. The unit of play is a three-player team whose members cannot
+communicate. And because a deployed team consists of three identical deterministic agents, its
+coordination is common knowledge, which inverts the usual assumption in the team-correlation
+literature that a team's correlation device is private. The result is a domain in which inference can
+be made provably correct, so that any remaining loss is attributable to policy rather than to belief.
 
-\S\ref{sec:game} states the game completely, so that nothing here depends on outside material, and
-\S\ref{sec:domain} says why it is worth studying. The short version is three properties in
-combination. The hidden state is a single object under hard logical constraints, so exact inference
-is cheap rather than aspirational. The unit of play is a three-player team whose members cannot
-communicate, which is the decentralised control problem in its purest card-game form. And a team of
-three \emph{identical, deterministic, published} agents inverts the standard assumption of the
-team-correlation literature, in which the correlation device is private: here it is common
-knowledge, and an adversary may read it.
+Computational work on the six-player game appears to be extremely limited. In the searches conducted
+across this project's cycles we found no academic work on it, no public repository containing search,
+planning or a working learner for it, and no coverage in the standard card-game reinforcement
+learning libraries (\S\ref{sec:related-fish}). The nearest published agent plays a four-player,
+48-card variant that does not raise the six-player allocation problem.
 
-\paragraph{What this paper contains.}
-The programme has produced two kinds of result, and this paper treats them as equally important.
+This paper presents \textbf{\fishseven{}}, the strongest agent produced in this project's FishBot
+lineage, and reports a rigorous evaluation of it. Earlier versions established the engine, the exact
+inference machinery and a sequence of progressively stronger policies, but their development also
+exposed serious evaluation problems: comparisons that could not resolve a one-point effect, an
+optimiser that could not move a policy, and at least two published conclusions that turned out to be
+artefacts of the measurement rather than properties of the agent (\S\ref{sec:background}).
+\fishseven{} therefore asks a question that only becomes answerable once those failures are
+corrected: whether further measurable progress in this policy class is available at all.
 
-The first kind is about the game. An exactly computable observer-conditioned deal posterior
-(\S\ref{sec:engine-belief}) --- and the finding that substituting it for the deployed approximation
-makes the policy \emph{worse}, because exactness in this game is purchased by discarding behaviour
-(\S\ref{sec:arc-vsix-belief}). More than half of ask decisions ending in a bit-for-bit tie that the
-\emph{exact} posterior also cannot separate, making the largest item on the design register a
-property of the information set rather than a defect (\S\ref{sec:arc-vsix-ties}). A determinized
-search that is \vsixCurseGap{}~points \emph{worse} than the blueprint it searches from when its
-action is chosen by an unguarded argmax, and fully recovered by a paired lower-confidence-bound
-guard (\S\ref{sec:arc-vsix-search}).
+\subsection{Research questions}
+\label{sec:intro-rq}
 
-The second kind is about measurement, and it is roughly half the contribution.
-\S\ref{sec:methodology} presents the apparatus as method rather than housekeeping: the
-duplicate-block design, deal-clustered intervals, power computed before a cell is run, replication
-across disjoint banks used as a veto over pooled significance, sealed material with committed
-digests, preregistration with stated failure conditions, a commit gate that runs before any strength
-number, calibrated detection floors, and a mechanical homogeneity gate with planted positive
-controls. Every one of those components was built in response to a specific measured failure, and
-most of the failures were this project's own (\S\ref{sec:arc-vsix-apparatus}).
+\begin{description}
+\item[RQ1] Does \fishseven{} achieve a replicated improvement over the strongest relevant
+  configuration available from \vsix{}, measured on material sealed before \fishseven{} existed?
+\item[RQ2] Does that improvement survive changes of partner, cross-play against independently trained
+  policies, alternative rule dialects, and adversarial responses fitted against it?
+\item[RQ3] Which of \fishseven{}'s changes account for the improvement, and which candidate
+  mechanisms fail to produce measurable strength?
+\item[RQ4] What do the results imply about the headroom remaining in the current policy class?
+\end{description}
 
-\paragraph{The final cycle, and its verdict.}
-\S\S\ref{sec:instrument}--\ref{sec:results} report a cycle designed so that its answer could not be
-argued into being positive: characterise the instrument, search for adversaries in the open, build
-candidate architectures, freeze exactly one configuration, and evaluate it from a cleared context
-against a protocol committed before any holdout deal had been played.
+\S\ref{sec:results} answers RQ1 and RQ2 directly, \S\ref{sec:development} and
+\S\ref{sec:results-attribution} answer RQ3, and \S\ref{sec:discussion} takes up RQ4.
 
-The preregistered primary claim passes and is certified: \vsevenBtwoFcheap{}~points
-$[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ against the cheapest point of the previous frontier,
-over \vsevenBtwoFcheapN{} games of sealed material, replicating on both banks and gate-clean. Nothing
-built to exploit it succeeds; it is not a self-play convention.
+\subsection{Three senses of ``strongest'', kept separate throughout}
+\label{sec:intro-strength}
 
-\textbf{And it does not beat the composite the programme had already assembled two phases earlier}
---- \vsevenBtwoComposite{}~points $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$. The protocol
-stated in advance what that would mean, and \S\ref{sec:against} says it: the strength gain in this
-cycle is real, it was found by an unfitted coordinate sweep, and the architecture work that followed
-added no measurable strength on top of it. Two further results point the same way. On a
-\vsevenPanelMembers{}-member panel the frozen configuration is \emph{third of four} on minimax
-regret. And of the four quantities the selection check tabulates, the largest shortfall against an
-advance-stated training value falls on the group of keys the freeze was \emph{selected over}.
+This paper makes a comparative claim of a specific and limited kind, and the distinction matters
+enough to state before any number appears.
 
-\paragraph{Contributions.}
+\begin{description}
+\item[Lineage strength.] \fishseven{} is the strongest configuration this project has produced,
+  measured against its own predecessors and against the frontier of configurations available at the
+  end of the \vsix{} cycle. This is what the paper establishes.
+\item[Robustness.] Whether that strength persists against a fixed opponent panel, under substituted
+  partners, across rule dialects, and against adversaries fitted to exploit it. This the paper
+  evaluates extensively, and reports mixed results.
+\item[Global standing.] Whether \fishseven{} is the strongest Canadian Fish agent anyone has built.
+  \textbf{This the paper does not establish and does not claim.} The comparison class contains only
+  agents this project wrote, and every exploitability figure here is a lower bound produced by a
+  search rather than a bound on what a search could find.
+\end{description}
+
+Accordingly the paper never describes \fishseven{} as near-optimal, unexploitable, or the strongest
+known Fish-playing team. \S\ref{sec:discussion-future} states what evidence those claims would
+require, none of which currently exists.
+
+\subsection{Contributions}
+\label{sec:intro-contributions}
+
 \begin{enumerate}
-\item \textbf{A complete, self-contained treatment of a domain in which we found no prior published
-  computational work} (\S\S\ref{sec:game}--\ref{sec:engine}): rules, dialect, the exact posterior and its
-  closed form, and the verification suite that establishes the engine is what it claims to be.
+\item \textbf{\fishseven{}} (\S\ref{sec:agent}), the strongest configuration in the FishBot lineage,
+  described at the level of its inference, ask and declaration policy, coordination assumptions,
+  termination rule and test-time search.
 
-\item \textbf{An evaluation apparatus presented as adoptable method} (\S\ref{sec:methodology}), each
-  component paired with the failure it prevents --- including two occasions on which this project's
-  own published claims turned out to be artefacts of its instrument.
+\item \textbf{An exact observer-conditioned deal inference method} for six-player Canadian Fish
+  (\S\ref{sec:inference}), which factorises the constraint system by half-suit and joins the blocks
+  through a dynamic program over per-seat card counts, yielding the normalisation constant, per-card
+  marginals and named-allocation probabilities without sampling.
 
-\item \textbf{An operational definition of team exploitability} for a homogeneous team of published
-  deterministic agents (\S\ref{sec:threat}), made mechanical by four tests with three calibrated
-  positive controls.
+\item \textbf{An evaluation framework} (\S\ref{sec:evaluation}) built from duplicate deal blocks,
+  deal-clustered bootstrap intervals, power computed before a cell is run, replication across
+  disjoint banks as an advance-specified criterion, sealed holdout material with committed digests,
+  a soundness gate applied before any strength measurement, calibrated detection floors, and
+  mechanical side-channel controls with planted positive instances.
 
-\item \textbf{Four candidate architectures killed with measurements} (\S\ref{sec:rejected}): a
-  declaration channel that closes at exactly zero, a leaf evaluator fitted \vsevenKoneFold$\times$
-  better that buys nothing, per-decision objectives that produce worse policies while moving their
-  own proxies the right way, and a learned re-ranker worth \vsevenKfiveHeadToHead{}~$\pm$
-  \vsevenKfivePm{} against a free hash tie-break.
+\item \textbf{A comprehensive evaluation of \fishseven{}} (\S\ref{sec:results}) covering frontier
+  comparisons, attribution of the gain to components, partner substitution, cross-play, rule
+  dialects, adversarial search including a white-box transcript-inversion adversary, negative
+  controls, and computational cost.
 
-\item \textbf{A preregistered evaluation with a stated failure condition} (\S\ref{sec:protocol}), of
-  which two conditions came out against the release and are reported as such
-  (\S\ref{sec:against}).
-
-\item \textbf{A corrections register} (\S\ref{sec:corrections}) against both the corpus's record and
-  this cycle's own, and \textbf{an explicit statement of what a near-optimality claim would require}
-  (\S\ref{sec:towardone}), none of which has been produced.
+\item \textbf{Negative and diagnostic results} (\S\ref{sec:development-rejected},
+  \S\ref{sec:discussion-limits}) showing that four plausible architectural mechanisms fail to produce
+  measurable improvement, and identifying a resolution barrier: the gains that remain in this policy
+  class, if any, are smaller than the evaluation and adversary-search machinery can reliably detect.
 \end{enumerate}
-
-\paragraph{What this paper does not claim.}
-It does not claim the release is stronger than the best configuration available before the
-architecture work began; the cell that would show that contains zero. It does not claim the frozen
-configuration is hard to exploit --- only that eight searches, at a stated budget, in stated
-classes, did not exploit it, which is a lower bound within a searched class and nothing more
-(\S\ref{sec:limitations-lbr}). It does not claim the gain is located: the protocol's own location
-test does not replicate across banks (\S\ref{sec:against-location}). And it does not claim that any
-policy here is near-optimal, or that this is the strongest Fish-playing team, because the comparison
-class has one member and every exploitability number in this corpus is a lower bound from a search
-rather than a bound on what a search could find.

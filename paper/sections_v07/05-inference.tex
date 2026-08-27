@@ -1,0 +1,131 @@
+\section{Exact observer-conditioned deal inference}
+\label{sec:inference}
+
+Every agent in this lineage is built on an inference object that this section defines formally,
+because it is one of the paper's principal contributions and because its exactness is what makes the
+policy results interpretable. The method is an exact enumeration carried out through a factorised
+dynamic program. It is not an analytic closed-form expression, and the paper avoids that phrase.
+
+\subsection{The engine, and the barrier between rules and policy}
+\label{sec:inference-engine}
+
+The engine is a single-header C++20 core. A hand is one 64-bit word over the 54 card indices
+$c = 6h + i$ for half-suit $h$ and offset $i$, so hand arithmetic is bit arithmetic. Random streams
+are counter-based and keyed by the triple (seed, seat, purpose), which gives the property everything
+else depends on: a deal and its entire play reproduce from the seed alone. The duplicate-block design
+of \S\ref{sec:evaluation-duplicate} rests on that property and on nothing else.
+
+An acting policy never receives the game state. It receives its own knowledge object, its own hand
+and the public event stream. There is no reference from a policy to the deal, to another seat's hand
+or to the referee. This is an architectural barrier rather than a convention, and it is what allows
+the side-channel audit of \S\ref{sec:evaluation-side} to be read as a test of the policy: a policy
+that cannot reach the deal cannot read it, so any decision the audit fails to reproduce from public
+information indicates state carried across deals rather than information taken from the referee.
+
+\subsection{State, observations and constraints}
+\label{sec:inference-constraints}
+
+Let the hidden state be the initial deal $D$, an assignment of the 54 cards to the six seats with
+nine cards each. Write $\mathcal{D}$ for the set of all such assignments; from one seat's viewpoint
+at deal time $|\mathcal{D}| = 45!/(9!)^5 \approx 1.9 \times 10^{28}$.
+
+An observer at seat $s$ holds an information set determined by five families of hard constraint,
+each of which is a logical restriction on $D$ rather than a probabilistic one:
+
+\begin{description}
+\item[(C1) Own hand.] Seat $s$ knows its own nine cards exactly.
+\item[(C2) Card counts.] The current number of cards at every seat is public, and given the transfer
+  record this determines each seat's initial count.
+\item[(C3) Transfers.] Every card that has changed hands, and between whom, is public.
+\item[(C4) Failed asks.] For each failed ask, the target did not hold the named card at that moment,
+  which given (C3) is a statement about $D$.
+\item[(C5) Ask legality.] For each ask, the asker held at least one \emph{other} card of the named
+  half-suit and did not hold the named card, again at that moment and hence about $D$.
+\end{description}
+
+The posterior of interest is uniform over the deals satisfying every constraint:
+\[
+  P(D \mid \mathcal{I}_s) \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s\right]}{Z},
+  \qquad
+  Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s\}\bigr| .
+\]
+
+\subsection{Factorisation by half-suit, joined by a count dynamic program}
+\label{sec:inference-factor}
+
+Computing $Z$ by direct enumeration is infeasible, and in general a constraint system of this shape
+induces a permanent-like count, the object the literature approximates with inclusion-exclusion
+\cite{ryser}, sign-vector formulae \cite{glynn}, Markov chains \cite{jsv}, matrix scaling \cite{lsw}
+or sequential importance sampling \cite{chen-sis}.
+
+Fish sidesteps all of it, because the constraints factorise by half-suit. Constraint (C5) is a
+statement about a half-suit. Constraint (C4) is a statement about a card and therefore about a
+half-suit. Constraint (C3) resolves within a half-suit. The \emph{only} coupling across half-suits is
+(C2), the per-seat card counts, which is a linear constraint on how many cards each seat draws from
+each block.
+
+The computation therefore proceeds in two stages.
+
+\begin{enumerate}
+\item \textbf{Block enumeration.} For each half-suit $h$ independently, enumerate the assignments of
+  its unresolved cards to seats that satisfy every (C1), (C3), (C4) and (C5) constraint touching
+  $h$. Because a half-suit has six cards and resolved cards are removed, the surviving block is
+  small. Accumulate, for each block, a table indexed by the vector of counts it contributes to each
+  seat, recording how many assignments realise that count vector and, for each card and seat, how
+  many of those place that card at that seat.
+\item \textbf{Count join.} Combine the block tables by a dynamic program over the running count
+  vector, which enforces (C2) exactly. The terminal cell of that program is $Z$; the same recursion
+  carried with the per-card sub-counts yields the marginals.
+\end{enumerate}
+
+From this the engine reads off, exactly and without sampling: the normalisation constant $Z$; the
+per-card marginal $P(\text{card } c \text{ at seat } j \mid \mathcal{I}_s)$; the probability that a
+given team owns a whole half-suit; and the probability of a fully named allocation of a half-suit,
+which is exactly the quantity a declaration decision requires.
+
+An exact rebuild costs \vsixCountCost{}~ms, which is why the project has been able to treat inference
+as solved and spend its cycles on policy.
+
+\subsection{The deployed approximation and its policy prior}
+\label{sec:inference-prior}
+
+The exact posterior is exact \emph{under a uniform prior over constraint-consistent deals}. It
+contains no model of behaviour, because the block construction consumes the deduction state alone
+and has no parameter through which an opponent's tendencies could enter.
+
+The path the agent actually deploys adds one. It applies a fitted soft reweighting of the rules
+posterior with two parameters and no learned opponent model, in the spirit of the Skat inference
+line \cite{solinas-supervised,rebstock-inference,buro-kermit} but far simpler; the deployed weight is $\theta = \vsixPriorTheta{}$. \S\ref{sec:background-vsix} reports the consequence, which is that the
+approximation is the better predictor of card location, and \S\ref{sec:discussion-limits} discusses
+what that implies.
+
+\subsection{Verification}
+\label{sec:inference-verify}
+
+Three checks run over the engine, and all three ran as preconditions of the evaluation in
+\S\ref{sec:results}.
+
+\begin{description}
+\item[Soundness audit.] Every seat's deduced knowledge is checked against the true deal at every
+  decision, since no agent's deduction may ever exclude the truth. The verification run for this
+  evaluation recorded \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks, and the
+  preceding cycle \vsixAuditViolations{} in \vsixAuditChecks{}.
+\item[Cross-engine agreement.] The block dynamic program, an independent card-counting path and an
+  exact sampler must agree. The self-test reports \vsevenSelftestChecks{} checks passing, with
+  block-versus-card agreement at the limit of double precision.
+\item[Identity control.] The current policy, carrying its predecessor's parameter vector with every
+  new mechanism disabled, must produce a transcript identical to its predecessor's under md5. It does
+  (\vsixIdentity{}). Without this an ablation is not an ablation, because a measured difference could
+  be an artefact of refactoring.
+\end{description}
+
+Two defects these checks found are recorded here because both changed previously published numbers,
+and both survived for the same reason: they were invisible to the path the agent actually deploys.
+The block dynamic program parked every instance's tables in a shared per-thread pool, so a second
+construction on the same thread silently repointed the first instance's tables, giving
+\numAliasMismatch{} mismatches in \numAliasChecks{} checks; any earlier number computed with the
+exact belief in a configuration where more than one seat held such an object is affected, and the
+deployed approximate-belief numbers are not. Separately, an audit that verifies the declaration
+pre-gate never rejects a correct declaration had been parsed only in an older branch and so had never
+run; once enabled it reports \vsixGateFalseNeg{} false negatives over \vsixGateOpportunities{}
+declaration opportunities. Appendix~\ref{app:corrections} carries the full register.
