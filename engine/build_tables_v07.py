@@ -1197,6 +1197,24 @@ def b0_verification():
     emit('vsevenMirrorDigest', fv['mirrorDigest'], 'P5-B0.json: R3 mirror pathology digest')
     emit('vsevenCoordinates', str(fv['coordinates']), 'P5-B0.json: coordinates in the frozen vector')
     emit('vsevenFrozenSpec', _tex(fv['reconstructedSpec']), 'P5-B0.json: spec reconstructed from the freeze artifact')
+    # Individual option values, so a formula in the text can name a search
+    # parameter without anyone typing it.  Read from the freeze artifact's own
+    # option map, which is the object the spec is reconstructed from.
+    try:
+        frz = json.load(open(os.path.join(_ROOT, 'engine', 'fishbot_v07.json')))
+        OPTNAME = {'r12': 'Contest', 'stall': 'StallK', 'det': 'Det', 'cand': 'Cand',
+                   'kappa': 'Kappa', 'depth': 'Depth', 'maxq': 'Maxq', 'rtie': 'Rtie',
+                   'force': 'Force', 'rbelief': 'Rbelief'}
+        for key, tag in OPTNAME.items():
+            if key in frz.get('options', {}):
+                emit('vsevenOpt' + tag, _tex(frz['options'][key]),
+                     'engine/fishbot_v07.json: frozen option %s' % key)
+        # stall2 defaults to twice the stall threshold (v07_stall.hpp)
+        if 'stall' in frz.get('options', {}):
+            emit('vsevenOptStallTwo', str(2 * int(frz['options']['stall'])),
+                 'v07_stall.hpp: stage-2 threshold, twice the stage-1 threshold')
+    except Exception as e:
+        print('freeze option macros skipped:', e, file=sys.stderr)
     # The spec is one unbreakable control word to TeX, so setting it verbatim
     # overflows the column by ~260pt.  A copy with a discretionary break after
     # every comma typesets; the characters are identical.
