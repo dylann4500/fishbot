@@ -1225,6 +1225,32 @@ def b0_verification():
             if key in frz.get('options', {}):
                 emit('vsevenOpt' + tag, _tex(frz['options'][key]),
                      'engine/fishbot_v07.json: frozen option %s' % key)
+        # Deployed coordinate values, read out of the frozen vector rather than
+        # out of a header default.  factory.hpp maps the flat vector as
+        # NFEAT ask weights, then fourteen v0.5 knobs, then three v0.6 ask
+        # terms, then eighteen v0.7 responder coordinates; v06.hpp:216-232
+        # fixes the offsets inside the knob block.
+        ap = frz.get('allparams') or []
+        lay = frz.get('allparamsLayout') or {}
+        NF = int(lay.get('nfeat', 20))
+        if len(ap) >= 55:
+            emit('vsevenPriorTheta', '%.5f' % ap[NF + 9],
+                 'engine/fishbot_v07.json allparams: deployed priorTheta (v06.hpp:225)')
+            emit('vsevenPriorPhi', '%.5f' % ap[NF + 10],
+                 'engine/fishbot_v07.json allparams: deployed priorPhi (v06.hpp:226)')
+            emit('vsevenLinearWeight', '%.5f' % ap[NF + 6],
+                 'engine/fishbot_v07.json allparams: deployed linearWeight (v06.hpp:222)')
+            off = NF + int(lay.get('v05knobs', 14)) + int(lay.get('v06askTerms', 3))
+            emit('vsevenContestWeight', '%g' % ap[off + 12],
+                 'engine/fishbot_v07.json allparams: the contestation coordinate, responder index 12')
+            emit('vsevenContestSign', 'positive' if ap[off + 12] > 0 else 'negative',
+                 'engine/fishbot_v07.json allparams: its sign')
+            nz = [i for i in range(off, len(ap)) if ap[i] != 0]
+            emit('vsevenResponderNonzero', str(len(nz)),
+                 'engine/fishbot_v07.json allparams: non-zero responder coordinates')
+            emit('vsevenResponderTotal', str(int(lay.get('v07responder', 18))),
+                 'engine/fishbot_v07.json allparamsLayout: responder coordinates in total')
+
         # stall2 defaults to twice the stall threshold (v07_stall.hpp)
         if 'stall' in frz.get('options', {}):
             emit('vsevenOptStallTwo', str(2 * int(frz['options']['stall'])),

@@ -20,28 +20,40 @@ skim it and return.
 \toprule
 Symbol & Meaning \\
 \midrule
+\multicolumn{2}{@{}l}{\itshape The game and the hidden state} \\
 $N=6$, $M=9$, $|H|=6$ & seats, half-suits, cards per half-suit; the deck is $M|H|=54$ cards \\
-$s \in \{0,\dots,5\}$ & the acting seat; $T(s)$ its team, $\mathcal{T}_s$ its two teammates,
-  $\mathcal{O}_s$ the three opponents \\
+$s$ & the acting seat; $T(s)$ its team, $\mathcal{T}_s$ its two teammates, $\mathcal{O}_s$ the three
+  opponents \\
 $D$ & the hidden state: the initial deal, an assignment of all 54 cards to seats, nine each \\
-$\mathcal{I}_s^t$ & seat $s$'s information set after $t$ public events: its own hand and the whole
-  public record \\
-$\mathrm{own}_t(c)$ & the seat holding card $c$ at time $t$, a deterministic function of $D$ and the
-  public record \\
-$\mathcal{M}_t(c) \subseteq \{0,\dots,5\}$ & the \emph{candidate set} of card $c$: seats not yet
-  excluded by a certificate \\
-$U_t$ & the unresolved cards, those with $|\mathcal{M}_t(c)| > 1$ \\
-$n_p$ & the number of unresolved cards seat $p$ still holds \\
-$Z$ & the number of deals consistent with $\mathcal{I}_s^t$ \\
-$\mu(c,p)$ & the posterior marginal $\Pr[\mathrm{own}_t(c) = p \mid \mathcal{I}_s^t]$ \\
+$\mathcal{I}_s^t$ & seat $s$'s information set after $t$ public events \\
+$\mathcal{P}_t$ & the running hash of the public event stream \\
+$\mathrm{own}_t(c)$, $H(c)$ & the seat holding card $c$; the half-suit containing $c$ \\
+$\mathcal{H}_t$ & the half-suits not yet claimed \\
+\midrule
+\multicolumn{2}{@{}l}{\itshape Beliefs} \\
+$\mathcal{M}_t(c)$ & the candidate set of card $c$: seats not yet excluded by a certificate \\
+$U_t$, $n_p$ & the unresolved cards; the unresolved cards seat $p$ holds \\
+$B_h$, $\mathcal{F}_h$ & the block of half-suit $h$; its assignments satisfying every certificate \\
+$\sigma(\alpha)$, $T_h(\mathbf{v})$ & an assignment's per-seat count signature; the block count table \\
+$F_k$, $G_k$ & the forward and backward partial convolutions of the count join \\
+$Z$, $\mu(c,p)$ & the number of consistent deals; the exact posterior marginal \\
 $\hat\mu(c,p)$ & the deployed approximation to $\mu(c,p)$ \\
-$H(c)$ & the half-suit containing card $c$ \\
-$\mathcal{A}_t$ & the legal ask set at time $t$; an ask $a=(c,q)$ names card $c$ and opponent $q$ \\
-$\phi(a) \in \mathbb{R}^{20}$, $w$ & the ask feature vector and its fitted weights \\
-$p_a$ & $\hat\mu(c,q)$, the modelled hit probability of ask $a=(c,q)$ \\
-$\pi_{\mathrm{alloc}}$, $\pi_{\mathrm{team}}$ & probability that a named allocation is exactly
-  correct, and that the acting team owns a whole half-suit \\
-$\kappa$, $D_{\mathrm{det}}$ & the search's deviation threshold and its number of sampled deals \\
+$\theta$, $\varphi$ & the two policy-prior parameters of \eqref{eq:prior} \\
+\midrule
+\multicolumn{2}{@{}l}{\itshape Acting} \\
+$\mathcal{A}_t$, $a=(c,q)$ & the legal ask set; an ask naming card $c$ and opponent $q$ \\
+$p_a$ & $\hat\mu(c,q)$, the modelled hit probability of ask $a$ \\
+$\phi(a)$, $w$, $u(a)$ & the ask feature vector, its fitted weights, and the resulting score \\
+$\lambda$, $\beta$ & the linear and value scale parameters of \eqref{eq:askscore} \\
+$M_H$, $q_H$ & opponent-held mass and residual ambiguity in half-suit $H$, in \eqref{eq:contest} \\
+$\mathcal{E}_t$, $\varepsilon$ & the bit-for-bit tied candidate set and its tolerance \\
+$\pi_{\mathrm{alloc}}$, $\pi_{\mathrm{team}}$ & probability a named allocation is exactly correct;
+  that the team owns a half-suit outright \\
+$\delta$, $\tau$ & the declaration value margin and the forced-endgame threshold \\
+$\chi_t$, $\nu_t$, $K$ & the deduction-state digest, the no-progress counter, its threshold \\
+$\Phi_t$ & the potential function of the termination argument in \S\ref{sec:agent-stall} \\
+$D_{\mathrm{det}}$, $w_d$ & the number of sampled worlds and their importance weights \\
+$\kappa$, $\eta$ & the search's deviation threshold and its blueprint blend, $\eta = 0$ here \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -134,8 +146,9 @@ A half-suit holds six cards and resolved ones are removed, so $|B_h| \le 6$ and 
 small.
 
 \paragraph{Stage 2: the count join.} Constraint (C2) says the signatures must sum to the vector of
-per-seat capacities $\mathbf{n} = (n_0,\dots,n_5)$. Order the blocks arbitrarily and define the
-partial convolution
+per-seat capacities $\mathbf{n} = (n_0,\dots,n_5)$. Order the blocks arbitrarily and define the partial convolution. A half-suit carrying no live (C5)
+disjunction factorises further into one independent unit per card, so the implementation runs one
+layer per unit rather than one per half-suit; the recursion below is the same object either way.
 \begin{equation}
   F_0(\mathbf{0}) = 1, \qquad
   F_k(\mathbf{v}) \;=\; \sum_{\mathbf{u}} F_{k-1}(\mathbf{v}-\mathbf{u})\, T_{h_k}(\mathbf{u}),
@@ -155,20 +168,23 @@ substituting one block's card-resolved table for its plain one:
   \label{eq:marg}
 \end{equation}
 
-Three quantities the policy needs come from the same machinery. The per-card marginals are
-\eqref{eq:marg}. The probability that team $\mathcal{T}$ owns half-suit $h$ outright,
-$\pi_{\mathrm{team}}(h)$, is \eqref{eq:marg} restricted to block assignments whose image lies in
-$\mathcal{T}$. And the probability of a fully named allocation, which is exactly what a declaration
-asserts, is
+Three quantities the policy needs are \emph{defined} by this machinery, and
+\S\ref{sec:inference-prior} records that the deployed configuration substitutes a cheaper
+approximation for each of them. The per-card marginals are \eqref{eq:marg}. The probability that team
+$\mathcal{T}$ owns half-suit $h$ outright, $\pi_{\mathrm{team}}(h)$, is \eqref{eq:marg} restricted to
+block assignments whose image lies in $\mathcal{T}$. And the probability of a fully named allocation,
+which is exactly what a declaration asserts, is
 \begin{equation}
   \pi_{\mathrm{alloc}}(h, \alpha^\star) \;=\;
-  \frac{1}{Z} \sum_{\mathbf{u}, \mathbf{v}} F_{k-1}(\mathbf{v})\,
+  \frac{\mathbb{1}\!\left[\alpha^\star \in \mathcal{F}_h\right]}{Z}
+  \sum_{\mathbf{u}, \mathbf{v}} F_{k-1}(\mathbf{v})\,
   \mathbb{1}\!\left[\sigma(\alpha^\star) = \mathbf{u}\right]
   G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
   \label{eq:alloc}
 \end{equation}
-for the single assignment $\alpha^\star$ the declaration names. No sampling is involved in any of the
-three.
+for the single assignment $\alpha^\star$ the declaration names. The leading indicator is not
+cosmetic: an assignment with a surviving count signature need not itself satisfy the half-suit's
+certificates, so feasibility is checked explicitly. No sampling is involved in any of the three.
 
 \paragraph{Cost.} The signature space is bounded by the capacities, each block table has at most
 $6^{|B_h|}$ entries before pruning, and the join is $M$ convolutions over that space. An exact
@@ -182,7 +198,7 @@ Equation~\eqref{eq:posterior} is exact \emph{under a uniform prior over constrai
 It contains no model of behaviour, because the construction above consumes the deduction state alone
 and has no parameter through which an opponent's tendencies could enter.
 
-The path the agent deploys adds exactly one such parameter and gives up exactness for it. It replaces
+The path the agent deploys adds two such parameters and gives up exactness for them. It replaces
 the count join by iterative proportional fitting, better known here as Sinkhorn scaling, on the
 $|U_t| \times 6$ matrix of admissible card--seat pairs. Initialise
 \begin{equation}
@@ -199,8 +215,15 @@ then alternate the two normalisations
   \label{eq:sinkhorn}
 \end{equation}
 to a fixed iteration count. The row step makes each card's distribution a probability; the column
-step enforces the capacity constraint (C2) that the exact join enforces combinatorially. The deployed
-weight is $\theta = \vsixPriorTheta{}$.
+step enforces the capacity constraint (C2) that the exact join enforces combinatorially.
+
+Between outer sweeps the routine also applies an independence conditioning step for each live (C5)
+disjunction: for a certificate saying that seat $A$ held \emph{some} card of a half-suit, each
+candidate card $d$ of that half-suit is reweighted by
+$\hat\mu(d,A) \big/ \bigl(1 - \prod_{e}(1 - \hat\mu(e,A))\bigr)$ over the half-suit's cards $e$.
+So (C5) is neither enforced exactly nor discarded in the deployed path: it is imposed approximately,
+under an independence assumption the exact enumeration of \S\ref{sec:inference-factor} does not need.
+The deployed parameters are $\theta = \vsevenPriorTheta{}$ and $\varphi = \vsevenPriorPhi{}$.
 
 Equation~\eqref{eq:prior} is the entire behavioural content of the agent's beliefs: a seat that has
 asked repeatedly in a half-suit is treated as more likely to hold cards of it, because asking

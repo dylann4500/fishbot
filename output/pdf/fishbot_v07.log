@@ -837,17 +837,17 @@ Package enumitem Warning: Negative labelwidth. This does not make much
 [4
 
 ]) (sections_v07/02-game [5] [6]) (sections_v07/03-related [7] [8] [9])
-(sections_v07/04-background [10] [11] [12]) (sections_v07/05-inference [13]
+(sections_v07/04-background [10] [11] [12]) (sections_v07/05-inference
 
 Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 78.
+(enumitem)                sense, on input line 90.
 
-[14] [15]
+[13] [14] [15]
 
 Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 224.
+(enumitem)                sense, on input line 247.
 
-) (sections_v07/06-agent [16] (tables_v07/components
+[16]) (sections_v07/06-agent (tables_v07/components
 Underfull \hbox (badness 5711) in paragraph at lines 7--7
 []|\T1/lmr/m/n/10 Tie-breaking among
  []
@@ -878,25 +878,25 @@ Underfull \hbox (badness 10000) in paragraph at lines 10--10
 []|\T1/lmr/m/n/10 deduction-state stall de-tec-tor
  []
 
-) [17] [18] [19] [20] [21] [22]) (sections_v07/07-evaluation [23]
+) [17] [18] [19] [20] [21] [22] [23]) (sections_v07/07-evaluation [24]
 
 Package enumitem Warning: Negative labelwidth. This does not make much
 (enumitem)                sense, on input line 57.
 
-[24] [25] [26]) (sections_v07/08-threat-model [27])
-(sections_v07/09-development
+[25] [26] [27]) (sections_v07/08-threat-model [28])
+(sections_v07/09-development [29]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 21.
- [28] [29] [30]) (sections_v07/10-design [31]
-(tables_v07/banks) [32] (tables_v07/sidechannel) (tables_v07/gate) [33]
-(tables_v07/battery)) (sections_v07/11-results [34] (tables_v07/forest)
-(tables_v07/frontier) [35]
+ [30] [31] [32]) (sections_v07/10-design
+[33] (tables_v07/banks) (tables_v07/sidechannel) [34] (tables_v07/gate)
+[35] (tables_v07/battery)) (sections_v07/11-results [36] (tables_v07/forest)
+(tables_v07/frontier)
 Underfull \hbox (badness 1521) in paragraph at lines 39--42
 []\T1/lmr/m/n/10.95 Against lin-eage base-lines, [] gains +4.63 pp over the de-
 ployed [] pol-icy
  []
 
-[36] (tables_v07/selection) [37] (tables_v07/worstcase)
+[37] [38] (tables_v07/selection) [39] (tables_v07/worstcase)
 Underfull \hbox (badness 1242) in paragraph at lines 187--191
 [][]\T1/lmr/m/n/10.95 's worst cell is -0.04 pp $\OT1/lmr/m/n/10.95 [\OMS/lmsy/
 m/n/10.95 ^^@\OT1/lmr/m/n/10.95 1\OML/lmm/m/it/10.95 :\OT1/lmr/m/n/10.95 41\OML
@@ -910,13 +910,13 @@ Underfull \hbox (badness 1303) in paragraph at lines 215--222
 in-i-max re-gret, at 4.53 against F-cheap's 4.00 and
  []
 
-[38] (tables_v07/farpanel) (tables_v07/attribution) [39]
-(tables_v07/partners_v05) [40] (tables_v07/partners_v06) (tables_v07/regimes)
-(tables_v07/crossplay) (tables_v07/crossh2h) [41] (tables_v07/dialects)
-[42] (tables_v07/adversaries) [43] [44] (tables_v07/controls)
-(tables_v07/residual) [45] (tables_v07/cost)) (sections_v07/12-discussion
-[46] [47] [48] [49]) (sections_v07/13-conclusion [50]) [51]
-(sections_v07/bibliography [52
+(tables_v07/farpanel) [40] (tables_v07/attribution) [41]
+(tables_v07/partners_v05) (tables_v07/partners_v06) (tables_v07/regimes)
+[42] (tables_v07/crossplay) (tables_v07/crossh2h) [43] (tables_v07/dialects)
+[44] (tables_v07/adversaries) [45] [46] (tables_v07/controls)
+(tables_v07/residual) [47] (tables_v07/cost)) (sections_v07/12-discussion
+[48] [49] [50] [51]) (sections_v07/13-conclusion [52]) [53]
+(sections_v07/bibliography [54
 
 ]
 Underfull \hbox (badness 1472) in paragraph at lines 103--105
@@ -924,11 +924,11 @@ Underfull \hbox (badness 1472) in paragraph at lines 103--105
 ^V$ \T1/lmr/m/n/10.95 Search Al-go-rithm for the Game of Bridge,''
  []
 
-[53] [54] [55]) [56] (sections_v07/A-dialect) (sections_v07/B-parameters
-[57
+[55] [56] [57]) [58] (sections_v07/A-dialect) (sections_v07/B-parameters
+[59
 
-] (tables_v07/options) (tables_v07/layout) [58]) (sections_v07/C-thresholds
-[59]) (sections_v07/D-panel (tables_v07/panelfull [60]))
+] (tables_v07/options) (tables_v07/layout) [60]) (sections_v07/C-thresholds
+[61]) (sections_v07/D-panel (tables_v07/panelfull [62]))
 (sections_v07/E-corrections
 
 Package enumitem Warning: Negative labelwidth. This does not make much
@@ -939,7 +939,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 19--29
 []\T1/lmr/m/n/10.95 The cor-pus recorded the
  []
 
-[61]
+[63]
 Underfull \hbox (badness 10000) in paragraph at lines 30--36
 []\T1/lmr/m/n/10.95 The
  []
@@ -972,7 +972,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 82--95
 []\T1/lmr/m/n/10.95 The freeze
  []
 
-[62]
+[64]
 Underfull \hbox (badness 2460) in paragraph at lines 98--107
 []\T1/lmr/m/n/10.95 Before any hold-out ma-te-rial
  []
@@ -987,8 +987,8 @@ Underfull \hbox (badness 3199) in paragraph at lines 126--132
 []\T1/lmr/m/n/10.95 The phase-5 doc-
  []
 
-) (sections_v07/F-deviations [63] (tables_v07/deviations [64] [65] [66]
-[67])) (sections_v07/G-reproduction
+) (sections_v07/F-deviations [65] (tables_v07/deviations [66] [67] [68]
+[69])) (sections_v07/G-reproduction
 Underfull \hbox (badness 1648) in paragraph at lines 37--44
 \T1/lmr/m/n/10.95 hashes. Ev-ery one of the 428 scored cells was played by $\T1
 /lmtt/m/n/10.95 e n g i n e / f i s h7$\T1/lmr/m/n/10.95 , SHA-256
@@ -1000,11 +1000,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 37--44
 f4e3\T1/lmr/m/n/10.95 , 1,242,312 bytes,
  []
 
-[68] (tables_v07/battery) [69]) [70] (fishbot_v07.aux)
+[70] (tables_v07/battery) [71]) [72] (fishbot_v07.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `fishbot_v07.out' has not changed.
-(rerunfilecheck)             Checksum: 7FC3CEC82E45969107B5A0A489FF4C30;24882.
+(rerunfilecheck)             Checksum: 0A5C5F416F026ADCED75889EBA38D266;24758.
  )
-Output written on fishbot_v07.xdv (70 pages, 515720 bytes).
+Output written on fishbot_v07.xdv (72 pages, 527748 bytes).
