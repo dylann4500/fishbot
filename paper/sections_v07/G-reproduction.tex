@@ -6,13 +6,36 @@
 The engine, every experiment artifact, the protocol, the generator that produces this paper's
 numbers and the provenance checker that audits them are in the project repository,
 \filepath{https://github.com/dylann29/fish-optimization}. The evaluation of \S\ref{sec:results}
-ran at commit \texttt{\vsevenBzeroCommit{}}; the caveat immediately below is why that commit alone
-does not identify the run.
+ran at the commit whose current hash is \texttt{\vsevenBzeroCommit{}}. Two caveats attach to that
+hash and the subsections below give both: the repository's history was rewritten after the
+evaluation, and no single commit describes the tree for the whole run in any case.
+
+\subsection*{A history rewrite, and what it did to the hashes}
+
+After the evaluation was complete, one artifact of the development phase, a per-decision search
+capture of \vsevenKfiveBytes{} bytes, exceeded the hosting limit and was excised from version-control
+history so the repository could be published. That rewrote every commit from phase 3 onward.
+
+Three consequences, stated because a reader checking this paper against the repository will otherwise
+be misled. First, \textbf{the commit hashes recorded inside the phase-5 artifacts no longer resolve}:
+the verification block records \texttt{\vsevenBzeroCommitRecorded{}} and the freeze artifact's drift
+check keys on \texttt{\vsevenFreezeCommitRecorded{}}, and neither object exists in the published
+history. Every hash printed in this paper is the post-rewrite one, recovered by matching commit
+subject lines, so the freeze commit is \texttt{\vsevenFreezeCommit{}} and the evaluation commit is
+\texttt{\vsevenBzeroCommit{}}. Second, the seal predates the rewrite and is unaffected: the commit at
+which the holdout material was sealed, \texttt{\vsevenSealCommit{}}, still resolves, so the
+commitment chain of \S\ref{sec:evaluation-seal} is intact and independently checkable. Third, the
+excised file is retained on disk and its digest recorded beside it in
+\filepath{research/v07/results/K5-capture-7030004.sha256}, SHA-256
+\texttt{\vsevenKfiveDigest{}\ldots}; it is regenerable from the capture harness and no measurement in
+this paper depends on it.
+
+The rewrite is also the clearest possible argument for the subsection that follows.
 
 \subsection*{The run is identified by its binary, not by a commit}
 
 Five commits landed in the repository while the battery was running, so no single commit describes the
-tree for the whole of it. Every one of the \vsevenScoredCells{} scored cells was played by
+tree for the whole of it, and a rewrite has since changed all of their hashes. Every one of the \vsevenScoredCells{} scored cells was played by
 \filepath{engine/fish7}, SHA-256 \texttt{\vsevenBinarySha{}}, \vsevenBinaryBytes{} bytes, and that
 binary was never rebuilt between the first bank digest and the last cell. The five later commits touch
 the interactive browser table and not the policy; \S\ref{app:corrections-self} records the executed

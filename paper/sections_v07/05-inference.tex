@@ -1,10 +1,50 @@
 \section{Exact observer-conditioned deal inference}
 \label{sec:inference}
 
-Every agent in this lineage is built on an inference object that this section defines formally,
-because it is one of the paper's principal contributions and because its exactness is what makes the
-policy results interpretable. The method is an exact enumeration carried out through a factorised
-dynamic program. It is not an analytic closed-form expression, and the paper avoids that phrase.
+Every agent in this lineage rests on an inference object that this section defines formally. The
+method is an exact enumeration carried out through a factorised dynamic program. It is not an
+analytic closed-form expression, and the paper avoids that phrase.
+
+\subsection{Notation}
+\label{sec:inference-notation}
+
+Table~\ref{tab:notation} fixes the symbols used here and in \S\ref{sec:agent}. A reader may prefer to
+skim it and return.
+
+\begin{table}[tbp]
+\centering
+\caption{Notation used in \S\ref{sec:inference} and \S\ref{sec:agent}.}
+\label{tab:notation}
+\tabfont
+\begin{tabularx}{\linewidth}{@{}l L@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$N=6$, $M=9$, $|H|=6$ & seats, half-suits, cards per half-suit; the deck is $M|H|=54$ cards \\
+$s \in \{0,\dots,5\}$ & the acting seat; $T(s)$ its team, $\mathcal{T}_s$ its two teammates,
+  $\mathcal{O}_s$ the three opponents \\
+$D$ & the hidden state: the initial deal, an assignment of all 54 cards to seats, nine each \\
+$\mathcal{I}_s^t$ & seat $s$'s information set after $t$ public events: its own hand and the whole
+  public record \\
+$\mathrm{own}_t(c)$ & the seat holding card $c$ at time $t$, a deterministic function of $D$ and the
+  public record \\
+$\mathcal{M}_t(c) \subseteq \{0,\dots,5\}$ & the \emph{candidate set} of card $c$: seats not yet
+  excluded by a certificate \\
+$U_t$ & the unresolved cards, those with $|\mathcal{M}_t(c)| > 1$ \\
+$n_p$ & the number of unresolved cards seat $p$ still holds \\
+$Z$ & the number of deals consistent with $\mathcal{I}_s^t$ \\
+$\mu(c,p)$ & the posterior marginal $\Pr[\mathrm{own}_t(c) = p \mid \mathcal{I}_s^t]$ \\
+$\hat\mu(c,p)$ & the deployed approximation to $\mu(c,p)$ \\
+$H(c)$ & the half-suit containing card $c$ \\
+$\mathcal{A}_t$ & the legal ask set at time $t$; an ask $a=(c,q)$ names card $c$ and opponent $q$ \\
+$\phi(a) \in \mathbb{R}^{20}$, $w$ & the ask feature vector and its fitted weights \\
+$p_a$ & $\hat\mu(c,q)$, the modelled hit probability of ask $a=(c,q)$ \\
+$\pi_{\mathrm{alloc}}$, $\pi_{\mathrm{team}}$ & probability that a named allocation is exactly
+  correct, and that the acting team owns a whole half-suit \\
+$\kappa$, $D_{\mathrm{det}}$ & the search's deviation threshold and its number of sampled deals \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{The engine, and the barrier between rules and policy}
 \label{sec:inference-engine}
@@ -22,82 +62,157 @@ the side-channel audit of \S\ref{sec:evaluation-side} to be read as a test of th
 that cannot reach the deal cannot read it, so any decision the audit fails to reproduce from public
 information indicates state carried across deals rather than information taken from the referee.
 
-\subsection{State, observations and constraints}
+\subsection{What a seat knows, as constraints on the deal}
 \label{sec:inference-constraints}
 
-Let the hidden state be the initial deal $D$, an assignment of the 54 cards to the six seats with
-nine cards each. Write $\mathcal{D}$ for the set of all such assignments; from one seat's viewpoint
-at deal time $|\mathcal{D}| = 45!/(9!)^5 \approx 1.9 \times 10^{28}$.
+Because a card changes hands only through an observed ask, the public record determines
+$\mathrm{own}_t(\cdot)$ given $D$. The only hidden object is therefore $D$ itself. Write
+$\mathcal{D}$ for the set of all deals; from one seat's viewpoint at deal time
+$|\mathcal{D}| = 45!/(9!)^5 \approx 1.9 \times 10^{28}$.
 
-An observer at seat $s$ holds an information set determined by five families of hard constraint,
-each of which is a logical restriction on $D$ rather than a probabilistic one:
+Each public event imposes a \emph{hard} constraint, meaning a logical restriction on $\mathcal{D}$
+rather than a probabilistic tilt. The engine maintains them as a per-card candidate set
+$\mathcal{M}_t(c)$, initialised to all six seats and only ever shrunk:
 
 \begin{description}
-\item[(C1) Own hand.] Seat $s$ knows its own nine cards exactly.
-\item[(C2) Card counts.] The current number of cards at every seat is public, and given the transfer
-  record this determines each seat's initial count.
-\item[(C3) Transfers.] Every card that has changed hands, and between whom, is public.
-\item[(C4) Failed asks.] For each failed ask, the target did not hold the named card at that moment,
-  which given (C3) is a statement about $D$.
-\item[(C5) Ask legality.] For each ask, the asker held at least one \emph{other} card of the named
-  half-suit and did not hold the named card, again at that moment and hence about $D$.
+\item[(C1) Own hand.] For each $c$ in seat $s$'s hand, $\mathcal{M}(c) \leftarrow \{s\}$; for every
+  other card, $s$ is removed from $\mathcal{M}(c)$.
+\item[(C2) Card counts.] Every seat's current hand size is public, so with the transfer record each
+  seat's count of unresolved cards, $n_p$, is known. This is the only constraint that couples
+  different half-suits.
+\item[(C3) Transfers.] A successful ask makes $\mathrm{own}(c)$ public from then on, so
+  $\mathcal{M}(c)$ collapses to a singleton.
+\item[(C4) Failed asks.] If $q$ was asked for $c$ at time $r$ and did not hold it, then $q \notin
+  \mathcal{M}(c)$ unless $q$ has acquired $c$ since, which is public.
+\item[(C5) Ask legality.] An asker of $c$ held another card of $H(c)$ at that moment and did not hold
+  $c$. The first is a disjunction over the other five cards of the half-suit and is the one
+  constraint that is not a simple exclusion.
 \end{description}
 
-The posterior of interest is uniform over the deals satisfying every constraint:
-\[
-  P(D \mid \mathcal{I}_s) \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s\right]}{Z},
+Conditioned on $\mathcal{I}_s^t$, all consistent deals are equally likely, so the posterior is
+uniform on the feasible set:
+\begin{equation}
+  \Pr[D \mid \mathcal{I}_s^t] \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s^t\right]}{Z},
   \qquad
-  Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s\}\bigr| .
-\]
+  Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s^t\}\bigr|.
+  \label{eq:posterior}
+\end{equation}
+The modelling content is entirely in which constraints are imposed. Nothing here refers to how anyone
+plays, which is the property \S\ref{sec:inference-prior} then gives up deliberately.
 
 \subsection{Factorisation by half-suit, joined by a count dynamic program}
 \label{sec:inference-factor}
 
-Computing $Z$ by direct enumeration is infeasible, and in general a constraint system of this shape
-induces a permanent-like count, the object the literature approximates with inclusion-exclusion
-\cite{ryser}, sign-vector formulae \cite{glynn}, Markov chains \cite{jsv}, matrix scaling \cite{lsw}
-or sequential importance sampling \cite{chen-sis}.
+Computing $Z$ by enumerating $\mathcal{D}$ is infeasible, and a constraint system of this shape
+generally induces a permanent-like count, the object the literature approximates by
+inclusion--exclusion \cite{ryser}, sign-vector formulae \cite{glynn}, Markov chains \cite{jsv},
+matrix scaling \cite{lsw} or sequential importance sampling \cite{chen-sis}.
 
-Fish sidesteps all of it, because the constraints factorise by half-suit. Constraint (C5) is a
-statement about a half-suit. Constraint (C4) is a statement about a card and therefore about a
-half-suit. Constraint (C3) resolves within a half-suit. The \emph{only} coupling across half-suits is
-(C2), the per-seat card counts, which is a linear constraint on how many cards each seat draws from
-each block.
+Fish avoids that, because every constraint except (C2) is confined to a single half-suit. Constraints
+(C3), (C4) and (C5) all speak about one card or one half-suit; only the per-seat capacities $n_p$
+couple half-suits, and they couple them only through counts.
 
-The computation therefore proceeds in two stages.
+Partition the unresolved cards by half-suit, $U_t = \bigcup_{h} B_h$, where $B_h$ is the
+\emph{block} of half-suit $h$. For a block, let an \emph{assignment} be a map $\alpha: B_h \to
+\{0,\dots,5\}$ with $\alpha(c) \in \mathcal{M}(c)$, and let $\mathcal{F}_h$ be the assignments that
+additionally satisfy every (C5) disjunction touching $h$. Write the \emph{count signature} of an
+assignment as the vector
+\[
+  \sigma(\alpha) \;=\; \bigl(|\alpha^{-1}(0)|,\;\dots,\;|\alpha^{-1}(5)|\bigr) \in \mathbb{Z}_{\ge 0}^{6}.
+\]
 
-\begin{enumerate}
-\item \textbf{Block enumeration.} For each half-suit $h$ independently, enumerate the assignments of
-  its unresolved cards to seats that satisfy every (C1), (C3), (C4) and (C5) constraint touching
-  $h$. Because a half-suit has six cards and resolved cards are removed, the surviving block is
-  small. Accumulate, for each block, a table indexed by the vector of counts it contributes to each
-  seat, recording how many assignments realise that count vector and, for each card and seat, how
-  many of those place that card at that seat.
-\item \textbf{Count join.} Combine the block tables by a dynamic program over the running count
-  vector, which enforces (C2) exactly. The terminal cell of that program is $Z$; the same recursion
-  carried with the per-card sub-counts yields the marginals.
-\end{enumerate}
+\paragraph{Stage 1: block enumeration.} For each half-suit independently, enumerate $\mathcal{F}_h$
+and accumulate a table indexed by count signature,
+\begin{equation}
+  T_h(\mathbf{v}) \;=\; \bigl|\{\alpha \in \mathcal{F}_h : \sigma(\alpha) = \mathbf{v}\}\bigr|,
+  \qquad
+  T_h^{c \to p}(\mathbf{v}) \;=\; \bigl|\{\alpha \in \mathcal{F}_h : \sigma(\alpha) = \mathbf{v},\,
+  \alpha(c) = p\}\bigr|.
+  \label{eq:blocktable}
+\end{equation}
+A half-suit holds six cards and resolved ones are removed, so $|B_h| \le 6$ and the enumeration is
+small.
 
-From this the engine reads off, exactly and without sampling: the normalisation constant $Z$; the
-per-card marginal $P(\text{card } c \text{ at seat } j \mid \mathcal{I}_s)$; the probability that a
-given team owns a whole half-suit; and the probability of a fully named allocation of a half-suit,
-which is exactly the quantity a declaration decision requires.
+\paragraph{Stage 2: the count join.} Constraint (C2) says the signatures must sum to the vector of
+per-seat capacities $\mathbf{n} = (n_0,\dots,n_5)$. Order the blocks arbitrarily and define the
+partial convolution
+\begin{equation}
+  F_0(\mathbf{0}) = 1, \qquad
+  F_k(\mathbf{v}) \;=\; \sum_{\mathbf{u}} F_{k-1}(\mathbf{v}-\mathbf{u})\, T_{h_k}(\mathbf{u}),
+  \label{eq:dp}
+\end{equation}
+so that
+\begin{equation}
+  Z \;=\; F_M(\mathbf{n}).
+  \label{eq:Z}
+\end{equation}
+Running the same recursion backwards gives suffix tables $G_k$, and the marginals follow by
+substituting one block's card-resolved table for its plain one:
+\begin{equation}
+  \mu(c,p) \;=\; \frac{1}{Z}\sum_{\mathbf{u},\,\mathbf{v}}
+  F_{k-1}(\mathbf{v})\; T_{h_k}^{c \to p}(\mathbf{u})\; G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
+  \qquad c \in B_{h_k}.
+  \label{eq:marg}
+\end{equation}
 
-An exact rebuild costs \vsixCountCost{}~ms, which is why the project has been able to treat inference
-as solved and spend its cycles on policy.
+Three quantities the policy needs come from the same machinery. The per-card marginals are
+\eqref{eq:marg}. The probability that team $\mathcal{T}$ owns half-suit $h$ outright,
+$\pi_{\mathrm{team}}(h)$, is \eqref{eq:marg} restricted to block assignments whose image lies in
+$\mathcal{T}$. And the probability of a fully named allocation, which is exactly what a declaration
+asserts, is
+\begin{equation}
+  \pi_{\mathrm{alloc}}(h, \alpha^\star) \;=\;
+  \frac{1}{Z} \sum_{\mathbf{u}, \mathbf{v}} F_{k-1}(\mathbf{v})\,
+  \mathbb{1}\!\left[\sigma(\alpha^\star) = \mathbf{u}\right]
+  G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
+  \label{eq:alloc}
+\end{equation}
+for the single assignment $\alpha^\star$ the declaration names. No sampling is involved in any of the
+three.
 
-\subsection{The deployed approximation and its policy prior}
+\paragraph{Cost.} The signature space is bounded by the capacities, each block table has at most
+$6^{|B_h|}$ entries before pruning, and the join is $M$ convolutions over that space. An exact
+rebuild costs \vsixCountCost{}~ms, which is why this project has been able to treat inference as
+solved and spend its cycles on policy.
+
+\subsection{The deployed approximation, and the policy prior it adds}
 \label{sec:inference-prior}
 
-The exact posterior is exact \emph{under a uniform prior over constraint-consistent deals}. It
-contains no model of behaviour, because the block construction consumes the deduction state alone
+Equation~\eqref{eq:posterior} is exact \emph{under a uniform prior over constraint-consistent deals}.
+It contains no model of behaviour, because the construction above consumes the deduction state alone
 and has no parameter through which an opponent's tendencies could enter.
 
-The path the agent actually deploys adds one. It applies a fitted soft reweighting of the rules
-posterior with two parameters and no learned opponent model, in the spirit of the Skat inference
-line \cite{solinas-supervised,rebstock-inference,buro-kermit} but far simpler; the deployed weight is $\theta = \vsixPriorTheta{}$. \S\ref{sec:background-vsix} reports the consequence, which is that the
-approximation is the better predictor of card location, and \S\ref{sec:discussion-limits} discusses
-what that implies.
+The path the agent deploys adds exactly one such parameter and gives up exactness for it. It replaces
+the count join by iterative proportional fitting, better known here as Sinkhorn scaling, on the
+$|U_t| \times 6$ matrix of admissible card--seat pairs. Initialise
+\begin{equation}
+  \hat\mu^{(0)}(c,p) \;=\; \mathbb{1}\!\left[p \in \mathcal{M}(c)\right] \cdot
+  \exp\Bigl(\operatorname{clip}\bigl(\theta\, a_{p,H(c)} - \varphi\, (A_p - a_{p,H(c)}),\; \pm 2.6\bigr)\Bigr),
+  \label{eq:prior}
+\end{equation}
+where $a_{p,h}$ is the number of asks seat $p$ has made in half-suit $h$ and $A_p$ its total asks, and
+then alternate the two normalisations
+\begin{equation}
+  \hat\mu(c,\cdot) \leftarrow \frac{\hat\mu(c,\cdot)}{\sum_{p}\hat\mu(c,p)},
+  \qquad
+  \hat\mu(\cdot,p) \leftarrow \hat\mu(\cdot,p)\cdot\frac{n_p}{\sum_{c}\hat\mu(c,p)},
+  \label{eq:sinkhorn}
+\end{equation}
+to a fixed iteration count. The row step makes each card's distribution a probability; the column
+step enforces the capacity constraint (C2) that the exact join enforces combinatorially. The deployed
+weight is $\theta = \vsixPriorTheta{}$.
+
+Equation~\eqref{eq:prior} is the entire behavioural content of the agent's beliefs: a seat that has
+asked repeatedly in a half-suit is treated as more likely to hold cards of it, because asking
+requires already holding one. It is a soft version of the (C5) certificate, in the spirit of the Skat
+inference line \cite{solinas-supervised,rebstock-inference,buro-kermit} but far simpler, with two
+parameters and no learned opponent model.
+
+\S\ref{sec:background-vsix} reports the consequence, which is the most counterintuitive result in the
+lineage: scored as predictors on identical states, $\hat\mu$ beats $\mu$. Exactness in this game is
+purchased by discarding \eqref{eq:prior}, and \eqref{eq:prior} is worth more than exactness. That is
+why the paper treats ``exact Bayesian inference'' as an assumption to test rather than a property to
+assume, and \S\ref{sec:development-alloc} is the second occasion on which the rule paid.
 
 \subsection{Verification}
 \label{sec:inference-verify}
@@ -106,13 +221,14 @@ Three checks run over the engine, and all three ran as preconditions of the eval
 \S\ref{sec:results}.
 
 \begin{description}
-\item[Soundness audit.] Every seat's deduced knowledge is checked against the true deal at every
-  decision, since no agent's deduction may ever exclude the truth. The verification run for this
-  evaluation recorded \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks, and the
-  preceding cycle \vsixAuditViolations{} in \vsixAuditChecks{}.
+\item[Soundness audit.] Every seat's candidate set is checked against the true deal at every
+  decision: $\mathrm{own}_t(c) \in \mathcal{M}_t(c)$ must hold always, since no agent's deduction may
+  exclude the truth. The verification run for this evaluation recorded
+  \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks, and the preceding cycle
+  \vsixAuditViolations{} in \vsixAuditChecks{}.
 \item[Cross-engine agreement.] The block dynamic program, an independent card-counting path and an
-  exact sampler must agree. The self-test reports \vsevenSelftestChecks{} checks passing, with
-  block-versus-card agreement at the limit of double precision.
+  exact sampler must agree on \eqref{eq:marg}. The self-test reports \vsevenSelftestChecks{} checks
+  passing, with block-versus-card agreement at the limit of double precision.
 \item[Identity control.] The current policy, carrying its predecessor's parameter vector with every
   new mechanism disabled, must produce a transcript identical to its predecessor's under md5. It does
   (\vsixIdentity{}). Without this an ablation is not an ablation, because a measured difference could

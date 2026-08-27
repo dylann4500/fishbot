@@ -8,6 +8,9 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{xltabular}   % longtable with an X column, for the deviation register
+\usepackage[section]{placeins} % floats may not drift across a section boundary
 \usepackage[dvipsnames]{xcolor}
 \usepackage{graphicx}
 % hyperref is loaded BEFORE tikz on purpose.  hyperref pulls in url, which
@@ -16,11 +19,14 @@
 % behaviour as \filepath first and then let tikz take \path back.
 \usepackage{hyperref}
 \DeclareUrlCommand\filepath{\urlstyle{tt}}
+\usepackage{xurl}        % break long URLs anywhere, so none reaches the margin
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+\captionsetup[table]{position=above,skip=6pt}
+\captionsetup[figure]{position=below,skip=8pt}
 
 \definecolor{fishgreen}{HTML}{0B5D46}
 \definecolor{fishlight}{HTML}{EAF4EF}
@@ -31,13 +37,61 @@
             pdfauthor={Dylan Nguyen}}
 \setlist{nosep,leftmargin=*}
 \setlength{\parindent}{1.2em}
-\setlength{\tabcolsep}{4.5pt}
 \setlength{\parskip}{0pt plus 1pt}
+% Agent names are \mbox'ed and confidence intervals are unbreakable math, so a
+% few paragraphs contain runs TeX cannot break.  A little emergency stretch lets
+% it resolve them by loosening inter-word space rather than by letting a line
+% protrude into the margin, which is the outcome this document does not permit.
+\setlength{\emergencystretch}{3em}
+
+% ---------------------------------------------------------------------------
+% Table house style.  Every table in this document is set at \tabfont, with the
+% same column padding, the same row spacing and the same booktabs rule weights,
+% and none uses a vertical rule.  Nothing may exceed \linewidth: the wide
+% tables are built from X columns rather than pushed into the margin, which is
+% why tabularx and xltabular are loaded above.
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\heavyrulewidth}{0.08em}
+\setlength{\lightrulewidth}{0.05em}
+\setlength{\aboverulesep}{0.5ex}
+\setlength{\belowrulesep}{0.6ex}
+\newcommand{\tabfont}{\small}
+% X-column variants: L ragged-left, R ragged-right for numbers, C centred.
+% \arraybackslash restores \\ after \raggedright, which redefines it.
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+% A numeric cell whose confidence interval is stacked under its estimate, so a
+% five-column interval table fits the text block without shrinking the type.
+\newcommand{\ci}[2]{#1\newline{\scriptsize $[#2]$}}
+
+% Float placement.  The results section declares sixteen tables, and with LaTeX's
+% default allowances (one float per page top, 70% of a page) they queue up and
+% surface pages later, in the middle of prose they have nothing to do with.
+% Raising the allowances lets a float settle on or near the page that first
+% refers to it; \FloatBarrier at each subsection stops any that still cannot.
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.72}
 \pagestyle{fancy}
 \fancyhf{}
 \lhead{\small FishBot v0.7}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.2pt}
+
+% Subsection numbers reach two digits in Section 11 (11.10), which overruns the
+% article class's default number box in the table of contents and prints
+% "11.10Computational cost".  Widening the box fixes it.
+\makeatletter
+\renewcommand{\l@section}{\@dottedtocline{1}{0em}{2.6em}}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{2.6em}{3.2em}}
+\renewcommand{\l@subsubsection}{\@dottedtocline{3}{5.8em}{4.0em}}
+\makeatother
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -3767,6 +3821,8 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenZoneFitPeak}{}\renewcommand{\vsevenZoneFitPeak}{+8.33}
 % P5-B4eval.jsonl: independent adversary searches evaluated
 \providecommand{\vsevenBfourArms}{}\renewcommand{\vsevenBfourArms}{8}
+% P5-B4eval.jsonl: the same count spelled, for running prose
+\providecommand{\vsevenBfourArmsWord}{}\renewcommand{\vsevenBfourArmsWord}{eight}
 % P5-B4fits.jsonl: searches that produced a weight vector
 \providecommand{\vsevenBfourFits}{}\renewcommand{\vsevenBfourFits}{8}
 % P5-B4eval.jsonl: largest upper bound over all arms
@@ -4125,6 +4181,8 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenDiaMaxExcursionRow}{}\renewcommand{\vsevenDiaMaxExcursionRow}{arb=turn}
 % P5-B8.jsonl: dialect rows measured
 \providecommand{\vsevenDiaRows}{}\renewcommand{\vsevenDiaRows}{8}
+% P5-B8.jsonl: the same count spelled, for running prose
+\providecommand{\vsevenDiaRowsWord}{}\renewcommand{\vsevenDiaRowsWord}{eight}
 % PREREGISTRATION 5.2: the S5 tolerance, points
 \providecommand{\vsevenSfiveTolerance}{}\renewcommand{\vsevenSfiveTolerance}{2.00}
 % PREREGISTRATION 5.2: S5 verdict
@@ -4339,8 +4397,6 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenBinaryShaShort}{}\renewcommand{\vsevenBinaryShaShort}{cf6d5ea2c1f0e9e3}
 % P5-B0.json: binary size
 \providecommand{\vsevenBinaryBytes}{}\renewcommand{\vsevenBinaryBytes}{1,242,312}
-% P5-B0.json: commit the B0 block was generated at
-\providecommand{\vsevenBzeroCommit}{}\renewcommand{\vsevenBzeroCommit}{d920f5b}
 % P5-B0.json: deal banks whose digest was reproduced
 \providecommand{\vsevenBanks}{}\renewcommand{\vsevenBanks}{7}
 % P5-B0.json: bank digests matching commitment
@@ -4363,6 +4419,28 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenCoordinates}{}\renewcommand{\vsevenCoordinates}{55}
 % P5-B0.json: spec reconstructed from the freeze artifact
 \providecommand{\vsevenFrozenSpec}{}\renewcommand{\vsevenFrozenSpec}{v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26}
+% engine/fishbot_v07.json: frozen option r12
+\providecommand{\vsevenOptContest}{}\renewcommand{\vsevenOptContest}{25}
+% engine/fishbot_v07.json: frozen option stall
+\providecommand{\vsevenOptStallK}{}\renewcommand{\vsevenOptStallK}{12}
+% engine/fishbot_v07.json: frozen option det
+\providecommand{\vsevenOptDet}{}\renewcommand{\vsevenOptDet}{12}
+% engine/fishbot_v07.json: frozen option cand
+\providecommand{\vsevenOptCand}{}\renewcommand{\vsevenOptCand}{4}
+% engine/fishbot_v07.json: frozen option kappa
+\providecommand{\vsevenOptKappa}{}\renewcommand{\vsevenOptKappa}{2.5}
+% engine/fishbot_v07.json: frozen option depth
+\providecommand{\vsevenOptDepth}{}\renewcommand{\vsevenOptDepth}{12}
+% engine/fishbot_v07.json: frozen option maxq
+\providecommand{\vsevenOptMaxq}{}\renewcommand{\vsevenOptMaxq}{26}
+% engine/fishbot_v07.json: frozen option rtie
+\providecommand{\vsevenOptRtie}{}\renewcommand{\vsevenOptRtie}{1}
+% engine/fishbot_v07.json: frozen option force
+\providecommand{\vsevenOptForce}{}\renewcommand{\vsevenOptForce}{1000000}
+% engine/fishbot_v07.json: frozen option rbelief
+\providecommand{\vsevenOptRbelief}{}\renewcommand{\vsevenOptRbelief}{indep}
+% v07_stall.hpp: stage-2 threshold, twice the stage-1 threshold
+\providecommand{\vsevenOptStallTwo}{}\renewcommand{\vsevenOptStallTwo}{24}
 % P5-B0.json: the same spec, with a discretionary break after each comma
 \providecommand{\vsevenFrozenSpecWrapped}{}\renewcommand{\vsevenFrozenSpecWrapped}{v07:r12=25,\allowbreak{}rtie=1,\allowbreak{}pool=-1,\allowbreak{}oppfloor=-1,\allowbreak{}force=1000000,\allowbreak{}askfloor=-1,\allowbreak{}stall=12,\allowbreak{}s1=1,\allowbreak{}det=12,\allowbreak{}cand=4,\allowbreak{}kappa=2.5,\allowbreak{}rbelief=indep,\allowbreak{}depth=12,\allowbreak{}maxq=26}
 % P5-B0.json: R2a round-trip with the search on is identical
@@ -4473,6 +4551,8 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenGateNegVerdict}{}\renewcommand{\vsevenGateNegVerdict}{FAIL}
 % P5-gate.jsonl: rules in the commit gate
 \providecommand{\vsevenGateRules}{}\renewcommand{\vsevenGateRules}{8}
+% P5-gate.jsonl: the same count spelled, for running prose
+\providecommand{\vsevenGateRulesWord}{}\renewcommand{\vsevenGateRulesWord}{eight}
 % P5-gate.jsonl: mirror games per configuration
 \providecommand{\vsevenGateGames}{}\renewcommand{\vsevenGateGames}{400}
 % P5-gate.jsonl FROZEN: provably-dead asks, percent
@@ -4559,6 +4639,24 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 \providecommand{\vsevenManifestVerified}{}\renewcommand{\vsevenManifestVerified}{29}
 % MANIFEST-P5.json: the frozen spec
 \providecommand{\vsevenManifestFrozenSpec}{}\renewcommand{\vsevenManifestFrozenSpec}{v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26}
+% git rev-parse HEAD: the commit this build was made at
+\providecommand{\vsevenHeadCommit}{}\renewcommand{\vsevenHeadCommit}{468580e}
+% P5-B0.json: the commit recorded at generation time, pre-rewrite
+\providecommand{\vsevenBzeroCommitRecorded}{}\renewcommand{\vsevenBzeroCommitRecorded}{d920f5b}
+% git log: the same commit after the history rewrite, found by subject line
+\providecommand{\vsevenBzeroCommit}{}\renewcommand{\vsevenBzeroCommit}{4d8cec9}
+% whether the recorded hash still resolves in the rewritten history
+\providecommand{\vsevenBzeroCommitAlive}{}\renewcommand{\vsevenBzeroCommitAlive}{no}
+% P5-drift.json: the freeze commit as recorded, pre-rewrite
+\providecommand{\vsevenFreezeCommitRecorded}{}\renewcommand{\vsevenFreezeCommitRecorded}{0fa4a5f}
+% git log: the freeze commit after the history rewrite, found by subject line
+\providecommand{\vsevenFreezeCommit}{}\renewcommand{\vsevenFreezeCommit}{ed321cc}
+% whether the seal commit survives the history rewrite
+\providecommand{\vsevenSealCommitAlive}{}\renewcommand{\vsevenSealCommitAlive}{yes}
+% K5-capture-7030004.sha256: digest of the excised capture, first 16
+\providecommand{\vsevenKfiveDigest}{}\renewcommand{\vsevenKfiveDigest}{bb655aac7cd413d2}
+% K5-capture-7030004.sha256: size of the excised capture
+\providecommand{\vsevenKfiveBytes}{}\renewcommand{\vsevenKfiveBytes}{139,267,276}
 % PREREGISTRATION 5.1 applied to P5-B2.jsonl B2.2
 \providecommand{\vsevenPrimaryVerdict}{}\renewcommand{\vsevenPrimaryVerdict}{satisfies the registered primary criterion}
 % PREREGISTRATION 5.1: the phase-2 C1-class detection floor
@@ -4568,9 +4666,9 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 % PREREGISTRATION 6 item 2 applied to P5-B2.jsonl B2.4
 \providecommand{\vsevenItemTwoMet}{}\renewcommand{\vsevenItemTwoMet}{MET}
 % build_tables_v07.py --paper run date
-\providecommand{\vsevenBuildDate}{}\renewcommand{\vsevenBuildDate}{2026-08-26}
+\providecommand{\vsevenBuildDate}{}\renewcommand{\vsevenBuildDate}{2026-08-27}
 % macros used in sections_v07 that this script generates from artifacts
-\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{227}
+\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{244}
 % macros used in sections_v07 generated from artifacts by an EARLIER cycle
 \providecommand{\vsevenProvInherited}{}\renewcommand{\vsevenProvInherited}{25}
 % macros used in sections_v07 that no generator emits, i.e. transcribed by hand
@@ -4586,26 +4684,27 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 Six-player Canadian Fish is a decentralised imperfect-information team game in which every action is
 public, so the hidden state reduces to the initial deal and the posterior over that deal can be
 computed exactly. We develop and evaluate \fishseven{}, the strongest configuration produced in this
-project's FishBot lineage. It combines an exact observer-conditioned deal posterior with a fitted
-linear ask and declaration policy, a public-history tie-breaking rule that preserves common knowledge
-among teammates, an information-denial weighting on contested half-suits, a deduction-state stall
-detector in place of an event-count termination rule, and a guarded determinized test-time search.
-Evaluation follows a protocol registered in advance and run on sealed holdout material, using
-duplicate deal blocks, deal-clustered bootstrap confidence intervals, replication across two disjoint
-deal banks as an advance-specified criterion, calibrated detection floors, and mechanical
-side-channel controls.
+project's FishBot lineage. It combines exact observer-conditioned deal inference with a fitted policy
+prior and a linear ask and declaration policy, a public-history tie-breaking rule that preserves
+common knowledge among teammates, an information-denial weighting on contested half-suits, a
+deduction-state stall detector in place of an event-count termination rule, and a guarded
+determinized test-time search. Evaluation follows a protocol registered in advance and run on sealed
+holdout material, using duplicate deal blocks, deal-clustered bootstrap confidence intervals,
+replication across two disjoint deal banks as an advance-specified criterion, calibrated detection
+floors, and mechanical side-channel controls.
 
 Against \fcheap{}, the cheapest configuration on the \vsix{} frontier and the registered comparison
-target, \fishseven{} gains \vsevenBtwoFcheapMag{} percentage points of team win-rate edge
-$[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over \vsevenBtwoFcheapN{} sealed games, with the sign
-replicating on both banks. The advantage survives partner substitution, cross-play between
-independently trained runs, \vsevenDiaRows{} rule dialects, and \vsevenBfourArms{} independently
-constructed adversarial searches, none of which found a positive edge at the tested budgets.
+target, \fishseven{} achieves a \vsevenBtwoFcheap{} percentage-point win-rate edge
+(95\% CI $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$) over \vsevenBtwoFcheapN{} sealed games, with
+the sign replicating on both banks. The advantage persists under partner substitution, cross-play
+between independently trained runs, and \vsevenDiaRowsWord{} rule dialects. Separately, none of \vsevenBfourArmsWord{} independently
+constructed adversarial searches found a positive edge at the tested budgets.
 
 \fishseven{} does not, however, measurably outperform a composite configuration assembled earlier in
-the same programme (\vsevenBtwoComposite{} $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$),
-indicating that the architecture work which followed added no measurable strength. Four candidate
-mechanisms were experimentally rejected. At the calibrated resolution of this evaluation the policy
+the same programme (\vsevenBtwoComposite{} pp, 95\% CI
+$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$), indicating that the architecture work which
+followed added no measurable strength. Four candidate mechanisms failed to produce measurable
+improvement at this resolution. At the calibrated resolution of this evaluation the tested policy
 class appears locally flat, and we state what evidence a near-optimality claim would require.
 %% --- end sections_v07/abstract ---
 \end{abstract}
@@ -4753,7 +4852,7 @@ Published descriptions of this game document mutually incompatible variants \cit
 set below is a selection rather than a canon. It matches the strategy corpus this line of work draws
 on \cite{develin} and the rules of record supplied by the project owner. Every contested choice is an
 engine switch, so its effect is measurable rather than assumed, and \S\ref{sec:results-dialects}
-measures the principal comparison under \vsevenDiaRows{} of them. The consequential choices are a
+measures the principal comparison under \vsevenDiaRowsWord{} of them. The consequential choices are a
 54-card deck in nine half-suits with nine cards per player; declaration legal at any moment, in or out
 of turn, by a seat holding cards or not; a misdeclaration awarding the half-suit to the opposing team;
 lowest seat index first among simultaneous declarers; an eight-level willingness ladder in the
@@ -4825,7 +4924,7 @@ A deal resolves in roughly a hundred public events, and the engine plays hundred
 six-player games per second per core with exact inference running in every seat. This is what makes
 the evaluation programme of \S\ref{sec:evaluation} possible: \vsevenBtwoFcheapN{} paired games for a
 single headline comparison, two disjoint holdout banks for every claim, a \vsevenPanelMembers{}-member
-opponent panel scored identically for four configurations, and \vsevenBfourArms{} independent
+opponent panel scored identically for four configurations, and \vsevenBfourArmsWord{} independent
 adversarial searches all run on one desktop within a day. In a domain where one evaluation cell costs
 GPU-hours, the version of this study that reports its own negative results could not have been
 afforded. The corresponding liability appears in \S\ref{sec:discussion-external}: cheap evaluation is
@@ -4871,11 +4970,10 @@ learner for it, and no coverage in RLCard \cite{rlcard}. The one agent located, 
 not raise the six-player allocation problem, and publishes no strength numbers; a closed-source
 mobile application advertises bots with no stated methodology \cite{playstore}. Every novelty
 statement in this paper therefore takes the form ``we found no prior published work that \ldots{}''
-and should be read against that scope. One recent item is worth naming because it may become the
-external calibration this line of work lacks: Valet packages twenty-one traditional
-imperfect-information card games in a common description language with measured branching factors
-and durations \cite{goadrich2026valet}, though its abstract does not state whether any of the twenty-one is a team game, so no
-comparison is drawn against it here.
+and should be read against that scope. One recent item is worth naming because a shared testbed is the kind of external calibration this
+line of work lacks: Valet packages twenty-one traditional imperfect-information card games in a
+common description language with measured branching factors and durations
+\cite{goadrich2026valet}. No comparison against it is attempted here.
 
 \subsection{Determinization, and why double-dummy analysis fails here}
 \label{sec:related-determinization}
@@ -4906,7 +5004,7 @@ statistic}. One determinization's value is the final half-suit differential, who
 order of magnitude larger than the differences between the leading candidates, so an argmax over
 sampled means selects on residual noise, and does so more confidently the more candidates it is
 offered. That is the optimiser's curse rather than strategy fusion, and \S\ref{sec:background-vsix}
-reports it measured at \vsixCurseGap{}~points by a control that forces the same code to return the
+reports it measured at \vsixCurseGap{}~pp by a control that forces the same code to return the
 blueprint's own pick. The transferable claim from that result is the guard, not the search.
 
 \subsection{Search in imperfect-information and cooperative games}
@@ -4978,7 +5076,8 @@ parameters and no learned opponent model.
 
 This is the only literature that has measured the same trade-off, and it is where
 \S\ref{sec:background-vsix}'s central negative result belongs. What is new there is the margin and
-its direction: in this game the exact conditional posterior is computable in closed form and cheap,
+its direction: in this game the exact conditional posterior is computable exactly by a tractable
+factorised dynamic program and is cheap,
 so the usual excuse for approximating does not apply, and yet substituting the exact posterior
 into an otherwise identical policy \emph{loses}, on two independent seed banks.
 
@@ -5073,11 +5172,14 @@ described. It found almost none of it, and discovered in the process that much o
 machinery was unsound. Four results from that cycle bear directly on \fishseven{}.
 
 \paragraph{Exchangeable ties are irreducible, so the tie-break is a coordination decision rather than
-a strength decision.} At \vsixTieShareFive\% of \emph{contested} ask decisions two or more candidates
-score bit-for-bit identically, and the winner is whichever the enumerator emitted first.
-\vsixTieSameSuitFive\% of those ties are two cards of one half-suit at one target, and the exact
-posterior \emph{separates} them in \vsixTieExactSepPctFive\% of cases, meaning it assigns them equal
-probability in every case. Every rule that ranks tied candidates by that probability therefore
+a strength decision.} Measured in the \vfive{} mirror, the policy that cycle set out to diagnose, \vsixTieShareFive\% of
+\emph{contested} ask decisions end with two or more candidates scoring bit-for-bit identically, and
+the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of those ties are two
+cards of one half-suit at one target, and the exact posterior \emph{separates} them in
+\vsixTieExactSepPctFive\% of cases, meaning it assigns them equal probability in every case. The
+same measurement on the \vsix{} mirror gives \vsevenTieContested\%, and that is the figure
+\S\ref{sec:agent-tiebreak} and \S\ref{sec:development-tie} use, because \fishseven{} modifies
+\vsix{} rather than \vfive{}. Every rule that ranks tied candidates by that probability therefore
 realises the same hit rate, and so does enumeration order. The largest item on the inherited design
 register was not a defect but a property of the information set. What remains addressable is the
 dependence on enumeration order itself, which is a correctness problem, and
@@ -5086,7 +5188,7 @@ dependence on enumeration order itself, which is a correctness problem, and
 \paragraph{The exact posterior is a worse predictor than the deployed approximation.} Scored as
 predictors on identical states, the ranking is:
 
-\begin{center}\small
+\begin{center}\tabfont
 \begin{tabular}{lrr}
 \toprule
 Posterior & Log loss (nats) & Argmax hit rate \\
@@ -5151,10 +5253,50 @@ phases and \S\ref{sec:results} the last.
 \section{Exact observer-conditioned deal inference}
 \label{sec:inference}
 
-Every agent in this lineage is built on an inference object that this section defines formally,
-because it is one of the paper's principal contributions and because its exactness is what makes the
-policy results interpretable. The method is an exact enumeration carried out through a factorised
-dynamic program. It is not an analytic closed-form expression, and the paper avoids that phrase.
+Every agent in this lineage rests on an inference object that this section defines formally. The
+method is an exact enumeration carried out through a factorised dynamic program. It is not an
+analytic closed-form expression, and the paper avoids that phrase.
+
+\subsection{Notation}
+\label{sec:inference-notation}
+
+Table~\ref{tab:notation} fixes the symbols used here and in \S\ref{sec:agent}. A reader may prefer to
+skim it and return.
+
+\begin{table}[tbp]
+\centering
+\caption{Notation used in \S\ref{sec:inference} and \S\ref{sec:agent}.}
+\label{tab:notation}
+\tabfont
+\begin{tabularx}{\linewidth}{@{}l L@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$N=6$, $M=9$, $|H|=6$ & seats, half-suits, cards per half-suit; the deck is $M|H|=54$ cards \\
+$s \in \{0,\dots,5\}$ & the acting seat; $T(s)$ its team, $\mathcal{T}_s$ its two teammates,
+  $\mathcal{O}_s$ the three opponents \\
+$D$ & the hidden state: the initial deal, an assignment of all 54 cards to seats, nine each \\
+$\mathcal{I}_s^t$ & seat $s$'s information set after $t$ public events: its own hand and the whole
+  public record \\
+$\mathrm{own}_t(c)$ & the seat holding card $c$ at time $t$, a deterministic function of $D$ and the
+  public record \\
+$\mathcal{M}_t(c) \subseteq \{0,\dots,5\}$ & the \emph{candidate set} of card $c$: seats not yet
+  excluded by a certificate \\
+$U_t$ & the unresolved cards, those with $|\mathcal{M}_t(c)| > 1$ \\
+$n_p$ & the number of unresolved cards seat $p$ still holds \\
+$Z$ & the number of deals consistent with $\mathcal{I}_s^t$ \\
+$\mu(c,p)$ & the posterior marginal $\Pr[\mathrm{own}_t(c) = p \mid \mathcal{I}_s^t]$ \\
+$\hat\mu(c,p)$ & the deployed approximation to $\mu(c,p)$ \\
+$H(c)$ & the half-suit containing card $c$ \\
+$\mathcal{A}_t$ & the legal ask set at time $t$; an ask $a=(c,q)$ names card $c$ and opponent $q$ \\
+$\phi(a) \in \mathbb{R}^{20}$, $w$ & the ask feature vector and its fitted weights \\
+$p_a$ & $\hat\mu(c,q)$, the modelled hit probability of ask $a=(c,q)$ \\
+$\pi_{\mathrm{alloc}}$, $\pi_{\mathrm{team}}$ & probability that a named allocation is exactly
+  correct, and that the acting team owns a whole half-suit \\
+$\kappa$, $D_{\mathrm{det}}$ & the search's deviation threshold and its number of sampled deals \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{The engine, and the barrier between rules and policy}
 \label{sec:inference-engine}
@@ -5172,82 +5314,157 @@ the side-channel audit of \S\ref{sec:evaluation-side} to be read as a test of th
 that cannot reach the deal cannot read it, so any decision the audit fails to reproduce from public
 information indicates state carried across deals rather than information taken from the referee.
 
-\subsection{State, observations and constraints}
+\subsection{What a seat knows, as constraints on the deal}
 \label{sec:inference-constraints}
 
-Let the hidden state be the initial deal $D$, an assignment of the 54 cards to the six seats with
-nine cards each. Write $\mathcal{D}$ for the set of all such assignments; from one seat's viewpoint
-at deal time $|\mathcal{D}| = 45!/(9!)^5 \approx 1.9 \times 10^{28}$.
+Because a card changes hands only through an observed ask, the public record determines
+$\mathrm{own}_t(\cdot)$ given $D$. The only hidden object is therefore $D$ itself. Write
+$\mathcal{D}$ for the set of all deals; from one seat's viewpoint at deal time
+$|\mathcal{D}| = 45!/(9!)^5 \approx 1.9 \times 10^{28}$.
 
-An observer at seat $s$ holds an information set determined by five families of hard constraint,
-each of which is a logical restriction on $D$ rather than a probabilistic one:
+Each public event imposes a \emph{hard} constraint, meaning a logical restriction on $\mathcal{D}$
+rather than a probabilistic tilt. The engine maintains them as a per-card candidate set
+$\mathcal{M}_t(c)$, initialised to all six seats and only ever shrunk:
 
 \begin{description}
-\item[(C1) Own hand.] Seat $s$ knows its own nine cards exactly.
-\item[(C2) Card counts.] The current number of cards at every seat is public, and given the transfer
-  record this determines each seat's initial count.
-\item[(C3) Transfers.] Every card that has changed hands, and between whom, is public.
-\item[(C4) Failed asks.] For each failed ask, the target did not hold the named card at that moment,
-  which given (C3) is a statement about $D$.
-\item[(C5) Ask legality.] For each ask, the asker held at least one \emph{other} card of the named
-  half-suit and did not hold the named card, again at that moment and hence about $D$.
+\item[(C1) Own hand.] For each $c$ in seat $s$'s hand, $\mathcal{M}(c) \leftarrow \{s\}$; for every
+  other card, $s$ is removed from $\mathcal{M}(c)$.
+\item[(C2) Card counts.] Every seat's current hand size is public, so with the transfer record each
+  seat's count of unresolved cards, $n_p$, is known. This is the only constraint that couples
+  different half-suits.
+\item[(C3) Transfers.] A successful ask makes $\mathrm{own}(c)$ public from then on, so
+  $\mathcal{M}(c)$ collapses to a singleton.
+\item[(C4) Failed asks.] If $q$ was asked for $c$ at time $r$ and did not hold it, then $q \notin
+  \mathcal{M}(c)$ unless $q$ has acquired $c$ since, which is public.
+\item[(C5) Ask legality.] An asker of $c$ held another card of $H(c)$ at that moment and did not hold
+  $c$. The first is a disjunction over the other five cards of the half-suit and is the one
+  constraint that is not a simple exclusion.
 \end{description}
 
-The posterior of interest is uniform over the deals satisfying every constraint:
-\[
-  P(D \mid \mathcal{I}_s) \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s\right]}{Z},
+Conditioned on $\mathcal{I}_s^t$, all consistent deals are equally likely, so the posterior is
+uniform on the feasible set:
+\begin{equation}
+  \Pr[D \mid \mathcal{I}_s^t] \;=\; \frac{\mathbb{1}\!\left[D \models \mathcal{I}_s^t\right]}{Z},
   \qquad
-  Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s\}\bigr| .
-\]
+  Z \;=\; \bigl|\{D \in \mathcal{D} : D \models \mathcal{I}_s^t\}\bigr|.
+  \label{eq:posterior}
+\end{equation}
+The modelling content is entirely in which constraints are imposed. Nothing here refers to how anyone
+plays, which is the property \S\ref{sec:inference-prior} then gives up deliberately.
 
 \subsection{Factorisation by half-suit, joined by a count dynamic program}
 \label{sec:inference-factor}
 
-Computing $Z$ by direct enumeration is infeasible, and in general a constraint system of this shape
-induces a permanent-like count, the object the literature approximates with inclusion-exclusion
-\cite{ryser}, sign-vector formulae \cite{glynn}, Markov chains \cite{jsv}, matrix scaling \cite{lsw}
-or sequential importance sampling \cite{chen-sis}.
+Computing $Z$ by enumerating $\mathcal{D}$ is infeasible, and a constraint system of this shape
+generally induces a permanent-like count, the object the literature approximates by
+inclusion--exclusion \cite{ryser}, sign-vector formulae \cite{glynn}, Markov chains \cite{jsv},
+matrix scaling \cite{lsw} or sequential importance sampling \cite{chen-sis}.
 
-Fish sidesteps all of it, because the constraints factorise by half-suit. Constraint (C5) is a
-statement about a half-suit. Constraint (C4) is a statement about a card and therefore about a
-half-suit. Constraint (C3) resolves within a half-suit. The \emph{only} coupling across half-suits is
-(C2), the per-seat card counts, which is a linear constraint on how many cards each seat draws from
-each block.
+Fish avoids that, because every constraint except (C2) is confined to a single half-suit. Constraints
+(C3), (C4) and (C5) all speak about one card or one half-suit; only the per-seat capacities $n_p$
+couple half-suits, and they couple them only through counts.
 
-The computation therefore proceeds in two stages.
+Partition the unresolved cards by half-suit, $U_t = \bigcup_{h} B_h$, where $B_h$ is the
+\emph{block} of half-suit $h$. For a block, let an \emph{assignment} be a map $\alpha: B_h \to
+\{0,\dots,5\}$ with $\alpha(c) \in \mathcal{M}(c)$, and let $\mathcal{F}_h$ be the assignments that
+additionally satisfy every (C5) disjunction touching $h$. Write the \emph{count signature} of an
+assignment as the vector
+\[
+  \sigma(\alpha) \;=\; \bigl(|\alpha^{-1}(0)|,\;\dots,\;|\alpha^{-1}(5)|\bigr) \in \mathbb{Z}_{\ge 0}^{6}.
+\]
 
-\begin{enumerate}
-\item \textbf{Block enumeration.} For each half-suit $h$ independently, enumerate the assignments of
-  its unresolved cards to seats that satisfy every (C1), (C3), (C4) and (C5) constraint touching
-  $h$. Because a half-suit has six cards and resolved cards are removed, the surviving block is
-  small. Accumulate, for each block, a table indexed by the vector of counts it contributes to each
-  seat, recording how many assignments realise that count vector and, for each card and seat, how
-  many of those place that card at that seat.
-\item \textbf{Count join.} Combine the block tables by a dynamic program over the running count
-  vector, which enforces (C2) exactly. The terminal cell of that program is $Z$; the same recursion
-  carried with the per-card sub-counts yields the marginals.
-\end{enumerate}
+\paragraph{Stage 1: block enumeration.} For each half-suit independently, enumerate $\mathcal{F}_h$
+and accumulate a table indexed by count signature,
+\begin{equation}
+  T_h(\mathbf{v}) \;=\; \bigl|\{\alpha \in \mathcal{F}_h : \sigma(\alpha) = \mathbf{v}\}\bigr|,
+  \qquad
+  T_h^{c \to p}(\mathbf{v}) \;=\; \bigl|\{\alpha \in \mathcal{F}_h : \sigma(\alpha) = \mathbf{v},\,
+  \alpha(c) = p\}\bigr|.
+  \label{eq:blocktable}
+\end{equation}
+A half-suit holds six cards and resolved ones are removed, so $|B_h| \le 6$ and the enumeration is
+small.
 
-From this the engine reads off, exactly and without sampling: the normalisation constant $Z$; the
-per-card marginal $P(\text{card } c \text{ at seat } j \mid \mathcal{I}_s)$; the probability that a
-given team owns a whole half-suit; and the probability of a fully named allocation of a half-suit,
-which is exactly the quantity a declaration decision requires.
+\paragraph{Stage 2: the count join.} Constraint (C2) says the signatures must sum to the vector of
+per-seat capacities $\mathbf{n} = (n_0,\dots,n_5)$. Order the blocks arbitrarily and define the
+partial convolution
+\begin{equation}
+  F_0(\mathbf{0}) = 1, \qquad
+  F_k(\mathbf{v}) \;=\; \sum_{\mathbf{u}} F_{k-1}(\mathbf{v}-\mathbf{u})\, T_{h_k}(\mathbf{u}),
+  \label{eq:dp}
+\end{equation}
+so that
+\begin{equation}
+  Z \;=\; F_M(\mathbf{n}).
+  \label{eq:Z}
+\end{equation}
+Running the same recursion backwards gives suffix tables $G_k$, and the marginals follow by
+substituting one block's card-resolved table for its plain one:
+\begin{equation}
+  \mu(c,p) \;=\; \frac{1}{Z}\sum_{\mathbf{u},\,\mathbf{v}}
+  F_{k-1}(\mathbf{v})\; T_{h_k}^{c \to p}(\mathbf{u})\; G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
+  \qquad c \in B_{h_k}.
+  \label{eq:marg}
+\end{equation}
 
-An exact rebuild costs \vsixCountCost{}~ms, which is why the project has been able to treat inference
-as solved and spend its cycles on policy.
+Three quantities the policy needs come from the same machinery. The per-card marginals are
+\eqref{eq:marg}. The probability that team $\mathcal{T}$ owns half-suit $h$ outright,
+$\pi_{\mathrm{team}}(h)$, is \eqref{eq:marg} restricted to block assignments whose image lies in
+$\mathcal{T}$. And the probability of a fully named allocation, which is exactly what a declaration
+asserts, is
+\begin{equation}
+  \pi_{\mathrm{alloc}}(h, \alpha^\star) \;=\;
+  \frac{1}{Z} \sum_{\mathbf{u}, \mathbf{v}} F_{k-1}(\mathbf{v})\,
+  \mathbb{1}\!\left[\sigma(\alpha^\star) = \mathbf{u}\right]
+  G_{k+1}(\mathbf{n}-\mathbf{v}-\mathbf{u}),
+  \label{eq:alloc}
+\end{equation}
+for the single assignment $\alpha^\star$ the declaration names. No sampling is involved in any of the
+three.
 
-\subsection{The deployed approximation and its policy prior}
+\paragraph{Cost.} The signature space is bounded by the capacities, each block table has at most
+$6^{|B_h|}$ entries before pruning, and the join is $M$ convolutions over that space. An exact
+rebuild costs \vsixCountCost{}~ms, which is why this project has been able to treat inference as
+solved and spend its cycles on policy.
+
+\subsection{The deployed approximation, and the policy prior it adds}
 \label{sec:inference-prior}
 
-The exact posterior is exact \emph{under a uniform prior over constraint-consistent deals}. It
-contains no model of behaviour, because the block construction consumes the deduction state alone
+Equation~\eqref{eq:posterior} is exact \emph{under a uniform prior over constraint-consistent deals}.
+It contains no model of behaviour, because the construction above consumes the deduction state alone
 and has no parameter through which an opponent's tendencies could enter.
 
-The path the agent actually deploys adds one. It applies a fitted soft reweighting of the rules
-posterior with two parameters and no learned opponent model, in the spirit of the Skat inference
-line \cite{solinas-supervised,rebstock-inference,buro-kermit} but far simpler; the deployed weight is $\theta = \vsixPriorTheta{}$. \S\ref{sec:background-vsix} reports the consequence, which is that the
-approximation is the better predictor of card location, and \S\ref{sec:discussion-limits} discusses
-what that implies.
+The path the agent deploys adds exactly one such parameter and gives up exactness for it. It replaces
+the count join by iterative proportional fitting, better known here as Sinkhorn scaling, on the
+$|U_t| \times 6$ matrix of admissible card--seat pairs. Initialise
+\begin{equation}
+  \hat\mu^{(0)}(c,p) \;=\; \mathbb{1}\!\left[p \in \mathcal{M}(c)\right] \cdot
+  \exp\Bigl(\operatorname{clip}\bigl(\theta\, a_{p,H(c)} - \varphi\, (A_p - a_{p,H(c)}),\; \pm 2.6\bigr)\Bigr),
+  \label{eq:prior}
+\end{equation}
+where $a_{p,h}$ is the number of asks seat $p$ has made in half-suit $h$ and $A_p$ its total asks, and
+then alternate the two normalisations
+\begin{equation}
+  \hat\mu(c,\cdot) \leftarrow \frac{\hat\mu(c,\cdot)}{\sum_{p}\hat\mu(c,p)},
+  \qquad
+  \hat\mu(\cdot,p) \leftarrow \hat\mu(\cdot,p)\cdot\frac{n_p}{\sum_{c}\hat\mu(c,p)},
+  \label{eq:sinkhorn}
+\end{equation}
+to a fixed iteration count. The row step makes each card's distribution a probability; the column
+step enforces the capacity constraint (C2) that the exact join enforces combinatorially. The deployed
+weight is $\theta = \vsixPriorTheta{}$.
+
+Equation~\eqref{eq:prior} is the entire behavioural content of the agent's beliefs: a seat that has
+asked repeatedly in a half-suit is treated as more likely to hold cards of it, because asking
+requires already holding one. It is a soft version of the (C5) certificate, in the spirit of the Skat
+inference line \cite{solinas-supervised,rebstock-inference,buro-kermit} but far simpler, with two
+parameters and no learned opponent model.
+
+\S\ref{sec:background-vsix} reports the consequence, which is the most counterintuitive result in the
+lineage: scored as predictors on identical states, $\hat\mu$ beats $\mu$. Exactness in this game is
+purchased by discarding \eqref{eq:prior}, and \eqref{eq:prior} is worth more than exactness. That is
+why the paper treats ``exact Bayesian inference'' as an assumption to test rather than a property to
+assume, and \S\ref{sec:development-alloc} is the second occasion on which the rule paid.
 
 \subsection{Verification}
 \label{sec:inference-verify}
@@ -5256,13 +5473,14 @@ Three checks run over the engine, and all three ran as preconditions of the eval
 \S\ref{sec:results}.
 
 \begin{description}
-\item[Soundness audit.] Every seat's deduced knowledge is checked against the true deal at every
-  decision, since no agent's deduction may ever exclude the truth. The verification run for this
-  evaluation recorded \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks, and the
-  preceding cycle \vsixAuditViolations{} in \vsixAuditChecks{}.
+\item[Soundness audit.] Every seat's candidate set is checked against the true deal at every
+  decision: $\mathrm{own}_t(c) \in \mathcal{M}_t(c)$ must hold always, since no agent's deduction may
+  exclude the truth. The verification run for this evaluation recorded
+  \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks, and the preceding cycle
+  \vsixAuditViolations{} in \vsixAuditChecks{}.
 \item[Cross-engine agreement.] The block dynamic program, an independent card-counting path and an
-  exact sampler must agree. The self-test reports \vsevenSelftestChecks{} checks passing, with
-  block-versus-card agreement at the limit of double precision.
+  exact sampler must agree on \eqref{eq:marg}. The self-test reports \vsevenSelftestChecks{} checks
+  passing, with block-versus-card agreement at the limit of double precision.
 \item[Identity control.] The current policy, carrying its predecessor's parameter vector with every
   new mechanism disabled, must produce a transcript identical to its predecessor's under md5. It does
   (\vsixIdentity{}). Without this an ablation is not an ablation, because a measured difference could
@@ -5290,7 +5508,7 @@ evaluation did not disturb it. This section describes the agent conceptually. Th
 configuration string, its option map, the parameter vector layout and the freeze artifact's hashes
 are in Appendix~\ref{app:parameters}.
 
-\begin{figure}[t]\centering
+\begin{figure}[tbp]\centering
 \begin{tikzpicture}[
   font=\small,
   box/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=9mm},
@@ -5319,11 +5537,11 @@ justifies it (\S\ref{sec:agent-search}).}
 \label{fig:pipeline}
 \end{figure}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
 are used in the paper only where a command must be reproduced.}
 \label{tab:components}
-{\small\begin{tabular}{p{0.20\linewidth}p{0.24\linewidth}p{0.34\linewidth}l}
+{\tabfont\begin{tabular}{p{0.20\linewidth}p{0.24\linewidth}p{0.34\linewidth}l}
 \toprule
 Component & v0.6 & FishBot v0.7 & Section \\
 \midrule
@@ -5332,60 +5550,184 @@ Ask and declaration policy & fitted linear score, 37 coordinates & unchanged; no
 Tie-breaking among equal-scoring asks & enumeration order (unstable sort) & hash of the public event stream (\texttt{rtie}) & \S\ref{sec:agent-tiebreak} \\
 Half-suit contestation & absent & information-denial weight (\texttt{r12}) & \S\ref{sec:agent-contest} \\
 Declaration urgency escalation & event-count clock at 220 events & disabled (\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}) & \S\ref{sec:agent-urgency} \\
-Termination guarantee & the urgency clock & deduction-state stall detector (\texttt{stall}) & \S\ref{sec:agent-stall} \\
+Termination safeguard & the urgency clock & deduction-state stall detector (\texttt{stall}) & \S\ref{sec:agent-stall} \\
 Test-time search & built and measured, deployed disabled & enabled, endgame-truncated, paired LCB guard & \S\ref{sec:agent-search} \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\subsection{Inference and the ask and declaration policy}
+\subsection{The decision problem, and the ask policy}
 \label{sec:agent-policy}
 
-Inference is unchanged from \vsix{} and is the object of \S\ref{sec:inference}: the exact
-observer-conditioned deal posterior, with the deployed path applying a fitted policy prior over it.
+At its turn a seat faces one decision with two branches: declare a half-suit, or ask. Declaration is
+treated first in the code and is described in \S\ref{sec:agent-declare}; this subsection covers the
+ask.
 
-The acting policy is a fitted linear score over features of the belief and the public state. An ask
-decision scores each legal (target, card) pair and takes the maximum; a declaration decision consults
-the named-allocation probability the inference object supplies and commits when a value rule judges
-the claim worth making. \fishseven{} inherits the \vsix{} parameter vector unchanged, and
-\textbf{no fit of any kind was applied to it during this cycle}. The vector was found by \vsix{}'s
-repaired optimiser under a minimax-regret objective over a four-member opponent panel. Of the
-\vsevenCoordinates{} coordinates in the extended vector, a number are known to be inert, and
+\paragraph{The legal action set.} With $\mathcal{O}_s$ the opponents and $\mathcal{H}_t$ the
+half-suits not yet claimed, the rules of \S\ref{sec:game-rules} give
+\begin{equation}
+  \mathcal{A}_t \;=\; \bigl\{(c,q) \;:\; q \in \mathcal{O}_s,\; \text{hand}_t(q) \neq \emptyset,\;
+  H(c) \in \mathcal{H}_t,\; c \notin \text{hand}_t(s),\;
+  \text{hand}_t(s) \cap H(c) \neq \emptyset \bigr\}.
+  \label{eq:legal}
+\end{equation}
+The last condition is what makes every ask informative: the asker must already hold a card of the
+half-suit, so asking publishes partial ownership.
+
+\paragraph{The score.} Each candidate is scored by a fitted linear function of a
+$20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \fishseven{}, three
+additional ownership terms:
+\begin{equation}
+  u(a) \;=\; \lambda\, w^{\!\top}\phi(a) \;+\; \beta\, V_{\mathrm{ask}}(a)
+  \;+\; \lambda\bigl(w_{\mathrm{void}}\, g_1(a) + w_{\mathrm{team}}\, g_2(a)
+  + w_{\mathrm{last}}\, g_3(a)\bigr),
+  \label{eq:askscore}
+\end{equation}
+with $\lambda$ and $\beta$ scale parameters of the fit. Writing $p_a = \hat\mu(c,q)$ for the modelled
+hit probability, the features $\phi$ are functions of the belief and the public state. They include
+$p_a$ and $p_a^2$; an indicator that the card is publicly certain; the acting seat's holding in
+$H(c)$ and the posterior mass its team already carries, each gated by $p_a$ so that a provably dead
+ask cannot outscore a live one; the best continuation probability elsewhere in the half-suit; the
+reply threat and exposure a miss would create, both weighted by $1-p_a$; the target's hand size and
+an indicator that this ask would empty it; the binary entropy $\mathrm{H}_2(p_a)$; and a score-margin
+term. Appendix~\ref{app:parameters} lists all twenty with their fitted weights.
+
+The three extra terms are the ones \vsix{} added, and each expresses an effect the twenty could not:
+\begin{align}
+  g_1(a) &= p_a \prod_{c' \in H(c) \setminus \{c\}} \bigl(1 - \hat\mu(c',q)\bigr),
+    \label{eq:gvoid}\\
+  g_2(a) &= \Pr\bigl[\,\mathrm{own}(c) \in \mathcal{T}_s \cup \{s\}\,\bigr],
+    \label{eq:gteam}\\
+  g_3(a) &= p_a \cdot \mathbb{1}\bigl[\,q \text{ is the last opponent holding cards, and holds one}\,\bigr].
+    \label{eq:glast}
+\end{align}
+Equation~\eqref{eq:gvoid} is the probability that the ask takes the target's \emph{last} card of the
+half-suit, \eqref{eq:gteam} the posterior mass the acting team already carries, so a measure of how
+wasteful the ask is, and \eqref{eq:glast} an indicator that the ask would trigger the forced
+endgame.
+Equation~\eqref{eq:gvoid} prices information denial in its bluntest form. Because a legal ask requires
+holding a card of the half-suit, removing a target's last card of $H(c)$ permanently removes that
+target's right to ask in it.
+
+\paragraph{Selection.} The policy takes the argmax, with the tie handling of
+\S\ref{sec:agent-tiebreak} and, when enabled, the search of \S\ref{sec:agent-search}:
+\begin{equation}
+  a^\star \;=\; \operatorname*{arg\,max}_{a \in \mathcal{A}_t} u(a).
+  \label{eq:argmax}
+\end{equation}
+
+\fishseven{} inherits $w$, $\lambda$, $\beta$ and the three extra weights from \vsix{} unchanged, and
+\textbf{no fit of any kind was applied during this cycle}. The vector was found by \vsix{}'s repaired
+optimiser under a minimax-regret objective over a four-member opponent panel. Of the
+\vsevenCoordinates{} coordinates in the extended vector a number are known to be inert, and
 Appendix~\ref{app:parameters} lists which and why.
 
 \subsection{Tie-breaking that preserves common knowledge}
 \label{sec:agent-tiebreak}
 
-At \vsevenTieContested\% of contested ask decisions two or more candidates score bit-for-bit
-identically (\S\ref{sec:background-vsix}), and in \vsix{} the winner was whichever the enumerator
-emitted first, under an unstable sort. That is a correctness problem rather than a strength problem:
-the choice is arbitrary, but it is also unpredictable, and \S\ref{sec:game-why} explains why
-unpredictability of the wrong kind is expensive here. Three identical deterministic teammates
-coordinate for free only if each can compute what the others will do; a tie broken by an
-implementation detail is not something a teammate can reconstruct.
+In the \vsix{} mirror, \vsevenTieContested\% of contested ask decisions end with two or more
+candidates scoring bit-for-bit identically under \eqref{eq:askscore}
+(\S\ref{sec:background-vsix}), and the winner was whichever the enumerator emitted first, under an
+unstable sort. That is a correctness problem rather than a strength problem. The choice is arbitrary,
+but it is also unpredictable, and \S\ref{sec:game-why} explains why unpredictability of the wrong kind
+is expensive here: three identical deterministic teammates coordinate for free only if each can
+compute what the others will do, and a tie broken by an implementation detail is not something a
+teammate can reconstruct.
 
-\fishseven{} replaces enumeration order with a hash of the public event stream
-(\texttt{rtie}). Every teammate observes that stream, so every teammate can compute the same
-tie-break, and no seat's private hand influences it. The mechanism is a coordination repair that
-happens to be free, and \S\ref{sec:development-tie} reports what happened when a later experiment
-tried to do better than randomising within the tied set.
+Order the candidates by score and let the tied set be
+\begin{equation}
+  \mathcal{E}_t \;=\; \bigl\{a \in \mathcal{A}_t \;:\; u(a) \ge u(a_{(1)}) - \varepsilon \bigr\},
+  \label{eq:tieset}
+\end{equation}
+where $a_{(1)}$ is the top-ranked candidate and $\varepsilon$ is a fixed tolerance. \fishseven{}
+replaces enumeration order with a deterministic draw keyed by the public record:
+\begin{equation}
+  a^\star \;=\; \mathcal{E}_t\bigl[\,\rho\bmod|\mathcal{E}_t|\,\bigr],
+  \qquad
+  \rho \;=\; \mathrm{hash}\bigl(\mathcal{P}_t,\; s,\; t\bigr),
+  \label{eq:tiebreak}
+\end{equation}
+with $\mathcal{P}_t$ the running hash of the public event stream, $s$ the seat index and $t$ the
+event count. Every seat observes all three arguments, so every teammate can recompute $\rho$; no
+seat's private hand enters it. The mechanism is a coordination repair that happens to be free, and it
+keeps the policy a deterministic function of $(\text{own hand}, \text{public record})$, which is the
+condition the side-channel audit of \S\ref{sec:evaluation-side} tests.
+
+The engine also offers a variant that draws $\rho$ from a private per-seat stream. That variant is
+\emph{not} used: it would break the reconstructibility that makes \eqref{eq:tiebreak} a coordination
+device. \S\ref{sec:development-tie} reports what happened when a later experiment tried to
+\emph{select} within $\mathcal{E}_t$ rather than randomise over it.
 
 \subsection{Half-suit contestation and information denial}
 \label{sec:agent-contest}
 
-The one component that carries measurable strength is a single coordinate weighting how willing the
-agent is to contest a half-suit in which an opponent has demonstrated certainty
-(\texttt{r12}, internally \texttt{oppCertDonate}). Raising it makes the agent less willing to ask into
-positions where the ask would confirm information the opponents can use, and more willing to
-contest half-suits whose ownership is still genuinely open.
+The one component carrying measurable strength is a single additional coordinate, weighting how much
+an ask hands to the opposing team when it \emph{misses}. A failed ask publishes a negative
+certificate, and a negative certificate about a card the opposing team is itself unsure of helps them
+resolve their own allocation. Let $O_H$ be the number of cards of half-suit $H$ whose posterior mass
+sits with the opposing team, and $u_H$ the number whose holder this seat cannot place. The term is
+\begin{equation}
+  r(a) \;=\; (1 - p_a)\cdot\frac{O_{H(c)}}{6}\cdot\frac{u_{H(c)}}{6},
+  \label{eq:contest}
+\end{equation}
+entering \eqref{eq:askscore} with a negative-signed fitted weight, so a large value discourages the
+ask. The first factor is the probability the ask misses and therefore publishes the certificate; the
+second is how much of the half-suit the opponents hold, so how much use the certificate is to them;
+the third is how ambiguous the half-suit still is, since a certificate about an already-public card
+tells nobody anything. In \fishseven{} the coefficient is set to
+\texttt{\vsevenOptContest{}} (\S\ref{app:parameters}).
 
-Two facts about its provenance matter for how the results in \S\ref{sec:results-attribution} should
-be read. It was found by an \emph{unfitted} coordinate sweep during the adversary-generation phase,
-not by architecture work: a single hand-set value, with no fitting, measured at
-\vsevenOneSwitchArm{}~pp against the deployed policy over \vsevenPhaseTwoCell{} games. And its edge
-against the more expensive frontier configuration \fmid{} is \vsevenOneSwitchArmVsFmid{}~pp, which is
-negative, so it is a strength gain with a worst case rather than an exploit
-(\S\ref{sec:development-adversaries}).
+Two facts about its provenance matter for \S\ref{sec:results-attribution}. It was found by an
+\emph{unfitted} coordinate sweep during adversary generation, not by architecture work: a single
+hand-set value, with no fitting, measured at \vsevenOneSwitchArm{}~pp against the deployed policy over
+\vsevenPhaseTwoCell{} games. And its edge against the more expensive frontier configuration \fmid{} is
+\vsevenOneSwitchArmVsFmid{}~pp, which is negative, so it is a strength gain with a worst case rather
+than an exploit (\S\ref{sec:development-adversaries}).
+
+\subsection{The declaration rule}
+\label{sec:agent-declare}
+
+A declaration names, for each of the six cards of a half-suit, which member of the declaring team
+holds it. It is all-or-nothing: correct, and the team scores the half-suit; wrong, and the opponents
+do. The decision therefore has two parts, choosing what to claim and choosing when.
+
+\paragraph{What to claim.} For half-suit $h$ the agent takes the most probable allocation among its
+own team,
+\begin{equation}
+  \alpha^\star(h) \;=\; \operatorname*{arg\,max}_{\alpha:\,H \to \mathcal{T}_s \cup \{s\}}
+  \; \pi_{\mathrm{alloc}}(h,\alpha),
+  \label{eq:bestalloc}
+\end{equation}
+with $\pi_{\mathrm{alloc}}$ from \eqref{eq:alloc}. The deployed path computes \eqref{eq:bestalloc}
+sequentially from the marginals rather than by enumeration. \S\ref{sec:development-alloc} reports the
+measurement that closed the question of whether that shortcut costs anything: over
+$\sim$\vsevenLoneDecls{} recorded declarations it selects the same allocation as the exact joint
+argmax every time, because the sequential rule's first chain-rule factor \emph{is} the marginal and
+the renormalisation that follows reweights the survivors without reordering them.
+
+\paragraph{When to claim.} Write $\pi_{\mathrm{alloc}}^\star = \pi_{\mathrm{alloc}}(h,\alpha^\star)$
+and $\pi_{\mathrm{team}}$ for the probability the team owns $h$ outright. Waiting is free in this
+dialect, because an opponent cannot claim a half-suit the acting team holds, so the decision is not a
+race but a trade: declaring scores a point now with probability $\pi_{\mathrm{alloc}}^\star$, and
+publishes the team's holdings either way. The agent evaluates that with its learned state-value
+function $V$:
+\begin{equation}
+  \Delta \;=\; \underbrace{\pi_{\mathrm{alloc}}^\star\, V(\text{state} \mid \text{correct})
+  \;+\; (1-\pi_{\mathrm{alloc}}^\star)\, V(\text{state} \mid \text{wrong})}_{\text{declare}}
+  \;-\; \underbrace{V(\text{state})}_{\text{wait}},
+  \label{eq:declev}
+\end{equation}
+and declares when $\Delta > \delta$ for a fitted margin $\delta$. The two conditioned states differ
+in the score margin, by $+1$ and $-1$ respectively, and in having the six cards of $h$ removed from
+the unresolved set.
+
+Two overrides sit above \eqref{eq:declev}. Under the forced endgame, when the opposing team is
+cardless and the acting team must resolve the remaining half-suits among itself, the agent declares
+on a threshold, $\pi_{\mathrm{alloc}}^\star \ge \tau$, and on a lower threshold once
+$\pi_{\mathrm{team}} > 1 - 10^{-3}$, since a half-suit the team certainly owns will have to be
+claimed eventually and delay only costs information. Under \emph{pressure}, the escalation described
+next, the thresholds drop further. \fishseven{} removes the mechanism that used to raise pressure in
+ordinary play.
 
 \subsection{Removing the urgency escalation}
 \label{sec:agent-urgency}
@@ -5399,58 +5741,187 @@ reaches it, since the longest game any adversarial search produced against an un
 entire declaration allocation-error class. \fishseven{} disables it
 (\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}).
 
-The escalation was, however, also the policy's termination guarantee, so removing it creates an
+The escalation was, however, also the policy's termination safeguard, so removing it creates an
 obligation.
 
-\subsection{A stall detector as the replacement termination guarantee}
+\subsection{A stall detector as the replacement termination safeguard}
 \label{sec:agent-stall}
 
-\fishseven{} escalates after twelve consecutive public events in which this seat's hard-certificate
-hash has not changed (\texttt{stall}). The quantity being watched is the seat's own deduction state,
-so the rule fires exactly when the game has stopped making progress from that seat's point of view,
-which is the condition the event counter was a proxy for.
+The escalation \fishseven{} removes was keyed to a clock. The condition the clock stood in for is
+``nothing is happening any more'', and that condition is directly observable from the seat's own
+deduction state, which is both tighter and safer.
 
-The threshold was set from a measurement rather than by taste. Over \vsevenStallMirrorGames{} mirror
-games, \vsix{} never produces a no-progress run longer than \vsevenStallIncumbentRun{}, while a
-deliberately deadlocked configuration, the negative control of \S\ref{sec:evaluation-gate}, produces
-\vsevenStallFrozenRun{}. Any threshold between 12 and 60 is therefore simultaneously unreachable in
-ordinary play and immediate in a deadlock. Armed, the rule's mirror transcript digest is byte
-identical to the same configuration without it: its cost in ordinary play is not small but identically
-zero, because it never runs. \S\ref{sec:results-attribution} confirms that on holdout material.
+Let $\chi_t = \mathrm{hash}\bigl(\mathcal{M}_t(\cdot),\, U_t,\, (\text{hand sizes})_t,\,
+(\text{live half-suits})_t\bigr)$, the digest of exactly the certificates the seat holds. Define the
+no-progress counter
+\begin{equation}
+  \nu_t \;=\;
+  \begin{cases}
+    0, & \chi_t \neq \chi_{t-1},\\
+    \nu_{t-1} + 1, & \chi_t = \chi_{t-1},
+  \end{cases}
+  \label{eq:stall}
+\end{equation}
+and escalate to pressure stage 1 when $\nu_t \ge K$ and to stage 2 when $\nu_t \ge 2K$, with
+$K = \texttt{\vsevenOptStallK{}}$ and $2K = \vsevenOptStallTwo{}$ in \fishseven{}.
+
+\paragraph{Why it is a safeguard and not a guarantee.} Consider
+$P_t = \sum_{c \in U_t}\bigl(|\mathcal{M}_t(c)| - 1\bigr) + |U_t| + |\mathcal{H}_t|$. Certificates
+only accumulate: a seat excluded from a card's candidate set is never restored, a resolved card is
+never unresolved again, and a claimed half-suit never returns. Every event that changes $\chi$ by one
+of those routes therefore strictly decreases $P_t$, which is a non-negative integer, so there can be
+only finitely many of them. \textbf{This argument does not close.} The digest also contains hand
+sizes, so a successful ask always counts as progress, and a card moving between two seats is not a
+monotone gain; nothing above forbids a card being won back later. The rule therefore bounds the mode
+of non-termination that actually occurs, a run of asks producing no new certificate, and not every
+mode. That is why this paper calls it a safeguard, and why \S\ref{sec:discussion-engineering} records
+termination as empirical.
+
+The threshold was set from measurement. Over \vsevenStallMirrorGames{} mirror games \vsix{} never
+produces a no-progress run longer than \vsevenStallIncumbentRun{}, while the deliberately deadlocked
+negative control of \S\ref{sec:evaluation-gate} produces \vsevenStallFrozenRun{}. Any
+$K \in [12,60]$ is therefore simultaneously unreachable in ordinary play and immediate in a deadlock.
+Armed, the rule's mirror transcript digest is byte identical to the same configuration without it:
+its cost in ordinary play is not small but identically zero, because $\nu_t$ never reaches $K$.
+\S\ref{sec:results-attribution} confirms that on holdout material. Note also that $\nu_t$ is a
+function of the seat's own hand and the public record alone, so the rule opens no information
+channel.
 
 \subsection{Guarded determinized test-time search}
 \label{sec:agent-search}
 
-\fishseven{} enables the search that \vsix{} built, measured and then deployed switched off
-(\texttt{s1}, with \texttt{det}, \texttt{cand}, \texttt{kappa}, \texttt{rbelief}, \texttt{depth},
-\texttt{maxq}). At a searched decision the agent samples twelve full deals from its own posterior and
-plays each forward with all six continuation players reconstructed at their own information sets,
-rather than made clairvoyant.
+\fishseven{} enables the search \vsix{} built, measured, and then deployed switched off. It runs only
+in the endgame, when at most \texttt{\vsevenOptMaxq{}} cards remain unresolved, and it revises the
+blueprint's choice only when a paired statistical test says it should.
 
-Two design choices are what make it usable. First, the deviation rule is a \emph{paired
-lower-confidence bound}: the search departs from the blueprint's choice only when the sampled
-advantage of an alternative clears a shrinkage threshold, which is what converts the
-\vsixCurseGap{}~pp optimiser's curse of \S\ref{sec:background-vsix} into a usable mechanism. Second,
-the search is endgame-truncated, running only when at most a set number of cards remain unresolved,
-which is what keeps its cost at a small multiple of the blueprint rather than the orders of magnitude
-the unrestricted configuration costs (\S\ref{sec:results-cost}).
+\paragraph{Sampling worlds.} The search draws $D_{\mathrm{det}} = \texttt{\vsevenOptDet{}}$
+determinizations from the exact posterior of \eqref{eq:posterior}, using the block dynamic program as
+a uniform sampler over deals satisfying (C1)--(C4) with the (C5) disjunctions enforced by rejection,
+so an accepted draw is an exact sample. The policy prior of \eqref{eq:prior} is then applied as an
+importance weight rather than baked into the sampler, which keeps the sampler exact and the prior
+auditable:
+\begin{equation}
+  \tilde w_d \;=\; \prod_{c \in U_t} \exp\Bigl(\operatorname{clip}\bigl(\theta\, a_{o_d(c),H(c)}
+  - \varphi\,(A_{o_d(c)} - a_{o_d(c),H(c)}),\, \pm 2.6\bigr)\Bigr),
+  \qquad
+  w_d = \frac{\tilde w_d}{\sum_{d'} \tilde w_{d'}}.
+  \label{eq:iw}
+\end{equation}
 
-\subsection{Coordination assumptions, and one defect the evaluation runs under}
+\paragraph{Rolling out.} The candidate set is the top $\texttt{\vsevenOptCand{}}$ blueprint
+candidates, with index $0$ reserved for the blueprint's own choice $a_{(1)}$. For each candidate $r$
+and world $d$, all six seats are reconstructed \emph{at their own information sets} under $d$ and the
+game is played to a terminal state or to depth \texttt{\vsevenOptDepth{}}, returning the acting
+team's half-suit differential $V_{r,d}$. This is the point at which the method departs from standard
+determinization: the continuation players are not made clairvoyant. \S\ref{sec:game-why} explains why
+that matters here, namely that clairvoyant play in Fish is degenerate and every action would score
+alike. All candidates share the same $D_{\mathrm{det}}$ worlds, so the comparison is paired and the
+noise that matters is the noise in the difference.
+
+\paragraph{The guarded deviation rule.} For each candidate $r \ge 1$ form the paired difference
+against the blueprint,
+\begin{equation}
+  m_r \;=\; \sum_{d} w_d\,\bigl(V_{r,d} - V_{0,d}\bigr),
+  \qquad
+  \mathrm{var}_r \;=\; \sum_{d} w_d\,\bigl(V_{r,d} - V_{0,d} - m_r\bigr)^2,
+  \label{eq:paired}
+\end{equation}
+and with the Kish effective sample size $n_{\mathrm{eff}} = 1/\sum_d w_d^2$ take
+\begin{equation}
+  \mathrm{se}_r = \sqrt{\frac{\mathrm{var}_r}{n_{\mathrm{eff}} - 1}},
+  \qquad
+  \mathrm{LCB}_r = m_r - \kappa_r\,\mathrm{se}_r + \eta\,\bigl(u(a_{(r+1)}) - u(a_{(1)})\bigr).
+  \label{eq:lcb}
+\end{equation}
+The search deviates to $\arg\max_r \mathrm{LCB}_r$ if that maximum is positive, and otherwise plays
+the blueprint's choice. The shrinkage is $\kappa = \texttt{\vsevenOptKappa{}}$, and $\eta$ is a small
+blend back toward the blueprint's own ranking.
+
+Equation~\eqref{eq:lcb} is the whole of what makes the machinery usable. Chosen instead by an
+unguarded $\arg\max_r m_r$, the same search is \vsixCurseGap{}~pp \emph{worse} than the blueprint it
+searches from (\S\ref{sec:background-vsix}): one world's return is a final half-suit differential
+whose spread is an order of magnitude larger than genuine differences between candidates, so the
+maximum selects on residual noise, and does so more confidently the more candidates it is offered.
+Requiring $\kappa$ standard errors of a \emph{paired} difference removes that.
+
+One detail is worth stating because \S\ref{sec:development-tie} turns on it. Within the tied set
+$\mathcal{E}_t$ of \eqref{eq:tieset} the rule applies $\kappa_r = 0$, that is, no shrinkage at all,
+which is precisely where its selection signal is most noise-dominated.
+
+\subsection{How three teammates coordinate without communicating}
 \label{sec:agent-coordination}
 
-\fishseven{} deploys as three identical agents with no shared secret and no communication beyond
-public actions. Its coordination is therefore common knowledge by the argument of
-\S\ref{sec:game-why}, provided every component is deterministic given public state and own hand,
-which the tie-break repair of \S\ref{sec:agent-tiebreak} is what secures.
+\fishseven{} deploys as three identical agents. They hold different private hands, they may not
+signal, and the only channels the dialect leaves are the forced-endgame willingness bit and the
+successor a cardless turn-holder names (\S\ref{sec:game-dialect}), both of which
+\S\ref{sec:game-dialect} measures as empty or near-empty. So all coordination has to come from
+somewhere else.
 
-One engine defect is present in every number in this paper and is stated rather than buried. Agents
-are constructed once per worker thread and reused across the deals that thread is given, and some
-per-agent state survives the inter-deal reset, reachable only under the search. The carrier was
-identified as the rollout engine, which the reset never touches, but the specific field was not.
-It was deliberately not repaired, because the one-line fix changes the play of every searching
-configuration by roughly one deal in \vsevenSsixIncidence{}, and applying it after the configuration
-was frozen would defeat the purpose of freezing. \S\ref{sec:results-controls} measures its magnitude
-on holdout material.
+It comes from determinism plus a shared observation. Let $\Pi$ denote the policy, a map from
+$(\text{own hand}, \text{public record})$ to an action. Every teammate runs the same $\Pi$ and
+observes the same public record $\mathcal{P}_t$. Teammate $j$ cannot compute $\Pi$'s output at seat
+$i$, because it does not know $i$'s hand. But it knows $\Pi$ itself, and it knows $\mathcal{P}_t$, so
+it can compute the \emph{distribution} of $i$'s action induced by its own posterior over $i$'s hand,
+\begin{equation}
+  \Pr\bigl[\,a_i = a \mid \mathcal{I}_j^t\,\bigr]
+  \;=\; \sum_{D \,\models\, \mathcal{I}_j^t}
+  \Pr\bigl[D \mid \mathcal{I}_j^t\bigr]\;
+  \mathbb{1}\!\left[\Pi\bigl(\text{hand}_i(D),\, \mathcal{P}_t\bigr) = a\right],
+  \label{eq:coord}
+\end{equation}
+and, having observed $a_i$, condition on it. That is exactly the (C5) reasoning of
+\S\ref{sec:inference-constraints} carried one step further: a legality certificate says the asker
+held \emph{some} card of the half-suit, while \eqref{eq:coord} says the asker held a hand on which
+$\Pi$ preferred that ask. The deployed approximation does not evaluate \eqref{eq:coord} in full,
+which would require enumerating hands; it captures the first-order part of it through the ask-tally
+prior \eqref{eq:prior}. The white-box adversary of \S\ref{sec:results-whitebox} is the construction
+that evaluates \eqref{eq:coord} against \fishseven{} rather than for it, and
+\S\ref{sec:development-instrument} reports what that inversion is worth.
+
+Two conditions make this work, and both are engineering constraints rather than assumptions. $\Pi$
+must be deterministic given $(\text{own hand}, \mathcal{P}_t)$, which is what
+\eqref{eq:tiebreak} restores and what an unstable sort had broken. And $\Pi$ must be common
+knowledge, which for three copies of one published agent it is. No shared secret and no pre-play
+randomisation are needed or used, which is the sense in which the team's correlation device is public
+(\S\ref{sec:threat}).
+
+\paragraph{One defect the evaluation runs under.} Agents are constructed once per worker thread and
+reused across the deals that thread is given, and some per-agent state survives the inter-deal reset,
+reachable only under the search. This violates the premise that $\Pi$ depends on
+$(\text{own hand}, \mathcal{P}_t)$ alone: a decision can depend on which deals the thread happened to
+process earlier. The carrier was identified as the rollout engine, which the reset never touches; the
+specific field was not. It was deliberately not repaired, because the one-line fix changes the play of
+every searching configuration by roughly one deal in \vsevenSsixIncidence{}, and applying it after the
+configuration was frozen would defeat the purpose of freezing.
+\S\ref{sec:results-controls} measures its magnitude on holdout material, and
+\S\ref{sec:discussion-engineering} states what it costs the argument above.
+
+\subsection{The complete decision procedure}
+\label{sec:agent-full}
+
+Collecting the pieces, one turn of \fishseven{} at seat $s$ and time $t$ runs as follows.
+
+\begin{enumerate}
+\item \textbf{Update beliefs.} Fold the new public events into the candidate sets
+  $\mathcal{M}_t(\cdot)$ by (C1)--(C5), then compute $\hat\mu$ by \eqref{eq:prior} and
+  \eqref{eq:sinkhorn}. Update the no-progress counter $\nu_t$ by \eqref{eq:stall}.
+\item \textbf{Consider declaring.} For each live half-suit form $\alpha^\star$ by
+  \eqref{eq:bestalloc} and its probability $\pi_{\mathrm{alloc}}^\star$ by \eqref{eq:alloc}. Declare
+  if $\Delta > \delta$ in \eqref{eq:declev}, or if a pressure or forced-endgame override fires
+  (\S\ref{sec:agent-declare}).
+\item \textbf{Otherwise ask.} Enumerate $\mathcal{A}_t$ by \eqref{eq:legal} and score every candidate
+  by \eqref{eq:askscore}, including the contestation term \eqref{eq:contest}.
+\item \textbf{Resolve ties.} Form $\mathcal{E}_t$ by \eqref{eq:tieset}. If the endgame condition does
+  not hold, return \eqref{eq:tiebreak} and stop.
+\item \textbf{Search.} Otherwise sample $D_{\mathrm{det}}$ worlds with weights \eqref{eq:iw}, roll out
+  each candidate in each world, and return the candidate selected by \eqref{eq:lcb}, which is the
+  blueprint's own choice unless a candidate clears it by $\kappa$ standard errors.
+\end{enumerate}
+
+Every step reads only the acting seat's own hand and the public record. That is what makes the
+coordination argument of \S\ref{sec:agent-coordination} go through, and it is the property the
+side-channel audit of \S\ref{sec:evaluation-side} tests mechanically rather than by inspection.
+
 %% --- end sections_v07/06-agent ---
 %% --- begin sections_v07/07-evaluation ---
 \section{Evaluation framework}
@@ -5609,7 +6080,7 @@ that scores \vsevenScoreboardTrapWin\% against an earlier version while making
 owns, and losing \vsevenScoreboardTrapLimit\% of its games to the action cap. It is both stronger and
 broken.
 
-A configuration is therefore gated \emph{before} any strength number is computed for it, on eight
+A configuration is therefore gated \emph{before} any strength number is computed for it, on \vsevenGateRulesWord{}
 rules covering dead asks, dead runs, action-limit games, the mirror game-length tail, late
 declarations, and the side-channel tests below. A configuration that fails is rejected regardless of
 its win rate. The gate runs on \emph{training} material by design, being a soundness check on
@@ -5905,8 +6376,9 @@ buys one out of the other. The estimator is worth keeping and the objective is n
 \subsubsection{Nothing learned survives a free random tie-break}
 \label{sec:development-tie}
 
-\vsevenTieContested\% of contested ask decisions tie bit-for-bit, and the open question was whether
-anything can be \emph{selected} within that set rather than merely randomised. A learned re-ranker
+In the \vsix{} mirror \vsevenTieContested\% of contested ask decisions tie bit-for-bit, and the
+open question was whether anything can be \emph{selected} within that set rather than merely
+randomised. A learned re-ranker
 restricted to the tied set was built for the purpose.
 
 Against the deployed policy it scores \vsevenKfiveTieOnly{}~pp, indistinguishable from the free
@@ -5943,16 +6415,18 @@ under the null.
 \section{Experimental design}
 \label{sec:design}
 
+\FloatBarrier
 \subsection{Configurations compared}
 \label{sec:design-configs}
 
-\begin{table}[t]\centering
-\caption{Every configuration this paper compares. Configurations marked as pre-existing were
-available before the v0.7 programme began; the phase-2 composite was assembled during it. Only
-\fishseven{} was frozen for holdout evaluation.}
+\begin{table}[tbp]
+\centering
+\caption{Every configuration this paper compares. Configurations marked pre-existing were available
+before the v0.7 programme began; the phase-2 composite was assembled during it. Only \fishseven{} was
+frozen for holdout evaluation.}
 \label{tab:configs}
-\small
-\begin{tabular}{lp{0.30\linewidth}lp{0.26\linewidth}}
+\tabfont
+\begin{tabularx}{\linewidth}{@{}l L l L@{}}
 \toprule
 Name & What it is & Origin & Role in this paper \\
 \midrule
@@ -5964,16 +6438,16 @@ lineage baseline and reference opponent for ablations \\
 \textbf{the registered primary comparison target} \\
 \fmid{} & a more expensive frontier configuration & pre-existing &
 secondary frontier comparison \\
-\composite{} & v0.6 frontier search, plus the contestation weight, plus one switch & assembled in
-development phase 2 of this cycle & the strongest configuration available before the architecture
-work; the comparison in \S\ref{sec:results-composite} \\
+\composite{} & v0.6 frontier search, plus the contestation weight, plus one switch &
+assembled in development phase 2 & the strongest configuration available before the architecture
+work; the comparison of \S\ref{sec:results-composite} \\
 v0.5, v0.4, v0.3 & earlier lineage releases & pre-existing & lineage baselines and panel members \\
-scripted archetypes & thirteen hand-built playstyles including deception archetypes & pre-existing &
+scripted archetypes & thirteen hand-built playstyles, including deception archetypes & pre-existing &
 opponent panel members \\
 sealed adversaries & fourteen configurations sealed before this cycle & sealed in phase 2 &
 opponent panel members, decoded only at evaluation \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 Table~\ref{tab:configs} is worth reading before any result, because the paper's central nuance
@@ -5983,27 +6457,27 @@ configuration that existed before this cycle, and improves on it. It is also com
 does not measurably improve on it. Those are different claims about different objects and
 \S\ref{sec:results-composite} keeps them apart.
 
-\begin{figure}[t]\centering
+\begin{figure}[tbp]\centering
 \begin{tikzpicture}[
   font=\small,
   st/.style={draw=fishgray,rounded corners=2pt,align=center,inner sep=5pt,minimum height=11mm,text width=26mm},
   seal/.style={st,fill=fishlight,draw=fishgreen},
   arr/.style={-{Stealth[length=2mm]},fishgray,thick}]
 \node[st] (base) at (0,0)    {\textbf{v0.6 frontier}\\{\scriptsize deployed policy,}\\[-1pt]{\scriptsize \texttt{F-cheap}, \texttt{F-mid}}};
-\node[st] (dev)  at (3.6,0)  {\textbf{development}\\{\scriptsize instrument, adversaries,}\\[-1pt]{\scriptsize candidate mechanisms}};
-\node[st] (sel)  at (7.2,0)  {\textbf{selection}\\{\scriptsize $K$ configurations}\\[-1pt]{\scriptsize scored and compared}};
-\node[st] (frz)  at (10.8,0) {\textbf{freeze}\\{\scriptsize one configuration,}\\[-1pt]{\scriptsize artifact round-tripped}};
-\node[seal] (ev) at (14.4,0) {\textbf{evaluation}\\{\scriptsize sealed holdout,}\\[-1pt]{\scriptsize registered protocol}};
+\node[st] (dev)  at (3.2,0)  {\textbf{development}\\{\scriptsize instrument, adversaries,}\\[-1pt]{\scriptsize candidate mechanisms}};
+\node[st] (sel)  at (6.4,0)  {\textbf{selection}\\{\scriptsize $K$ configurations}\\[-1pt]{\scriptsize scored and compared}};
+\node[st] (frz)  at (9.6,0) {\textbf{freeze}\\{\scriptsize one configuration,}\\[-1pt]{\scriptsize artifact round-tripped}};
+\node[seal] (ev) at (12.8,0) {\textbf{evaluation}\\{\scriptsize sealed holdout,}\\[-1pt]{\scriptsize registered protocol}};
 \draw[arr] (base) -- (dev); \draw[arr] (dev) -- (sel); \draw[arr] (sel) -- (frz); \draw[arr] (frz) -- (ev);
-\node[align=center,font=\scriptsize,fishgray,text width=76mm] (train) at (5.4,-1.75)
+\node[align=center,font=\scriptsize,fishgray,text width=70mm] (train) at (4.8,-1.75)
   {\textbf{training material}: banks 7030001--7030004, unsealed adversary half.\\
    Everything left of the barrier may see this material.};
-\node[align=center,font=\scriptsize,fishgreen,text width=42mm] (hold) at (14.4,-1.75)
+\node[align=center,font=\scriptsize,fishgreen,text width=38mm] (hold) at (12.8,-1.75)
   {\textbf{sealed material}: banks committed by digest, adversary half encrypted, decoded only here.};
-\draw[fishgreen,very thick,dashed] (12.6,1.2) -- (12.6,-2.6);
-\node[font=\scriptsize\bfseries,fishgreen,rotate=90] at (12.35,-0.7) {seal};
-\draw[fishgray,dotted] (5.4,-0.75) -- (5.4,-1.15);
-\draw[fishgreen,dotted] (14.4,-0.75) -- (14.4,-1.15);
+\draw[fishgreen,very thick,dashed] (11.2,1.2) -- (11.2,-2.6);
+\node[font=\scriptsize\bfseries,fishgreen,rotate=90] at (10.95,-0.7) {seal};
+\draw[fishgray,dotted] (4.8,-0.75) -- (4.8,-1.15);
+\draw[fishgreen,dotted] (12.8,-0.75) -- (12.8,-1.15);
 \end{tikzpicture}
 \caption{The development and evaluation protocol. Configurations were generated, scored and selected
 using training material only. Exactly one configuration was then frozen, and evaluated against
@@ -6013,16 +6487,17 @@ a run naming a sealed seed fails unless an explicit variable is set, which was s
 \label{fig:protocol}
 \end{figure}
 
+\FloatBarrier
 \subsection{Material, and the checks performed before any measurement}
 \label{sec:design-material}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The deal banks. Each digest was recomputed before any cell was played, by folding the six
 dealt hands and the dealer of every deal into a rolling hash without constructing a policy or playing
 a game. The committed digests had been computed by a different build of the engine at sealing time,
 so agreement is between two binaries as well as two dates.}
 \label{tab:banks}
-{\small\begin{tabular}{lrll}
+{\tabfont\begin{tabular}{lrll}
 \toprule
 Bank & Deals & Digest reproduced & Matches commitment \\
 \midrule
@@ -6044,13 +6519,13 @@ character from its own ordered option map, and its round trip with search enable
 \vsevenRtwoaGames{} games. The engine's soundness audit reports \vsevenVerifyViolations{} violations
 in \vsevenVerifyChecks{} checks and its self-test passes on \vsevenSelftestChecks{} checks.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Calibration of the side-channel controls on holdout material. \emph{Must fail} is the set
 the protocol names for each planted violation in advance. It is not one test each: the seed cheat is
 visible to two of them. A control failing a test outside its set, or missing one inside it, would
 mean the gate does not discriminate.}
 \label{tab:sidechannel}
-{\small\begin{tabular}{lccccll}
+{\tabfont\begin{tabular}{lccccll}
 \toprule
 Planted channel & S3 & S4 & S5 & S6 & Must fail & As required \\
 \midrule
@@ -6065,14 +6540,15 @@ The homogeneity controls of \S\ref{sec:evaluation-side} calibrate as specified: 
 fails exactly the tests named for it and no others, identically on both banks, over
 \vsevenSideCells{} cells (Table~\ref{tab:sidechannel}).
 
+\FloatBarrier
 \subsection{The soundness gate}
 \label{sec:design-gate}
 
-\begin{table}[t]\centering
-\caption{The soundness gate, eight rules, run on training material by design. The negative control is
+\begin{table}[tbp]\centering
+\caption{The soundness gate, \vsevenGateRulesWord{} rules, run on training material by design. The negative control is
 a configuration constructed to be rejected.}
 \label{tab:gate}
-{\small\begin{tabular}{lcccc}
+{\tabfont\begin{tabular}{lcccc}
 \toprule
 Rule & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Negative control \\
 \midrule
@@ -6090,7 +6566,7 @@ S6 = 0 at \texttt{--threads=1 --freshagents} & ok & ok & ok & ok \\
 \end{tabular}}
 \end{table}
 
-\fishseven{} passes all \vsevenGateRules{} rules: \vsevenGateDeadAsks\% provably dead asks against a
+\fishseven{} passes all \vsevenGateRulesWord{} rules: \vsevenGateDeadAsks\% provably dead asks against a
 0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail maximum \vsevenGateTailMax{} with
 99th percentile \vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches over
 \vsevenGateSsixNodes{} audited decisions. Reported but not gated: \vsevenGateEvents{} events per game,
@@ -6098,6 +6574,7 @@ S6 = 0 at \texttt{--threads=1 --freshagents} & ok & ok & ok & ok \\
 \vsevenNegFailCount{} rules, namely \vsevenNegFails{}, which are exactly the rules the protocol names
 for it in advance.
 
+\FloatBarrier
 \subsection{The registered protocol}
 \label{sec:design-protocol}
 
@@ -6120,18 +6597,19 @@ a particular ordering, so that its direction could not be chosen after the fact,
 training material that comparison ran \emph{against} \fishseven{}. \S\ref{sec:results-partners}
 reports the outcome and uses the registered wording.
 
+\FloatBarrier
 \subsection{The battery}
 \label{sec:design-battery}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Every registered battery against what was measured. \emph{Registered} is the count the
 protocol names, not the count that ran: two deviations add a reference cell and sixteen control cells,
 because without them three of the protocol's own questions are not computable from the cells it
 lists.}
 \label{tab:battery}
-{\small\begin{tabular}{llrrrl}
+{\tabfont\begin{tabularx}{\linewidth}{@{}l L r r r l@{}}
 \toprule
-Battery & What it measures & Preregistered & Added & Measured & Status \\
+Battery & What it measures & Registered & Added & Measured & Status \\
 \midrule
 B2 & headline strength against the frontier & 10 & 0 & 10 & complete \\
 B3 & the shared 31-member panel & 248 & 0 & 248 & complete \\
@@ -6143,7 +6621,7 @@ B8 & the rule-dialect table & 16 & 0 & 16 & complete \\
 B9 & the negative controls & 10 & 16 & 26 & complete (D2) \\
 B10 & the S6 residual & 16 & 0 & 16 & complete \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
 \vsevenScoredCells{} scored cells over \vsevenScoredGames{} games. No registered cell was dropped;
@@ -6166,62 +6644,63 @@ Appendix~\ref{app:repro} and emitted into this document mechanically. The sectio
 \S\ref{sec:results-partners} through \S\ref{sec:results-adversarial}, before reporting the validity
 controls and the computational cost.
 
+\FloatBarrier
 \subsection{RQ1: strength against the v0.6 frontier}
 \label{sec:results-primary}
 
-\begin{figure}[t]\centering
-{\small\begin{tikzpicture}[x=1cm,y=1cm]
+\begin{figure}[tbp]\centering
+{\tabfont\begin{tikzpicture}[x=1cm,y=1cm]
   \node[anchor=east,font=\small] at (-0.25,-0.000) {vs.\ v0.6 (deployed)};
-  \draw[fishgray,thick] (8.682,-0.000) -- (9.598,-0.000);
-  \draw[fishgray] (8.682,-0.110) -- (8.682,0.110);
-  \draw[fishgray] (9.598,-0.110) -- (9.598,0.110);
-  \fill[fishgray] (9.140,-0.000) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-0.000) {+4.63};
+  \draw[fishgray,thick] (7.735,-0.000) -- (8.551,-0.000);
+  \draw[fishgray] (7.735,-0.110) -- (7.735,0.110);
+  \draw[fishgray] (8.551,-0.110) -- (8.551,0.110);
+  \fill[fishgray] (8.143,-0.000) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-0.000) {+4.63};
   \node[anchor=east,font=\small] at (-0.25,-0.720) {vs.\ F-cheap \textit{(primary)}};
-  \draw[fishgreen,ultra thick] (7.320,-0.720) -- (8.256,-0.720);
-  \draw[fishgreen] (7.320,-0.830) -- (7.320,-0.610);
-  \draw[fishgreen] (8.256,-0.830) -- (8.256,-0.610);
-  \fill[fishgreen] (7.788,-0.720) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-0.720) {+3.33};
+  \draw[fishgreen,ultra thick] (6.522,-0.720) -- (7.355,-0.720);
+  \draw[fishgreen] (6.522,-0.830) -- (6.522,-0.610);
+  \draw[fishgreen] (7.355,-0.830) -- (7.355,-0.610);
+  \fill[fishgreen] (6.939,-0.720) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-0.720) {+3.33};
   \node[anchor=east,font=\small] at (-0.25,-1.440) {vs.\ F-mid};
-  \draw[fishgray,thick] (6.408,-1.440) -- (8.261,-1.440);
-  \draw[fishgray] (6.408,-1.550) -- (6.408,-1.330);
-  \draw[fishgray] (8.261,-1.550) -- (8.261,-1.330);
-  \fill[fishgray] (7.335,-1.440) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-1.440) {+2.89};
+  \draw[fishgray,thick] (5.709,-1.440) -- (7.360,-1.440);
+  \draw[fishgray] (5.709,-1.550) -- (5.709,-1.330);
+  \draw[fishgray] (7.360,-1.550) -- (7.360,-1.330);
+  \fill[fishgray] (6.535,-1.440) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-1.440) {+2.89};
   \node[anchor=east,font=\small] at (-0.25,-2.160) {vs.\ phase-2 composite};
-  \draw[fishgray,thick] (4.016,-2.160) -- (4.934,-2.160);
-  \draw[fishgray] (4.016,-2.270) -- (4.016,-2.050);
-  \draw[fishgray] (4.934,-2.270) -- (4.934,-2.050);
-  \fill[fishgray] (4.475,-2.160) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-2.160) {+0.15};
+  \draw[fishgray,thick] (3.578,-2.160) -- (4.395,-2.160);
+  \draw[fishgray] (3.578,-2.270) -- (3.578,-2.050);
+  \draw[fishgray] (4.395,-2.270) -- (4.395,-2.050);
+  \fill[fishgray] (3.987,-2.160) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-2.160) {+0.15};
   \node[anchor=east,font=\small] at (-0.25,-2.880) {vs.\ v0.5};
-  \draw[fishgray,thick] (9.068,-2.880) -- (10.375,-2.880);
-  \draw[fishgray] (9.068,-2.990) -- (9.068,-2.770);
-  \draw[fishgray] (10.375,-2.990) -- (10.375,-2.770);
-  \fill[fishgray] (9.721,-2.880) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-2.880) {+5.18};
+  \draw[fishgray,thick] (8.079,-2.880) -- (9.243,-2.880);
+  \draw[fishgray] (8.079,-2.990) -- (8.079,-2.770);
+  \draw[fishgray] (9.243,-2.990) -- (9.243,-2.770);
+  \fill[fishgray] (8.661,-2.880) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-2.880) {+5.18};
   \node[anchor=east,font=\small] at (-0.25,-3.600) {worst partner substitution};
-  \draw[fishgray,thick] (3.236,-3.600) -- (5.019,-3.600);
-  \draw[fishgray] (3.236,-3.710) -- (3.236,-3.490);
-  \draw[fishgray] (5.019,-3.710) -- (5.019,-3.490);
-  \fill[fishgray] (4.128,-3.600) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-3.600) {-0.19};
+  \draw[fishgray,thick] (2.883,-3.600) -- (4.472,-3.600);
+  \draw[fishgray] (2.883,-3.710) -- (2.883,-3.490);
+  \draw[fishgray] (4.472,-3.710) -- (4.472,-3.490);
+  \fill[fishgray] (3.677,-3.600) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-3.600) {-0.19};
   \node[anchor=east,font=\small] at (-0.25,-4.320) {best adversary found};
-  \draw[fishgray,thick] (0.625,-4.320) -- (1.963,-4.320);
-  \draw[fishgray] (0.625,-4.430) -- (0.625,-4.210);
-  \draw[fishgray] (1.963,-4.430) -- (1.963,-4.210);
-  \fill[fishgray] (1.294,-4.320) circle (0.075);
-  \node[anchor=west,font=\scriptsize\ttfamily] at (11.250,-4.320) {-2.91};
-  \draw[densely dashed,fishgray] (4.323,-4.870) -- (4.323,0.550);
-  \draw[->,fishgray] (0,-4.870) -- (11.100,-4.870);
-  \draw[fishgray] (0.157,-4.870) -- (0.157,-4.970) node[below,font=\scriptsize] {-4};
-  \draw[fishgray] (2.240,-4.870) -- (2.240,-4.970) node[below,font=\scriptsize] {-2};
-  \draw[fishgray] (4.323,-4.870) -- (4.323,-4.970) node[below,font=\scriptsize] {0};
-  \draw[fishgray] (6.406,-4.870) -- (6.406,-4.970) node[below,font=\scriptsize] {2};
-  \draw[fishgray] (8.489,-4.870) -- (8.489,-4.970) node[below,font=\scriptsize] {4};
-  \draw[fishgray] (10.572,-4.870) -- (10.572,-4.970) node[below,font=\scriptsize] {6};
-  \node[font=\scriptsize,anchor=north] at (5.500,-5.320) {win-rate edge (percentage points)};
+  \draw[fishgray,thick] (0.557,-4.320) -- (1.749,-4.320);
+  \draw[fishgray] (0.557,-4.430) -- (0.557,-4.210);
+  \draw[fishgray] (1.749,-4.430) -- (1.749,-4.210);
+  \fill[fishgray] (1.153,-4.320) circle (0.075);
+  \node[anchor=west,font=\scriptsize\ttfamily] at (10.050,-4.320) {-2.91};
+  \draw[densely dashed,fishgray] (3.851,-4.870) -- (3.851,0.550);
+  \draw[->,fishgray] (0,-4.870) -- (9.900,-4.870);
+  \draw[fishgray] (0.140,-4.870) -- (0.140,-4.970) node[below,font=\scriptsize] {-4};
+  \draw[fishgray] (1.996,-4.870) -- (1.996,-4.970) node[below,font=\scriptsize] {-2};
+  \draw[fishgray] (3.851,-4.870) -- (3.851,-4.970) node[below,font=\scriptsize] {0};
+  \draw[fishgray] (5.707,-4.870) -- (5.707,-4.970) node[below,font=\scriptsize] {2};
+  \draw[fishgray] (7.563,-4.870) -- (7.563,-4.970) node[below,font=\scriptsize] {4};
+  \draw[fishgray] (9.419,-4.870) -- (9.419,-4.970) node[below,font=\scriptsize] {6};
+  \node[font=\scriptsize,anchor=north] at (4.900,-5.320) {win-rate edge (percentage points)};
 \end{tikzpicture}}
 \caption{Principal comparisons for \fishseven{}, pooled over both holdout banks with 95\%
 deal-clustered bootstrap confidence intervals. Positive values favour \fishseven{}. The registered
@@ -6231,15 +6710,15 @@ axis: the worst partner substitution of \S\ref{sec:results-partners}, and the mo
 \label{fig:forest}
 \end{figure}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Strength against the \vsix{} frontier and lineage baselines, paired duplicate blocks, both
 holdout banks.}
 \label{tab:frontier}
-{\small\begin{tabular}{llrrrr}
+{\tabfont\begin{tabular}{llrrrr}
 \toprule
 Cell & Opponent & Edge (pp) & 95\% CI & Games & Sign replicates \\
 \midrule
-B2.1 & v06 & $+4.63$ & $[+4.19, +5.06]$ & 48,000 & yes \\
+B2.1 & v0.6 & $+4.63$ & $[+4.19, +5.06]$ & 48,000 & yes \\
 B2.2 & \texttt{F-cheap} & $+3.33$ & $[+2.88, +3.78]$ & 48,000 & yes \\
 B2.3 & \texttt{F-mid} & $+2.89$ & $[+2.00, +3.78]$ & 12,000 & yes \\
 B2.4 & the phase-2 composite & $+0.15$ & $[-0.29, +0.59]$ & 48,000 & yes \\
@@ -6271,6 +6750,7 @@ interval of any kind, so no interval can be quoted and no claim about the declar
 made. \fishseven{} runs \vsevenDeclFrozenLo{} to \vsevenDeclFrozenHi{} across the five cells against
 opponents' \vsevenDeclOppLo{} to \vsevenDeclOppHi{}. That is a diagnostic.
 
+\FloatBarrier
 \subsection{Non-confirmatory results}
 \label{sec:results-nonconfirm}
 
@@ -6314,7 +6794,7 @@ removing every single component in turn costs less than a third of the whole, th
 gain it cannot explain. Read per bank, as \S\ref{sec:evaluation-replication} requires, the two banks
 disagree.
 
-\begin{center}\small
+\begin{center}\tabfont
 \begin{tabular}{lrrlc}
 \toprule
 Bank & Whole & One third & Largest single drop & Verdict \\
@@ -6346,13 +6826,13 @@ The selection term on holdout material is \vsevenSelOnHoldout{}~pp \emph{by cons
 banks were never available for selection, so not one of the \vsevenSelK{} choices could have used any
 deal of them. That is a structural guarantee rather than a measurement.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The four quantities the registered selection check tabulates, against their holdout
 measurements. Three reproduce or exceed; one falls short. These are not every figure the protocol
 states in advance, and two of the partner-regime predictions in \S\ref{sec:results-partners} also
 come in low.}
 \label{tab:selection}
-{\small\begin{tabular}{lrrr}
+{\tabfont\begin{tabular}{lrrr}
 \toprule
 Quantity & Training & Holdout & Shortfall \\
 \midrule
@@ -6376,8 +6856,8 @@ the direction \S\ref{sec:results-composite} indicates.
 \subsubsection{The seven conditions, answered}
 \label{sec:results-seven}
 
-\begin{center}\small
-\begin{tabular}{clp{0.50\linewidth}}
+\begin{center}\tabfont
+\begin{tabularx}{\linewidth}{@{}c L L@{}}
 \toprule
 \# & Condition & Result \\
 \midrule
@@ -6389,12 +6869,13 @@ the direction \S\ref{sec:results-composite} indicates.
 6 & the soundness gate & not met. All \vsevenGateRules{} rules pass \\
 7 & the validity controls & not met. Every control behaves as specified \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
 Two of the seven are met or unresolved, being condition 2 outright and condition 3 by
 non-replication. The other five are not met.
 
+\FloatBarrier
 \subsection{Worst case and minimax regret over a shared panel}
 \label{sec:results-panel}
 
@@ -6404,19 +6885,20 @@ non-replication. The other five are not met.
 \vsevenPanelExpensive{} expensive members at \vsevenDealsExpensive{}. All four carry a cell for every
 member, which is what makes minimax regret defined.
 
-\begin{table}[t]\centering
-\caption{Worst panel cell per configuration.}
+\begin{table}[tbp]\centering
+\caption{Worst panel cell per configuration. Per-bank values are given in bank order,
+7090001 then 7090002.}
 \label{tab:worstcase}
-{\small\begin{tabular}{llrrl}
+{\tabfont\begin{tabularx}{\linewidth}{@{}L l r c r@{}}
 \toprule
 Configuration & Worst cell & Edge (pp) & 95\% CI & Per bank \\
 \midrule
-FishBot v0.7 & phase-2 composite & $-0.04$ & $[-1.41, +1.33]$ & 7090001:+1.67\ \ 7090002:-1.75 \\
-v0.6 deployed & SEALED:X01xC3f & $-4.24$ & $[-4.86, -3.62]$ & 7090001:-3.86\ \ 7090002:-4.63 \\
-\texttt{F-cheap} & phase-2 composite & $-2.08$ & $[-3.48, -0.69]$ & 7090001:-2.21\ \ 7090002:-1.96 \\
-phase-2 composite & phase-2 composite & $+0.00$ & $[+0.00, +0.00]$ & 7090001:+0.00\ \ 7090002:+0.00 \\
+FishBot v0.7 & phase-2 composite & $-0.04$ & $[-1.41, +1.33]$ & $+1.67$ / $-1.75$ \\
+v0.6 deployed & SEALED:X01xC3f & $-4.24$ & $[-4.86, -3.62]$ & $-3.86$ / $-4.63$ \\
+\texttt{F-cheap} & phase-2 composite & $-2.08$ & $[-3.48, -0.69]$ & $-2.21$ / $-1.96$ \\
+phase-2 composite & phase-2 composite & $+0.00$ & $[+0.00, +0.00]$ & $+0.00$ / $+0.00$ \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
 \fishseven{}'s worst cell is \vsevenWorstFrozen{}~pp
@@ -6440,11 +6922,11 @@ members carry a free zero cell against themselves, so the worst case is printed 
 \composite{} is ahead of \fishseven{} on both readings, at \vsevenWorstComposite{} with its self-cell
 and \vsevenWorstCompositeExSelf{} without.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Minimax regret over the shared panel, best first. The protocol sets no threshold on this
 quantity and requires only that it be reported.}
 \label{tab:regret}
-{\small\begin{tabular}{llr}
+{\tabfont\begin{tabular}{llr}
 \toprule
 Configuration & Minimax regret (pp) & Attained against \\
 \midrule
@@ -6464,10 +6946,10 @@ subject. The regret difference is concentrated in the far archetypes (Table~\ref
 opponents every configuration already beats by between \vsevenFarSpanLo{} and \vsevenFarSpanHi{}~pp,
 which is a reason to weight it less but not a reason to discount it.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The far archetypes, where the minimax-regret differences are concentrated.}
 \label{tab:farpanel}
-{\small\begin{tabular}{lrrrr}
+{\tabfont\begin{tabular}{lrrrr}
 \toprule
 Far archetype & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
@@ -6498,17 +6980,18 @@ therefore double-counted by any mean, the figures are \fishseven{} \vsevenPanelM
 \vsevenPanelMeanIncumbent{}. The reporting rule of \S\ref{sec:evaluation-panel} forbids leading with
 this, and it points the opposite way from minimax regret. Appendix~\ref{app:panel} gives every cell.
 
+\FloatBarrier
 \subsection{RQ3: attribution of the gain}
 \label{sec:results-attribution}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The attribution lattice. Add-one-in is measured from the deployed \vsix{} policy;
 leave-one-out is the drop from \fishseven{}. Reference cell \fishseven{} against the deployed policy
 on the lattice banks: \vsevenBfiveWhole{} $[\vsevenBfiveWholeLo, \vsevenBfiveWholeHi]$.}
 \label{tab:attribution}
-{\small\begin{tabular}{lrrrr}
+{\tabfont\begin{tabularx}{\linewidth}{@{}L r c r c@{}}
 \toprule
-Component & Add-one-in from v0.6 & 95\% CI & Leave-one-out drop & 95\% CI \\
+Component & Add-one-in & 95\% CI & Leave-one-out & 95\% CI \\
 \midrule
 r12=25 & $+2.18$ & $[+1.55, +2.81]$ & $+1.69$ & $[+0.80, +2.57]$ \\
 the search & $+1.91$ & $[+1.38, +2.44]$ & $+0.57$ & $[-0.33, +1.46]$ \\
@@ -6517,11 +7000,11 @@ urgency-off & $+1.37$ & $[+1.12, +1.63]$ & $+0.64$ & $[-0.25, +1.53]$ \\
 stall=12 & $+0.00$ & $[+0.00, +0.00]$ & $+0.00$ & $[-0.89, +0.89]$ \\
 \textit{m2=0} \textit{(not in the freeze)} & $+0.77$ & $[+0.66, +0.88]$ & --- & --- \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
 The registered prediction was that the contestation weight of \S\ref{sec:agent-contest} carries the
-gain, checkable as a leave-one-out drop of roughly two points. On that check it holds: the holdout
+gain, checkable as a leave-one-out drop of roughly two percentage points. On that check it holds: the holdout
 drop is \vsevenLooRtwelve{}~pp $[\vsevenLooRtwelveLo, \vsevenLooRtwelveHi]$, with the training figure
 \vsevenTrainRtwelveLoo{} inside the interval, and an add-one-in of \vsevenAddInRtwelve{}. The stronger
 statement, that this coordinate is where the gain lives, is not supported at this power: the drop's
@@ -6546,27 +7029,29 @@ on training material and is not re-measured here, because \fishseven{} does not 
 the protocol directs that it not be added back; there is no leave-one-out cell for it and there could
 not be.
 
+\FloatBarrier
 \subsection{RQ2: partner substitution and one-seat upgrades}
 \label{sec:results-partners}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Partner-regime table against a v0.5 opponent. Team A is the evaluated configuration plus two
-copies of the named partner; team B is three copies of the opponent.}
+copies of the named partner; team B is three copies of the opponent. Per-bank values are given in
+bank order, 7090001 then 7090002.}
 \label{tab:partners}
-{\small\begin{tabular}{lrrlc}
+{\tabfont\begin{tabularx}{\linewidth}{@{}L r c r c@{}}
 \toprule
-Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Sign replicates \\
+Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Repl. \\
 \midrule
-itself & $+4.49$ & $[+3.61, +5.38]$ & 7090001:+4.18\ \ 7090002:+4.81 & yes \\
-v06 & $+1.93$ & $[+1.04, +2.82]$ & 7090001:+2.07\ \ 7090002:+1.79 & yes \\
-v05 & $+0.78$ & $[-0.09, +1.66]$ & 7090001:+0.95\ \ 7090002:+0.62 & yes \\
-v04 & $+1.34$ & $[+0.46, +2.22]$ & 7090001:+1.30\ \ 7090002:+1.38 & yes \\
-v03 & $+1.40$ & $[+0.56, +2.25]$ & 7090001:+1.08\ \ 7090002:+1.72 & yes \\
-detective & $+1.83$ & $[+0.97, +2.68]$ & 7090001:+1.35\ \ 7090002:+2.30 & yes \\
-withholder & $-0.19$ & $[-1.04, +0.67]$ & 7090001:+0.00\ \ 7090002:-0.38 & \textbf{no} \\
-lockout & $+1.89$ & $[+1.04, +2.74]$ & 7090001:+1.39\ \ 7090002:+2.39 & yes \\
+itself & $+4.49$ & $[+3.61, +5.38]$ & $+4.18$ / $+4.81$ & yes \\
+v0.6 & $+1.93$ & $[+1.04, +2.82]$ & $+2.07$ / $+1.79$ & yes \\
+v0.5 & $+0.78$ & $[-0.09, +1.66]$ & $+0.95$ / $+0.62$ & yes \\
+v0.4 & $+1.34$ & $[+0.46, +2.22]$ & $+1.30$ / $+1.38$ & yes \\
+v0.3 & $+1.40$ & $[+0.56, +2.25]$ & $+1.08$ / $+1.72$ & yes \\
+\texttt{detective} & $+1.83$ & $[+0.97, +2.68]$ & $+1.35$ / $+2.30$ & yes \\
+\texttt{withholder} & $-0.19$ & $[-1.04, +0.67]$ & $+0.00$ / $-0.38$ & \textbf{no} \\
+\texttt{lockout} & $+1.89$ & $[+1.04, +2.74]$ & $+1.39$ / $+2.39$ & yes \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
 \vsevenSonePositive{} of \vsevenSoneRows{} changed-partner rows are positive. The minimum is
@@ -6585,29 +7070,30 @@ expectation. The protocol states in advance \vsevenTrainOppSixSelf{} in self-pla
 namely \vsevenOppSixVthree{} against \texttt{v03}, more than a point below its floor, and
 \vsevenOppSixDetective{} against \texttt{detective}.
 
-\begin{table}[t]\centering
-\caption{Partner-regime table against a \vsix{} opponent.}
+\begin{table}[tbp]\centering
+\caption{Partner-regime table against a \vsix{} opponent. Per-bank values are given in bank order,
+7090001 then 7090002.}
 \label{tab:partnerssix}
-{\small\begin{tabular}{lrrlc}
+{\tabfont\begin{tabularx}{\linewidth}{@{}L r c r c@{}}
 \toprule
-Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Sign replicates \\
+Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Repl. \\
 \midrule
-itself & $+4.55$ & $[+3.92, +5.18]$ & 7090001:+4.88\ \ 7090002:+4.21 & yes \\
-v06 & $+2.75$ & $[+2.14, +3.37]$ & 7090001:+2.97\ \ 7090002:+2.54 & yes \\
-v03 & $+1.46$ & $[+0.63, +2.29]$ & 7090001:+1.25\ \ 7090002:+1.67 & yes \\
-detective & $+2.34$ & $[+1.49, +3.19]$ & 7090001:+2.42\ \ 7090002:+2.26 & yes \\
+itself & $+4.55$ & $[+3.92, +5.18]$ & $+4.88$ / $+4.21$ & yes \\
+v0.6 & $+2.75$ & $[+2.14, +3.37]$ & $+2.97$ / $+2.54$ & yes \\
+v0.3 & $+1.46$ & $[+0.63, +2.29]$ & $+1.25$ / $+1.67$ & yes \\
+\texttt{detective} & $+2.34$ & $[+1.49, +3.19]$ & $+2.42$ / $+2.26$ & yes \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Transfer across partners: \fishseven{} over \vsix{} against \vsix{} over v0.5, on the same
 eight settings and the same banks. The two training rows are quoted from the registered protocol and
 are the only hand-entered numbers in this section; the protocol records that its v0.6-over-v0.5
 training row is computed on three of seven changed settings, so that row is not directly comparable
 with the holdout row above it. Reported and not gated.}
 \label{tab:regimes}
-{\small\begin{tabular}{lrrrr}
+{\tabfont\begin{tabular}{lrrrr}
 \toprule
 Comparison & Min & Median & Self & Median/self \\
 \midrule
@@ -6632,15 +7118,16 @@ A one-seat upgrade is worth \vsevenOneSeatFive{}~pp against a v0.5 opponent (reg
 \vsevenTrainOneSeatSix{}). That a single seat purchases a large fraction of the three-seat gain is
 the strongest evidence in this paper that the advantage is individual rather than conventional.
 
+\FloatBarrier
 \subsection{RQ2: cross-play between independently trained runs}
 \label{sec:results-crossplay}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Cross-play. Three runs of the same architecture, trained independently on disjoint fitting
 banks with different search trajectories and, for one, a different starting basin; pairwise parameter
 distance \vsevenXpDistanceLo{} to \vsevenXpDistanceHi{} over \vsevenCoordinates{} coordinates.}
 \label{tab:crossplay}
-{\small\begin{tabular}{lccc}
+{\tabfont\begin{tabular}{lccc}
 \toprule
 Run \textbackslash\ partners & xp1 & xp2 & xp3 \\
 \midrule
@@ -6660,12 +7147,12 @@ satisfied against a threshold of \vsevenStwoThreshold{}~pp. For scale, the coord
 documented convention collapses run from self-play scores in the twenties to low single digits under
 cross-play \cite{bard-hanabi,hu-otherplay}; nothing of that kind is present.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The three independently trained runs head to head. \vsevenHtwohSeparated{} of the three
 pairs separate from zero, which is what establishes that these are distinguishable policies rather
 than one policy three times.}
 \label{tab:crossh2h}
-{\small\begin{tabular}{lrr}
+{\tabfont\begin{tabular}{lrr}
 \toprule
 Pair & Edge (pp) & 95\% CI \\
 \midrule
@@ -6676,16 +7163,17 @@ xp2 vs xp3 & $+1.05$ & $[+0.43, +1.68]$ \\
 \end{tabular}}
 \end{table}
 
+\FloatBarrier
 \subsection{RQ2: robustness to rule dialects}
 \label{sec:results-dialects}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The rule-dialect table. Both configurations play the same dialect in every row. This is the
 first dialect sweep of its kind in the corpus and has no training-bank counterpart.}
 \label{tab:dialects}
-{\small\begin{tabular}{lrrlr}
+{\tabfont\begin{tabular}{lrrlr}
 \toprule
-Dialect & Edge (pts) & 95\% CI & Per bank & vs default \\
+Dialect & Edge (pp) & 95\% CI & Per bank & vs default \\
 \midrule
 default & $+4.73$ & $[+4.10, +5.36]$ & 7090003:+4.57\ \ 7090001:+4.88 & $+0.00$ \\
 no-out-of-turn & $+5.25$ & $[+4.63, +5.87]$ & 7090003:+4.72\ \ 7090001:+5.78 & $+0.52$ \\
@@ -6712,32 +7200,33 @@ components rather than three; it is \vsevenLegacyResidual{}
 $[\vsevenLegacyResidualLo, \vsevenLegacyResidualHi]$, an interval \vsevenLegacyResidualRatio{} times
 the size of the residual, so the data are equally consistent with the ladder contributing nothing.
 
+\FloatBarrier
 \subsection{RQ2: adversarial search against FishBot v0.7}
 \label{sec:results-adversarial}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{\vsevenBfourArms{} independently constructed adversarial searches against \fishseven{}. A
 positive edge would mean the adversary beats the target. Each was fitted on a deal stream disjoint
-from the banks it is evaluated on.}
+from the banks it is evaluated on. Per-bank values are given in bank order, 7090001 then 7090002.}
 \label{tab:adversaries}
-{\small\begin{tabular}{lllrrll}
+{\tabfont\begin{tabularx}{\linewidth}{@{}l L l r c r c@{}}
 \toprule
-ID & Class & Objective & Edge over v0.7 & 95\% CI & Per bank & Sign replicates \\
+ID & Class & Objective & Edge (pp) & 95\% CI & Per bank & Repl. \\
 \midrule
-Z01 & C1 in-class & win & $-2.91$ & $[-3.55, -2.27]$ & 7090001:-2.76\ \ 7090002:-3.06 & yes \\
-Z02 & C2 extended & win & $-3.90$ & $[-4.52, -3.28]$ & 7090001:-3.80\ \ 7090002:-4.00 & yes \\
-Z03 & C1 & declerr & $-10.70$ & $[-11.32, -10.09]$ & 7090001:-10.65\ \ 7090002:-10.76 & yes \\
-Z04 & C1 & events & $-9.64$ & $[-10.27, -9.01]$ & 7090001:-9.83\ \ 7090002:-9.46 & yes \\
-Z05 & C1 & forced & $-7.14$ & $[-7.76, -6.52]$ & 7090001:-7.17\ \ 7090002:-7.11 & yes \\
-Z06 & C2 wide sigma & win & $-5.25$ & $[-5.88, -4.62]$ & 7090001:-4.93\ \ 7090002:-5.57 & yes \\
-Z07 & C1 v05 basin & win & $-5.21$ & $[-5.84, -4.58]$ & 7090001:-4.85\ \ 7090002:-5.58 & yes \\
-Z08 & C5 white-box & win & $-3.56$ & $[-4.19, -2.92]$ & 7090001:-3.95\ \ 7090002:-3.17 & yes \\
+Z01 & C1 in-class & win & $-2.91$ & $[-3.55, -2.27]$ & $-2.76$ / $-3.06$ & yes \\
+Z02 & C2 extended & win & $-3.90$ & $[-4.52, -3.28]$ & $-3.80$ / $-4.00$ & yes \\
+Z03 & C1 & declerr & $-10.70$ & $[-11.32, -10.09]$ & $-10.65$ / $-10.76$ & yes \\
+Z04 & C1 & events & $-9.64$ & $[-10.27, -9.01]$ & $-9.83$ / $-9.46$ & yes \\
+Z05 & C1 & forced & $-7.14$ & $[-7.76, -6.52]$ & $-7.17$ / $-7.11$ & yes \\
+Z06 & C2 wide sigma & win & $-5.25$ & $[-5.88, -4.62]$ & $-4.93$ / $-5.57$ & yes \\
+Z07 & C1 v05 basin & win & $-5.21$ & $[-5.84, -4.58]$ & $-4.85$ / $-5.58$ & yes \\
+Z08 & C5 white-box & win & $-3.56$ & $[-4.19, -2.92]$ & $-3.95$ / $-3.17$ & yes \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
-\vsevenBfourFits{} of \vsevenBfourArms{} searches produced a weight vector and all
-\vsevenBfourArms{} were evaluated. \textbf{None of the \vsevenBfourArms{} searches found a positive
+\vsevenBfourFits{} of \vsevenBfourArmsWord{} searches produced a weight vector and all
+\vsevenBfourArmsWord{} were evaluated. \textbf{None of the \vsevenBfourArmsWord{} searches found a positive
 edge against \fishseven{} at the tested budgets.} Every one loses, by between
 \vsevenBfourBestLoss{} and \vsevenBfourWorstLoss{}~pp; every sign replicates; and the largest upper
 bound anywhere is \vsevenBfourWorstUpper{}, which is \vsevenBfourFloorGap{}~pp below the detection
@@ -6780,25 +7269,26 @@ on the fitting stream and already falls below parity there, because the generati
 maximum over candidates at \vsevenBfourDeals{} deals each rather than a measurement of the vector
 that was retained. Re-evaluation closes most of the gap and disjoint banks close the rest.
 
+\FloatBarrier
 \subsection{Validity controls}
 \label{sec:results-controls}
 
 If these misbehave, nothing else in this section is interpretable.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Planted-edge recovery. The recovered excess is the responder's edge against the handicapped
 target minus its edge against the unhandicapped one. The sub-floor rung must \emph{not} be recovered.}
 \label{tab:controls}
-{\small\begin{tabular}{lrrrr}
+{\tabfont\begin{tabularx}{\linewidth}{@{}l C C C C@{}}
 \toprule
-Planted handicap & Planted cost & Responder vs handicapped & Responder vs v0.7 & Recovered excess \\
+Planted handicap & Planted cost & vs.\ handicapped & vs.\ v0.7 & Recovered excess \\
 \midrule
-0.05 \textit{(sub-floor)} & $+0.78$ $[+0.25, +1.32]$ & $-3.62$ $[-4.26, -2.99]$ & $-4.32$ $[-4.94, -3.69]$ & $\mathbf{+0.70}$ $[-0.20, +1.59]$ \\
-0.08 & $+1.59$ $[+1.05, +2.13]$ & $-2.29$ $[-2.92, -1.67]$ & $-4.67$ $[-5.30, -4.05]$ & $\mathbf{+2.38}$ $[+1.50, +3.26]$ \\
-0.11 & $+8.52$ $[+7.93, +9.12]$ & $+2.52$ $[+1.89, +3.16]$ & $-6.90$ $[-7.52, -6.28]$ & $\mathbf{+9.42}$ $[+8.54, +10.31]$ \\
-0.15 & $+11.44$ $[+10.85, +12.03]$ & $+7.30$ $[+6.68, +7.93]$ & $-5.34$ $[-5.97, -4.71]$ & $\mathbf{+12.64}$ $[+11.75, +13.53]$ \\
+0.05 \textit{(sub-floor)} & \ci{$+0.78$}{+0.25, +1.32} & \ci{$-3.62$}{-4.26, -2.99} & \ci{$-4.32$}{-4.94, -3.69} & \ci{$\mathbf{+0.70}$}{-0.20, +1.59} \\[0.4ex]
+0.08 & \ci{$+1.59$}{+1.05, +2.13} & \ci{$-2.29$}{-2.92, -1.67} & \ci{$-4.67$}{-5.30, -4.05} & \ci{$\mathbf{+2.38}$}{+1.50, +3.26} \\[0.4ex]
+0.11 & \ci{$+8.52$}{+7.93, +9.12} & \ci{$+2.52$}{+1.89, +3.16} & \ci{$-6.90$}{-7.52, -6.28} & \ci{$\mathbf{+9.42}$}{+8.54, +10.31} \\[0.4ex]
+0.15 & \ci{$+11.44$}{+10.85, +12.03} & \ci{$+7.30$}{+6.68, +7.93} & \ci{$-5.34$}{-5.97, -4.71} & \ci{$\mathbf{+12.64}$}{+11.75, +13.53} \\[0.4ex]
 \bottomrule
-\end{tabular}}
+\end{tabularx}}
 \end{table}
 
 Two of the three supra-floor rungs are recovered with a lower bound above the
@@ -6821,15 +7311,15 @@ The identity control is exact: \fishseven{} against itself is \vsevenIdentityRat
 zero-width interval on both banks over \vsevenIdentityN{} games each. The responders fitted for these
 controls also lose to unhandicapped \fishseven{} in all four rows, a second sample of
 \S\ref{sec:results-adversarial}'s finding from a different bank and against a handicapped target;
-they maximise win rate as four of the eight adversarial searches do, so this is a second sample
+they maximise win rate as four of the \vsevenBfourArmsWord{} adversarial searches do, so this is a second sample
 rather than an independent method.
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{The seat-isolation residual on holdout material, \vsevenSsixCells{} cells over
 \vsevenSsixDeals{} audited deals. The right column is the registered zero-tolerance condition; the
 left column is the deployed mode.}
 \label{tab:residual}
-{\small\begin{tabular}{llrr}
+{\tabfont\begin{tabular}{llrr}
 \toprule
 Configuration & Bank & \texttt{--threads=1} & \texttt{--threads=1 --freshagents} \\
 \midrule
@@ -6854,10 +7344,11 @@ decision counts move between the two columns in \vsevenSsixDenomMoved{} of the c
 measured form of the statement in \S\ref{sec:evaluation-side} that rebuilding agents per deal changes
 play.
 
+\FloatBarrier
 \subsection{Computational cost}
 \label{sec:results-cost}
 
-\begin{table}[t]\centering
+\begin{table}[tbp]\centering
 \caption{Cost relative to the blueprint. Every figure is a \emph{lower bound}, because the harness
 reports whole-match throughput, which carries the opponent's cost on both sides of the ratio. The
 bound is tightest against the cheapest opponent. No figure carries an interval, these being wall-clock
@@ -6865,7 +7356,7 @@ timings taken across a battery that ran over two days, and the aggregation is a 
 which differs from a median of per-bank ratios by at most \vsevenCostAggDelta{} across the six median
 cells.}
 \label{tab:cost}
-{\small\begin{tabular}{lrrr}
+{\tabfont\begin{tabular}{lrrr}
 \toprule
 Configuration & vs \texttt{random} (tightest) & Far archetypes (median) & Whole panel (median) \\
 \midrule
@@ -6901,7 +7392,7 @@ The advantage is not an artefact of self-play coordination, which is the failure
 cooperative-play literature exists to warn about \cite{bard-hanabi,hu-otherplay}. A single seat's
 upgrade is worth \vsevenOneSeatFive{}~pp of the \vsevenSoneSelf{}~pp three-seat gain, so most of the
 value is individual rather than conventional; cross-play between three independently trained runs
-moves the result by \vsevenXpGapAbs{}~pp; and the advantage survives \vsevenDiaRows{} rule dialects
+moves the result by \vsevenXpGapAbs{}~pp; and the advantage survives \vsevenDiaRowsWord{} rule dialects
 with a largest excursion of \vsevenDiaMaxExcursion{}~pp.
 
 Answering RQ3, the gain is attributable primarily to one component, a half-suit contestation weight
@@ -6966,7 +7457,7 @@ provide.
 \subsection{Exploitability, and what the adversarial results do and do not show}
 \label{sec:discussion-exploit}
 
-None of the \vsevenBfourArms{} adversarial searches found a positive edge against \fishseven{} at the
+None of the \vsevenBfourArmsWord{} adversarial searches found a positive edge against \fishseven{} at the
 tested budgets, in the tested classes, controlling all three opposing seats in the synchronised
 correlation regime. Every one of those qualifiers is load-carrying, and the result is a \emph{lower
 bound} on exploitability rather than an upper bound.
@@ -7097,8 +7588,8 @@ the sign replicating on both banks and every advance-specified validity conditio
 That advantage survives the tests of coordination and robustness this paper applies. A single seat's
 upgrade purchases \vsevenOneSeatFive{} of the \vsevenSoneSelf{}~pp three-seat gain, so the value is
 largely individual rather than conventional; cross-play between three independently trained runs moves
-the result by \vsevenXpGapAbs{}~pp; the advantage persists across \vsevenDiaRows{} rule dialects; and
-none of \vsevenBfourArms{} independently constructed adversarial searches, including a white-box
+the result by \vsevenXpGapAbs{}~pp; the advantage persists across \vsevenDiaRowsWord{} rule dialects; and
+none of \vsevenBfourArmsWord{} independently constructed adversarial searches, including a white-box
 adversary that reads the target's own deterministic policy and inverts its transcript, found a
 positive edge at the tested budgets.
 
@@ -7200,9 +7691,7 @@ arXiv:1910.04376, 2019.
 
 \bibitem{goadrich2026valet}
 M. Goadrich, A. Morenville, and \'E. Piette, ``Valet: A Standardized Testbed of
-Traditional Imperfect-Information Card Games,'' arXiv:2603.03252, 2026.\\
-\url{https://arxiv.org/abs/2603.03252}
-
+Traditional Imperfect-Information Card Games,'' arXiv:2603.03252, 2026.
 %% ---------------------------------------------------------------
 %% Determinization and search under imperfect information
 %% ---------------------------------------------------------------
@@ -7240,14 +7729,10 @@ Hanabi,'' arXiv:1902.06075, 2019.
 
 \bibitem{cazenave2019alphamu}
 T. Cazenave and V. Ventos, ``The $\alpha\mu$ Search Algorithm for the Game of
-Bridge,'' arXiv:1911.07960, 2019.\\
-\url{https://arxiv.org/abs/1911.07960}
-
+Bridge,'' arXiv:1911.07960, 2019.
 \bibitem{edelkamp2021paranoia}
 S. Edelkamp, ``Knowledge-Based Paranoia Search in Trick-Taking,''
-arXiv:2104.05423, 2021.\\
-\url{https://arxiv.org/abs/2104.05423}
-
+arXiv:2104.05423, 2021.
 \bibitem{buro-kermit}
 M. Buro, J. R. Long, T. Furtak, and N. R. Sturtevant, ``Improving State
 Evaluation, Inference, and Search in Trick-Based Card Games,'' \emph{IJCAI-09},
@@ -7276,9 +7761,7 @@ N. Brown, T. Sandholm, and B. Amos, ``Depth-Limited Solving for
 Imperfect-Information Games,'' \emph{NeurIPS 2018}, 2018; arXiv:1805.08195.
 Master-level heads-up no-limit hold'em on a 4-core CPU and 16 GB, via
 multi-valued states. The soundness argument is for two-player zero-sum games and
-is not inherited by the team game studied here.\\
-\url{https://arxiv.org/abs/1805.08195}
-
+is not inherited by the team game studied here.
 \bibitem{zhang2021subgamesolvingwithoutck}
 B. H. Zhang and T. Sandholm, ``Subgame Solving without Common Knowledge,''
 \emph{NeurIPS 2021}, 2021; arXiv:2106.06068.\\
@@ -7306,37 +7789,25 @@ arXiv:1912.02318.\\
 \bibitem{hu2021lbs}
 H. Hu, D. J. Wu, A. Lerer, J. Foerster, and N. Brown, ``Learned Belief Search:
 Efficiently Improving Policies in Partially Observable Settings,''
-arXiv:2106.09086, 2021.\\
-\url{https://arxiv.org/abs/2106.09086}
-
+arXiv:2106.09086, 2021.
 \bibitem{fickinger2021rlfinetuning}
 A. Fickinger, H. Hu, B. Amos, S. Russell, and N. Brown, ``Scalable Online
 Planning via Reinforcement Learning Fine-Tuning,'' \emph{NeurIPS 2021}, 2021;
-arXiv:2109.15316.\\
-\url{https://arxiv.org/abs/2109.15316}
-
+arXiv:2109.15316.
 \bibitem{milec2021cdr}
 D. Milec, O. Kub\'i\v{c}ek, and V. Lis\'y, ``Continual Depth-limited Responses
-for Computing Counter-strategies in Sequential Games,'' arXiv:2112.12594, 2021.\\
-\url{https://arxiv.org/abs/2112.12594}
-
+for Computing Counter-strategies in Sequential Games,'' arXiv:2112.12594, 2021.
 \bibitem{milec2025abd}
 D. Milec, V. Kova\v{r}\'ik, and V. Lis\'y, ``Adapting Beyond the Depth Limit:
 Counter Strategies in Large Imperfect Information Games,'' arXiv:2501.10464,
-2025.\\
-\url{https://arxiv.org/abs/2501.10464}
-
+2025.
 \bibitem{kubicek2025lamir}
 O. Kub\'i\v{c}ek and V. Lis\'y, ``Look-ahead Reasoning with a Learned Model in
 Imperfect Information Games,'' arXiv:2510.05048, 2025; ICLR 2026 per the arXiv
-PDF header.\\
-\url{https://arxiv.org/abs/2510.05048}
-
+PDF header.
 \bibitem{kubicek2026refinements}
 O. Kub\'i\v{c}ek, V. Lis\'y, and T. Sandholm, ``Equilibrium Refinements Improve
-Subgame Solving in Imperfect-Information Games,'' arXiv:2601.17131, 2026.\\
-\url{https://arxiv.org/abs/2601.17131}
-
+Subgame Solving in Imperfect-Information Games,'' arXiv:2601.17131, 2026.
 %% ---------------------------------------------------------------
 %% Full solvers, and the evaluation of their approximation quality
 %% ---------------------------------------------------------------
@@ -7344,9 +7815,7 @@ Subgame Solving in Imperfect-Information Games,'' arXiv:2601.17131, 2026.\\
 \bibitem{brown2020rebel}
 N. Brown, A. Bakhtin, A. Lerer, and Q. Gong, ``Combining Deep Reinforcement
 Learning and Search for Imperfect-Information Games,'' \emph{NeurIPS 2020},
-2020; arXiv:2007.13544.\\
-\url{https://arxiv.org/abs/2007.13544}
-
+2020; arXiv:2007.13544.
 \bibitem{schmid2023sog}
 M. Schmid, M. Morav\v{c}\'ik, N. Burch, R. Kadlec, J. Davidson, K. Waugh,
 N. Bard, F. Timbers, M. Lanctot, G. Z. Holland, E. Davoodi, A. Christianson, and
@@ -7362,9 +7831,7 @@ Artificial Intelligence in Heads-Up No-Limit Poker,'' \emph{Science}
 
 \bibitem{lisy2017lbr}
 V. Lis\'y and M. Bowling, ``Equilibrium Approximation Quality of Current
-No-Limit Poker Bots,'' arXiv:1612.07547, 2017.\\
-\url{https://arxiv.org/abs/1612.07547}
-
+No-Limit Poker Bots,'' arXiv:1612.07547, 2017.
 %% ---------------------------------------------------------------
 %% Cooperative play, conventions, and belief modelling
 %% ---------------------------------------------------------------
@@ -7379,9 +7846,7 @@ arXiv:1902.00506.
 \bibitem{foerster2019bad}
 J. N. Foerster, H. F. Song, E. Hughes, N. Burch, I. Dunning, S. Whiteson,
 M. Botvinick, and M. Bowling, ``Bayesian Action Decoder for Deep Multi-Agent
-Reinforcement Learning,'' \emph{ICML 2019}, 2019; arXiv:1811.01458.\\
-\url{https://arxiv.org/abs/1811.01458}
-
+Reinforcement Learning,'' \emph{ICML 2019}, 2019; arXiv:1811.01458.
 \bibitem{hu-sad}
 H. Hu and J. N. Foerster, ``Simplified Action Decoder for Deep Multi-Agent
 Reinforcement Learning,'' \emph{ICLR 2020}, 2020; arXiv:1912.02288.
@@ -7392,15 +7857,11 @@ Zero-Shot Coordination,'' \emph{ICML 2020}, 2020; arXiv:2003.02979.
 
 \bibitem{hu2021obl}
 H. Hu, A. Lerer, B. Cui, L. Pineda, N. Brown, and J. Foerster, ``Off-Belief
-Learning,'' \emph{ICML 2021}, 2021; arXiv:2103.04000.\\
-\url{https://arxiv.org/abs/2103.04000}
-
+Learning,'' \emph{ICML 2021}, 2021; arXiv:2103.04000.
 \bibitem{sokota2021capi}
 S. Sokota, E. Lockhart, F. Timbers, E. Davoodi, R. D'Orazio, N. Burch,
 M. Schmid, M. Bowling, and M. Lanctot, ``Solving Common-Payoff Games with
-Approximate Policy Iteration,'' \emph{AAAI 2021}, 2021; arXiv:2101.04237.\\
-\url{https://arxiv.org/abs/2101.04237}
-
+Approximate Policy Iteration,'' \emph{AAAI 2021}, 2021; arXiv:2101.04237.
 \bibitem{hu2022sed}
 H. Hu, S. Sokota, D. J. Wu, A. Bakhtin, A. Lupu, B. Cui, and J. N. Foerster,
 ``Self-Explaining Deviations for Coordination,'' \emph{NeurIPS 2022}, 2022;
@@ -7415,9 +7876,7 @@ to Make the Perfect Fireworks Display: Two Strategies for Hanabi,''
 \bibitem{tian2020jps}
 Y. Tian, Q. Gong, and T. Jiang, ``Joint Policy Search for Multi-Agent
 Collaboration with Imperfect Information,'' \emph{NeurIPS 2020}, 2020;
-arXiv:2008.06495.\\
-\url{https://arxiv.org/abs/2008.06495}
-
+arXiv:2008.06495.
 %% ---------------------------------------------------------------
 %% Human-compatible play and regularised search
 %% ---------------------------------------------------------------
@@ -7425,14 +7884,10 @@ arXiv:2008.06495.\\
 \bibitem{jacob2022pikl}
 A. P. Jacob, D. J. Wu, G. Farina, A. Lerer, H. Hu, A. Bakhtin, J. Andreas, and
 N. Brown, ``Modeling Strong and Human-Like Gameplay with KL-Regularized
-Search,'' \emph{ICML 2022}, 2022; arXiv:2112.07544.\\
-\url{https://arxiv.org/abs/2112.07544}
-
+Search,'' \emph{ICML 2022}, 2022; arXiv:2112.07544.
 \bibitem{hu2022humanregularized}
 H. Hu, D. J. Wu, A. Lerer, J. Foerster, and N. Brown, ``Human-AI Coordination
-via Human-Regularized Search and Learning,'' arXiv:2210.05125, 2022.\\
-\url{https://arxiv.org/abs/2210.05125}
-
+via Human-Regularized Search and Learning,'' arXiv:2210.05125, 2022.
 \bibitem{fair2022cicero}
 Meta Fundamental AI Research Diplomacy Team (FAIR), A. Bakhtin, N. Brown,
 E. Dinan, G. Farina, C. Flaherty, D. Fried, A. Goff, J. Gray, H. Hu, and others,
@@ -7452,9 +7907,7 @@ T. Dizdarevi\'c and others, ``Ad-Hoc Human-AI Coordination Challenge,''
 \bibitem{nayyar2013common}
 A. Nayyar, A. Mahajan, and D. Teneketzis, ``Decentralized Stochastic Control
 with Partial History Sharing: A Common Information Approach,'' \emph{IEEE
-Transactions on Automatic Control} 58(7):1644--1658, 2013; arXiv:1209.1695.\\
-\url{https://arxiv.org/abs/1209.1695}
-
+Transactions on Automatic Control} 58(7):1644--1658, 2013; arXiv:1209.1695.
 \bibitem{celli-gatti}
 A. Celli and N. Gatti, ``Computational Results for Extensive-Form Adversarial
 Team Games,'' \emph{AAAI 2018}, 2018; arXiv:1711.06930.
@@ -7478,9 +7931,7 @@ Learning and Subgame Solving,'' \emph{ICML 2022}, 2022; arXiv:2206.09161.
 \bibitem{carminati2024hiddenrole}
 L. Carminati, B. H. Zhang, G. Farina, N. Gatti, and T. Sandholm, ``Hidden-Role
 Games: Equilibrium Concepts and Computation,'' \emph{ACM Conference on Economics
-and Computation (EC) 2024}, 2024; arXiv:2308.16017.\\
-\url{https://arxiv.org/abs/2308.16017}
-
+and Computation (EC) 2024}, 2024; arXiv:2308.16017.
 %% ---------------------------------------------------------------
 %% Counting, permanents and constrained sampling
 %% ---------------------------------------------------------------
@@ -7551,9 +8002,7 @@ Stockfish contributors, ``Statistical Methods and Algorithms in Fishtest.''\\
 
 \bibitem{kelidari2026goldstandard}
 N. Kelidari, M. Haghi, and M. Salmani, ``A Gold-Standard Study of What Makes a
-Lightweight Game-Playing Agent Strong,'' arXiv:2607.06854, 2026.\\
-\url{https://arxiv.org/abs/2607.06854}
-
+Lightweight Game-Playing Agent Strong,'' arXiv:2607.06854, 2026.
 \end{thebibliography}
 %% --- end sections_v07/bibliography ---
 
@@ -7567,7 +8016,7 @@ Every contested rule choice of \S\ref{sec:game-dialect} is an engine switch, so 
 measurable rather than assumed. This appendix lists each choice against the switch that changes it,
 so that a reader can re-implement the dialect or vary it.
 
-\begin{center}\small
+\begin{center}\tabfont
 \begin{tabular}{llp{0.42\linewidth}}
 \toprule
 Clause & Switch & Setting studied \\
@@ -7588,7 +8037,7 @@ Legacy bundle & \texttt{--legacy} & the full v0.3-era dialect, bundling several 
 
 \S\ref{sec:results-dialects} measures the paper's headline comparison under \vsevenDiaRows{} rows of
 this table. Every row keeps its sign and every row replicates; the largest excursion from the
-default row is \vsevenDiaMaxExcursion{} points, on \vsevenDiaMaxExcursionRow{}.
+default row is \vsevenDiaMaxExcursion{}~pp, on \vsevenDiaMaxExcursionRow{}.
 
 \paragraph{Two clauses on which an earlier report in this corpus is wrong, corrected here.}
 
@@ -7640,7 +8089,7 @@ inverter), and each \texttt{key=value} sets one option on it. Two properties of 
 \vsevenFrozenSpecWrapped{}
 \end{quote}
 
-\begin{center}\small
+\begin{center}\tabfont
 %% --- begin tables_v07/options ---
 \begin{tabular}{llp{0.52\linewidth}}
 \toprule
@@ -7673,7 +8122,7 @@ compare strings.
 
 \subsection*{The parameter vector}
 
-\begin{center}\small
+\begin{center}\tabfont
 %% --- begin tables_v07/layout ---
 \begin{tabular}{lr}
 \toprule
@@ -7692,9 +8141,15 @@ total & 55 \\
 \noindent
 \vsevenLayoutNote{}
 
-The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit,
-whose provenance is recorded in the freeze artifact as \texttt{\vsevenInheritedVector{}\ldots}. No
-fit of any kind was applied to the frozen configuration in this cycle
+The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit.
+The freeze artifact records its provenance as
+
+\begin{quote}\ttfamily\footnotesize\raggedright
+\vsevenInheritedVector{}\ldots
+\end{quote}
+
+\noindent
+No fit of any kind was applied to the frozen configuration in this cycle
 (\S\ref{sec:agent-policy}).
 
 \subsection*{Coordinates known to be inert}
@@ -7729,8 +8184,8 @@ played and before the sealed adversary half had been decoded. The verdicts are
 
 \fishseven{} beats \fcheap{} on both primary holdout banks, pooled over \vsevenBtwoFcheapN{} games.
 
-\begin{center}\small
-\begin{tabular}{ll}
+\begin{center}\tabfont
+\begin{tabularx}{\linewidth}{@{}l L@{}}
 \toprule
 Verdict & Condition \\
 \midrule
@@ -7738,14 +8193,18 @@ CERTIFIED advancement & pooled lower bound above \vsevenPrimaryFloor{}, sign rep
 measured advancement & pooled lower bound above 0 but under \vsevenPrimaryFloor{}, sign replicates, gate passes \\
 not an advancement & the pooled interval contains zero, or the sign does not replicate, or the gate fails \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
-\noindent Result: the comparison \textbf{\vsevenPrimaryVerdict{}}.
+\noindent
+The verdict labels above are the protocol's own. This paper does not use the word \emph{certified},
+which suggests verification by a third party, and reports the top outcome instead as what was
+actually satisfied (\S\ref{sec:design-protocol}). Result: the comparison
+\textbf{\vsevenPrimaryVerdict{}}.
 
 \subsection*{The secondary claims}
 
-\begin{center}\small
+\begin{center}\tabfont
 \begin{tabular}{llp{0.40\linewidth}l}
 \toprule
 \# & Claim & Passes if & Result \\
@@ -7755,7 +8214,7 @@ and the minimum not below $\vsevenSoneThreshold{}$ & \vsevenSoneVerdict{} \\
 S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{} points of the diagonal & \vsevenStwoVerdict{} \\
 S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
 S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
-S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{} points below default & \vsevenSfiveVerdict{} \\
+S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{}~pp below default & \vsevenSfiveVerdict{} \\
 S6 & the worst case is not catastrophic & \fishseven{}'s worst panel cell no worse than the deployed \vsix{} policy's & PASS \\
 S7 & the instrument is intact & the planted edges recover, the sub-floor rung does not, the cheats fail exactly their own tests & PASS \\
 \bottomrule
@@ -7796,7 +8255,7 @@ Class \texttt{near} is \vsevenDealsNear{} deals a bank, \texttt{far} \vsevenDeal
 \texttt{expensive} \vsevenDealsExpensive{}. A
 positive number means the arm beats that member.
 
-{\small\begin{longtable}{llrrrr}
+{\tabfont\begin{xltabular}{\linewidth}{@{}L l r r r r@{}}
 \toprule
 Panel member & Class & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
@@ -7805,6 +8264,11 @@ Panel member & Class & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
 Panel member & Class & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
 \endhead
+\midrule
+\multicolumn{6}{r@{}}{\footnotesize\itshape continued overleaf}\\
+\endfoot
+\bottomrule
+\endlastfoot
 \texttt{F-fast} & near & $+4.55$ & $+0.00$ & $+1.83$ & $+4.17$ \\
 \texttt{F-cheap} & near & $+3.38$ & $-1.83$ & $+0.00$ & $+2.37$ \\
 v0.5 & near & $+5.18$ & $+0.69$ & $+1.84$ & $+4.45$ \\
@@ -7836,8 +8300,7 @@ withholder & far & $+25.35$ & $+29.88$ & $+29.55$ & $+25.80$ \\
 random & far & $+50.00$ & $+50.00$ & $+50.00$ & $+50.00$ \\
 \texttt{F-mid} & expensive & $+2.15$ & $-3.15$ & $-0.10$ & $+2.00$ \\
 phase-2 composite & expensive & $-0.04$ & $-3.69$ & $-2.08$ & $+0.00$ \\
-\bottomrule
-\end{longtable}}
+\end{xltabular}}
 %% --- end sections_v07/D-panel ---
 %% --- begin sections_v07/E-corrections ---
 \section{Corrections to the earlier record}
@@ -7876,7 +8339,7 @@ exists in the form it does.
   losing, is a number of exactly the same kind, and the correction is what stops this paper making
   the same claim.
 
-\item[The declaration-allocation channel is worth zero, not two points.] The
+\item[The declaration-allocation channel is worth zero, not two percentage points.] The
   register ranked it second by priority, at \vsevenLonePriority{}. \S\ref{sec:development-alloc} closes it
   at exactly zero over $\sim$\vsevenLoneDecls{} recorded declarations, shows its proposed fix is worse
   than the object it would replace, and shows most of the residual error class is an information limit
@@ -7884,7 +8347,7 @@ exists in the form it does.
 
 \item[The forced-endgame entry's own number was wrong.]
   Re-derived from this cycle's capture, closing the entire accuracy gap is worth
-  \vsevenLthirteenClose{}~win-rate points, the register's figure corrected \emph{upward} by a factor
+  \vsevenLthirteenClose{}~pp, the register's figure corrected \emph{upward} by a factor
   of two, and still a fiftieth of the detection floor. The entry is closed either way.
 
 \item[An annotation in this project's own bibliography overstated its source.] The vetted entry for
@@ -7908,6 +8371,17 @@ exists in the form it does.
 \subsection{Corrections this cycle makes to its own record}
 \label{app:corrections-self}
 
+
+\begin{description}
+\item[An artifact was excised from version-control history after the evaluation.] A per-decision
+  search capture from the development phase, \vsevenKfiveBytes{} bytes, exceeded the repository
+  host's file-size limit and was removed from git history so the work could be published. The file is
+  retained on disk with its SHA-256 recorded in a sidecar
+  (\texttt{\vsevenKfiveDigest{}\ldots}) and is regenerable from the capture harness; no measurement in
+  this paper depends on it. The rewrite changed every commit hash from phase 3 onward, so hashes
+  recorded inside the phase-5 artifacts no longer resolve.
+  Appendix~\ref{app:repro} gives the mapping and confirms the seal commit is unaffected.
+\end{description}
 \begin{description}
 
 \item[A freeze-verification step could not fire, and its silence was not a pass.] The freeze checker reads its source-drift baseline out of the freeze artifact's own
@@ -7956,7 +8430,7 @@ exists in the form it does.
 
 \item[The cross-play gap was printed under the reversed sign convention.] The phase-5 document reports the gap as \vsevenXpGapRecorded{}, which is diagonal minus
   off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative direction is off-diagonal minus diagonal, which is \vsevenXpGap{}.
-  \emph{Neither sign is resolved}: the magnitude is \vsevenXpGapAbs{}~points against a per-cell
+  \emph{Neither sign is resolved}: the magnitude is \vsevenXpGapAbs{}~pp against a per-cell
   half-width of \vsevenXpHalfWidth{} and a \vsevenStwoThreshold{}-point threshold, so no verdict
   moves and this paper reads no lift out of it either. What the correction is worth is only this:
   the sign as printed \emph{implies} a small collapse, and the data support no direction at all.
@@ -7983,7 +8457,7 @@ read out of \filepath{docs/v07/FINAL-RESULTS.md} by the generator rather than re
 drift from the results document it reports; long entries are elided with an ellipsis and the source
 document carries them in full.
 
-{\small\begin{longtable}{llp{0.62\linewidth}}
+{\tabfont\begin{xltabular}{\linewidth}{@{}l l L@{}}
 \toprule
 ID & Kind & Deviation, addition or correction \\
 \midrule
@@ -7992,6 +8466,11 @@ ID & Kind & Deviation, addition or correction \\
 ID & Kind & Deviation, addition or correction \\
 \midrule
 \endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape continued overleaf}\\
+\endfoot
+\bottomrule
+\endlastfoot
 \textbf{D1} & Added Cell & B5 REF-FROZEN. The eleven cells B5 names cannot yield a leave-one-out DROP: the drop is FROZEN's edge minus the variant's, and FROZEN's own edge on the lattice banks is not one of the eleven. A twelfth cell was added at the lattice size on both lattice banks. B5 therefore cost 288,000 games rather than the preregistered 264,000. \\
 \textbf{D2} & Added Cells & B9 planted cost and responder-vs-unhandicapped. B9.2 requires that "the recovered size tracks the planted size", which needs the planted size; B9.3 speaks of the planted excess "resolving TO zero", which is the responder's edge against the handicapped target MINUS its edge against the unhandicapped one. Four rungs x 2 banks x 6,000 deals were added for each, 192,000 games in total. \\
 \textbf{D3} & Unspecified Bank & B8. Section 2.1 assigns 7090003 the role "the ablation lattice and the dialect table" but names no replicate for the dialect rows. 7090001 was used, by symmetry with B5, which the protocol does specify as 7090003 primary and 7090001 replicate. \\
@@ -8019,8 +8498,7 @@ ID & Kind & Deviation, addition or correction \\
 \textbf{D26} & Substitution & B11's third clause is not computable as written. It asks phase 5 to confirm "that the holdout estimate is not systematically smaller than the training estimate by about that amount", where the estimate B11 is about is the measured holdout gain -- but the protocol supplies no training figure for B2.1 or B2.2. Phase 5 substituted the three quantities the protocol DOES state in advance (the B2.4 group at +0.78, the B6 self-play row at +2.94, and B7's\,\ldots \\
 \textbf{D27} & Added Artifact & research/v07/results/P5-drift.json. D19's executed replacement for the vacuous hash-based drift check was performed but not initially recorded, which made it an assertion rather than evidence. It is now an artifact: the build command, both binaries' SHA-256 and byte counts, the pathology argv, the two recomputed digests, and the source sets differing from the artifact's own baseline and from the freeze commit. \\
 \textbf{D24} & Correction & per-bank columns were printed unlabelled and sorted by seed NUMBER, which inverts the attribution for B5 and B8, whose primary bank is 7090003 and whose replicate is 7090001. Every per-bank column in P5-TABLES.txt is now printed as `seed:value`. In THIS document the bank order is given in each table's first row and the pairs that follow keep it: section 5's B4 table is (7090001, 7090002) and section 9's B8 table is (7090003, 7090001). A reader\,\ldots \\
-\bottomrule
-\end{longtable}}
+\end{xltabular}}
 %% --- end sections_v07/F-deviations ---
 %% --- begin sections_v07/G-reproduction ---
 \section{Reproduction and availability}
@@ -8031,13 +8509,36 @@ ID & Kind & Deviation, addition or correction \\
 The engine, every experiment artifact, the protocol, the generator that produces this paper's
 numbers and the provenance checker that audits them are in the project repository,
 \filepath{https://github.com/dylann29/fish-optimization}. The evaluation of \S\ref{sec:results}
-ran at commit \texttt{\vsevenBzeroCommit{}}; the caveat immediately below is why that commit alone
-does not identify the run.
+ran at the commit whose current hash is \texttt{\vsevenBzeroCommit{}}. Two caveats attach to that
+hash and the subsections below give both: the repository's history was rewritten after the
+evaluation, and no single commit describes the tree for the whole run in any case.
+
+\subsection*{A history rewrite, and what it did to the hashes}
+
+After the evaluation was complete, one artifact of the development phase, a per-decision search
+capture of \vsevenKfiveBytes{} bytes, exceeded the hosting limit and was excised from version-control
+history so the repository could be published. That rewrote every commit from phase 3 onward.
+
+Three consequences, stated because a reader checking this paper against the repository will otherwise
+be misled. First, \textbf{the commit hashes recorded inside the phase-5 artifacts no longer resolve}:
+the verification block records \texttt{\vsevenBzeroCommitRecorded{}} and the freeze artifact's drift
+check keys on \texttt{\vsevenFreezeCommitRecorded{}}, and neither object exists in the published
+history. Every hash printed in this paper is the post-rewrite one, recovered by matching commit
+subject lines, so the freeze commit is \texttt{\vsevenFreezeCommit{}} and the evaluation commit is
+\texttt{\vsevenBzeroCommit{}}. Second, the seal predates the rewrite and is unaffected: the commit at
+which the holdout material was sealed, \texttt{\vsevenSealCommit{}}, still resolves, so the
+commitment chain of \S\ref{sec:evaluation-seal} is intact and independently checkable. Third, the
+excised file is retained on disk and its digest recorded beside it in
+\filepath{research/v07/results/K5-capture-7030004.sha256}, SHA-256
+\texttt{\vsevenKfiveDigest{}\ldots}; it is regenerable from the capture harness and no measurement in
+this paper depends on it.
+
+The rewrite is also the clearest possible argument for the subsection that follows.
 
 \subsection*{The run is identified by its binary, not by a commit}
 
 Five commits landed in the repository while the battery was running, so no single commit describes the
-tree for the whole of it. Every one of the \vsevenScoredCells{} scored cells was played by
+tree for the whole of it, and a rewrite has since changed all of their hashes. Every one of the \vsevenScoredCells{} scored cells was played by
 \filepath{engine/fish7}, SHA-256 \texttt{\vsevenBinarySha{}}, \vsevenBinaryBytes{} bytes, and that
 binary was never rebuilt between the first bank digest and the last cell. The five later commits touch
 the interactive browser table and not the policy; \S\ref{app:corrections-self} records the executed
@@ -8054,9 +8555,9 @@ tracks the planted size and ``the planted excess resolves to zero are not comput
 cells the protocol lists. No cell was dropped.}
 \label{tab:battery}
 %% --- begin tables_v07/battery ---
-\begin{tabular}{llrrrl}
+\begin{tabularx}{\linewidth}{@{}l L r r r l@{}}
 \toprule
-Battery & What it measures & Preregistered & Added & Measured & Status \\
+Battery & What it measures & Registered & Added & Measured & Status \\
 \midrule
 B2 & headline strength against the frontier & 10 & 0 & 10 & complete \\
 B3 & the shared 31-member panel & 248 & 0 & 248 & complete \\
@@ -8068,7 +8569,7 @@ B8 & the rule-dialect table & 16 & 0 & 16 & complete \\
 B9 & the negative controls & 10 & 16 & 26 & complete (D2) \\
 B10 & the S6 residual & 16 & 0 & 16 & complete \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 %% --- end tables_v07/battery ---
 \end{table}
 
@@ -8126,12 +8627,12 @@ reach a PDF built after the battery has been run. Generated on \vsevenBuildDate{
 
 \subsection*{Sample sizes}
 
-The project's power rule is a $95\%$ half-width of $98/\sqrt{N}$ points at parity, computed by the
+The project's power rule is a $95\%$ half-width of $98/\sqrt{N}$~pp at parity, computed by the
 harness and emitted with every cell. At \vsevenBtwoFcheapN{} games the primary claim's pooled half-width is
-\vsevenBtwoFcheapHalfWidth{} points; the
+\vsevenBtwoFcheapHalfWidth{}~pp; the
 frontier cells are sized so that the primary claim's half-width is small against the
 \vsevenPrimaryFloor{}-point reference bar rather than against the effect. Far-class panel members are
-sized at a quarter of the near class deliberately: they are decided by \vsevenFarSpanLo{} to \vsevenFarSpanHi{} points
+sized at a quarter of the near class deliberately: they are decided by \vsevenFarSpanLo{} to \vsevenFarSpanHi{}~pp
 and do not need the resolution.
 %% --- end sections_v07/G-reproduction ---
 

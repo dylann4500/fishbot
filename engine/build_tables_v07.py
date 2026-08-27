@@ -427,6 +427,17 @@ def _n(x, d=2):
 def _sg(x, d=2):
     return ('%+.*f' % (d, x))
 
+_NUMWORD = {0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six',
+            7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve',
+            13: 'thirteen', 14: 'fourteen', 15: 'fifteen', 16: 'sixteen',
+            17: 'seventeen', 18: 'eighteen', 19: 'nineteen', 20: 'twenty'}
+
+def _word(n):
+    """House style spells small counts in running prose and prints numerals in
+    tables, so a count used in both places needs both forms generated."""
+    n = int(n)
+    return _NUMWORD.get(n, str(n))
+
 def _commafy(n):
     return '{:,}'.format(int(n))
 
@@ -775,6 +786,8 @@ def b4_adversaries():
              'P5-Z01.jsonl: best paired margin any generation reached on its fitting stream')
     hi, zid = max(uppers)
     emit('vsevenBfourArms', str(len(uppers)), 'P5-B4eval.jsonl: independent adversary searches evaluated')
+    emit('vsevenBfourArmsWord', _word(len(uppers)),
+         'P5-B4eval.jsonl: the same count spelled, for running prose')
     emit('vsevenBfourFits', str(sum(1 for f in fits.values() if f.get('ok'))),
          'P5-B4fits.jsonl: searches that produced a weight vector')
     emit('vsevenBfourWorstUpper', _sg(hi), 'P5-B4eval.jsonl: largest upper bound over all arms')
@@ -1033,6 +1046,8 @@ def b8_dialects():
     emit('vsevenDiaMaxExcursion', _sg(mx[2]), 'P5-B8.jsonl: largest excursion from the default row')
     emit('vsevenDiaMaxExcursionRow', _tex(mx[1]), 'P5-B8.jsonl: dialect attaining it')
     emit('vsevenDiaRows', str(len(lines)), 'P5-B8.jsonl: dialect rows measured')
+    emit('vsevenDiaRowsWord', _word(len(lines)),
+         'P5-B8.jsonl: the same count spelled, for running prose')
     emit('vsevenSfiveTolerance', '2.00', 'PREREGISTRATION 5.2: the S5 tolerance, points')
     emit('vsevenSfiveVerdict', 'PASS' if mx[0] <= 2.0 else 'FAIL', 'PREREGISTRATION 5.2: S5 verdict')
     # the legacy residual: legacy minus the isolable components.  --maxasks=360
@@ -1177,7 +1192,8 @@ def b0_verification():
     emit('vsevenBinarySha', d['binary']['sha256'], 'P5-B0.json: sha256 of the binary that played every cell')
     emit('vsevenBinaryShaShort', d['binary']['sha256'][:16], 'P5-B0.json: first 16 of that hash')
     emit('vsevenBinaryBytes', _commafy(d['binary']['bytes']), 'P5-B0.json: binary size')
-    emit('vsevenB0Commit', d['commit'][:7], 'P5-B0.json: commit the B0 block was generated at')
+    # The recorded commit and its post-rewrite identity are emitted by
+    # commit_map(); this name would sanitise to the same macro and collide.
     bd = d['B0_1_bankDigests']
     emit('vsevenBanks', str(len(bd['rows'])), 'P5-B0.json: deal banks whose digest was reproduced')
     emit('vsevenBanksMatch', 'all' if bd['allMatch'] else 'NOT ALL', 'P5-B0.json: bank digests matching commitment')
@@ -1353,6 +1369,8 @@ def b1_gate():
         emit('vsevenGate%sVerdict' % CTAG[c], by[c]['verdict'], 'P5-gate.jsonl: %s gate verdict' % c)
     fz = by['FROZEN']
     emit('vsevenGateRules', str(len(GTAG)), 'P5-gate.jsonl: rules in the commit gate')
+    emit('vsevenGateRulesWord', _word(len(GTAG)),
+         'P5-gate.jsonl: the same count spelled, for running prose')
     emit('vsevenGateGames', _commafy(fz['games']), 'P5-gate.jsonl: mirror games per configuration')
     emit('vsevenGateDeadAsks', '%.5f' % fz['stats']['deadAskPct'], 'P5-gate.jsonl FROZEN: provably-dead asks, percent')
     emit('vsevenGateLongestDead', str(fz['stats']['longestDead']), 'P5-gate.jsonl FROZEN: longest dead run')
@@ -1587,6 +1605,90 @@ def totals():
          'docs/v07/FINAL-RESULTS.md: the hand-typed cell count this generator corrects')
 
 
+def commit_map():
+    """Commit identity after the history rewrite.
+
+    An oversized capture artifact was excised from git history so the repository
+    could be pushed, which rewrote every commit from phase 3 onward.  The hashes
+    recorded inside the phase-5 artifacts therefore name objects that no longer
+    resolve.  Rather than reprint a dead hash or retype a live one, each recorded
+    commit is re-found here by its subject line and the current hash emitted
+    beside the recorded one, with the lookup asserted unique.
+    """
+    import subprocess
+
+    def git(*a):
+        return subprocess.run(['git'] + list(a), cwd=_ROOT, capture_output=True,
+                              text=True).stdout.strip()
+
+    def alive(h):
+        return git('cat-file', '-t', h) == 'commit'
+
+    def by_subject(pat):
+        out = git('log', '--all', '--format=%h\x1f%s')
+        hits = [l.split('\x1f') for l in out.split('\n') if l and pat.lower() in l.split('\x1f')[1].lower()]
+        return hits[0][0] if len(hits) == 1 else ''
+
+    emit('vsevenHeadCommit', git('rev-parse', '--short', 'HEAD'),
+         'git rev-parse HEAD: the commit this build was made at')
+
+    # the commit the B0 verification block recorded
+    try:
+        rec = json.load(open(os.path.join(_RES, 'P5-B0.json')))['commit'][:7]
+    except Exception:
+        rec = ''
+    if rec:
+        emit('vsevenBzeroCommitRecorded', rec,
+             'P5-B0.json: the commit recorded at generation time, pre-rewrite')
+        cur = rec if alive(rec) else by_subject('cross-play re-run on the actual frozen architecture')
+        if cur:
+            emit('vsevenBzeroCommit', cur,
+                 'git log: the same commit after the history rewrite, found by subject line')
+        emit('vsevenBzeroCommitAlive', 'yes' if alive(rec) else 'no',
+             'whether the recorded hash still resolves in the rewritten history')
+
+    # the freeze commit, which the drift artifact keys on
+    frz_rec = ''
+    try:
+        d = json.load(open(os.path.join(_RES, 'P5-drift.json')))
+        for k in d:
+            m = _re.search(r'([0-9a-f]{7,40})$', k)
+            if m:
+                frz_rec = m.group(1)[:7]
+                break
+    except Exception:
+        pass
+    if frz_rec:
+        emit('vsevenFreezeCommitRecorded', frz_rec,
+             'P5-drift.json: the freeze commit as recorded, pre-rewrite')
+        cur = frz_rec if alive(frz_rec) else by_subject('FREEZE -- one configuration')
+        if cur:
+            emit('vsevenFreezeCommit', cur,
+                 'git log: the freeze commit after the history rewrite, found by subject line')
+
+    # the seal commit predates the rewrite and is unchanged; assert that
+    try:
+        seal = json.load(open(os.path.join(_ROOT, 'research', 'v07', 'banks',
+                                           'SEAL.json')))['commit'][:7]
+        emit('vsevenSealCommitAlive', 'yes' if alive(seal) else 'no',
+             'whether the seal commit survives the history rewrite')
+    except Exception:
+        pass
+
+    # the excised artifact, cited through its digest sidecar
+    side = os.path.join(_RES, 'K5-capture-7030004.sha256')
+    if os.path.exists(side):
+        txt = open(side).read()
+        m = _re.search(r'sha256:\s*([0-9a-f]{64})', txt)
+        if m:
+            emit('vsevenKfiveDigest', m.group(1)[:16],
+                 'K5-capture-7030004.sha256: digest of the excised capture, first 16')
+        m = _re.search(r'size:\s*(\d+)', txt)
+        if m:
+            emit('vsevenKfiveBytes', _commafy(m.group(1)),
+                 'K5-capture-7030004.sha256: size of the excised capture')
+
+
 def manifest_table():
     man = json.load(open(os.path.join(_RES, 'MANIFEST-P5.json')))
     emit('vsevenManifestRuns', str(len(man['runs'])), 'MANIFEST-P5.json: digested artifacts')
@@ -1703,6 +1805,7 @@ def paper_main():
     deviations()
     totals()
     manifest_table()
+    commit_map()
     verdicts()
     forest_plot()
     emit('vsevenBuildDate', _time.strftime('%Y-%m-%d'), 'build_tables_v07.py --paper run date')

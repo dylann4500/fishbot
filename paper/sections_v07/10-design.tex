@@ -111,13 +111,13 @@ fails exactly the tests named for it and no others, identically on both banks, o
 \label{sec:design-gate}
 
 \begin{table}[tbp]\centering
-\caption{The soundness gate, eight rules, run on training material by design. The negative control is
+\caption{The soundness gate, \vsevenGateRulesWord{} rules, run on training material by design. The negative control is
 a configuration constructed to be rejected.}
 \label{tab:gate}
 {\tabfont\input{tables_v07/gate}}
 \end{table}
 
-\fishseven{} passes all \vsevenGateRules{} rules: \vsevenGateDeadAsks\% provably dead asks against a
+\fishseven{} passes all \vsevenGateRulesWord{} rules: \vsevenGateDeadAsks\% provably dead asks against a
 0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail maximum \vsevenGateTailMax{} with
 99th percentile \vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches over
 \vsevenGateSsixNodes{} audited decisions. Reported but not gated: \vsevenGateEvents{} events per game,

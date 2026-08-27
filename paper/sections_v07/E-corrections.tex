@@ -66,6 +66,17 @@ exists in the form it does.
 \subsection{Corrections this cycle makes to its own record}
 \label{app:corrections-self}
 
+
+\begin{description}
+\item[An artifact was excised from version-control history after the evaluation.] A per-decision
+  search capture from the development phase, \vsevenKfiveBytes{} bytes, exceeded the repository
+  host's file-size limit and was removed from git history so the work could be published. The file is
+  retained on disk with its SHA-256 recorded in a sidecar
+  (\texttt{\vsevenKfiveDigest{}\ldots}) and is regenerable from the capture harness; no measurement in
+  this paper depends on it. The rewrite changed every commit hash from phase 3 onward, so hashes
+  recorded inside the phase-5 artifacts no longer resolve.
+  Appendix~\ref{app:repro} gives the mapping and confirms the seal commit is unaffected.
+\end{description}
 \begin{description}
 
 \item[A freeze-verification step could not fire, and its silence was not a pass.] The freeze checker reads its source-drift baseline out of the freeze artifact's own

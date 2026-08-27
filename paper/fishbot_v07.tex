@@ -43,6 +43,12 @@
 % it resolve them by loosening inter-word space rather than by letting a line
 % protrude into the margin, which is the outcome this document does not permit.
 \setlength{\emergencystretch}{3em}
+% Widows, orphans, and headings stranded at the foot of a page.  The defaults
+% (150) are far too permissive for a document this long.
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\brokenpenalty=10000
 
 % ---------------------------------------------------------------------------
 % Table house style.  Every table in this document is set at \tabfont, with the
@@ -83,6 +89,15 @@
 \lhead{\small FishBot v0.7}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.2pt}
+
+% Subsection numbers reach two digits in Section 11 (11.10), which overruns the
+% article class's default number box in the table of contents and prints
+% "11.10Computational cost".  Widening the box fixes it.
+\makeatletter
+\renewcommand{\l@section}{\@dottedtocline{1}{0em}{2.6em}}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{2.6em}{3.2em}}
+\renewcommand{\l@subsubsection}{\@dottedtocline{3}{5.8em}{4.0em}}
+\makeatother
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
