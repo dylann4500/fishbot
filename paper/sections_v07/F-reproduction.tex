@@ -1,5 +1,13 @@
-\section{Reproduction}
+\section{Reproduction and availability}
 \label{app:repro}
+
+\subsection*{Availability}
+
+The engine, every experiment artifact, the protocol, the generator that produces this paper's
+numbers and the provenance checker that audits them are in the project repository,
+\filepath{https://github.com/dylann29/fish-optimization}. The evaluation of \S\ref{sec:results}
+ran at commit \texttt{\vsevenBzeroCommit{}}; the caveat immediately below is why that commit alone
+does not identify the run.
 
 \subsection*{The run is identified by its binary, not by a commit}
 
@@ -62,6 +70,13 @@ without reference to this document or to the driver that produced it.
   programme, each attributed.
 \item \filepath{paper/inline.py} flattens the modular source into a single self-contained file.
 \end{enumerate}
+
+Sections~\ref{sec:game}--\ref{sec:arc} quote results from this programme's earlier cycles. Those
+numbers are not retyped here either: the earlier cycles' generators emitted them from their own
+artifacts, and this document loads those generated files directly. Of the numbers this paper uses,
+\vsevenProvGenerated{} are generated --- most by this cycle's generator and the remainder by an
+earlier one --- and \vsevenProvTranscribed{} are transcribed under a header naming the report or
+artifact that records them, which \filepath{paper/check\_provenance.py} verifies exists on disk.
 
 The generated file is \verb|\input| after the placeholder file, so a value in the placeholder can never
 reach a PDF built after the battery has been run. Generated on \vsevenBuildDate{}.

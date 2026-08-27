@@ -970,6 +970,12 @@
 \providecommand{\vsevenSelftestChecks}{}\renewcommand{\vsevenSelftestChecks}{424,986}
 % P5-B0.json: fish7 selftest verdict
 \providecommand{\vsevenSelftest}{}\renewcommand{\vsevenSelftest}{PASS}
+% engine/fishbot_v07.json: allparamsLayout note
+\providecommand{\vsevenLayoutNote}{}\renewcommand{\vsevenLayoutNote}{the flat `allparams` vector: NFEAT ask weights, the fourteen v0.5 knobs, the three v0.6 ask terms, then the eighteen v0.7 responder coordinates (v07\_responder.hpp r7Name)}
+% engine/fishbot_v07.json: switches that cannot be expressed in the parameter vector
+\providecommand{\vsevenNotVectorisable}{}\renewcommand{\vsevenNotVectorisable}{\texttt{askfloor}, \texttt{pool}, \texttt{oppfloor}}
+% engine/fishbot_v07.json: provenance of the inherited parameter vector
+\providecommand{\vsevenInheritedVector}{}\renewcommand{\vsevenInheritedVector}{fitC.jsonl [final weights record] sha256:be4a4c31d9153208 gens=14 obj=minimaxregret paired=1 panel=v05+v03+withholder+fe}
 % P5-B0.json: repeat runs of one training cell
 \providecommand{\vsevenReproRuns}{}\renewcommand{\vsevenReproRuns}{5}
 % P5-B0.json: whether all repeat runs were bit-identical at 400 deals
@@ -1103,9 +1109,9 @@
 % docs/v07/PREREGISTRATION.md: the cost multiple the record carried
 \providecommand{\vsevenCostRecorded}{}\renewcommand{\vsevenCostRecorded}{3.2}
 % docs/v07/FINAL-RESULTS.md section 15: recorded deviations
-\providecommand{\vsevenDeviations}{}\renewcommand{\vsevenDeviations}{24}
+\providecommand{\vsevenDeviations}{}\renewcommand{\vsevenDeviations}{26}
 % docs/v07/FINAL-RESULTS.md section 15: entries that are corrections
-\providecommand{\vsevenDeviationCorrections}{}\renewcommand{\vsevenDeviationCorrections}{4}
+\providecommand{\vsevenDeviationCorrections}{}\renewcommand{\vsevenDeviationCorrections}{3}
 % docs/v07/FINAL-RESULTS.md section 15: entries that add a cell or a check
 \providecommand{\vsevenDeviationAdded}{}\renewcommand{\vsevenDeviationAdded}{3}
 % P5-B2..B9: scored match cells
@@ -1129,9 +1135,9 @@
 % docs/v07/FINAL-RESULTS.md: the hand-typed cell count this generator corrects
 \providecommand{\vsevenScoredCellsRecorded}{}\renewcommand{\vsevenScoredCellsRecorded}{409}
 % MANIFEST-P5.json: digested artifacts
-\providecommand{\vsevenManifestRuns}{}\renewcommand{\vsevenManifestRuns}{28}
+\providecommand{\vsevenManifestRuns}{}\renewcommand{\vsevenManifestRuns}{29}
 % MANIFEST-P5.json: artifacts whose sha256 re-verifies on disk
-\providecommand{\vsevenManifestVerified}{}\renewcommand{\vsevenManifestVerified}{28}
+\providecommand{\vsevenManifestVerified}{}\renewcommand{\vsevenManifestVerified}{29}
 % MANIFEST-P5.json: the frozen spec
 \providecommand{\vsevenManifestFrozenSpec}{}\renewcommand{\vsevenManifestFrozenSpec}{v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26}
 % PREREGISTRATION 5.1 applied to P5-B2.jsonl B2.2
@@ -1145,6 +1151,6 @@
 % build_tables_v07.py --paper run date
 \providecommand{\vsevenBuildDate}{}\renewcommand{\vsevenBuildDate}{2026-08-26}
 % macros used in sections_v07 that this script generates from artifacts
-\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{230}
+\providecommand{\vsevenProvGenerated}{}\renewcommand{\vsevenProvGenerated}{231}
 % macros used in sections_v07 that this script does NOT generate, i.e. transcribed
-\providecommand{\vsevenProvTranscribed}{}\renewcommand{\vsevenProvTranscribed}{91}
+\providecommand{\vsevenProvTranscribed}{}\renewcommand{\vsevenProvTranscribed}{151}

@@ -1,0 +1,20 @@
+\begin{tabular}{llp{0.52\linewidth}}
+\toprule
+Key & Value & What it controls \\
+\midrule
+\texttt{r12} & \texttt{25} & half-suit contestation weight (\texttt{oppCertDonate}) \\
+\texttt{rtie} & \texttt{1} & tie-break by a hash of the public event stream, not sort order \\
+\texttt{pool} & \texttt{-1} & urgency pooling threshold; $-1$ disables \\
+\texttt{oppfloor} & \texttt{-1} & urgency opponent-ownership floor; $-1$ disables \\
+\texttt{force} & \texttt{1000000} & urgency forcing horizon in events; $10^6$ disables \\
+\texttt{askfloor} & \texttt{-1} & urgency ask floor; $-1$ disables \\
+\texttt{stall} & \texttt{12} & escalate after $K$ public events with no change in this seat's certificate hash \\
+\texttt{s1} & \texttt{1} & enable the endgame-truncated determinized search \\
+\texttt{det} & \texttt{12} & determinizations sampled per searched decision \\
+\texttt{cand} & \texttt{4} & candidate actions carried into the search \\
+\texttt{kappa} & \texttt{2.5} & shrinkage of the paired lower-confidence-bound deviation rule \\
+\texttt{rbelief} & \texttt{indep} & belief model used to reconstruct continuation players \\
+\texttt{depth} & \texttt{12} & search depth limit in plies \\
+\texttt{maxq} & \texttt{26} & search runs only when at most this many cards remain unresolved \\
+\bottomrule
+\end{tabular}

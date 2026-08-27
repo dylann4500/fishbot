@@ -1,6 +1,6 @@
 \documentclass[11pt]{article}
 
-\usepackage[margin=0.9in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
@@ -22,23 +22,21 @@
 \usepackage{fancyhdr}
 \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
 
-% Latin Modern has no bold small caps in any weight, so an arm name must never
-% be nested inside \textbf: bold the rest of the sentence instead.  Declaring a
-% substitution here only moves the failure, so there is none.
-
 \definecolor{fishgreen}{HTML}{0B5D46}
-\definecolor{fishlight}{HTML}{EAF4EF}
 \definecolor{fishgray}{HTML}{4B5954}
-\hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen}
+\hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen,
+            pdftitle={Exact Inference, Measurement, and Adversarial Evaluation in Six-Player
+                      Canadian Fish},
+            pdfauthor={Dylan Nguyen}}
 \setlist{nosep,leftmargin=*}
 \setlength{\parindent}{1.2em}
 \setlength{\tabcolsep}{4.5pt}
 \setlength{\parskip}{0pt plus 1pt}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small FishBot v0.7}
-\rhead{\small A preregistered evaluation, and the barrier it found}
+\lhead{\small Six-Player Canadian Fish}
 \cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.2pt}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -51,11 +49,13 @@
 % its number audit for exactly that reason.  They appear inside captions and
 % section titles, which are moving arguments, so they must be robust; and they
 % reach PDF bookmarks, so \texorpdfstring supplies a plain spelling.
-\DeclareRobustCommand{\vseven}{\texorpdfstring{\mbox{FishBot v0.7}}{FishBot v0.7}}
-\DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{FishBot v0.6}}{FishBot v0.6}}
-\DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{FishBot v0.5}}{FishBot v0.5}}
-\DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{FishBot v0.4}}{FishBot v0.4}}
-\DeclareRobustCommand{\vthree}{\texorpdfstring{\mbox{FishBot v0.3}}{FishBot v0.3}}
+% Latin Modern has no bold small caps in any weight, so an arm name must never
+% be nested inside \textbf: bold the rest of the sentence instead.
+\DeclareRobustCommand{\vseven}{\texorpdfstring{\mbox{v0.7}}{v0.7}}
+\DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{v0.6}}{v0.6}}
+\DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{v0.5}}{v0.5}}
+\DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{v0.4}}{v0.4}}
+\DeclareRobustCommand{\vthree}{\texorpdfstring{\mbox{v0.3}}{v0.3}}
 % The four arms of the shared panel, named once so no section invents a synonym.
 \DeclareRobustCommand{\frozen}{\texorpdfstring{\textsc{Frozen}}{FROZEN}}
 \DeclareRobustCommand{\incumbent}{\texorpdfstring{\textsc{Incumbent}}{INCUMBENT}}
@@ -63,31 +63,23 @@
 \DeclareRobustCommand{\fmid}{\texorpdfstring{\mbox{\texttt{F-mid}}}{F-mid}}
 \DeclareRobustCommand{\composite}{\texorpdfstring{\mbox{the phase-2 composite}}{the phase-2 composite}}
 
-\title{\textbf{FishBot v0.7: A Preregistered Evaluation of a\\
-Configuration Change, and the Barrier It Found}\\[5pt]
-\large What survives sealed holdout material and a fresh adversary search,\\
-what the protocol said in advance would count as failure and did,\\
-and what it would take to call any Fish-playing team near-optimal}
-\author{Dylan Nguyen\\\small FishLab Research Project}
-\date{%
-  \small Technical report --- \today\\[2pt]
-  \small Repository: \filepath{https://github.com/dylann29/fish-optimization}\\[1pt]
-  \small The evaluation is identified by its binary, not by a commit. Every one of the
-  \vsevenScoredCells{} scored cells was played by \filepath{engine/fish7}, SHA-256
-  \texttt{\vsevenBinaryShaShort{}\ldots}, \vsevenBinaryBytes{} bytes, which was never rebuilt between
-  the first bank digest and the last cell; five commits landed in the repository while the battery
-  ran and none of them touches the policy. Protocol:
-  \filepath{docs/v07/PREREGISTRATION.md}, committed before any holdout bank had been played and
-  before the sealed adversary half had been decoded. Digests of every artifact are in
-  \filepath{research/v07/results/MANIFEST-P5.json}.%
-}
+\title{\textbf{Exact Inference, Measurement, and Adversarial Evaluation\\
+in Six-Player Canadian Fish}}
+\author{Dylan Nguyen}
+\date{\today}
 
+% Numbers.  numbers_v07.tex holds placeholders and the values transcribed from
+% this programme's earlier phases, each under a comment header naming its
+% source; numbers_v07_generated.tex is emitted straight from the experiment
+% artifacts by `engine/build_tables_v07.py --paper' and is \input AFTER it, so a
+% placeholder can never reach a built PDF.  The v0.5 and v0.6 files are loaded
+% because Sections 5 and 6 tell those cycles' results, and their numbers are
+% generated from their own artifacts rather than retyped here.
+\input{numbers_v05}
+\InputIfFileExists{numbers_v05_generated}{}{}
+\input{numbers_v06}
+\InputIfFileExists{numbers_v06_generated}{}{}
 \input{numbers_v07}
-% Generated from the experiment artifacts by `engine/build_tables_v07.py --paper`,
-% on the two-file scheme v0.5 introduced and v0.6 kept: the generator
-% \renewcommand's every macro the artifacts settle, so the placeholder values in
-% numbers_v07.tex act only as a compile-before-the-battery-runs fallback and can
-% never silently reach the PDF once the battery has been run.
 \InputIfFileExists{numbers_v07_generated}{}{}
 
 \begin{document}
@@ -98,26 +90,39 @@ and what it would take to call any Fish-playing team near-optimal}
 \input{sections_v07/abstract}
 \end{abstract}
 
-\input{sections_v07/01-introduction}
-\input{sections_v07/02-configuration}
-\input{sections_v07/03-threat-model}
-\input{sections_v07/04-instrument}
-\input{sections_v07/05-rejected}
-\input{sections_v07/06-protocol}
-\input{sections_v07/07-results}
-\input{sections_v07/08-exploitability}
-\input{sections_v07/09-against}
-\input{sections_v07/10-corrections}
-\input{sections_v07/11-limitations}
-\input{sections_v07/12-toward-v1}
-\input{sections_v07/13-conclusion}
+\tableofcontents
+\clearpage
 
+\input{sections_v07/01-introduction}
+\input{sections_v07/02-game}
+\input{sections_v07/03-domain}
+\input{sections_v07/04-related}
+\input{sections_v07/05-engine}
+\input{sections_v07/06-arc}
+\input{sections_v07/07-methodology}
+\input{sections_v07/08-threat-model}
+\input{sections_v07/09-instrument}
+\input{sections_v07/10-rejected}
+\input{sections_v07/11-configuration}
+\input{sections_v07/12-protocol}
+\input{sections_v07/13-results}
+\input{sections_v07/14-exploitability}
+\input{sections_v07/15-against}
+\input{sections_v07/16-corrections}
+\input{sections_v07/17-limitations}
+\input{sections_v07/18-toward-v1}
+\input{sections_v07/19-conclusion}
+
+\clearpage
 \input{sections_v07/bibliography}
 
+\clearpage
 \appendix
-\input{sections_v07/A-thresholds}
-\input{sections_v07/B-deviations}
-\input{sections_v07/C-panel}
-\input{sections_v07/D-reproducibility}
+\input{sections_v07/A-dialect}
+\input{sections_v07/B-parameters}
+\input{sections_v07/C-thresholds}
+\input{sections_v07/D-panel}
+\input{sections_v07/E-deviations}
+\input{sections_v07/F-reproduction}
 
 \end{document}

@@ -1,31 +1,430 @@
-\section*{References and prior work}
-\addcontentsline{toc}{section}{References}
+% ---------------------------------------------------------------
+% Bibliography.
+%
+% Every entry below is carried VERBATIM from the vetted bibliography this
+% project built in an earlier cycle, which was itself assembled from a recorded
+% literature search: each entry there was fetched and checked to exist, and the
+% search's "unfetchable" list was excluded rather than cited on metadata alone.
+% No entry has been added, edited or invented while writing this paper -- the
+% only editorial act here is SELECTION, keeping the 71 entries this paper
+% actually cites and dropping 3 that it does not.
+%
+% Dropped as uncited: \texttt{fishbot03}, \texttt{fishbot04}, \texttt{fishbot05}.
+% The first three are this project's own earlier technical reports; their
+% content is told in Sections 5 and 6 of this paper rather than cited, which is
+% what makes this document self-contained.
+%
+% There is no .bib file in this repository and no bibtex/biber step in the
+% build; that is deliberate, and it is why these are manual \bibitem entries.
+% ---------------------------------------------------------------
 
-This report is the sixth in an internal series and cites the corpus it corrects rather than an external
-bibliography; the v0.6 manuscript carries the literature review this cycle's threat model was built
-against, including the partnership-game, team-correlation and search-in-imperfect-information lines it
-draws on, and \S\ref{sec:towardone} states which of those lines have no Fish analogue yet.
+\begin{thebibliography}{99}
 
-\begin{description}\small
-\item[\filepath{paper/fishbot\_v06\_standalone.tex}] --- \vsix{}: the tie-break analysis, the repaired
-  optimiser, the guarded determinized search, and the literature review this cycle inherits.
-\item[\filepath{docs/v07/THREAT-MODEL.md}] --- the operational definition of team exploitability
-  summarised in \S\ref{sec:threat}, its ten decisions, its rejected alternatives, and the review of
-  what in it appears to be new.
-\item[\filepath{docs/v07/INSTRUMENT.md}] --- what the measuring instrument can and cannot see:
-  detection floors, the per-decision channel, transcript inversion, throughput on one basis.
-\item[\filepath{docs/v07/ADVERSARIES.md}] --- open-ended adversary generation against the \vsix{}
-  frontier, the channel ceilings measured before any adversary was fitted, and the taxonomy of what was
-  searched.
-\item[\filepath{docs/v07/CANDIDATES.md}] --- the five candidate architectures of \S\ref{sec:rejected},
-  what each was keyed to, and what survived.
-\item[\filepath{docs/v07/SUBOPTIMALITY-LEDGER.md}] --- the ranked register of hypotheses this cycle
-  inherited, the closed-question register, and the provenance defects it found in the corpus.
-\item[\filepath{docs/v07/PREREGISTRATION.md}] --- the protocol of \S\ref{sec:protocol}, committed
-  before any holdout bank had been played.
-\item[\filepath{docs/v07/FINAL-RESULTS.md}] --- the phase-5 recording, from which
-  Appendix~\ref{app:deviations} is generated and which \S\ref{sec:corrections-self} corrects in three
-  places.
-\item[\filepath{docs/v07/RESEARCH-LOG.md}] --- the working record of all four earlier phases, including
-  every defect found and every battery that did not finish.
-\end{description}
+\bibitem{pagat}
+J. McLeod, ``Literature,'' \emph{Pagat}, 2006--2025, last updated 1 July 2026.\\
+\url{https://www.pagat.com/quartet/literature.html}
+
+\bibitem{develin}
+M. Develin, ``Canadian Fish,'' chapter 9 of \emph{Card Games}, author's online
+manual.\\
+\url{https://web.archive.org/web/20170720075756/http://bantha.org/~develin/cardgames.html\#ch9}
+
+\bibitem{dorsa}
+Deposit Genius, ``Literature Game Strategy (Canadian Fish),'' online article.\\
+\url{https://depositgenius.com/literature-strategy-canadian-fish/}
+
+\bibitem{strategy-site}
+Canadian Fish Project, ``Strategy notes,'' 2026.\\
+\url{https://canadian-fish.vercel.app/strategy}
+
+\bibitem{wikiliterature}
+Wikipedia, ``Literature (card game),'' online encyclopedia entry.\\
+\url{https://en.wikipedia.org/wiki/Literature_(card_game)}
+
+\bibitem{somani}
+N. Somani, ``literature: card game implementation and learning bot,'' GitHub
+repository, MIT licence, Python, 2018--.\\
+\url{https://github.com/neelsomani/literature}
+
+\bibitem{somani-server}
+N. Somani, ``literature-server,'' GitHub repository, with a live deployment at
+\url{https://literature.neelsomani.com/}\\
+\url{https://github.com/neelsomani/literature-server}
+
+\bibitem{playstore}
+``Literature: Fish Card Game'' (\texttt{com.cards.game.literature}), Google Play
+store listing, closed source.\\
+\url{https://play.google.com/store/apps/details?id=com.cards.game.literature}
+
+\bibitem{rlcard}
+D. Zha, K.-H. Lai, S. Huang, Y. Cao, K. Reddy, J. Vargas, R. Wei, J. Guo, and
+X. Hu, ``RLCard: A Toolkit for Reinforcement Learning in Card Games,''
+arXiv:1910.04376, 2019.
+
+\bibitem{goadrich2026valet}
+M. Goadrich, A. Morenville, and \'E. Piette, ``Valet: A Standardized Testbed of
+Traditional Imperfect-Information Card Games,'' arXiv:2603.03252, 2026.
+21 games in the RECYCLE description language; whether any of them is a team game
+is not stated on the abstract page and the full text was not fetched.\\
+\url{https://arxiv.org/abs/2603.03252}
+
+%% ---------------------------------------------------------------
+%% Determinization and search under imperfect information
+%% ---------------------------------------------------------------
+
+\bibitem{levy}
+D. Levy, ``The Million Pound Bridge Program,'' \emph{Heuristic Programming in
+Artificial Intelligence: The First Computer Olympiad}, Ellis Horwood, 1989.
+
+\bibitem{ginsberg-gib}
+M. L. Ginsberg, ``GIB: Imperfect Information in a Computationally Challenging
+Game,'' \emph{Journal of Artificial Intelligence Research} 14:303--358, 2001.
+
+\bibitem{frank-basin-ai}
+I. Frank and D. Basin, ``Search in Games with Incomplete Information: A Case
+Study Using Bridge Card Play,'' \emph{Artificial Intelligence}
+100(1--2):87--123, 1998.
+
+\bibitem{frank-basin-aaai}
+I. Frank, D. Basin, and H. Matsubara, ``Finding Optimal Strategies for Imperfect
+Information Games,'' \emph{AAAI-98}, pp.~500--507, 1998.
+
+\bibitem{long-pimc}
+J. Long, N. R. Sturtevant, M. Buro, and T. Furtak, ``Understanding the Success
+of Perfect Information Monte Carlo Sampling in Game Tree Search,''
+\emph{AAAI-10}, pp.~134--140, 2010.
+
+\bibitem{cowling-ismcts}
+P. I. Cowling, E. J. Powley, and D. Whitehouse, ``Information Set Monte Carlo
+Tree Search,'' \emph{IEEE Transactions on Computational Intelligence and AI in
+Games} 4(2):120--143, 2012.
+
+\bibitem{goodman-ris}
+J. Goodman, ``Re-determinizing Information Set Monte Carlo Tree Search in
+Hanabi,'' arXiv:1902.06075, 2019.
+
+\bibitem{cazenave2019alphamu}
+T. Cazenave and V. Ventos, ``The $\alpha\mu$ Search Algorithm for the Game of
+Bridge,'' arXiv:1911.07960, 2019.\\
+\url{https://arxiv.org/abs/1911.07960}
+
+\bibitem{edelkamp2021paranoia}
+S. Edelkamp, ``Knowledge-Based Paranoia Search in Trick-Taking,''
+arXiv:2104.05423, 2021. Skat; over 1,000 points on the extended Seeger scale.
+The runtime is not stated on the abstract page, so no compute cost is attributed
+to this method in this report.\\
+\url{https://arxiv.org/abs/2104.05423}
+
+\bibitem{buro-kermit}
+M. Buro, J. R. Long, T. Furtak, and N. R. Sturtevant, ``Improving State
+Evaluation, Inference, and Search in Trick-Based Card Games,'' \emph{IJCAI-09},
+pp.~1407--1413, 2009.
+
+\bibitem{solinas-supervised}
+C. Solinas, D. Rebstock, and M. Buro, ``Improving Search with Supervised
+Learning in Trick-Based Card Games,'' \emph{AAAI-19}, 2019; arXiv:1903.09604.
+
+\bibitem{rebstock-inference}
+D. Rebstock, C. Solinas, M. Buro, and N. R. Sturtevant, ``Policy Based Inference
+in Trick-Taking Card Games,'' \emph{IEEE Conference on Games 2019}, 2019;
+arXiv:1905.10911.
+
+\bibitem{solinas-history}
+C. Solinas, D. Rebstock, N. R. Sturtevant, and M. Buro, ``History Filtering in
+Imperfect Information Games: Algorithms and Complexity,'' \emph{NeurIPS 2023},
+2023; arXiv:2311.14651.
+
+%% ---------------------------------------------------------------
+%% Depth-limited solving, subgame solving, and decision-time planning
+%% ---------------------------------------------------------------
+
+\bibitem{brown2018depthlimited}
+N. Brown, T. Sandholm, and B. Amos, ``Depth-Limited Solving for
+Imperfect-Information Games,'' \emph{NeurIPS 2018}, 2018; arXiv:1805.08195.
+Master-level heads-up no-limit hold'em on a 4-core CPU and 16 GB, via
+multi-valued states. The soundness argument is for two-player zero-sum games and
+is not inherited by the team game studied here.\\
+\url{https://arxiv.org/abs/1805.08195}
+
+\bibitem{zhang2021subgamesolvingwithoutck}
+B. H. Zhang and T. Sandholm, ``Subgame Solving without Common Knowledge,''
+\emph{NeurIPS 2021}, 2021; arXiv:2106.06068.\\
+\url{https://proceedings.neurips.cc/paper/2021/hash/c96c08f8bb7960e11a1239352a479053-Abstract.html}
+
+\bibitem{zhang2022teamsubgame}
+B. H. Zhang, L. Carminati, F. Cacciamani, G. Farina, P. Olivieri, N. Gatti, and
+T. Sandholm, ``Subgame Solving in Adversarial Team Games,'' \emph{NeurIPS 2022},
+2022. Cited from the proceedings abstract page; the mirrored PDF did not
+decode.\\
+\url{https://proceedings.neurips.cc/paper_files/paper/2022/hash/aa5f5e6eb6f613ec412f1d948dfa21a5-Abstract-Conference.html}
+
+\bibitem{sokota2024updateequivalence}
+S. Sokota, G. Farina, D. J. Wu, H. Hu, K. A. Wang, J. Z. Kolter, and N. Brown,
+``The Update-Equivalence Framework for Decision-Time Planning,'' \emph{ICLR
+2024}, 2024; arXiv:2304.13138. Mirror-descent search at two orders of magnitude
+less search time than public-belief-state search in Hanabi.\\
+\url{https://openreview.net/forum?id=JXGph215fL}
+
+\bibitem{lerer2020sparta}
+A. Lerer, H. Hu, J. Foerster, and N. Brown, ``Improving Policies via Search in
+Cooperative Partially Observable Games,'' \emph{AAAI 2020}, 2020;
+arXiv:1912.02318. SPARTA; Hanabi 24.08 to 24.61 at test time.\\
+\url{https://ojs.aaai.org/index.php/AAAI/article/view/6208}
+
+\bibitem{hu2021lbs}
+H. Hu, D. J. Wu, A. Lerer, J. Foerster, and N. Brown, ``Learned Belief Search:
+Efficiently Improving Policies in Partially Observable Settings,''
+arXiv:2106.09086, 2021.\\
+\url{https://arxiv.org/abs/2106.09086}
+
+\bibitem{fickinger2021rlfinetuning}
+A. Fickinger, H. Hu, B. Amos, S. Russell, and N. Brown, ``Scalable Online
+Planning via Reinforcement Learning Fine-Tuning,'' \emph{NeurIPS 2021}, 2021;
+arXiv:2109.15316.\\
+\url{https://arxiv.org/abs/2109.15316}
+
+\bibitem{milec2021cdr}
+D. Milec, O. Kub\'i\v{c}ek, and V. Lis\'y, ``Continual Depth-limited Responses
+for Computing Counter-strategies in Sequential Games,'' arXiv:2112.12594, 2021.
+Robust-response methods do not compose with limited-look-ahead solving off the
+shelf.\\
+\url{https://arxiv.org/abs/2112.12594}
+
+\bibitem{milec2025abd}
+D. Milec, V. Kova\v{r}\'ik, and V. Lis\'y, ``Adapting Beyond the Depth Limit:
+Counter Strategies in Large Imperfect Information Games,'' arXiv:2501.10464,
+2025.\\
+\url{https://arxiv.org/abs/2501.10464}
+
+\bibitem{kubicek2025lamir}
+O. Kub\'i\v{c}ek and V. Lis\'y, ``Look-ahead Reasoning with a Learned Model in
+Imperfect Information Games,'' arXiv:2510.05048, 2025; ICLR 2026 per the arXiv
+PDF header.\\
+\url{https://arxiv.org/abs/2510.05048}
+
+\bibitem{kubicek2026refinements}
+O. Kub\'i\v{c}ek, V. Lis\'y, and T. Sandholm, ``Equilibrium Refinements Improve
+Subgame Solving in Imperfect-Information Games,'' arXiv:2601.17131, 2026.\\
+\url{https://arxiv.org/abs/2601.17131}
+
+%% ---------------------------------------------------------------
+%% Full solvers, and the evaluation of their approximation quality
+%% ---------------------------------------------------------------
+
+\bibitem{brown2020rebel}
+N. Brown, A. Bakhtin, A. Lerer, and Q. Gong, ``Combining Deep Reinforcement
+Learning and Search for Imperfect-Information Games,'' \emph{NeurIPS 2020},
+2020; arXiv:2007.13544.\\
+\url{https://arxiv.org/abs/2007.13544}
+
+\bibitem{schmid2023sog}
+M. Schmid, M. Morav\v{c}\'ik, N. Burch, R. Kadlec, J. Davidson, K. Waugh,
+N. Bard, F. Timbers, M. Lanctot, G. Z. Holland, E. Davoodi, A. Christianson, and
+M. Bowling, ``Student of Games: A Unified Learning Algorithm for Both Perfect
+and Imperfect Information Games,'' \emph{Science Advances} 9(46), 2023;
+arXiv:2112.03178. Circulated 2021--2022 as ``Player of Games.''
+
+\bibitem{moravcik2017deepstack}
+M. Morav\v{c}\'ik, M. Schmid, N. Burch, V. Lis\'y, D. Morrill, N. Bard,
+T. Davis, K. Waugh, M. Johanson, and M. Bowling, ``DeepStack: Expert-Level
+Artificial Intelligence in Heads-Up No-Limit Poker,'' \emph{Science}
+356(6337):508--513, 2017.
+
+\bibitem{lisy2017lbr}
+V. Lis\'y and M. Bowling, ``Equilibrium Approximation Quality of Current
+No-Limit Poker Bots,'' arXiv:1612.07547, 2017. Local Best Response; every ACPC
+2016 entrant is more than 3,180 mBB/h exploitable.\\
+\url{https://arxiv.org/abs/1612.07547}
+
+%% ---------------------------------------------------------------
+%% Cooperative play, conventions, and belief modelling
+%% ---------------------------------------------------------------
+
+\bibitem{bard-hanabi}
+N. Bard, J. N. Foerster, S. Chandar, N. Burch, M. Lanctot, H. F. Song,
+E. Parisotto, V. Dumoulin, S. Moitra, E. Hughes, I. Dunning, S. Mourad,
+H. Larochelle, M. G. Bellemare, and M. Bowling, ``The Hanabi Challenge: A New
+Frontier for AI Research,'' \emph{Artificial Intelligence} 280, 2020;
+arXiv:1902.00506.
+
+\bibitem{foerster2019bad}
+J. N. Foerster, H. F. Song, E. Hughes, N. Burch, I. Dunning, S. Whiteson,
+M. Botvinick, and M. Bowling, ``Bayesian Action Decoder for Deep Multi-Agent
+Reinforcement Learning,'' \emph{ICML 2019}, 2019; arXiv:1811.01458.\\
+\url{https://arxiv.org/abs/1811.01458}
+
+\bibitem{hu-sad}
+H. Hu and J. N. Foerster, ``Simplified Action Decoder for Deep Multi-Agent
+Reinforcement Learning,'' \emph{ICLR 2020}, 2020; arXiv:1912.02288.
+
+\bibitem{hu-otherplay}
+H. Hu, A. Lerer, A. Peysakhovich, and J. N. Foerster, ```Other-Play' for
+Zero-Shot Coordination,'' \emph{ICML 2020}, 2020; arXiv:2003.02979.
+
+\bibitem{hu2021obl}
+H. Hu, A. Lerer, B. Cui, L. Pineda, N. Brown, and J. Foerster, ``Off-Belief
+Learning,'' \emph{ICML 2021}, 2021; arXiv:2103.04000.\\
+\url{https://arxiv.org/abs/2103.04000}
+
+\bibitem{sokota2021capi}
+S. Sokota, E. Lockhart, F. Timbers, E. Davoodi, R. D'Orazio, N. Burch,
+M. Schmid, M. Bowling, and M. Lanctot, ``Solving Common-Payoff Games with
+Approximate Policy Iteration,'' \emph{AAAI 2021}, 2021; arXiv:2101.04237.\\
+\url{https://arxiv.org/abs/2101.04237}
+
+\bibitem{hu2022sed}
+H. Hu, S. Sokota, D. J. Wu, A. Bakhtin, A. Lupu, B. Cui, and J. N. Foerster,
+``Self-Explaining Deviations for Coordination,'' \emph{NeurIPS 2022}, 2022;
+arXiv:2207.12322. IMPROVISED; the first algorithmic Hanabi finesse plays.\\
+\url{https://proceedings.neurips.cc/paper_files/paper/2022/hash/faa6276ea12d7afeb3e42b210c86f688-Abstract-Conference.html}
+
+\bibitem{cox-hanabi}
+C. Cox, J. De Silva, P. DeOrsey, F. H. J. Kenter, T. Retter, and J. Tobin, ``How
+to Make the Perfect Fireworks Display: Two Strategies for Hanabi,''
+\emph{Mathematics Magazine} 88(5):323--336, 2015.
+
+\bibitem{tian2020jps}
+Y. Tian, Q. Gong, and T. Jiang, ``Joint Policy Search for Multi-Agent
+Collaboration with Imperfect Information,'' \emph{NeurIPS 2020}, 2020;
+arXiv:2008.06495. Contract Bridge: $+0.63$ IMPs/board against WBridge5.\\
+\url{https://arxiv.org/abs/2008.06495}
+
+%% ---------------------------------------------------------------
+%% Human-compatible play and regularised search
+%% ---------------------------------------------------------------
+
+\bibitem{jacob2022pikl}
+A. P. Jacob, D. J. Wu, G. Farina, A. Lerer, H. Hu, A. Bakhtin, J. Andreas, and
+N. Brown, ``Modeling Strong and Human-Like Gameplay with KL-Regularized
+Search,'' \emph{ICML 2022}, 2022; arXiv:2112.07544.\\
+\url{https://arxiv.org/abs/2112.07544}
+
+\bibitem{hu2022humanregularized}
+H. Hu, D. J. Wu, A. Lerer, J. Foerster, and N. Brown, ``Human-AI Coordination
+via Human-Regularized Search and Learning,'' arXiv:2210.05125, 2022.\\
+\url{https://arxiv.org/abs/2210.05125}
+
+\bibitem{fair2022cicero}
+Meta Fundamental AI Research Diplomacy Team (FAIR), A. Bakhtin, N. Brown,
+E. Dinan, G. Farina, C. Flaherty, D. Fried, A. Goff, J. Gray, H. Hu, and others,
+``Human-Level Play in the Game of Diplomacy by Combining Language Models with
+Strategic Reasoning,'' \emph{Science} 378(6624):1067--1074, 2022.\\
+\url{https://www.science.org/doi/10.1126/science.ade9097}
+
+\bibitem{dizdarevic2025ah2ac2}
+T. Dizdarevi\'c and others, ``Ad-Hoc Human-AI Coordination Challenge,''
+\emph{ICML 2025}, 2025; arXiv:2506.21490.\\
+\url{https://proceedings.mlr.press/v267/dizdarevic25a.html}
+
+%% ---------------------------------------------------------------
+%% Team games, hidden roles, and common information
+%% ---------------------------------------------------------------
+
+\bibitem{nayyar2013common}
+A. Nayyar, A. Mahajan, and D. Teneketzis, ``Decentralized Stochastic Control
+with Partial History Sharing: A Common Information Approach,'' \emph{IEEE
+Transactions on Automatic Control} 58(7):1644--1658, 2013; arXiv:1209.1695.\\
+\url{https://arxiv.org/abs/1209.1695}
+
+\bibitem{celli-gatti}
+A. Celli and N. Gatti, ``Computational Results for Extensive-Form Adversarial
+Team Games,'' \emph{AAAI 2018}, 2018; arXiv:1711.06930.
+
+\bibitem{farina-collusion}
+G. Farina, A. Celli, N. Gatti, and T. Sandholm, ``Connecting Optimal Ex-Ante
+Collusion in Teams to Extensive-Form Correlation: Faster Algorithms and Positive
+Complexity Results,'' \emph{ICML 2021}, PMLR 139:3164--3173, 2021.
+
+\bibitem{zhang-tbdag}
+B. H. Zhang, G. Farina, A. Celli, and T. Sandholm, ``Team Belief DAG:
+Generalizing the Sequence Form to Team Games for Fast Computation of Correlated
+Team Max-Min Equilibria via Regret Minimization,'' \emph{ICML 2023}, 2023;
+arXiv:2202.00789.
+
+\bibitem{carminati-tpi}
+L. Carminati, F. Cacciamani, M. Ciccone, and N. Gatti, ``A Marriage between
+Adversarial Team Games and 2-Player Games: Enabling Abstractions, No-Regret
+Learning and Subgame Solving,'' \emph{ICML 2022}, 2022; arXiv:2206.09161.
+
+\bibitem{carminati2024hiddenrole}
+L. Carminati, B. H. Zhang, G. Farina, N. Gatti, and T. Sandholm, ``Hidden-Role
+Games: Equilibrium Concepts and Computation,'' \emph{ACM Conference on Economics
+and Computation (EC) 2024}, 2024; arXiv:2308.16017.\\
+\url{https://arxiv.org/abs/2308.16017}
+
+%% ---------------------------------------------------------------
+%% Counting, permanents and constrained sampling
+%% ---------------------------------------------------------------
+
+\bibitem{ryser}
+H. J. Ryser, \emph{Combinatorial Mathematics}, Carus Mathematical Monographs 14,
+Mathematical Association of America, 1963.
+
+\bibitem{glynn}
+D. G. Glynn, ``The Permanent of a Square Matrix,'' \emph{European Journal of
+Combinatorics} 31(7):1887--1891, 2010.
+
+\bibitem{jsv}
+M. Jerrum, A. Sinclair, and E. Vigoda, ``A Polynomial-Time Approximation
+Algorithm for the Permanent of a Matrix with Non-Negative Entries,''
+\emph{Journal of the ACM} 51(4):671--697, 2004.
+
+\bibitem{lsw}
+N. Linial, A. Samorodnitsky, and A. Wigderson, ``A Deterministic Strongly
+Polynomial Algorithm for Matrix Scaling and Approximate Permanents,''
+\emph{Combinatorica} 20(4):545--568, 2000.
+
+\bibitem{chen-sis}
+Y. Chen, P. Diaconis, S. P. Holmes, and J. S. Liu, ``Sequential Monte Carlo
+Methods for Statistical Analysis of Tables,'' \emph{Journal of the American
+Statistical Association} 100(469):109--120, 2005.
+
+%% ---------------------------------------------------------------
+%% Evaluation methodology
+%% ---------------------------------------------------------------
+
+\bibitem{acpc}
+N. Bard, J. Hawkin, J. Rubin, and M. Zinkevich, ``The Annual Computer Poker
+Competition,'' \emph{AI Magazine} 34(2):112--118, 2013; and the competition
+rules describing duplicate matches and common seeds.
+
+\bibitem{zinkevich-divat}
+M. Zinkevich, M. Bowling, N. Bard, M. Kan, and D. Billings, ``Optimal Unbiased
+Estimators for Evaluating Agent Performance,'' \emph{AAAI-06}, pp.~573--578,
+2006.
+
+\bibitem{burch-aivat}
+N. Burch, M. Schmid, M. Morav\v{c}\'ik, D. Morrill, and M. Bowling, ``AIVAT: A
+New Variance Reduction Technique for Agent Evaluation in Imperfect Information
+Games,'' \emph{AAAI-18}, 2018; arXiv:1612.06915.
+
+\bibitem{waugh-abstraction}
+K. Waugh, D. Schnizlein, M. Bowling, and D. Szafron, ``Abstraction Pathologies
+in Extensive Games,'' \emph{AAMAS 2009}, pp.~781--788, 2009.
+
+\bibitem{balduzzi-reeval}
+D. Balduzzi, K. Tuyls, J. P\'erolat, and T. Graepel, ``Re-evaluating
+Evaluation,'' \emph{NeurIPS 2018}, 2018; arXiv:1806.02643.
+
+\bibitem{coulom-whr}
+R. Coulom, ``Whole-History Rating: A Bayesian Rating System for Players of
+Time-Varying Strength,'' \emph{Computers and Games 2008}, 2008.
+
+\bibitem{herbrich-trueskill}
+R. Herbrich, T. Minka, and T. Graepel, ``TrueSkill\texttrademark: A Bayesian
+Skill Rating System,'' \emph{Advances in Neural Information Processing Systems}
+19, 2006.
+
+\bibitem{nelo}
+M. Van den Bergh, ``Comments on Normalized Elo,'' Fishtest technical note; and
+Stockfish contributors, ``Statistical Methods and Algorithms in Fishtest.''\\
+\url{https://cantate.be/Fishtest/normalized_elo_practical.pdf}
+
+\bibitem{kelidari2026goldstandard}
+N. Kelidari, M. Haghi, and M. Salmani, ``A Gold-Standard Study of What Makes a
+Lightweight Game-Playing Agent Strong,'' arXiv:2607.06854, 2026. Gin Rummy and
+Leduc; concludes that the binding constraint is information, not capacity.\\
+\url{https://arxiv.org/abs/2607.06854}
+
+
+\end{thebibliography}

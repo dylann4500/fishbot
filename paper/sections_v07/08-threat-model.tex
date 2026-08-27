@@ -29,12 +29,12 @@ The team gets no shared secret pre-play seed. Everything else a seat-conditioned
 legal. An \emph{illegal} side channel is defined by the bridge encrypted-signal criterion, made
 mechanical by a closed list of implementation-only discriminators plus four tests over all four engine
 decision types. Until phase~3 none of those tests existed as code; the constraint had only ever been
-checked by inspection. \S\ref{sec:instrument-side} reports the harness that implements them and the
+checked by inspection. \S\ref{sec:methodology-side} reports the harness that implements them and the
 three planted cheats that calibrate it.
 
 \paragraph{Every exploitability number is a lower bound.}
 Reported as $\ge x$ with class, correlation regime, seat count and budget attached. Computing the true
-value is NP-hard even white-box. The consequence for this report is stated once and then honoured
+value is NP-hard even white-box. The consequence for this paper is stated once and then honoured
 everywhere: \textbf{a search that fails to find an exploit is evidence about the search, not a
 property of the target.} The v0.4 record contains exactly this reading error, turning a null result
 into a win, and \S\ref{sec:corrections} carries the correction forward rather than repeating it.
@@ -42,7 +42,7 @@ into a win, and \S\ref{sec:corrections} carries the correction forward rather th
 \paragraph{A class may contribute only after calibration.}
 An adversary class is admitted to an exploitability claim only once it has passed a planted-edge
 calibration at or below the effect size being claimed. That precondition is why
-\S\ref{sec:instrument-floor} exists and why the negative controls of \S\ref{sec:results-controls}
+\S\ref{sec:methodology-floor} exists and why the negative controls of \S\ref{sec:results-controls}
 are run at all: an instrument that cannot recover a planted edge of a given size cannot report the
 absence of a real one of that size.
 
@@ -50,4 +50,4 @@ absence of a real one of that size.
 It does not license the claim that a policy passing every test is unexploitable, and it does not
 license reading the panel's worst cell as an exploitability figure. The panel measures robustness
 across playstyles; the adversary search measures what a fitted responder can do. They are different
-objects and this report keeps them in different sections.
+objects and this paper keeps them in different sections.

@@ -1,0 +1,78 @@
+\section{Configuration grammar and parameters}
+\label{app:parameters}
+
+\subsection*{The grammar}
+
+A configuration is named by a single string, and every policy in this paper --- every arm, every
+panel member, every fitted adversary --- is one of these strings. The grammar is
+
+\begin{quote}\ttfamily
+base\,\textup{[}\,:key=value\,\textup{(}\,,key=value\,\textup{)}$^{*}$\,\textup{]}
+\end{quote}
+
+\noindent
+where \texttt{base} names a policy family (\texttt{v03} \ldots{} \texttt{v07}, a scripted archetype
+such as \texttt{withholder}, or an instrumented variant such as \texttt{v07i} for the white-box
+inverter), and each \texttt{key=value} sets one option on it. Two properties of the grammar are
+load-bearing for the evaluation:
+
+\begin{itemize}
+\item \textbf{It is total.} Any configuration this paper measures can be written as one string and
+      reconstructed from it, which is what makes an ablation lattice mechanical rather than a set of
+      hand-edited builds.
+\item \textbf{An explicit key beats a bulk vector.} A spec may carry
+      \texttt{allparams=$w_1|w_2|\ldots$}, the entire parameter vector; explicit keys written
+      alongside it are re-applied afterwards. Before this was fixed, a sentinel such as
+      \texttt{pool=-1} was silently clamped away by the bulk vector, and three independently fitted
+      configurations carried machinery their spec said was switched off.
+\end{itemize}
+
+\subsection*{The frozen configuration}
+
+\begin{quote}\small\ttfamily\raggedright
+\vsevenFrozenSpecWrapped{}
+\end{quote}
+
+\begin{center}\small
+\input{tables_v07/options}
+\end{center}
+
+\noindent
+Three of these are switches that cannot be expressed as coordinates of the parameter vector at all
+--- \vsevenNotVectorisable{} --- which is why the freeze artifact records the option map separately
+from the vector and why the round-trip check of \S\ref{sec:configuration} has to execute rather than
+compare strings.
+
+\subsection*{The parameter vector}
+
+\begin{center}\small
+\input{tables_v07/layout}
+\end{center}
+
+\noindent
+\vsevenLayoutNote{}
+
+The first \vsevenVsixCoords{} coordinates are inherited unchanged from the previous release's fit,
+whose provenance is recorded in the freeze artifact as \texttt{\vsevenInheritedVector{}\ldots}. No
+fit of any kind was applied to the frozen configuration in this cycle
+(\S\ref{sec:configuration-notchanged}).
+
+\subsection*{Coordinates known to be inert}
+
+Not every fitted coordinate does anything, and a paper that presented all
+\vsevenCoordinates{} as tuned quantities would be overstating the search. Known inert coordinates in
+this family:
+
+\begin{itemize}
+\item two v0.5 knobs unreachable under the shipped declaration branch --- setting them produces a
+      bit-identical transcript;
+\item three v0.5 ask terms belonging to a re-scoring pass that the shipped configuration does not
+      run;
+\item \texttt{m2}, whose leave-one-out drop is exactly zero and which was dropped from the freeze
+      for that reason (\S\ref{sec:results-attribution});
+\item \texttt{stall}, which is armed and never fires: its mirror digest is byte-identical to the
+      same configuration without it (\S\ref{sec:configuration-keys});
+\item and, in the white-box adversary class specifically, \vsevenZeightInert{} of the
+      \vsevenCoordinates{} fitted coordinates, because that base reads only the
+      \vsevenVsixCoords{}-coordinate v0.6 vector (\S\ref{sec:exploit-whitebox}).
+\end{itemize}

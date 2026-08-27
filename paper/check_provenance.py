@@ -38,10 +38,19 @@ ROOT = os.path.dirname(HERE)
 # number was carried in from an earlier study. v0.7 inherits v0.5's and v0.6's
 # macros as transcribed, because a v0.7 section quoting an earlier study's
 # number is exactly the case this audit exists for.
+# `inherited_generated` names earlier studies' generated files. A macro those
+# files \renewcommand is generated from an artifact too -- an earlier study's,
+# but generated, with its own source comment recorded there. A paper that tells
+# the whole arc quotes those numbers, and they are not "transcribed by hand"
+# merely because a previous cycle's script emitted them.
 VERSIONS = {
-    'v05': dict(generated='num', inherited=(), master='fishbot_v05.tex'),
-    'v06': dict(generated='vsix', inherited=('num',), master='fishbot_v06.tex'),
-    'v07': dict(generated='vseven', inherited=('num', 'vsix'), master='fishbot_v07.tex'),
+    'v05': dict(generated='num', inherited=(), master='fishbot_v05.tex',
+                inherited_generated=()),
+    'v06': dict(generated='vsix', inherited=('num',), master='fishbot_v06.tex',
+                inherited_generated=('numbers_v05_generated.tex',)),
+    'v07': dict(generated='vseven', inherited=('num', 'vsix'), master='fishbot_v07.tex',
+                inherited_generated=('numbers_v05_generated.tex',
+                                     'numbers_v06_generated.tex')),
 }
 
 SRC_RE = re.compile(r'(research/[^\s,;]+|engine/[^\s,;]+|docs/[^\s,;]+|paper/[^\s,;]+)')
@@ -82,6 +91,38 @@ def declared_in(path, prefixes):
     return set(pat.findall(open(path).read()))
 
 
+# A sentinel is a value that was never a measurement: the X.XX convention the
+# placeholder files use, or nothing at all. A bare 0 is deliberately NOT a
+# sentinel. Zero audit violations, a posterior that separates 0.00% of ties and
+# a mechanism worth exactly 0.00 points are all real results, and nothing in the
+# value distinguishes them from an unfilled zero -- so this check catches the
+# X convention, which is unambiguous, and leaves zeros to the generator's own
+# completeness warning.
+SENTINEL = re.compile(r'^(?:[Xx?]+(?:[.,][Xx?]+)*|)$')
+
+
+def resolved_values(files, prefixes):  # noqa: D401
+    """The value each macro ends up with, applying the files in load order:
+    \\providecommand does not overwrite, \\renewcommand does. A macro whose final
+    value is still a sentinel (``X``, ``X.XX``, an unfilled zero) typesets that
+    sentinel into the PDF, which is worse than a missing number because it looks
+    like data. Inheriting an earlier study's placeholder file is exactly how one
+    gets there, so the resolved value is checked rather than assumed."""
+    val = {}
+    for f in files:
+        if not os.path.exists(f):
+            continue
+        for kind, name, v in re.findall(
+                r'(provide|renew|new)command\{\\((?:%s)[A-Za-z]+)\}\{([^}]*)\}'
+                % '|'.join(prefixes), open(f).read()):
+            if kind == 'provide':
+                if name not in val:
+                    val[name] = (v, False)
+            else:
+                val[name] = (v, True)
+    return val
+
+
 def placeholder_attribution(placeholder, prefixes):
     """Map macro -> the artifact named by the nearest preceding comment header."""
     attrib, current = {}, None
@@ -119,7 +160,20 @@ def main():
 
     used = used_macros(sections, prefixes)
     gen = generated_macros(generated, cfg['generated'])
-    attrib = placeholder_attribution(placeholder, prefixes)
+    inherited_gen = set()
+    for fn in cfg.get('inherited_generated', ()):
+        for pre in prefixes:
+            inherited_gen |= generated_macros(os.path.join(HERE, fn), pre)
+    gen |= inherited_gen
+    # An inherited number carries its source header in the study that first
+    # transcribed it, so the attribution map has to span the placeholder files
+    # of every study this document loads -- otherwise a number that IS properly
+    # attributed reads as unattributed merely because it is old.
+    attrib = {}
+    for fn in cfg.get('inherited_generated', ()):
+        attrib.update(placeholder_attribution(
+            os.path.join(HERE, fn.replace('_generated.tex', '.tex')), prefixes))
+    attrib.update(placeholder_attribution(placeholder, prefixes))
 
     # A macro is a NUMBER only if a numbers file declares it. Everything else a
     # section writes with an audited prefix is a prose command from the master
@@ -152,8 +206,24 @@ def main():
         problems.append('undeclared: \\%s is used in sections_%s/ but no numbers '
                         'file declares it -- it typesets as empty' % (m, v))
 
+    # a used macro whose resolved value is still a sentinel
+    order = []
+    for fn in cfg.get('inherited_generated', ()):
+        stem = fn.replace('_generated.tex', '.tex')
+        order += [os.path.join(HERE, stem), os.path.join(HERE, fn)]
+    order += [placeholder, generated]
+    vals = resolved_values(order, prefixes)
+    for m in sorted(numbers):
+        value, _was_generated = vals.get(m, ('', False))
+        if SENTINEL.match(value):
+            problems.append('placeholder reaches the page: \\%s resolves to %r and no '
+                            'generator ever filled it' % (m, value))
+
     print('numbers used in sections_%s/ : %d' % (v, len(numbers)))
     print('  generated from artifacts   : %d' % len(numbers & gen))
+    if inherited_gen:
+        print('    of which by this study    : %d' % len(numbers & (gen - inherited_gen)))
+        print('    of which by an earlier one: %d' % len(numbers & inherited_gen))
     print('  transcribed from reports   : %d' % len(transcribed))
     srcs = sorted({attrib.get(m) for m in transcribed if attrib.get(m)})
     print('  distinct source artifacts  : %d' % len(srcs))

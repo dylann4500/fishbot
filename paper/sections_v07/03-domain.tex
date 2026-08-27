@@ -1,0 +1,102 @@
+\section{Why this game is worth studying}
+\label{sec:domain}
+
+Fish sits at an unusual point in the space of imperfect-information games, and the point is
+unusual in a way that makes certain questions cheap to ask that are expensive everywhere else. This
+section says what those questions are, because they are the reason the rest of the paper exists.
+
+\subsection{The hidden state is the deal, and the posterior over it is exact}
+\label{sec:domain-exact}
+
+Every card movement in Fish is public. A card changes hands only through a successful ask, and the
+ask, its target and its outcome are seen by everyone; a declaration reveals an entire half-suit's
+allocation whether it succeeds or fails. It follows that the \emph{only} thing any player does not
+know is the initial deal, and that the public record determines every subsequent card position given
+that deal.
+
+This is a stronger property than it sounds. In most hidden-hand card games the reachable-history set
+is what must be filtered, and history filtering is FNP-complete in general
+\cite{solinas-history}. Fish escapes: there is exactly one object to reconstruct, and the
+constraints on it are logical rather than probabilistic. A player who has been told ``I do not hold
+the seven of hearts'' knows it, forever, with certainty. The observation history is a conjunction of
+hard constraints on a fixed unknown, and the posterior over deals consistent with those constraints
+is computable in closed form (\S\ref{sec:engine-belief}).
+
+The consequence for research is that Fish lets you \emph{separate} inference from policy. In poker
+or Bridge, a claim that a policy is weak can always be answered with ``its beliefs are wrong''. Here
+the beliefs can be made provably right, at which point every remaining loss is attributable to the
+policy. That separation is what makes the negative results of \S\ref{sec:arc} and
+\S\ref{sec:rejected} meaningful rather than merely discouraging.
+
+It also sets up the single most surprising finding in this corpus, which
+\S\ref{sec:arc-vsix-belief} reports: making the belief exact makes the policy \emph{worse}.
+
+\subsection{The team is the unit, and the team cannot talk}
+\label{sec:domain-team}
+
+Three teammates share a payoff, hold different private information, and have no communication
+channel beyond the public actions themselves. That is precisely the decentralised control problem
+the common-information approach formalises: reformulate from the point of view of a coordinator who
+knows the common information and issues \emph{prescriptions}, maps from each controller's private
+information to its action \cite{nayyar2013common}. In Fish the common information is the entire
+public history, so the coordinator's information state is exactly the belief object the engine
+already maintains.
+
+Two things follow that matter for evaluation rather than for algorithms. First, the coordinator's
+problem is not solvable here --- a prescription maps every possible nine-card hand to an ask --- so
+the reduction is a correctness lens and not a method. Second, and more usefully, \emph{any
+deterministic procedure that reads only public state and its own hand is automatically common
+knowledge among the three teammates}, with no shared seed and no communication. That is a cheap
+version of a property the cooperative-search literature has to work for \cite{lerer2020sparta}, and
+it is why the side-channel definition of \S\ref{sec:threat} can be made mechanical.
+
+The qualifier is load-bearing, and \S\ref{sec:arc-vsix-ties} is where it bites: a randomised
+tie-break loses the property unless its randomisation is seeded from the public history.
+
+\subsection{A team of published, deterministic, identical agents inverts a standard assumption}
+\label{sec:domain-inverted}
+
+The team-correlation literature uniformly assumes the correlation device is the team's own ---
+private, and unknown to the opponent \cite{celli-gatti,farina-collusion,zhang-tbdag}. A homogeneous
+team of three \emph{identical published deterministic} agents inverts that: the device is common
+knowledge, and an adversary may read it. The threat model of \S\ref{sec:threat} takes that
+seriously, and \S\ref{sec:exploit} reports what an adversary that reads the target's own policy and
+inverts its transcript actually achieves.
+
+We found no prior work covering this case, and \S\ref{sec:related} states the scope of that search
+rather than claiming priority beyond it.
+
+\subsection{The domain is cheap, and that is a methodological asset}
+\label{sec:domain-cheap}
+
+A Fish deal plays out in roughly a hundred public events. The engine used here plays hundreds of
+complete six-player games per second per core with exact inference running in every seat. This is
+not a boast about engineering; it is what makes the evaluation programme in \S\ref{sec:methodology}
+possible at all. A study that needs 48{,}000 paired games to resolve a three-point effect, two
+disjoint holdout banks for every claim, a 31-member opponent panel scored identically for four arms,
+and eight independent adversary searches, can run all of that on one desktop in a day. In a domain
+where a single evaluation cell costs GPU-hours, the honest version of this paper could not have been
+written.
+
+The corresponding liability is stated in \S\ref{sec:limitations}: cheap evaluation is not external
+evaluation, and every number here was produced by one engine that this project wrote.
+
+\subsection{What the game does \emph{not} offer}
+\label{sec:domain-not}
+
+Two disclaimers, because both bear on how the results should be read.
+
+Fish's perfect-information game is degenerate, not merely fused. A clairvoyant player names only
+cards the target actually holds, so never fails an ask, never loses the turn, and declares each
+half-suit as soon as their team holds all of it. Almost every reachable position carries the same
+perfect-information value. Determinization --- the standard recipe for hidden-hand card games
+\cite{levy,ginsberg-gib} --- therefore collapses here to choosing the ask most likely to hit, blind
+to the information an ask leaks, the information a refusal supplies, and the option value of
+postponing a declaration. \S\ref{sec:related-determinization} places this against the literature,
+and \S\ref{sec:arc-vsix-search} reports what the project measured when it built such a search
+anyway.
+
+And Fish has no passive continuation. A player must ask or declare; there is no equivalent of poker's
+check/call rollout, which is what the standard cheap exploitability probe is built on
+\cite{lisy2017lbr}. \S\ref{sec:towardone} names this as the single largest obstacle between this
+corpus and a defensible near-optimality claim.

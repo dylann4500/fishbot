@@ -1,91 +1,100 @@
 \section{Introduction}
 \label{sec:intro}
 
-Six-player Canadian Fish is a team game of pure public information flow. Fifty-four cards are dealt
-nine each into two alternating teams of three; a player asks a named opponent for a named card, must
-already hold another card of that card's six-card half-suit, must not hold the card itself, and keeps
-the turn on a hit and loses it on a miss; a team scores a half-suit by naming, correctly and in full,
-which of its members holds each of the six cards. Every ask, every hit, every miss and every
-declaration is seen by all six players, which makes the entire hidden state the initial deal and the
-posterior over that deal exactly computable.
+This paper is the account of record for a research programme in six-player Canadian Fish, a team
+card game with a property that is rare and useful: \emph{every action is public}. Cards move only
+through asks whose target and outcome everyone observes, so the entire hidden state is the initial
+deal, and the posterior over it is exactly computable in closed form. A domain in which inference
+can be made provably correct is a domain in which every remaining loss is attributable to policy ---
+and that separation is what the programme has spent six versions exploiting.
 
-The \vsix{} study ended with a policy that beat its predecessor by about nine tenths of a point and
-with a design register most of whose entries it had just closed as worth nothing. It named the
-binding constraint plainly: at the budget the project had always used, this policy class looks flat.
-The v0.7 programme was built to find out whether it \emph{is} flat, and it was organised so that the
-answer could not be argued into being positive. Five phases ran under separate briefs: rebuild the
-measuring instrument and characterise what it can see; generate adversaries in the open and find what
-actually beats the \vsix{} frontier; build candidate architectures; run a bake-off and freeze exactly
-one configuration; and then --- from a cleared context, reading only a protocol committed before any
-holdout deal had been played --- measure the frozen configuration on sealed material.
+\S\ref{sec:game} states the game completely, so that nothing here depends on outside material, and
+\S\ref{sec:domain} says why it is worth studying. The short version is three properties in
+combination. The hidden state is a single object under hard logical constraints, so exact inference
+is cheap rather than aspirational. The unit of play is a three-player team whose members cannot
+communicate, which is the decentralised control problem in its purest card-game form. And a team of
+three \emph{identical, deterministic, published} agents inverts the standard assumption of the
+team-correlation literature, in which the correlation device is private: here it is common
+knowledge, and an adversary may read it.
 
-This report is phase 6. It is written after the numbers are in, and it is bound by what the protocol
-said before they were.
+\paragraph{What this paper contains.}
+The programme has produced two kinds of result, and this paper treats them as equally important.
 
-\paragraph{The result in one paragraph.}
-The preregistered primary claim passes and is certified: against \fcheap{}, the cheapest point of the
-\vsix{} frontier, the frozen configuration scores \vsevenBtwoFcheap{}~points
-$[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over \vsevenBtwoFcheapN{} games of sealed material, with
-the sign replicating on both banks and a lower bound above the pre-committed detection floor. Nothing
-built to exploit it succeeds. It is not a self-play convention. But it does \emph{not} beat
-\composite{} --- \vsevenBtwoComposite{}~points
-$[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$ --- and the protocol states in advance what that
-means: the increment that phases~3 and~4 added to what phase~2 already had did not replicate, and on
-that cell the release reduces to a phase-2 result. The strength gain in this cycle is real, it is
-located in a single coordinate found by an unfitted sweep in phase~2, and the three phases of
-architecture work that followed added no measurable strength on top of it.
+The first kind is about the game. An exactly computable observer-conditioned deal posterior
+(\S\ref{sec:engine-belief}) --- and the finding that substituting it for the deployed approximation
+makes the policy \emph{worse}, because exactness in this game is purchased by discarding behaviour
+(\S\ref{sec:arc-vsix-belief}). More than half of ask decisions ending in a bit-for-bit tie that the
+\emph{exact} posterior also cannot separate, making the largest item on the design register a
+property of the information set rather than a defect (\S\ref{sec:arc-vsix-ties}). A determinized
+search that is \vsixCurseGap{}~points \emph{worse} than the blueprint it searches from when its
+action is chosen by an unguarded argmax, and fully recovered by a paired lower-confidence-bound
+guard (\S\ref{sec:arc-vsix-search}).
+
+The second kind is about measurement, and it is roughly half the contribution.
+\S\ref{sec:methodology} presents the apparatus as method rather than housekeeping: the
+duplicate-block design, deal-clustered intervals, power computed before a cell is run, replication
+across disjoint banks used as a veto over pooled significance, sealed material with committed
+digests, preregistration with stated failure conditions, a commit gate that runs before any strength
+number, calibrated detection floors, and a mechanical homogeneity gate with planted positive
+controls. Every one of those components was built in response to a specific measured failure, and
+most of the failures were this project's own (\S\ref{sec:arc-vsix-apparatus}).
+
+\paragraph{The final cycle, and its verdict.}
+\S\S\ref{sec:instrument}--\ref{sec:results} report a cycle designed so that its answer could not be
+argued into being positive: characterise the instrument, search for adversaries in the open, build
+candidate architectures, freeze exactly one configuration, and evaluate it from a cleared context
+against a protocol committed before any holdout deal had been played.
+
+The preregistered primary claim passes and is certified: \vsevenBtwoFcheap{}~points
+$[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ against the cheapest point of the previous frontier,
+over \vsevenBtwoFcheapN{} games of sealed material, replicating on both banks and gate-clean. Nothing
+built to exploit it succeeds; it is not a self-play convention.
+
+\textbf{And it does not beat the composite the programme had already assembled two phases earlier}
+--- \vsevenBtwoComposite{}~points $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$. The protocol
+stated in advance what that would mean, and \S\ref{sec:against} says it: the strength gain in this
+cycle is real, it was found by an unfitted coordinate sweep, and the architecture work that followed
+added no measurable strength on top of it. Two further results point the same way. On a
+\vsevenPanelMembers{}-member panel the frozen configuration is \emph{third of four} on minimax
+regret. And the one quantity that falls short of its advance-stated training value is the group of
+keys the freeze was \emph{selected over}.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-\item \textbf{A preregistered evaluation with a stated failure condition}
-  (\S\ref{sec:protocol}). The protocol names the bar (\fcheap{}, not the deployed policy), the
-  thresholds, the seven conditions that would mean v0.7 is not an advancement, and the sentence the
-  report must use if the partner-regime ordering survives. Two of the seven conditions came out
-  against the release and are reported as such (\S\ref{sec:against}).
+\item \textbf{A complete, self-contained treatment of a domain with no prior computational
+  literature} (\S\S\ref{sec:game}--\ref{sec:engine}): rules, dialect, the exact posterior and its
+  closed form, and the verification suite that establishes the engine is what it claims to be.
 
-\item \textbf{The worst case and the minimax regret lead, and they disagree}
-  (\S\ref{sec:results-panel}). On a \vsevenPanelMembers{}-member panel scored identically for four
-  arms, \frozen{}'s worst cell is \vsevenWorstFrozen{} against \incumbent{}'s
-  \vsevenWorstIncumbent{} --- but \composite{}'s is better still on both readings
-  (\vsevenWorstComposite{} with its free self-cell, \vsevenWorstCompositeExSelf{} without), and
-  \frozen{} is \emph{third of four} on minimax regret. Both are reported; the panel mean is reported last and
-  labelled a diagnostic, because the project's standing rule forbids leading with an aggregate.
+\item \textbf{An evaluation apparatus presented as adoptable method} (\S\ref{sec:methodology}), each
+  component paired with the failure it prevents --- including two occasions on which this project's
+  own published claims turned out to be artefacts of its instrument.
 
-\item \textbf{Four architectures killed with measurements} (\S\ref{sec:rejected}). The
-  declaration-allocation channel --- the corpus's second-largest quantified opportunity --- closes at
-  exactly zero, and its proposed fix is shown not to be a fix. A leaf evaluator fitted
-  \vsevenKoneFold$\times$ better in the only statistic its consumer can use buys nothing in play.
-  Every self-oriented per-decision objective produces a worse policy while moving its own proxy in
-  the intended direction. A learned re-ranker inside the exchangeable tie group is worth
-  \vsevenKfiveHeadToHead{} $\pm$ \vsevenKfivePm{} against a free hash tie-break.
+\item \textbf{An operational definition of team exploitability} for a homogeneous team of published
+  deterministic agents (\S\ref{sec:threat}), made mechanical by four tests with three calibrated
+  positive controls.
 
-\item \textbf{A mechanical side-channel gate with calibrated positive controls}
-  (\S\ref{sec:instrument-side}). Three planted cheats each fail exactly the tests the
-  protocol requires of them --- two for one of the three, not one each --- and pass every other test,
-  on holdout material, across \vsevenSideCells{} cells.
+\item \textbf{Four candidate architectures killed with measurements} (\S\ref{sec:rejected}): a
+  declaration channel that closes at exactly zero, a leaf evaluator fitted \vsevenKoneFold$\times$
+  better that buys nothing, per-decision objectives that produce worse policies while moving their
+  own proxies the right way, and a learned re-ranker worth \vsevenKfiveHeadToHead{}~$\pm$
+  \vsevenKfivePm{} against a free hash tie-break.
 
-\item \textbf{A fresh adversary search that finds nothing} (\S\ref{sec:exploit}). Eight independent
-  searches over four objectives and three classes, each evaluated on banks disjoint from the stream it
-  was fitted on. Every arm loses; the largest upper bound anywhere is \vsevenBfourWorstUpper{}.
+\item \textbf{A preregistered evaluation with a stated failure condition} (\S\ref{sec:protocol}), of
+  which two conditions came out against the release and are reported as such
+  (\S\ref{sec:against}).
 
-\item \textbf{The selection signature, located} (\S\ref{sec:against-selection}). Of four quantities
-  with a training figure stated in advance, \vsevenSelReproduce{} reproduce or exceed it and the
-  largest shortfall falls on the one measuring the group of keys the freeze was selected over.
-
-\item \textbf{Corrections to the record} (\S\ref{sec:corrections}), including a freeze-verification
-  step that could not fire because its own baseline had been refreshed, a scored-cell count that the
-  artifacts do not support, and a cost figure the corpus understated --- by
-  \vsevenCostFcheapTight$\times$ against \vsevenCostRecorded$\times$ for the configuration the
-  record was describing.
+\item \textbf{A corrections register} (\S\ref{sec:corrections}) against both the corpus's record and
+  this cycle's own, and \textbf{an explicit statement of what a near-optimality claim would require}
+  (\S\ref{sec:towardone}), none of which has been produced.
 \end{enumerate}
 
 \paragraph{What this paper does not claim.}
-It does not claim that v0.7 is stronger than the best configuration available before phase~3 began;
-the cell that would show that is \vsevenBtwoComposite{}~points with an interval containing zero. It
-does not claim that the frozen configuration is hard to exploit --- only that eight searches at a
-stated budget, in stated classes, did not exploit it, which is a lower bound within a searched class
-and nothing more (\S\ref{sec:limitations-lbr}). It does not claim the gain is located: the protocol's
-own location test does not replicate across the two banks (\S\ref{sec:against-location}). And it does
-not claim that any policy in this corpus is near-optimal. \S\ref{sec:towardone} states what would
-have to be measured before that sentence could be written about \emph{any} Fish-playing team, and
-none of it has been.
+It does not claim the release is stronger than the best configuration available before the
+architecture work began; the cell that would show that contains zero. It does not claim the frozen
+configuration is hard to exploit --- only that eight searches, at a stated budget, in stated
+classes, did not exploit it, which is a lower bound within a searched class and nothing more
+(\S\ref{sec:limitations-lbr}). It does not claim the gain is located: the protocol's own location
+test does not replicate across banks (\S\ref{sec:against-location}). And it does not claim that any
+policy here is near-optimal, or that this is the strongest Fish-playing team, because the comparison
+class has one member and every exploitability number in this corpus is a lower bound from a search
+rather than a bound on what a search could find.

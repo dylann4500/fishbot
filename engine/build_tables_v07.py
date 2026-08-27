@@ -1173,6 +1173,41 @@ def b0_verification():
     m = _re.search(r'checks\s+(\d+)', eng['selftest']['stdout'])
     emit('vsevenSelftestChecks', _commafy(m.group(1)), 'P5-B0.json: fish7 selftest, checks')
     emit('vsevenSelftest', 'PASS' if eng['selftest']['pass_'] else 'FAIL', 'P5-B0.json: fish7 selftest verdict')
+    # the frozen configuration's option map and vector layout, as tables, so the
+    # appendix reproduces the artifact rather than paraphrasing it
+    fz = json.load(open(os.path.join(_ROOT, 'engine', 'fishbot_v07.json')))
+    KEYDOC = {
+        'r12': 'half-suit contestation weight (\\texttt{oppCertDonate})',
+        'rtie': 'tie-break by a hash of the public event stream, not sort order',
+        'pool': 'urgency pooling threshold; $-1$ disables',
+        'oppfloor': 'urgency opponent-ownership floor; $-1$ disables',
+        'force': 'urgency forcing horizon in events; $10^6$ disables',
+        'askfloor': 'urgency ask floor; $-1$ disables',
+        'stall': 'escalate after $K$ public events with no change in this seat\'s certificate hash',
+        's1': 'enable the endgame-truncated determinized search',
+        'det': 'determinizations sampled per searched decision',
+        'cand': 'candidate actions carried into the search',
+        'kappa': 'shrinkage of the paired lower-confidence-bound deviation rule',
+        'rbelief': 'belief model used to reconstruct continuation players',
+        'depth': 'search depth limit in plies',
+        'maxq': 'search runs only when at most this many cards remain unresolved',
+    }
+    opt_lines = []
+    for k, v in fz['options'].items():
+        opt_lines.append('\\texttt{%s} & \\texttt{%s} & %s \\\\'
+                         % (_tex(k), _tex(v), KEYDOC.get(k, '---')))
+    writeTable('options.tex', opt_lines, 'llp{0.52\\linewidth}',
+               'Key & Value & What it controls')
+    lay = fz['allparamsLayout']
+    lay_lines = [('%s & %s \\\\' % (_tex(k), _tex(v)))
+                 for k, v in lay.items() if k != 'note']
+    writeTable('layout.tex', lay_lines, 'lr', 'Block & Coordinates')
+    emit('vsevenLayoutNote', _tex(lay.get('note', '')), 'engine/fishbot_v07.json: allparamsLayout note')
+    emit('vsevenNotVectorisable', ', '.join('\\texttt{%s}' % _tex(x)
+                                            for x in fz['switchesNotExpressibleAsVector']),
+         'engine/fishbot_v07.json: switches that cannot be expressed in the parameter vector')
+    emit('vsevenInheritedVector', _tex(fz['inheritedVectorProvenance'][:120]),
+         'engine/fishbot_v07.json: provenance of the inherited parameter vector')
     rep = d['reproducibility']
     emit('vsevenReproRuns', str(len(rep['runs'])), 'P5-B0.json: repeat runs of one training cell')
     emit('vsevenReproIdentical', 'yes' if rep['identical'] else 'no',

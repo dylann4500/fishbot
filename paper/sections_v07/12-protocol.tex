@@ -28,6 +28,20 @@ its round-trip \emph{with the search on} is identical over \vsevenRtwoaGames{} g
 audit reports \vsevenVerifyViolations{} soundness violations in \vsevenVerifyChecks{} checks and its
 self-test passes on \vsevenSelftestChecks{} checks.
 
+\begin{table}[t]\centering
+\caption{The calibrated side-channel positive controls, on holdout material. \emph{Must fail} is the
+set the protocol names for each planted channel in advance --- not one test each; the seed cheat is
+visible to two of them. A cheat failing a test outside its own set, or missing one inside it, would
+mean the gate does not discriminate and no seat-isolation statement in this paper could be read as a
+measurement.}
+\label{tab:sidechannel}
+{\small\input{tables_v07/sidechannel}}
+\end{table}
+
+The homogeneity gate of \S\ref{sec:methodology-side} is calibrated here: each planted channel fails
+exactly the tests the protocol names for it and no others, identically on both banks, over
+\vsevenSideCells{} cells (Table~\ref{tab:sidechannel}).
+
 Three of the fourteen sealed adversaries are policies the rest of the panel already carries. They are
 run anyway, because the protocol fixes the panel by name, and their agreement with the corresponding
 scripted or frontier cell is used as a free determinism check

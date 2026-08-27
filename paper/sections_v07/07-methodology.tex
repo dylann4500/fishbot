@@ -1,0 +1,219 @@
+\section{Methodology}
+\label{sec:methodology}
+
+Half of what this project has produced is the apparatus, and it is presented here as method rather
+than as housekeeping, because every component of it was built in response to a specific measured
+failure --- most of them this project's own. A reader working in another game can adopt these
+pieces individually; each is stated with the failure it prevents.
+
+\subsection{The duplicate-block design}
+\label{sec:methodology-duplicate}
+
+\textbf{What it is.} A \emph{cell} is a comparison of two configurations $A$ and $B$ over a
+\emph{bank} of deals identified by one integer seed. Every deal in the bank is played twice: once
+with $A$ in the odd seats and $B$ in the even seats, and once with the seats swapped. Both
+configurations therefore play the identical deal from both sides.
+
+\textbf{What it prevents.} Fish has enormous per-deal variance --- a deal can be won or lost on the
+cards --- and an unpaired comparison spends most of its sample resolving that variance rather than
+the difference between the policies. The rotation cancels the deal's intrinsic luck exactly, in the
+same spirit as duplicate bridge and the poker line's variance-reduction estimators
+\cite{zinkevich-divat,burch-aivat}.
+
+\textbf{What it requires.} Reproducibility from the seed alone (\S\ref{sec:engine-impl}). If the
+engine's randomness is not keyed by \emph{(seed, seat, purpose)}, the two rotations are not the same
+deal and the design silently degrades into an unpaired one.
+
+Throughout this paper a cell's result is reported as an \textbf{edge} in points:
+$100 \times (\text{winRate}_A - 0.5)$, where $0$ means the two configurations are indistinguishable.
+
+\subsection{Deal-clustered intervals}
+\label{sec:methodology-intervals}
+
+The two rotations of one deal are \emph{not} two independent observations. They share a deal, and
+their outcomes are strongly negatively correlated by construction. Treating them as independent ---
+which is what a Wilson interval on the game count does --- understates the width.
+
+Every interval in this paper is a \textbf{deal-clustered bootstrap}: 20{,}000 resamples in which the
+resampling unit is the \emph{deal}, carrying both of its rotations together. No Wilson interval is
+quoted anywhere in this paper, and the substitution is not cosmetic: it is the difference between a
+claim that replicates and one that does not.
+
+\paragraph{Pooling two banks.} Two banks of equal size pool as the mean of the two edges with
+$\text{se}_{\text{pooled}} = \sqrt{\text{se}_1^2 + \text{se}_2^2}/2$, where each $\text{se}$ is read
+back off that bank's clustered interval. Both per-bank values are printed beside every pooled figure
+in this paper, so a reader can always see the pooling rather than take it on trust.
+
+\paragraph{Differences of cells.} A difference between two \emph{pooled} cells --- for example an
+ablation's leave-one-out drop --- is the difference of the estimates with the two pooled half-widths
+combined \textbf{in quadrature}. This is conservative. The arms are paired on deals, so a genuine
+paired delta would be narrower, but the harness produces no paired delta \emph{across} two separately
+run cells, and inventing one would be a stronger claim than the data structure supports.
+
+\subsection{Power, computed in advance}
+\label{sec:methodology-power}
+
+At parity a cell's 95\% half-width in points is approximately $98/\sqrt{N}$ for $N$ games. The
+harness computes this for every cell and emits it with the result, including the mirror case where
+no half-width exists.
+
+The arithmetic is stated in advance because it decides what may be attempted. Resolving one point
+needs roughly \vsevenScoreboardGames{} games; a quarter of a point needs sixteen times that. A study
+that wants to find quarter-point mechanisms on the scoreboard cannot afford to, and
+\S\ref{sec:towardone-optimal} names that as an open problem rather than pretending it is solved.
+
+\textbf{The failure this prevents} is the one \S\ref{sec:arc-vsix-apparatus} describes: five
+mechanisms that cleared a 95\% paired interval at one budget and returned exactly zero at three
+times it. Sample sizes in this paper are chosen from the arithmetic before the cell is run, never
+after seeing it.
+
+\subsection{Replication as a veto}
+\label{sec:methodology-replication}
+
+Every claim in this paper is measured on \emph{two disjoint banks}, and the rule is absolute:
+
+\begin{quote}
+A claim whose \textbf{sign} does not agree on both banks is reported as NOT REPLICATED, whatever its
+pooled interval says.
+\end{quote}
+
+This is stricter than a pooled significance test and deliberately so. A pooled interval can exclude
+zero while the two banks disagree, and in this corpus that configuration has occurred and has been
+published as a positive result before. \S\ref{sec:against-location} is where the rule bites against
+this paper's own release, and \S\ref{sec:results-panel} is where it bites against this paper's own
+headline cell.
+
+\subsection{Sealed material and preregistration}
+\label{sec:methodology-seal}
+
+\textbf{The problem.} A programme that generates candidate configurations, scores them, and picks
+the best is performing a maximisation. The winner's score is upward-biased by exactly the amount a
+maximum over $K$ draws exceeds the mean, and no amount of care in the final measurement removes it
+if the final measurement uses material the selection has seen.
+
+\textbf{The apparatus.} Before any candidate existed, deal banks were reserved by seed and their
+digests committed: a rolling hash over the six dealt hands and the dealer of every deal in the bank,
+computed without constructing a policy or playing a game. An adversary population was split in half
+by a rule fixed in advance, and one half was \emph{sealed} --- encrypted, with the plaintext's
+SHA-256 committed --- so that it could not be trained against even accidentally. The engine enforces
+the seal: a run that names a sealed seed fails unless an explicit unseal variable is set, which is
+set once, at the top of the final evaluation, and recorded.
+
+\textbf{The protocol.} The entire final battery --- every cell, its sample size, its threshold, the
+arithmetic behind the sample size, and the conditions that would count as failure --- was written
+down and committed before any holdout bank had been played and before the sealed half had been
+decoded. The evaluation phase then ran from a cleared context, reading that protocol and nothing
+else from the project's document set. Where it needed a training figure for comparison, it took it
+from the protocol, which states its expectations in advance for exactly that purpose, so that
+agreement is a check and disagreement is a finding.
+
+\textbf{Deviations.} Anything the evaluation did that the protocol does not specify is recorded as a
+deviation, next to the affected result rather than in a footnote. There are \vsevenDeviations{}
+(Appendix~\ref{app:deviations}). A battery with recorded deviations and honest numbers is worth more
+than one that silently matched its own protocol.
+
+\subsection{The commit gate runs before any strength number}
+\label{sec:methodology-gate}
+
+\textbf{The failure this prevents} is dissociation between win rate and soundness. This corpus
+contains a configuration that scores \vsevenScoreboardTrapWin\% against a prior version while
+carrying \vsevenScoreboardTrapDead\% provably-dead asks --- asks for cards its own team already
+demonstrably owns --- a dead run of hundreds of consecutive such asks, and
+\vsevenScoreboardTrapLimit\% of its games killed by the action cap. It is stronger and it is
+broken.
+
+So a configuration is gated \emph{before} any strength number is computed for it, on eight rules
+covering dead asks, dead runs, action-limit games, the mirror game-length tail, late declarations,
+and the side-channel tests below. A configuration that fails is rejected regardless of its win rate.
+The gate is run on \emph{training} material by design: it is a soundness check on self-play
+behaviour, not a strength claim.
+
+\textbf{A gate needs a negative control.} The corpus maintains a configuration built to be
+rejected, and the gate must reject it; a gate that cannot would certify nothing about the one it
+accepts. \S\ref{sec:protocol-gate} reports both.
+
+\subsection{Detection floors}
+\label{sec:methodology-floor}
+
+An exploitability number is produced by a search, and a search that finds nothing has two possible
+explanations: there is nothing, or the search is too weak. A \textbf{detection floor} separates
+them. Plant an artificial handicap of known size in a target, fit a responder against the
+handicapped target, and measure the \emph{excess} of that responder's edge over its edge against the
+unhandicapped one. The smallest planted edge the procedure recovers is the floor.
+
+Two findings from doing this are methodologically important and neither was expected.
+
+\begin{enumerate}
+\item \textbf{The floor does not buy down with evaluation games.} An early prediction that it would
+      fall as (evaluation games)$^{-1/2}$ was refuted at its own predicted value: at four times the
+      games the floor is \vsevenPrimaryFloor{}, and the sub-floor rung is still undetected --- not
+      because the interval is wide but because the excess resolves \emph{to} zero. Below roughly a
+      point and a half the responder is \emph{empty}, not unresolved. The binding constraint is
+      search power, not evaluation power.
+\item \textbf{Floors are family-specific.} The declaration channel has its own, higher floor
+      (\vsevenDeclFloor{}), and reading a declaration-objective result against the general floor
+      would overstate it.
+\end{enumerate}
+
+A class of adversary may contribute to an exploitability claim only after it has passed a
+planted-edge calibration at or below the effect size being claimed. That precondition is why the
+negative controls of \S\ref{sec:results-controls} are run at all: an instrument that cannot recover
+a planted edge of a given size cannot report the absence of a real one of that size.
+
+\subsection{The homogeneity and side-channel gates}
+\label{sec:methodology-side}
+
+\textbf{The problem.} The team under evaluation is three identical agents with no shared secret.
+``Identical and deterministic'' means their coordination is common knowledge
+(\S\ref{sec:domain-team}) --- which is legitimate --- but it also means an implementation detail can
+become an illegal signalling channel without anyone intending it. Before this cycle the constraint
+had only ever been checked by reading the source.
+
+\textbf{The apparatus.} Four mechanical tests, run over all four engine decision types:
+
+\begin{description}
+\item[S3, listening substitution.] Does a seat's behaviour change more when a \emph{teammate}'s
+  hidden action changes than when an \emph{opponent}'s does, beyond what the rules explain?
+\item[S4, stream independence.] Is the seat's private random stream drawn independently of the deal?
+\item[S5, posterior invariance.] Does the seat's action depend on the true card location beyond what
+  its own posterior supports?
+\item[S6, seat isolation.] Replay every decision from (own hand, public event stream, rules, reset
+  seed) alone and count the decisions the reconstruction cannot reproduce. Zero tolerance.
+\end{description}
+
+\textbf{The calibration, which is the part that makes it a test.} Three positive controls were
+built, each a policy carrying one planted cheat, and each must fail exactly the tests the protocol
+names for it in advance and no others. \S\ref{sec:protocol-material} reports the result on holdout
+material. Without those controls, a clean report from the gate would be uninformative.
+
+\textbf{One honest limitation, stated wherever the gate is used.} S6's zero-tolerance form requires
+one thread --- the audit depends on the deal-to-thread partition, and work-stealing does not fix that
+partition at any higher count --- and agents rebuilt per deal. Rebuilding agents per deal
+\emph{changes play}. So the gate certifies ``with cross-deal residue removed, nothing else depends on
+anything it should not''. The residue is not removed from the shipped mode, and every strength number
+in this paper is measured under it (\S\ref{sec:results-residual}).
+
+\subsection{Worst case and minimax regret over a shared panel}
+\label{sec:methodology-panel}
+
+The project's standing reporting rule is that \textbf{the worst case leads and an aggregate never
+does}. A mean over an opponent panel rewards beating weak opponents by more, which is not the
+quantity anyone cares about.
+
+Two statistics are reported, both over a panel scored identically for every arm:
+
+\begin{itemize}
+\item the \textbf{worst cell} per arm --- the panel member on which it does least well;
+\item the \textbf{minimax regret} per arm --- for each member, how far the arm falls short of the
+      best arm on that member, maximised over members.
+\end{itemize}
+
+They can disagree, and in \S\ref{sec:results-panel} they do. Reporting both, and reporting the panel
+mean last and labelled as a diagnostic, is the discipline; choosing whichever one flatters the
+release is the failure it prevents. Every arm must carry a cell for every member, or minimax regret
+is not defined at all --- which is why the panel is fixed by name in advance and scored for all arms
+on the same banks.
+
+\paragraph{A caveat the panel design forces.} An arm that is itself a panel member meets itself and
+carries a free $0.00$ cell, which can only flatter its worst case. Where that matters,
+\S\ref{sec:results-panel} prints the worst case both with and without self-cells.

@@ -1,0 +1,44 @@
+\section{The rules dialect, clause by clause}
+\label{app:dialect}
+
+Every contested rule choice of \S\ref{sec:game-dialect} is an engine switch, so its effect is
+measurable rather than assumed. This appendix lists each choice against the switch that changes it,
+so that a reader can re-implement the dialect or vary it.
+
+\begin{center}\small
+\begin{tabular}{llp{0.42\linewidth}}
+\toprule
+Clause & Switch & Setting studied \\
+\midrule
+Deck and half-suits & \texttt{--sets=8} & 54 cards in nine half-suits; \texttt{--sets=8} plays the
+48-card, eight-half-suit variant \\
+Out-of-turn declaration & \texttt{--no-out-of-turn} & permitted; the switch forbids it \\
+Cardless declaration & \texttt{--no-cardless-declare} & permitted; the switch forbids it \\
+Simultaneous declarers & \texttt{--arb=high}, \texttt{--arb=turn} & lowest seat index first;
+the switches arbitrate by stated confidence and by turn order \\
+Misdeclaration & --- & the half-suit is awarded to the opposing team \\
+Forced endgame & --- & eight-level willingness ladder when one whole team is cardless \\
+Action cap & \texttt{--maxasks=N} & 400 asks; residue adjudicated by physical majority \\
+Legacy bundle & \texttt{--legacy} & the full v0.3-era dialect, bundling several of the above \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\S\ref{sec:results-dialects} measures the paper's headline comparison under \vsevenDiaRows{} rows of
+this table. Every row keeps its sign and every row replicates; the largest excursion from the
+default row is \vsevenDiaMaxExcursion{} points, on \vsevenDiaMaxExcursionRow{}.
+
+\paragraph{Two clauses on which an earlier report in this corpus is wrong, corrected here.}
+
+\begin{enumerate}
+\item \textbf{An undeclared half-suit does not score nothing.} An earlier report justified an
+  unconditional forcing rule on the premise that an unclaimed half-suit is worthless. Under the
+  dialect actually evaluated, residue at the action cap is awarded by physical majority, and on a
+  wrong post-horizon declaration the declaring team holds a mean \numResidueHeld{} of the six cards.
+  The rule converts a probable award into a certain concession.
+\item \textbf{Restarting the forced-endgame ladder sharpens nothing.} The argument is that restarting
+  the willingness ladder after each declaration lets early, safer declarations resolve cards and so
+  sharpen later ones. It is sound and inoperative: on every occasion a team went cardless with live
+  half-suits --- \numLadderOccasions{} of them at seed \numLadderSeed{} --- exactly
+  \numLadderLiveSets{} half-suit was live, so there is no ordering to exploit.
+\end{enumerate}

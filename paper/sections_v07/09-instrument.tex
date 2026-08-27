@@ -1,0 +1,110 @@
+\section{Characterising the instrument, and searching for what beats the frontier}
+\label{sec:instrument}
+
+The first two phases of the v0.7 programme did no policy work at all. One rebuilt the measuring
+instrument and established what it can and cannot see; the other tried, in the open, to find
+anything that beats the v0.6 \emph{frontier}. Both were run before any candidate architecture
+existed, and both returned results that reshaped what the rest of the programme could claim.
+
+\subsection{The frontier, and why the bar is not the deployed policy}
+\label{sec:instrument-frontier}
+
+v0.6 shipped a policy with its determinized search switched off, and also \emph{measured} that
+search working. The set of configurations available at the end of that cycle is therefore not a
+point but a \textbf{frontier}: the deployed blueprint at one end, and progressively more expensive
+searching configurations at the other. Three points of it are named throughout this paper --- the
+deployed policy \incumbent{}, the cheapest searching configuration on the frontier \fcheap{}, and a
+more expensive one \fmid{}.
+
+This distinction is the single most consequential methodological choice in the v0.7 programme.
+Beating the deployed policy is the easy claim, and several unfitted one-switch deviations of it
+already do. \textbf{The bar was therefore fixed as \fcheap{}}, and \S\ref{sec:protocol-failure}
+records that the protocol committed to it in advance.
+
+\subsection{What the instrument can see}
+\label{sec:instrument-sees}
+
+The detection-floor apparatus of \S\ref{sec:methodology-floor} was built and calibrated here, and
+produced the two findings that section reports: the floor is \vsevenPrimaryFloor{} points, and it
+does \emph{not} buy down with evaluation games. Below roughly a point and a half a fitted responder
+is empty rather than unresolved, so the binding constraint on every exploitability statement in this
+paper is search power.
+
+Two further instrument results matter for how later sections read.
+
+\paragraph{Transcript inversion works, and it is not an attack.} Because the target team is
+deterministic and published, an adversary can invert its transcript: for every ask the target made,
+ask what deals would have produced that ask, and contract the posterior accordingly. Measured, this
+contracts the deal posterior by $\sim$\vsevenBitsPerAsk{} bits per observed ask beyond the
+certificates the rules already supply --- the first such measurement in this corpus, and one the
+threat model's literature review found no external precedent for. Converting those bits into play is
+worth \vsevenInversionUnfitted{}~points unfitted, the strongest single arm anyone built against the
+deployed policy.
+
+\textbf{It is not an exploit.} The excess tracks planted-edge size within
+$\pm$\vsevenInversionTrack{} on all eight rungs of the calibration ladder, which is the signature of
+a general strength gain rather than an exploitation instrument. And no linear handicap adds more
+than \vsevenHandicapBits{}~bits per ask, so within this policy family there is \emph{no readability
+handicap for a stochastic policy to buy}. A brief that asked for a stochastic policy conditional on
+the inverter biting was therefore closed on its antecedent rather than skipped.
+
+\paragraph{A cost figure the corpus had wrong by two orders of magnitude.} The record priced the
+searching configuration at \vsevenCorpusCost$\times$ the blueprint. That figure describes the
+\emph{unrestricted} search, which is not the point of the frontier anything was measured at. The
+endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$.
+\S\ref{sec:results-cost} corrects that correction in turn.
+
+\subsection{Open-ended adversary generation}
+\label{sec:instrument-adversaries}
+
+The second phase's constraint was that the searches must not share a bias --- \emph{fifteen runs of
+one search are one run}. Every exploiter search in the corpus before it had been the same search: a
+cross-entropy fit of a linear vector, maximising win rate, from one seed, against one target. The
+phase built six adversary classes, three correlation regimes, and a taxonomy of channels, and
+measured channel ceilings \emph{before} fitting anything against them.
+
+\paragraph{The headline is negative and it is the reason this paper exists in the shape it does.}
+Nothing built exploits the v0.6 frontier beyond the detection floor. The best measured exploitability
+of the deployed policy remains an in-class figure of \vsevenBestExploit{}
+$[\vsevenBestExploitLo, \vsevenBestExploitHi]$ over \vsevenBestExploitN{} games --- \emph{below} the
+class floor of \vsevenPrimaryFloor{}. Seven independently fitted searches confirmed it; none cleared
+its class floor.
+
+Every arm that beat the deployed policy by more than the floor turned out, on measurement, to be a
+\textbf{better policy rather than an exploit}: the target's own test-time search at
+\vsevenSearchAsExploit{}, and a single out-of-class coordinate at \vsevenOneSwitchArm{} whose gain
+survives against opponents sharing none of the target's machinery. The second of those is worth
+dwelling on, because it is where this cycle's entire strength gain comes from: it is a
+\emph{hand-set} coordinate found by an unfitted sweep, with no fit at all, and against the more
+expensive frontier point its edge is \vsevenOneSwitchArmVsFmid{} --- negative. It is a strength gain
+with a worst case, not an exploit.
+
+\paragraph{A defect found in the target rather than an attack on it.} The declaration-urgency channel
+the phase expected to headline has a measured ceiling of \vsevenUrgencyCeiling{}
+$[\vsevenUrgencyCeilingLo, \vsevenUrgencyCeilingHi]$ --- dead as an attack. But the \emph{same}
+channel is worth \vsevenUrgencyWorthLo{} to \vsevenUrgencyWorthHi{} points to a configuration that
+simply switches it off. The adversary owns the smaller half of a two-point defect in the target.
+
+\paragraph{A cliff nobody can reach, and a termination duty inherited by anyone who removes it.}
+Behind the incumbent's event counter sits a \vsevenCliff{}-point cliff: past a threshold its
+declaration rule drops its team-ownership floor and cashes half-suits at close to a coin flip. No
+adversary reaches it --- the longest game any of them produced against an unmodified incumbent is
+\vsevenCliffIncumbentTail{} events. But that escalation is also the policy's termination guarantee,
+and a configuration that switches it off has a self-play tail of \vsevenCliffTail{} events. Removing
+a defect here creates an obligation, and \S\ref{sec:configuration-keys} is how it was discharged.
+
+\subsection{What these two phases established before any candidate was built}
+\label{sec:instrument-established}
+
+\begin{enumerate}
+\item The v0.7 case rests on \textbf{beating the frontier, not on closing exploits}. There are no
+      exploits above the floor to close.
+\item The bar is \fcheap{}, fixed in advance.
+\item The only thing found that beats the frontier is a configuration built from the frontier's own
+      search plus one hand-set coordinate plus a switch --- a \emph{configuration change}, not an
+      architecture. This is the object called \composite{} throughout this paper, and
+      \S\ref{sec:against-composite} is the section in which it becomes decisive.
+\item The instrument's floor is \vsevenPrimaryFloor{} points and will not improve by spending games.
+\item The evaluation material is sealed, and the adversary population is split in half by a rule
+      fixed in advance, with half of it encrypted (\S\ref{sec:methodology-seal}).
+\end{enumerate}

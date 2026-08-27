@@ -18,7 +18,8 @@ B9f & \filepath{P5-B9fits.jsonl} & C1 responders fitted against the planted-weak
 B9 & \filepath{P5-B9.jsonl} & planted-edge recovery (B9.2), the sub-floor rung that must NOT be recovered (B9.3), and the identity control (B9.4) & \texttt{b7c768946bcc} \\
 B9s & \filepath{P5-B9side.jsonl} & the three calibrated side-channel positive controls (B9.5) & \texttt{ceada8f71a18} \\
 B10 & \filepath{P5-B10.jsonl} & the S6 residual on holdout material, in both conditions: one thread alone, and one thread with agents rebuilt per deal & \texttt{882bbaff43dc} \\
-T & \filepath{P5-TABLES.txt} & the reduction of every artifact above to the tables the report prints & \texttt{5963ab40b515} \\
+DR & \filepath{P5-drift.json} & the EXECUTED source-drift check: B0.3 compares the tree against a baseline stored inside the freeze artifact, and that artifact was rewritten after the freeze, so the hash check could not fire.  The engine is rebuilt from the tree and the frozen R3 mirror digest recomputed with the fresh binary; both binaries must return the frozen digest & \texttt{b165c648ebe9} \\
+T & \filepath{P5-TABLES.txt} & the reduction of every artifact above to the tables the report prints & \texttt{31ce85282498} \\
 F & \filepath{P5-B9-h005.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{9a498afb5c1b} \\
 F & \filepath{P5-B9-h008.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{9ce524a9772b} \\
 F & \filepath{P5-B9-h011.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{2a3a002b2860} \\

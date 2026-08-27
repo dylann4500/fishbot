@@ -1,0 +1,159 @@
+\section{The research arc}
+\label{sec:arc}
+
+This project has run for six versions. The arc matters to the reader of this paper for one reason:
+the v0.7 evaluation of \S\ref{sec:results} is only interpretable against what came before it, and
+what came before it includes two occasions on which this project's own published claims turned out
+to be artefacts of its measurement rather than properties of its policies. A reader who wants to
+know why the apparatus of \S\ref{sec:methodology} is as heavy as it is will find the answer here.
+
+\subsection{v0.2 to v0.4: building the object}
+\label{sec:arc-early}
+
+The first versions established the domain and the inference. A count-conditioned, empirically tuned
+linear policy in a TypeScript simulator became a rules-exact C++ engine with an exact reference
+posterior, a fast deployed approximation, a twenty-feature ask score and a value-based declaration
+rule. The substantive contribution of that period is the object described in
+\S\ref{sec:engine-belief}: an exactly computable observer-conditioned deal posterior in a game where
+nobody had computed one, cheap enough to run in all six seats simultaneously.
+
+That period also set the pattern this paper spends a great deal of effort undoing. Its evaluation
+was a few thousand games per cell against a handful of opponents, its ablations were unpaired, and
+its conclusions were drawn from point estimates. \S\ref{sec:corrections-corpus} lists what that cost.
+
+\subsection{v0.5: a failure mode found, removed, and honestly reported as worth nothing}
+\label{sec:arc-vfive}
+
+v0.5 diagnosed a two-question deadlock in mirror play --- two policies alternately asking each other
+for cards neither would surrender, ending in misdeclaration --- and removed it. It then reported, in
+terms, that removing it was worth almost nothing in win rate.
+
+That report is the honest ancestor of this one. It is also the point at which the project's central
+difficulty became visible: a release that removes a real defect and gains no measurable strength is
+either at the ceiling of its policy class or is measuring badly, and those two possibilities call
+for opposite responses.
+
+\subsection{v0.6: the measurement crisis}
+\label{sec:arc-vsix}
+
+The v0.6 cycle set out to find several points of accessible headroom that the accumulated design
+register described. It found none of it, and in the process discovered that most of the apparatus
+was broken. Four results from that cycle are load-bearing for this paper.
+
+\subsubsection{Exchangeable ties are irreducible, and the tie-break is a coordination decision}
+\label{sec:arc-vsix-ties}
+
+At \vsixTieShareFive\% of ask decisions two or more candidates score \emph{bit-for-bit identically},
+and the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of those ties are
+two cards of one half-suit at one target, and the \emph{exact} posterior --- not merely the
+approximation the policy deploys --- assigns them identical probability in
+\vsixTieExactSepPctFive\% of cases. Every rule that ranks them by that probability therefore
+realises the same hit rate, and so does enumeration order.
+
+The largest item on the inherited register was not a defect. It was a property of the information
+set.
+
+What is \emph{not} irreducible is the dependence on enumeration order itself. An unstable sort order
+deciding half of all contested decisions is a correctness problem rather than a strength problem,
+and \S\ref{sec:domain-team}'s common-knowledge property says how to fix it: replace the order with a
+hash of the public event stream, which every teammate can compute and which no seat's private hand
+influences. That switch is one of the five keys of the configuration this paper evaluates
+(\S\ref{sec:configuration}), and \S\ref{sec:rejected-tie} reports what happened when a later cycle
+tried to do better than randomising inside the tie group.
+
+\subsubsection{The exact posterior is a worse predictor than the approximation}
+\label{sec:arc-vsix-belief}
+
+Scored as predictors on identical states --- mean predictive log loss over unresolved cards, and the
+realised hit rate of each posterior's own argmax ask --- the ranking is:
+
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+Posterior & Log loss (nats) & Argmax hit rate \\
+\midrule
+Exact, uniform deal prior & \vsixBeliefExactNLL{} & \vsixBeliefExactHit\% \\
+Rules posterior, no policy prior & \vsixBeliefNoPriorNLL{} & \vsixBeliefNoPriorHit\% \\
+\textbf{Deployed approximation} & \textbf{\vsixBeliefShippedNLL{}} & \textbf{\vsixBeliefShippedHit\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The exact object is the worst row. The policy prior is the entire difference: exactness here is
+bought by discarding behaviour, because the block construction of \S\ref{sec:engine-belief} has no
+parameter through which behaviour could enter. Exactness and behaviour-awareness are not available
+in the same object in this game.
+
+This closed an experiment three studies had listed as outstanding, and it established the standing
+rule this project has applied ever since --- ``exact Bayesian inference'' is an assumption to test.
+\S\ref{sec:rejected-alloc} is the second time that rule paid, on a different channel.
+
+\subsubsection{The optimiser's curse in determinized search}
+\label{sec:arc-vsix-search}
+
+v0.6 built a determinized search that samples full deals from the public posterior and plays each
+forward with all six players reconstructed at their own information sets --- not clairvoyant, which
+\S\ref{sec:domain-not} explains would be degenerate.
+
+Chosen by an unguarded argmax over sampled means, that search is \textbf{\vsixCurseGap{}~points
+worse} than the blueprint it searches from, measured against a control that forces the same code to
+return the blueprint's own pick at identical budget, seed and sample size. The reason is the
+statistic, not the search: one determinization's return is the final half-suit differential, whose
+spread is an order of magnitude larger than genuine differences between candidates, so the argmax
+selects on residual noise and does so more confidently the more candidates it is offered.
+
+A paired lower-confidence-bound deviation rule recovers all of it. Guarded, the search is worth
+\vsixSearchPooled\% against the deployed policy over \vsixSearchPooledN{} games at
+\vsixSearchPooledBanks{} banks. The transferable result is the guard rather than the search, and the
+guarded search --- shipped switched off in v0.6 --- is one of the five keys of the configuration
+this paper evaluates.
+
+\subsubsection{The evaluation could not resolve a point, and the optimiser could not move a policy}
+\label{sec:arc-vsix-apparatus}
+
+Two apparatus failures, both of which this paper's methodology exists to prevent.
+
+\textbf{The evaluation.} Pooling every same-pair cell in the v0.6 battery gave \vsixHeadPooled\%
+with a naive $z$ of \vsixHeadZ{} --- a null, and an earlier draft of that report published it as
+one. Re-run at high power across \vsixBigFiveBanks{} disjoint banks, the same comparison is
+\vsixBigFive\% over \vsixBigFiveN{} games $[\vsixBigFiveLo, \vsixBigFiveHi]$, above parity on
+\emph{all \vsixBigFiveAbove{}} banks, worst bank \vsixBigFiveMin\%. The two cells that had gone the
+other way returned above parity at the larger sample. The effect was always there; the instrument
+could not see it.
+
+Five mechanisms in that cycle cleared a 95\% paired interval at the per-cell budget this project had
+used since v0.3 and returned \emph{exactly zero} at three times it. That is the fact that makes
+every sample size in \S\ref{sec:methodology-power} non-negotiable.
+
+\textbf{The optimiser.} The previous fitting harness could not move a policy: one step size for
+thirty-four coordinates spanning two and a half orders of magnitude, an unpaired objective, and an
+objective documented as a worst case that was in fact a weighted mean. Its forty-generation refit
+was indistinguishable from sampling noise, so the vector it ``found'' was the previous version's.
+The repaired optimiser then found a policy that trades nothing head to head for a large replicated
+gain against the deception archetype the project owner brought from live play
+(\vsixPoolWithholderGain{}~points).
+
+\subsection{What v0.6 handed forward}
+\label{sec:arc-handoff}
+
+A policy about nine tenths of a point stronger than its predecessor, a design register most of whose
+entries had just been closed as worth nothing, and a diagnosis: \emph{at the budget this project had
+always used, this policy class looks flat.} v0.6 stated plainly that it did not know whether the
+class \emph{is} flat or whether the instrument was still too coarse.
+
+v0.7 is the cycle built to answer that, and it was organised so the answer could not be argued into
+being positive. Five phases ran under separate briefs, each starting from a cleared context:
+
+\begin{enumerate}
+\item \textbf{Rebuild the instrument} and characterise what it can and cannot see
+      (\S\ref{sec:instrument}).
+\item \textbf{Generate adversaries in the open} and find what actually beats the v0.6 frontier ---
+      not the deployed policy, the frontier (\S\ref{sec:instrument-adversaries}).
+\item \textbf{Build candidate architectures} against the register's ranked hypotheses
+      (\S\ref{sec:rejected}).
+\item \textbf{Bake off and freeze} exactly one configuration (\S\ref{sec:configuration}).
+\item \textbf{Evaluate it} on sealed material under a protocol committed in advance
+      (\S\ref{sec:protocol}, \S\ref{sec:results}).
+\end{enumerate}
+
+The rest of this paper is that programme and its result.
