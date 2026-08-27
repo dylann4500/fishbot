@@ -1,0 +1,52 @@
+==============================================================================
+COMMIT GATE  PASS  ::  FROZEN
+  spec   v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.05820% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 134 < 220 and p99 130 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405. The p99 clause is a second tripwire for a configuration whose BULK lengthens rather than its tail: v06 120, K3 122-125, the frozen configuration 130, the rejected stack 132, so 150 is ~14% above the worst yet measured and nothing has failed it)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance, per TEST and not per roll-up: a skipped test is not a pass)
+  [ok] G7b S6 seat-isolation  0/542483 = 0.00 per million                     (zero tolerance, AGENTS REBUILT PER DEAL: this asks whether the seat's action depends on anything beyond its permitted inputs ONCE the cross-deal residue of RESEARCH-LOG 4.3 is removed.  That residue is a real engine defect present in the mode every scored cell uses, quantified there, and it is NOT what this rule tests)
+  reported, not gated: events/game 99.805, ask hit 50.716%, misdeclaration 2.55556%
+==============================================================================
+COMMIT GATE  PASS  ::  INCUMBENT
+  spec   v06
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.01178% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 131 < 220 and p99 120 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405. The p99 clause is a second tripwire for a configuration whose BULK lengthens rather than its tail: v06 120, K3 122-125, the frozen configuration 130, the rejected stack 132, so 150 is ~14% above the worst yet measured and nothing has failed it)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance, per TEST and not per roll-up: a skipped test is not a pass)
+  [ok] G7b S6 seat-isolation  0/524371 = 0.00 per million                     (zero tolerance, AGENTS REBUILT PER DEAL: this asks whether the seat's action depends on anything beyond its permitted inputs ONCE the cross-deal residue of RESEARCH-LOG 4.3 is removed.  That residue is a real engine defect present in the mode every scored cell uses, quantified there, and it is NOT what this rule tests)
+  reported, not gated: events/game 94.192, ask hit 53.633%, misdeclaration 2.55556%
+==============================================================================
+COMMIT GATE  PASS  ::  F-cheap
+  spec   v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+  mirror 400 games, seed 31
+  [ok] G1 dead asks           0.00589% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [ok] G2 longest dead run    1 <= 5                                          (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [ok] G3 games w/ run>=6     0 == 0                                          (zero for every configuration the corpus has shipped)
+  [ok] G4 action-limit        0 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [ok] G5 mirror tail         max 131 < 220 and p99 124 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405. The p99 clause is a second tripwire for a configuration whose BULK lengthens rather than its tail: v06 120, K3 122-125, the frozen configuration 130, the rejected stack 132, so 150 is ~14% above the worst yet measured and nothing has failed it)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance, per TEST and not per roll-up: a skipped test is not a pass)
+  [ok] G7b S6 seat-isolation  0/526995 = 0.00 per million                     (zero tolerance, AGENTS REBUILT PER DEAL: this asks whether the seat's action depends on anything beyond its permitted inputs ONCE the cross-deal residue of RESEARCH-LOG 4.3 is removed.  That residue is a real engine defect present in the mode every scored cell uses, quantified there, and it is NOT what this rule tests)
+  reported, not gated: events/game 94.225, ask hit 53.249%, misdeclaration 2.25000%
+==============================================================================
+COMMIT GATE  FAIL  ::  NEGCONTROL
+  spec   v06:rtie=1,m1=0,pool=-1,oppfloor=-1,force=1000000,askfloor=-1
+  mirror 400 games, seed 31
+  [XX] G1 dead asks           2.59217% of asks <= 0.10%                       (v06 0.0118%, K3 arms 0.0088-0.0203%; the rejected m1=0 stack 2.91%)
+  [XX] G2 longest dead run    326 <= 5                                        (v06 1, K3 arms 1; the rejected stack 326.  6 is the engine's own run cut)
+  [XX] G3 games w/ run>=6     2 == 0                                          (zero for every configuration the corpus has shipped)
+  [XX] G4 action-limit        2 == 0                                          (v06 0; the rejected stack 0.33% of games)
+  [XX] G5 mirror tail         max 405 < 220 and p99 132 <= 150                (220 is v0.5's pressure rung and a 15.18-point cliff; v06 max 131, K3 125-129, the rejected stack 405. The p99 clause is a second tripwire for a configuration whose BULK lengthens rather than its tail: v06 120, K3 122-125, the frozen configuration 130, the rejected stack 132, so 150 is ~14% above the worst yet measured and nothing has failed it)
+  [ok] G6 late declarations   0 == 0                                          (declarations taken at or after the 220-event rung are taken under the collapsed floor)
+  [ok] G7a S3/S4/S5           7030001:ok 7030002:ok                           (zero tolerance, per TEST and not per roll-up: a skipped test is not a pass)
+  [ok] G7b S6 seat-isolation  0/528199 = 0.00 per million                     (zero tolerance, AGENTS REBUILT PER DEAL: this asks whether the seat's action depends on anything beyond its permitted inputs ONCE the cross-deal residue of RESEARCH-LOG 4.3 is removed.  That residue is a real engine defect present in the mode every scored cell uses, quantified there, and it is NOT what this rule tests)
+  reported, not gated: events/game 96.812, ask hit 52.955%, misdeclaration 1.05673%

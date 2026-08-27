@@ -42,3 +42,7 @@ yarn-error.log*
 
 # Claude Code agent worktrees -- transient, never committed
 .claude/worktrees/
+
+# python bytecode
+__pycache__/
+*.pyc

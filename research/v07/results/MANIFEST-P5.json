@@ -1,0 +1,331 @@
+{
+  "generated": "2026-08-26T18:02:14",
+  "commit": "e0da8fda6d98eab62efad7d57c89ec1a9ec60af3",
+  "working_tree_dirty": true,
+  "results_dir": "research/v07/results",
+  "project": "FishBot v0.7 -- phase 5, frozen final evaluation",
+  "protocol": "docs/v07/PREREGISTRATION.md",
+  "frozen_spec": "v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26",
+  "frozen_artifact": "engine/fishbot_v07.json",
+  "mirror_pathology_digest": "5f81f440fc9c272a87e87c05fecc7b74",
+  "coordinates": 55,
+  "threads_scored_cells": 13,
+  "threads_s6_gate": 1,
+  "rotations": 2,
+  "unseal": "FISH_UNSEAL_PHASE=5, set once for the whole battery",
+  "banks": {
+    "primary": 7090001,
+    "replicate": 7090002,
+    "lattice_and_dialects": 7090003,
+    "fresh_search": 7090004,
+    "negative_controls": 7090005,
+    "sealed_adversary_eval": 7091001,
+    "sealed_adversary_fit": 7091002
+  },
+  "bank_digests": {
+    "7090001": "896dbc89be124d85",
+    "7090002": "0b6e40d834ac0ca1",
+    "7090003": "863bea69baf6e73c",
+    "7090004": "54f257c3f8ae9fab",
+    "7090005": "268a1dae71a31713",
+    "7091001": "958ada042cc26900",
+    "7091002": "5c39af3b5e0bd9a0"
+  },
+  "sealed_adversaries_sha256": "1ca0346a332586c70a750f1523b105485322af34ff31aab3b9e77a2f0a3b6c52",
+  "seal_commit": "f4581da58ff0a4408cd222d3313e26a43ad0101a",
+  "frontier": {
+    "INCUMBENT": "v06",
+    "F_cheap": "v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26",
+    "F_mid": "v06:s1=1,det=16,cand=6,kappa=2.0,maxq=26",
+    "composite": "v07:m2=0,r12=25,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26"
+  },
+  "thresholds": {
+    "certified_advancement_bar": 1.53,
+    "exploitability_detection_floor": 1.53,
+    "declaration_family_floor": 2.13,
+    "S1_min_not_below": -1.0,
+    "S1_positive_rows_required": 5,
+    "S2_offdiagonal_within": 1.5,
+    "S5_row_within_of_default": 2.0
+  },
+  "interval": "deal-clustered bootstrap `ci` from match --json; never `wilsonCI`",
+  "runs": [
+    {
+      "id": "B0",
+      "artifact": "P5-B0.json",
+      "command": "fish7 bankdigest --seed=S --deals=24000 (x7); sha256 of the decoded sealed half; freeze_config_v07.py --verify-only; fish7 seeds --require=...; fish7 verify; fish7 selftest",
+      "design": "the verification block, run before anything is measured: seven bank digests against the phase-2 commitment, the sealed adversary half against SEAL.json, the freeze artifact's R1/R2a/R3 round trips, the seed registry, and the engine self-audit",
+      "present": true,
+      "bytes": 7977,
+      "sha256": "2141dda039d6927afc0ef2553e8de68ccf6f5bd697390eacc22f2d545c353526"
+    },
+    {
+      "id": "B1",
+      "artifact": "P5-gate.jsonl",
+      "command": "engine/gate_v07.sh --spec=SPEC --id=NAME  (pathology --games=400 --rotations=2 --seed=31 --threads=13, plus v7side on both TRAINING banks with S6 at --threads=1 --freshagents)",
+      "design": "the commit gate, before any strength number: G1-G6, G7a, G7b for FROZEN, INCUMBENT, F-cheap and the negative control the gate must reject (B9.1)",
+      "present": true,
+      "bytes": 24328,
+      "sha256": "6b08669788606c9994e16f738750ab483fb8d1faaf6ee9266eb24398754e2878",
+      "rows": 4
+    },
+    {
+      "id": "B1t",
+      "artifact": "P5-gate.txt",
+      "command": "see P5-gate.jsonl",
+      "design": "the human-readable gate digest with each threshold's provenance",
+      "present": true,
+      "bytes": 7991,
+      "sha256": "5c4757f2f2aa8af312fb22beaf6afcfe508181b0507e1d8bfa095862d96ffc7f"
+    },
+    {
+      "id": "B2",
+      "artifact": "P5-B2.jsonl",
+      "command": "fish7 match --a=FROZEN --b=OPP --games=D --rotations=2 --seed=BANK --threads=13 --json",
+      "design": "headline strength against the frontier; paired duplicate, both primary banks 7090001 and 7090002; 12,000 deals a bank against v06 / F-cheap / the phase-2 composite, 3,000 against F-mid, 6,000 against v05",
+      "present": true,
+      "bytes": 18530,
+      "sha256": "ea2563922c70de2424526e5ff904a17fb4cdfa9109d0dce503140918ec4a563f",
+      "rows": 10
+    },
+    {
+      "id": "B3",
+      "artifact": "P5-B3.jsonl",
+      "command": "fish7 match --a=ARM --b=PANEL_MEMBER --games=D --rotations=2 --seed=BANK --threads=13 --json",
+      "design": "the shared panel: four arms (FROZEN, INCUMBENT, F-cheap, the phase-2 composite) against 31 panel members (14 sealed adversaries, 13 scripted archetypes, 4 frontier points) on both primary banks; near 6,000 deals a bank, far 1,500, expensive 1,200",
+      "present": true,
+      "bytes": 452916,
+      "sha256": "090dd5a9717260547a4ef6631a61e5aaf2964b6e92ebe0e31c0d020d18c0ba99",
+      "rows": 248
+    },
+    {
+      "id": "B4f",
+      "artifact": "P5-B4fits.jsonl",
+      "command": "fish7 tune --panel=<FROZEN, commas as +> --base=B --full [--fromv6] --kpi=K --obj=min --paired --beta=1 --sigmarel=S --games=120 --pop=12 --elite=5 --gens=8 --seed=BANK --shard=s/4 --threads=13 --out=P5-Z<NN>.jsonl",
+      "design": "eight independent fresh adversary searches against the frozen configuration, sharded across the two sealed fitting banks; 8 x 12 x 120 deals x 2 rotations = 23,040 games each",
+      "present": true,
+      "bytes": 9127,
+      "sha256": "7e1c9b1f32868f98973d9035a807abd67a3363d6d72434dd6d01ed10a82fdc4c",
+      "rows": 8
+    },
+    {
+      "id": "B4e",
+      "artifact": "P5-B4eval.jsonl",
+      "command": "fish7 match --a=<fitted adversary> --b=FROZEN --games=6000 --rotations=2 --seed=BANK --threads=13 --json",
+      "design": "each fitted adversary re-measured against the frozen configuration on the two EVALUATION banks, disjoint from the banks it was fitted on; 24,000 games an arm",
+      "present": true,
+      "bytes": 44542,
+      "sha256": "94d13bfd4e8ac917e8699e085deeac95324895508a749b647be0274bc53f7683",
+      "rows": 16
+    },
+    {
+      "id": "B5",
+      "artifact": "P5-B5.jsonl",
+      "command": "fish7 match --a=VARIANT --b=v06 --games=6000 --rotations=2 --seed=BANK --threads=13 --json",
+      "design": "the attribution lattice: six add-one-in cells from v06, five leave-one-out cells from FROZEN, and the FROZEN reference the drops are taken from; banks 7090003 and 7090001",
+      "present": true,
+      "bytes": 37428,
+      "sha256": "cead615fa7ee961580a25be49946c4e0339b453c37fd48e128e7885bfe13d63f",
+      "rows": 24
+    },
+    {
+      "id": "B6",
+      "artifact": "P5-B6.jsonl",
+      "command": "fish7 match --a=ARM --partners=P --b=v05|v06 --games=6000 --rotations=2 --seed=BANK --threads=13 --json",
+      "design": "the partner-regime table: three arms at all eight partner settings against v05, and two arms at four settings against v06; 24,000 games a cell",
+      "present": true,
+      "bytes": 101335,
+      "sha256": "e4e1526e32af2da7f7252737dec4b3d45b25a8036ddd76949ea2270a14a6a588",
+      "rows": 64
+    },
+    {
+      "id": "B7",
+      "artifact": "P5-B7.jsonl",
+      "command": "fish7 match --a=run_i --partners=run_j --b=v05 ... ; and each unordered pair head to head",
+      "design": "cross-play between three independently-trained runs of the frozen architecture (disjoint fitting banks, different CEM trajectories, one different starting basin)",
+      "present": true,
+      "bytes": 109319,
+      "sha256": "4d630fc4190e5c3ab33d35803028707d37c04bda6aaad79e5e05dddcd7911fb9",
+      "rows": 24
+    },
+    {
+      "id": "B8",
+      "artifact": "P5-B8.jsonl",
+      "command": "fish7 match --a=FROZEN --b=v06 --games=6000 --rotations=2 --seed=BANK --threads=13 --json [--no-out-of-turn|--no-cardless-declare|--maxasks=360|--arb=high|--arb=turn|--sets=8|--legacy]",
+      "design": "the rule-dialect table, unbundled: both arms play the same dialect, eight rows",
+      "present": true,
+      "bytes": 28732,
+      "sha256": "c3f29385e77e1742a65670bf49c26e30e52695a681503afc74708eed60dbf454",
+      "rows": 16
+    },
+    {
+      "id": "B9f",
+      "artifact": "P5-B9fits.jsonl",
+      "command": "fish7 tune --panel=<FROZEN,hcap=decl,hstr=H as +> --base=v06 --full --fromv6 --kpi=win --obj=min --paired --beta=1 --sigmarel=0.08 --games=120 --pop=12 --elite=5 --gens=8 --seed=7090005 --threads=13",
+      "design": "C1 responders fitted against the planted-weakness rungs H in {0.08, 0.11, 0.15} and against the sub-floor rung H=0.05",
+      "present": true,
+      "bytes": 3946,
+      "sha256": "8bcc51b408dd6cf510510f1c968d75dceda485ab8529c1ba49da09a80fd2b664",
+      "rows": 4
+    },
+    {
+      "id": "B9",
+      "artifact": "P5-B9.jsonl",
+      "command": "fish7 match ... --games=6000 --rotations=2 --seed=7090001|7090002",
+      "design": "planted-edge recovery (B9.2), the sub-floor rung that must NOT be recovered (B9.3), and the identity control (B9.4)",
+      "present": true,
+      "bytes": 60469,
+      "sha256": "b7c768946bcc8158f4ba470d48c31e9de78bfbdc2de46622a9556ec9c2299091",
+      "rows": 26
+    },
+    {
+      "id": "B9s",
+      "artifact": "P5-B9side.jsonl",
+      "command": "fish7 v7side --a=v07x:cheat=seed|shared|conv --b=v06 --games=400 --seed=BANK --tests=s3,s4,s5 --threads=13 ; and --tests=s6 --threads=1 --freshagents",
+      "design": "the three calibrated side-channel positive controls (B9.5)",
+      "present": true,
+      "bytes": 20299,
+      "sha256": "ceada8f71a1834c24b62c59525bbb2f002a9639bb6fda01326df84075791ee61",
+      "rows": 12
+    },
+    {
+      "id": "B10",
+      "artifact": "P5-B10.jsonl",
+      "command": "fish7 v7side --a=ARM --b=v06 --games=1200 --seed=BANK --tests=s6 --threads=1 [--freshagents]",
+      "design": "the S6 residual on holdout material, in both conditions: one thread alone, and one thread with agents rebuilt per deal",
+      "present": true,
+      "bytes": 24964,
+      "sha256": "882bbaff43dc6ded194cd66e164550958b9afc3f0c8dc687983762cb7148671e",
+      "rows": 16
+    },
+    {
+      "id": "T",
+      "artifact": "P5-TABLES.txt",
+      "command": "python3 engine/p5_analyse.py",
+      "design": "the reduction of every artifact above to the tables the report prints",
+      "present": true,
+      "bytes": 45084,
+      "sha256": "5963ab40b515992e8f6ef58b20162b6629243342b1c8bb4fac83dd75e3fa9897"
+    },
+    {
+      "id": "F",
+      "artifact": "P5-B9-h005.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5920,
+      "sha256": "9a498afb5c1b20dca547fc92691f325d9e9f67e39133a7392cde164aae30edca",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-B9-h008.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5923,
+      "sha256": "9ce524a9772b1021154cad7912d37ce2f9c1312d74783f45e75a4c77064356d8",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-B9-h011.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5910,
+      "sha256": "2a3a002b28606b609baa243a2bede3857454b124e1435a55cd81949b32b82ea1",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-B9-h015.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5919,
+      "sha256": "6a63aa70e06705d10387713b3e1d47ba36fb59eddba6ea409bddfa76df47127c",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z01.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5893,
+      "sha256": "b2d55597c3e2c7fd60017f315375d01a5257e4b5f67545b1e4b8d10822656bd6",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z02.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 8105,
+      "sha256": "4554a98cf1cc4804cde09339e99044e1ba4001e56711380f30aa4a618db9b95c",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z03.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5905,
+      "sha256": "7cf720736ed6bfb1317389a9f5dfa646cce43034d3a165e5f67fedcdc358434f",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z04.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5901,
+      "sha256": "0437f4a76e1616334ce2bfe77641250da9074a5b39fc035aa8a3049b700b6886",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z05.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5891,
+      "sha256": "f38568cf29ce67725a6163382030e79e91e7a0a35d56274fc5f3f1b0ac372922",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z06.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 8126,
+      "sha256": "1c46099e348040d7ee77e24ef9ca9ee8f59fa00a314fc03470348530cc4500c4",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z07.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 5909,
+      "sha256": "e74ed69b8c2cdf77ac3f1eeaa3eb7d7431348bfd423736aa7239df01ecf1930b",
+      "rows": 12
+    },
+    {
+      "id": "F",
+      "artifact": "P5-Z08.jsonl",
+      "command": "see B4f / B9f",
+      "design": "CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from",
+      "present": true,
+      "bytes": 8128,
+      "sha256": "1ef6397d337acdc08b31ef3b85101c7d5ad703538181152166a3ac419c7f6526",
+      "rows": 12
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+\begin{longtable}{@{}llp{0.40\linewidth}l@{}}
+\toprule
+ID & Artifact & Design & SHA-256 (first 12) \\
+\midrule
+\endhead
+B0 & \filepath{P5-B0.json} & the verification block, run before anything is measured: seven bank digests against the phase-2 commitment, the sealed adversary half against SEAL.json, the freeze artifact's R1/R2a/R3 round trips, the seed registry, and the engine self-audit & \texttt{2141dda039d6} \\
+B1 & \filepath{P5-gate.jsonl} & the commit gate, before any strength number: G1-G6, G7a, G7b for FROZEN, INCUMBENT, F-cheap and the negative control the gate must reject (B9.1) & \texttt{6b0866978860} \\
+B1t & \filepath{P5-gate.txt} & the human-readable gate digest with each threshold's provenance & \texttt{5c4757f2f2aa} \\
+B2 & \filepath{P5-B2.jsonl} & headline strength against the frontier; paired duplicate, both primary banks 7090001 and 7090002; 12,000 deals a bank against v06 / F-cheap / the phase-2 composite, 3,000 against F-mid, 6,000 against v05 & \texttt{ea2563922c70} \\
+B3 & \filepath{P5-B3.jsonl} & the shared panel: four arms (FROZEN, INCUMBENT, F-cheap, the phase-2 composite) against 31 panel members (14 sealed adversaries, 13 scripted archetypes, 4 frontier points) on both primary banks; near 6,000 deals a bank, far 1,500, expensive 1,200 & \texttt{090dd5a97172} \\
+B4f & \filepath{P5-B4fits.jsonl} & eight independent fresh adversary searches against the frozen configuration, sharded across the two sealed fitting banks; 8 x 12 x 120 deals x 2 rotations = 23,040 games each & \texttt{7e1c9b1f3286} \\
+B4e & \filepath{P5-B4eval.jsonl} & each fitted adversary re-measured against the frozen configuration on the two EVALUATION banks, disjoint from the banks it was fitted on; 24,000 games an arm & \texttt{94d13bfd4e8a} \\
+B5 & \filepath{P5-B5.jsonl} & the attribution lattice: six add-one-in cells from v06, five leave-one-out cells from FROZEN, and the FROZEN reference the drops are taken from; banks 7090003 and 7090001 & \texttt{cead615fa7ee} \\
+B6 & \filepath{P5-B6.jsonl} & the partner-regime table: three arms at all eight partner settings against v05, and two arms at four settings against v06; 24,000 games a cell & \texttt{e4e1526e32af} \\
+B7 & \filepath{P5-B7.jsonl} & cross-play between three independently-trained runs of the frozen architecture (disjoint fitting banks, different CEM trajectories, one different starting basin) & \texttt{4d630fc4190e} \\
+B8 & \filepath{P5-B8.jsonl} & the rule-dialect table, unbundled: both arms play the same dialect, eight rows & \texttt{c3f29385e77e} \\
+B9f & \filepath{P5-B9fits.jsonl} & C1 responders fitted against the planted-weakness rungs H in {0.08, 0.11, 0.15} and against the sub-floor rung H=0.05 & \texttt{8bcc51b408dd} \\
+B9 & \filepath{P5-B9.jsonl} & planted-edge recovery (B9.2), the sub-floor rung that must NOT be recovered (B9.3), and the identity control (B9.4) & \texttt{b7c768946bcc} \\
+B9s & \filepath{P5-B9side.jsonl} & the three calibrated side-channel positive controls (B9.5) & \texttt{ceada8f71a18} \\
+B10 & \filepath{P5-B10.jsonl} & the S6 residual on holdout material, in both conditions: one thread alone, and one thread with agents rebuilt per deal & \texttt{882bbaff43dc} \\
+T & \filepath{P5-TABLES.txt} & the reduction of every artifact above to the tables the report prints & \texttt{5963ab40b515} \\
+F & \filepath{P5-B9-h005.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{9a498afb5c1b} \\
+F & \filepath{P5-B9-h008.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{9ce524a9772b} \\
+F & \filepath{P5-B9-h011.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{2a3a002b2860} \\
+F & \filepath{P5-B9-h015.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{6a63aa70e067} \\
+F & \filepath{P5-Z01.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{b2d55597c3e2} \\
+F & \filepath{P5-Z02.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{4554a98cf1cc} \\
+F & \filepath{P5-Z03.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{7cf720736ed6} \\
+F & \filepath{P5-Z04.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{0437f4a76e16} \\
+F & \filepath{P5-Z05.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{f38568cf29ce} \\
+F & \filepath{P5-Z06.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{1c46099e3480} \\
+F & \filepath{P5-Z07.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{e74ed69b8c2c} \\
+F & \filepath{P5-Z08.jsonl} & CEM fitting trace: header, one record a generation, and the final weight vector the adversary spec is rebuilt from & \texttt{1ef6397d337a} \\
+\bottomrule
+\end{longtable}

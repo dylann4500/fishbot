@@ -1,0 +1,205 @@
+{
+ "kind": "fishbot-v07-phase5-B0",
+ "generated": "2026-08-25T15:25:47",
+ "commit": "d920f5bd869f1e0b18213acd972d4bedfd5a28b7",
+ "treeDirty": true,
+ "binary": {
+  "path": "engine/fish7",
+  "sha256": "cf6d5ea2c1f0e9e3896bc51f2a366834e7d60303eaf85acc553346c97359f4e3",
+  "bytes": 1242312
+ },
+ "unsealPhase": "FISH_UNSEAL_PHASE=5, set once for the whole battery",
+ "B0_1_bankDigests": {
+  "rows": [
+   {
+    "seed": 7090001,
+    "deals": 24000,
+    "digest": "896dbc89be124d85",
+    "expected": "896dbc89be124d85",
+    "match": true
+   },
+   {
+    "seed": 7090002,
+    "deals": 24000,
+    "digest": "0b6e40d834ac0ca1",
+    "expected": "0b6e40d834ac0ca1",
+    "match": true
+   },
+   {
+    "seed": 7090003,
+    "deals": 24000,
+    "digest": "863bea69baf6e73c",
+    "expected": "863bea69baf6e73c",
+    "match": true
+   },
+   {
+    "seed": 7090004,
+    "deals": 24000,
+    "digest": "54f257c3f8ae9fab",
+    "expected": "54f257c3f8ae9fab",
+    "match": true
+   },
+   {
+    "seed": 7090005,
+    "deals": 24000,
+    "digest": "268a1dae71a31713",
+    "expected": "268a1dae71a31713",
+    "match": true
+   },
+   {
+    "seed": 7091001,
+    "deals": 24000,
+    "digest": "958ada042cc26900",
+    "expected": "958ada042cc26900",
+    "match": true
+   },
+   {
+    "seed": 7091002,
+    "deals": 24000,
+    "digest": "5c39af3b5e0bd9a0",
+    "expected": "5c39af3b5e0bd9a0",
+    "match": true
+   }
+  ],
+  "allMatch": true,
+  "note": "reproduced with engine/fish7; engine/seal_banks_v07.py computed the committed digests with engine/fish7b, so this is also a cross-binary check"
+ },
+ "B0_2_sealedAdversaries": {
+  "sha256": "1ca0346a332586c70a750f1523b105485322af34ff31aab3b9e77a2f0a3b6c52",
+  "expected": "1ca0346a332586c70a750f1523b105485322af34ff31aab3b9e77a2f0a3b6c52",
+  "match": true,
+  "sealCommit": "f4581da58ff0a4408cd222d3313e26a43ad0101a",
+  "rows": 14,
+  "ids": [
+   "R-v04",
+   "S-archetype-0",
+   "S-ask-1",
+   "S-ask-3",
+   "S-decl-0",
+   "S-invert-0",
+   "S-reference-0",
+   "S-search-1",
+   "X01",
+   "X01xC3f",
+   "X02",
+   "X13",
+   "X18",
+   "X20"
+  ],
+  "specs": {
+   "R-v04": "v04",
+   "S-archetype-0": "feint",
+   "S-ask-1": "v06:m1=0",
+   "S-ask-3": "v06:chain2=1",
+   "S-decl-0": "v06:m2=0",
+   "S-invert-0": "v07i:idet=48,imodel=v06",
+   "S-reference-0": "v06",
+   "S-search-1": "v06:s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=24,maxq=26",
+   "X01": "v06:allparams=9.60189|6.15330|3.83683|3.12220|6.65640|6.64437|1.29917|-0.63211|-2.07810|-4.73361|-3.36019|1.69692|2.23122|5.94852|0.89676|0.11936|5.11158|-0.59790|1.81511|-1.21220|0.86813|0.74469|0.29558|5.91993|2.55634|6.95324|0.68312|0.87672|-0.03021|0.40022|0.19007|5.73206|3.57881|3.69737|0.34414|-1.30664|0.01140",
+   "X01xC3f": "v06:allparams=9.60189|6.15330|3.83683|3.12220|6.65640|6.64437|1.29917|-0.63211|-2.07810|-4.73361|-3.36019|1.69692|2.23122|5.94852|0.89676|0.11936|5.11158|-0.59790|1.81511|-1.21220|0.86813|0.74469|0.29558|5.91993|2.55634|6.95324|0.68312|0.87672|-0.03021|0.40022|0.19007|5.73206|3.57881|3.69737|0.34414|-1.30664|0.01140,s1=1,det=16,cand=6,kappa=2.0,maxq=26,roppo=v06",
+   "X02": "v06:allparams=10.65701|4.49654|2.81921|3.18930|2.32051|5.18461|1.94891|-1.98659|-3.49553|-7.03545|-3.76484|2.99829|1.35196|3.46434|2.59333|-0.81971|4.74162|-0.11169|2.33458|-4.33672|0.81349|0.74176|0.28516|5.41076|3.02993|7.00088|0.86686|0.86254|-0.02900|0.42256|0.09747|6.41678|3.15604|3.92501|0.32859|-0.35205|-0.54433",
+   "X13": "v07:dead7=1,allparams=12.34003|5.77698|3.01280|3.15879|2.18166|6.93533|0.50231|-0.41603|-2.92129|-5.29695|-1.54504|1.21655|2.12483|4.67018|0.43247|-2.38785|4.18155|1.01245|1.61377|-1.50855|0.85344|0.74102|0.29524|5.64691|3.57890|8.97650|0.75725|0.81061|-0.01047|0.37589|0.16957|6.08466|3.50400|3.70347|0.71649|-0.73436|-1.76790|-1.51966|-0.33821|-0.29468|-0.52715|0.56908|-0.16538|0.01109|-1.18642|-1.61075|-0.23280|1.56231|-1.77070|0.61949|-1.43323|0.71314|-0.13769|-0.87270|0.82603",
+   "X18": "v06:allparams=10.88642|5.45148|3.08622|2.60621|1.23358|6.71067|1.33987|0.10283|-0.07741|-5.89914|-4.22573|2.19085|0.67779|3.42813|2.83997|-0.73452|6.80792|1.70377|1.81262|-5.88808|0.84584|0.74827|0.24368|4.15674|3.39203|5.50852|0.75888|0.81736|-0.02002|0.38967|0.15473|6.10077|2.79653|4.31269|0.63762|-0.47487|-0.73261",
+   "X20": "v06:allparams=9.10781|5.80946|2.71487|4.25643|5.52995|8.38937|1.54463|0.12591|0.19814|-7.71403|-1.32504|0.02234|5.53270|4.96234|5.10946|0.19713|3.41871|-2.44487|0.06519|1.63428|0.87653|0.79292|0.17127|3.09941|3.22193|6.38536|0.82793|0.84624|0.00361|0.22748|0.18001|4.76864|2.55898|3.85779|0.00000|-0.31563|-2.28829"
+  },
+  "distinctPolicies": 14
+ },
+ "B0_3_freezeVerify": {
+  "rc": 0,
+  "stdout": "VERIFY PASS  /Users/dylan/Documents/GitHub/fish optimization/engine/fishbot_v07.json\n  spec   v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26\n  digest 5f81f440fc9c272a87e87c05fecc7b74",
+  "stderr": "",
+  "reconstructedSpec": "v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26",
+  "matchesArtifact": true,
+  "mirrorDigest": "5f81f440fc9c272a87e87c05fecc7b74",
+  "coordinates": 55,
+  "R2a_vector_search": {
+   "winRateA": 0.5,
+   "games": 800,
+   "setsA": 4.5,
+   "setsB": 4.5,
+   "askAccA": 0.504843,
+   "askAccB": 0.504843,
+   "identical": true
+  },
+  "changedSourcesNote": false,
+  "note": "the NOTE listing engine sources changed since the freeze did not print: zero sources differ from the freeze provenance on this tree"
+ },
+ "B0_4_seeds": {
+  "rc": 0,
+  "required": "7090001,7090002,7090003,7090004,7090005,7091001,7091002",
+  "allRegisteredAndUsable": true,
+  "registryViolations": [
+   "R1 VIOLATION seed 515253: 'v06/E4 per-style panel' (eval) and 'v06/X1 exploitability responder fit (exploitability_v06.sh FITSEED)' (fit)"
+  ],
+  "note": "--require prints nothing on success and returns 3 on any unregistered or still-sealed seed; rc=0 is the pass. The R1 violation reported is a pre-existing v0.6-era registry collision on seed 515253 and involves no phase-5 bank; it is recorded here because B0.4 says to record it."
+ },
+ "B0_5_engine": {
+  "verify": {
+   "rc": 0,
+   "pass_": true,
+   "stdout": "audit violations: 0 / 6737436 checks\nset-conservation failures: 0\naction-limit games: 0\ndeterminism: PASS\nVERIFY PASS"
+  },
+  "selftest": {
+   "rc": 0,
+   "pass_": true,
+   "stdout": "checks                    424986\nblock build failures      0\nblock vs card DP (no C5)  max abs diff 3.414e-15\nblock vs exact sampling   max abs diff 4.066e-02\nsinkhorn vs block  max 0.5000  mean 0.01690\nSELFTEST PASS\nnote: allocation probabilities are validated by `fish oracle`, not here"
+  }
+ },
+ "reproducibility": {
+  "cell": "FROZEN vs v06, 400 deals x 2 rotations, training seed 31",
+  "runs": [
+   {
+    "threads": 13,
+    "winRateA": 0.56,
+    "eventsPerGame": 97.305,
+    "askAccA": 0.531488,
+    "ci": [
+     0.52625,
+     0.59375
+    ]
+   },
+   {
+    "threads": 13,
+    "winRateA": 0.56,
+    "eventsPerGame": 97.305,
+    "askAccA": 0.531488,
+    "ci": [
+     0.52625,
+     0.59375
+    ]
+   },
+   {
+    "threads": 13,
+    "winRateA": 0.56,
+    "eventsPerGame": 97.305,
+    "askAccA": 0.531488,
+    "ci": [
+     0.52625,
+     0.59375
+    ]
+   },
+   {
+    "threads": 1,
+    "winRateA": 0.56,
+    "eventsPerGame": 97.305,
+    "askAccA": 0.531488,
+    "ci": [
+     0.52625,
+     0.59375
+    ]
+   },
+   {
+    "threads": 2,
+    "winRateA": 0.56,
+    "eventsPerGame": 97.305,
+    "askAccA": 0.531488,
+    "ci": [
+     0.52625,
+     0.59375
+    ]
+   }
+  ],
+  "identical": true,
+  "why": "runMatch schedules deals by work-stealing, so the deal-to-thread assignment is not fixed run to run; the frozen configuration carries the cross-deal agent residue of PREREGISTRATION 5.3.  This checks directly that a scored cell is nonetheless reproducible, at a fixed thread count and across thread counts, before twelve hours of holdout material is spent on the assumption."
+ }
+}
