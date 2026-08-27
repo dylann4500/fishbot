@@ -1,6 +1,6 @@
 {
-  "generated": "2026-08-26T18:02:14",
-  "commit": "e0da8fda6d98eab62efad7d57c89ec1a9ec60af3",
+  "generated": "2026-08-26T19:46:36",
+  "commit": "dc28db3464323f86fe9cd4a8a135b1641a0f1f99",
   "working_tree_dirty": true,
   "results_dir": "research/v07/results",
   "project": "FishBot v0.7 -- phase 5, frozen final evaluation",
@@ -199,13 +199,22 @@
       "rows": 16
     },
     {
+      "id": "DR",
+      "artifact": "P5-drift.json",
+      "command": "clang++ ... src/main.cpp -o fish7-rebuild -pthread ; fish7 pathology --a=FROZEN --b=FROZEN --games=400 --rotations=2 --seed=31 --threads=2, with both binaries",
+      "design": "the EXECUTED source-drift check: B0.3 compares the tree against a baseline stored inside the freeze artifact, and that artifact was rewritten after the freeze, so the hash check could not fire.  The engine is rebuilt from the tree and the frozen R3 mirror digest recomputed with the fresh binary; both binaries must return the frozen digest",
+      "present": true,
+      "bytes": 1850,
+      "sha256": "b165c648ebe9cf157c1be9f1baaf8085b6a6493ca8c0b786039c045cc50aac44"
+    },
+    {
       "id": "T",
       "artifact": "P5-TABLES.txt",
       "command": "python3 engine/p5_analyse.py",
       "design": "the reduction of every artifact above to the tables the report prints",
       "present": true,
       "bytes": 45084,
-      "sha256": "5963ab40b515992e8f6ef58b20162b6629243342b1c8bb4fac83dd75e3fa9897"
+      "sha256": "31ce8528249834a6d6863461e9a69447b05ba8b13cbe65c3e7a0f071e665ec5b"
     },
     {
       "id": "F",

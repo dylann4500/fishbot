@@ -1,0 +1,45 @@
+{
+ "kind": "fishbot-v07-phase5-drift-check",
+ "generated": "2026-08-26T19:42:17",
+ "why": "B0.3 compares the tree against a baseline stored INSIDE engine/fishbot_v07.json, and that artifact was rewritten after the freeze commit (d1c6b35, d8c554b), refreshing the baseline. The hash-based drift check therefore could not fire.  This is the executed replacement: the engine is rebuilt from the tree and the frozen policy R3 mirror digest recomputed.",
+ "command": "clang++ -std=c++20 -O3 -march=native -funroll-loops -fno-math-errno -DFISH_NO_SERVE src/main.cpp -o fish7-rebuild -pthread",
+ "digestCommand": "fish7 pathology --a=v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 --b=v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26 --games=400 --rotations=2 --seed=31 --threads=2",
+ "expectedDigest": "5f81f440fc9c272a87e87c05fecc7b74",
+ "binaries": {
+  "shipped": {
+   "binary": "engine/fish7",
+   "sha256": "cf6d5ea2c1f0e9e3896bc51f2a366834e7d60303eaf85acc553346c97359f4e3",
+   "bytes": 1242312,
+   "mtime": "2026-08-25T13:19:03",
+   "digestMd5": "5f81f440fc9c272a87e87c05fecc7b74",
+   "rc": 0
+  },
+  "rebuilt": {
+   "binary": "scratch rebuild",
+   "sha256": "3f2a48cc395b5b2f9e6dcb40fc6f059be2780ccdf1e505a7b5d0441668ae95ef",
+   "bytes": 1242320,
+   "mtime": "2026-08-26T15:25:56",
+   "digestMd5": "5f81f440fc9c272a87e87c05fecc7b74",
+   "rc": 0
+  }
+ },
+ "identical": true,
+ "sourcesDifferingFromArtifactBaseline": [
+  "fish.hpp",
+  "game.hpp",
+  "human.hpp",
+  "table.hpp"
+ ],
+ "sourcesDifferingFromFreezeCommit_0fa4a5f": [
+  "arena.hpp",
+  "factory.hpp",
+  "fish.hpp",
+  "game.hpp",
+  "human.hpp",
+  "main.cpp",
+  "table.hpp",
+  "tuner.hpp",
+  "v07_side.hpp"
+ ],
+ "nSources": 78
+}

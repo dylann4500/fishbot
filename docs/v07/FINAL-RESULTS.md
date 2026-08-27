@@ -5,7 +5,7 @@ Repository `https://github.com/dylann4500/fishbot.git`.
 
 **The run is identified by its binary, not by a commit.** Five commits landed in the repository
 while the battery was running, so no single commit describes the tree for the whole of it. Every
-one of the 409 scored cells was played by `engine/fish7`, SHA-256
+one of the 428 scored cells was played by `engine/fish7`, SHA-256
 `cf6d5ea2c1f0e9e3896b…`, 1,242,312 bytes, built 2026-08-25 13:19 from the tree at `d920f5b`, and
 that binary was never rebuilt between the first bank digest and the last cell. The five later
 commits (`b8cb227`, `2e829c2`, `46f3515`, `72fa936`, `e0da8fd`) are all in the interactive
@@ -112,11 +112,15 @@ frontier cell is used below as a free determinism check.
 
   What is **not** weakened is the policy identity. R1, R2a and the R3 mirror digest are computed by
   *running* the engine, not by comparing file hashes, and all three round-trip. Because the
-  hash-based drift check was vacuous, it was replaced with an executed one: the engine was rebuilt
-  from the tree as it stands at the end of the battery and the mirror digest recomputed with the
-  fresh binary. It is `5f81f440fc9c272a87e87c05fecc7b74` — identical to the frozen artifact and to
-  the binary that played every cell. **The source drift does not move the frozen policy, and that is
-  now established by executing it rather than by hashing it.**
+  hash-based drift check was vacuous, it was replaced with an executed one, **recorded as an
+  artifact in `research/v07/results/P5-drift.json`**: the engine was rebuilt from the tree as it
+  stands at the end of the battery (fresh binary SHA-256 `3f2a48cc395b5b2f…`) and the mirror digest
+  recomputed with it. Both binaries return `5f81f440fc9c272a87e87c05fecc7b74`, identical to the
+  frozen artifact. **The source drift does not move the frozen policy, and that is established by
+  executing it rather than by hashing it.** The same artifact records the drift measured properly:
+  **nine of the 78 sources differ from the freeze commit `0fa4a5f`** — `arena.hpp`, `factory.hpp`,
+  `fish.hpp`, `game.hpp`, `human.hpp`, `main.cpp`, `table.hpp`, `tuner.hpp`, `v07_side.hpp` — of
+  which four arrived in the mid-battery commits of D20.
 
 ### B0.4 — the seed registry
 
@@ -217,6 +221,14 @@ cell for all four arms, which is what makes minimax regret defined at all.
 
 **S6 passes.** `FROZEN`'s worst cell is −0.04 against the incumbent's −4.24.
 
+Three properties of that cell belong beside the verdict. Its **sign does not replicate**: +1.67 on
+7090001 and −1.75 on 7090002, so by §0's own rule the cell is NOT REPLICATED and the −0.04 is a
+pooled point estimate straddling zero. It is an **expensive-class** cell — 1,200 deals a bank, 4,800
+games, half-width ±1.37 — while `INCUMBENT`'s worst cell is a 6,000-deal near cell resolved to ±0.63,
+so the two sides of the comparison are not equally resolved. And B2.4 measures the same pairing at
+24,000 games and gets +0.15 [−0.29, +0.59] with both banks positive. The honest reading is that
+`FROZEN` is indistinguishable from the composite on this cell, not that it loses to it.
+
 The comparison needs one caveat stated rather than buried: `INCUMBENT`, `F-cheap` and the composite
 each meet **themselves** in the panel and so carry a free 0.00 cell, which can only lower their worst
 case; `FROZEN` is not a panel member and carries none. Excluding self-cells the composite's worst
@@ -244,7 +256,8 @@ archetypes, where the blueprints beat `FROZEN` outright:
 | `silent` | **+32.75** | +34.23 | +34.05 | +30.92 |
 
 Against the hardest sealed adversary the ordering reverses: on `SEALED:X01xC3f`, `FROZEN` is
-**+1.43 [+0.80, +2.06]** where `INCUMBENT` is −4.24 and `F-cheap` is −1.25.
+**+1.43 [+0.80, +2.06]** and the composite **+1.23 [+0.60, +1.86]**, where `INCUMBENT` is −4.24 and
+`F-cheap` is −1.25. Two of the four arms beat it; `FROZEN` by the larger margin.
 
 `INCUMBENT`'s attaining member is decided by 0.004 points over `SEALED:S-invert-0` against a
 half-width of 1.24, and it flips between banks; the regret *value* 5.67 is stable, the name attached
@@ -285,8 +298,11 @@ The full 31 × 4 cell table is in `research/v07/results/P5-TABLES.txt`.
 
 **VERDICT: CERTIFIED advancement.**
 
-B2.3 clears the restriction the protocol placed on `F-mid` in advance — no claim below 2 points —
-at +2.89, and the cell's half-width is 0.89, matching §3's `98/√N` table exactly.
+B2.3 **grazes** the restriction the protocol placed on `F-mid` in advance — no claim below 2 points.
+Its pooled edge is +2.8917 with a lower bound of **+2.0019**, two thousandths of a point above the
+restriction, and the cell's half-width is 0.89, matching §3's `98/√N` table exactly. A claim about
+`F-mid` is therefore admissible by the narrowest possible margin, and is stated as such rather than
+as a clean clearance.
 
 ### 4.2 B2.4 is a failure, and it is one the protocol named in advance
 
@@ -299,6 +315,13 @@ The protocol's own arithmetic makes this cell interpretable: `FROZEN` minus the 
 the group `rtie=1` + urgency-off + `stall=12` added and `m2=0` removed, and §1 records `m2=0`'s
 leave-one-out drop as exactly zero. §1 states that group's training value in advance as **+0.78
 [+0.33, +1.22]**. See §12 for what B11 does with that.
+
+**§6 item 2 attaches a mandatory consequence to this outcome, and it is recorded here in the
+protocol's own terms.** On this cell **v0.7 reduces to the phase-2 composite — which is a phase-2
+result, not a v0.7 one — and the v0.7 contribution is the measurement programme and the four closed
+ledger entries, not the policy.** The protocol requires the report to say that, and it says it.
+That is not the whole of what this battery measured: `FROZEN` does beat the v0.6 frontier at B2.2
+and B2.3, which is a claim the composite cell does not touch. Both stand.
 
 ### 4.3 Declaration accuracy — reported, not claimed
 
@@ -336,7 +359,9 @@ Z03 is read against the **declaration-family floor 2.13**, not 1.53, because its
 condition ("any arm clears its floor with a replicated sign") are **not complements**, and there is a
 band in which the protocol determines no verdict. Both were computed. The band is **empty** — every
 upper bound is below its floor — so the pass condition is met outright and no reading had to be
-chosen. Had the band been occupied, §7 would have required phase 5 to stop; it was not.
+chosen. Had the band been occupied, phase 5's rule was to report the arm as UNDETERMINED rather than
+resolve it by choosing a reading (§15 D10). Whether the non-complementarity is itself a §7 flaw is
+adjudicated in §15.1, not here.
 
 Two limits of Z08, stated because it is the cell the phase brief singles out. `v07i` derives from
 `V06Agent` and reads only the 37 v0.6 coordinates, while the CEM extends the vector to 55 for any
@@ -361,12 +386,14 @@ arithmetic the protocol's disjointness rule exists to expose.
 | the search | +1.91 [+1.38, +2.44] | +0.57 [−0.33, +1.46] |
 | `rtie=1` | +0.71 [+0.08, +1.34] | +1.08 [+0.20, +1.97] |
 | urgency-off | +1.37 [+1.12, +1.63] | +0.64 [−0.25, +1.53] |
-| `stall=12` | **+0.00 [+0.00, +0.00]** | **+0.00 [+0.00, +0.00]** |
+| `stall=12` | **+0.00 [+0.00, +0.00]** | **+0.00 [−0.89, +0.89]** |
 | `m2=0` *(not in the freeze)* | +0.77 [+0.66, +0.88] | — |
 
 Naive sum of the **five** components the freeze carries: **+6.18**. Measured whole: **+4.73**.
-Sub-additivity ratio **0.766 [0.653, 0.926]** — phase 2's own 0.83 lies inside that interval, so the
-two phases' composition is not distinguishable here. Quoting the sum would overstate the
+Sub-additivity ratio **0.766 [0.566, 1.049]** — phase 2's own 0.83 lies inside that interval, so the
+two phases' composition is not distinguishable here. **The interval also contains 1.0**, so this
+battery does not resolve sub-additivity: the point estimates are sub-additive, which is what S4
+tests, and the ratio is not distinguishable from exact additivity at this sample size. Quoting the sum would overstate the
 configuration by 1.45 points.
 
 **S4: PASS** — the components are sub-additive and no single leave-one-out drop exceeds the whole.
@@ -394,7 +421,9 @@ than a third of the whole. Under §3's replication rule this must be read per ba
 | 7090003 *(lattice primary)* | 4.575 | 1.525 | `L-r12` +1.025 | **NOT LOCATED** |
 | pooled | 4.729 | 1.576 | `L-r12` +1.687 | LOCATED, by +0.111 |
 
-The two banks' largest drops differ by 1.325 points against a half-width on that difference of 1.249:
+The two banks' largest drops differ by 1.325 points against a half-width on that difference of
+**1.767** — each bank's drop is itself a difference of two single-bank cells, so the difference of
+the two drops combines four per-bank errors:
 the split is real on the point estimates and is **not itself statistically resolved**. Under §3 —
 "a claim whose sign does not replicate across the two banks is reported as not replicated, whatever
 its pooled interval says" — **the pooled LOCATED verdict is NOT REPLICATED**, and the honest reading
@@ -409,22 +438,41 @@ S4 itself passes on both banks; it is §6 item 3 specifically that splits.
 
 `FROZEN − INCUMBENT`, opponent `v05`:
 
-| partners | itself | `v06` | `v05` | `v04` | `v03` | `detective` | `withholder` | `lockout` |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| delta | +4.49 | +1.93 | +0.78 | +1.34 | +1.40 | +1.83 | **−0.19** | +1.89 |
-| replicates | yes | yes | yes | yes | yes | yes | **NO** | yes |
+| partners | `FROZEN − INCUMBENT` | per bank | replicates |
+|---|---|---|---|
+| itself | +4.49 [+3.61, +5.38] | 7090001:+4.18  7090002:+4.81 | yes |
+| `v06` | +1.93 [+1.04, +2.82] | +2.07 / +1.79 | yes |
+| `v05` | +0.78 [−0.09, +1.66] | +0.95 / +0.62 | yes |
+| `v04` | +1.34 [+0.46, +2.22] | +1.30 / +1.38 | yes |
+| `v03` | +1.40 [+0.56, +2.25] | +1.08 / +1.72 | yes |
+| `detective` | +1.83 [+0.97, +2.68] | +1.35 / +2.30 | yes |
+| **`withholder`** | **−0.19 [−1.04, +0.67]** | +0.00 / −0.38 | **NO** |
+| `lockout` | +1.89 [+1.04, +2.74] | +1.39 / +2.39 | yes |
 
-Seven of eight rows positive; six of seven changed-partner rows positive; minimum **−0.19**, well
-above the −1.0 collapse threshold. The single negative row, `withholder`, is +0.00 on one bank and
-−0.38 on the other and is reported as **not replicated**.
+Seven of eight rows positive; six of seven changed-partner rows positive; minimum **−0.19**, above
+the −1.0 collapse threshold. The single negative row, `withholder`, is +0.00 on one bank and −0.38
+on the other and is reported as **not replicated**.
+
+**S1's minimum passes on the point estimate and is not resolved against the threshold.** S1 fails if
+any row is below −1.0. The minimum row's interval is [−1.04, +0.67] — its lower bound is *below*
+−1.0. The point estimate clears the threshold, the interval does not exclude a value that would
+fail it, and this battery does not separate the two.
 
 **S1: PASS on both readings of the row count.** §5.2 says "five of the eight changed-partner rows";
 B6 has seven changed settings plus self-play, and the protocol's own worked table counts eight
 including self-play. Both counts are given; the verdict uses the eight-row reading the protocol
 demonstrates, and the seven-row reading passes as well.
 
-Opponent `v06`, where §1 predicts far more stability: +4.55, +2.75, +1.46, +2.34 — all four rows
-positive and all four clear zero.
+Opponent `v06`, where §1 predicts far more stability: +4.55 (itself), +2.75 (`v06`), +1.46 (`v03`),
++2.34 (`detective`) — all four rows positive and all four clear zero.
+
+**This is where the measurement disagrees with the protocol's advance statement, and §1 says a
+disagreement is a finding.** §1 item 4 states in advance "+4.82 self and +2.50 to +2.88 under
+partner change, all three clearing zero". All three changed rows do clear zero, but **two of the
+three fall below the stated range** — `v03` at +1.46 [+0.63, +2.29], a point below the bottom of it,
+and `detective` at +2.34 [+1.49, +3.19] — and the self row is +4.55 against a predicted +4.82. The
+direction of the prediction holds: the `v06` regime is more stable than the `v05` regime. Its
+magnitude is smaller than phase 4 measured on training material.
 
 §1's one-seat prediction: a single-seat upgrade among `v06` partners is worth **+1.93** against a
 `v05` opponent (predicted +1.26) and **+2.75** against a `v06` opponent (predicted +2.88).
@@ -466,7 +514,8 @@ Pairwise parameter distance over 55 coordinates: **xp1–xp2 L2 9.638**, **xp1�
 Diagonal mean **+4.55**; off-diagonal mean **+4.55**; **gap −0.01** against a per-cell half-width of
 0.63. Phase 4 measured +4.51 / +4.48 with a gap of 0.02 on training material.
 
-**S2: PASS.** The worst off-diagonal cell (+3.80) is 0.75 below the weakest diagonal cell, and the
+**S2: PASS.** The worst off-diagonal cell (+3.80) is 0.40 below the weakest diagonal cell (xp3–xp3, +4.20) and
+0.75 below the diagonal mean, and the
 best off-diagonal (+5.15) exceeds every diagonal cell. For scale, the protocol cites the Hanabi
 line's collapses as the thing to look for — SAD 23.97 → 2.52, IPPO 24.04 → 0.12. Nothing of that
 kind is present.
@@ -499,8 +548,8 @@ orders, both declaration-permission changes and the full v0.3 legacy dialect.
 `--maxasks=360` is **bit-identical to default**: the 400-ask cap is never reached in this population.
 
 The **legacy residual** — legacy minus the isolable components, which the protocol assigns to the
-forced-endgame willingness ladder because it has no CLI flag of its own — is **−0.292 [−1.55,
-+0.96]**. The interval is 4.3× the size of the residual, so the data are equally consistent with the
+forced-endgame willingness ladder because it has no CLI flag of its own — is **−0.292 [−1.95,
++1.37]**. The interval is 5.7× the size of the residual, so the data are equally consistent with the
 ladder contributing nothing. Note also that since `--maxasks=360` is inert, the residual is
 arithmetically legacy minus *two* effective components, not three.
 
@@ -697,6 +746,26 @@ The other five are not met.
 to the affected result rather than in a footnote. Every entry below also appears in
 `research/v07/results/P5-TABLES.txt` beside its table.
 
+### 15.1 Whether any of this is "a genuine flaw in this protocol" under §7
+
+§7 says that if phase 5 finds a genuine flaw — *a cell that cannot answer the question it is posed,
+a threshold that is incoherent, a control that does not control* — it **stops and reports the flaw**
+rather than amending and continuing. Four candidates arose. Phase 5 judged none of them a stop, and
+records the reasoning so a reader can disagree with it. **No threshold, cell or sample size was
+changed at any point; every judgement below is a recorded reading, not an amendment.**
+
+| candidate | §7 category it might fall under | adjudication |
+|---|---|---|
+| **D19** — B0.3's source-drift NOTE could not fire, because its baseline lives inside the artifact it checks and was refreshed after the freeze | "a control that does not control" | **Not a stop.** The protocol itself calls the changed-source NOTE "a report and not a failure"; the *control* is the R3 digest round-trip, which is computed by running the engine, which fired and passed. A report that cannot fire is not a control that does not control. Phase 5 nonetheless replaced it with an executed check rather than leaving the gap, and recorded that check as an artifact. |
+| **D10** — S3's pass and fail conditions are not complements, leaving a band undetermined | "a threshold that is incoherent" | **Not a stop, on this data.** The threshold determines a verdict everywhere except the band, and the band came out **empty**: every arm's upper bound is below its floor, so the pass condition was met by the protocol's own words with no choice by phase 5. A stricter reader could hold that *discovering* the gap is itself the trigger regardless of whether it bites; that reading is recorded here so it can be applied by someone else. |
+| **D5** — §4/B4's description of what `tune --seed=<bank> --shard=s/4` plays is factually wrong | "a cell that cannot answer the question it is posed" | **Not a stop.** The cell answers its question: eight mutually disjoint fitting sets, fitting disjoint from the evaluation banks, evaluation at the preregistered size on holdout. The protocol's account of the mechanism is wrong; the cell is not. |
+| **D26** — B11's third clause asks for a comparison the protocol supplies no figure for | "a cell that cannot answer the question it is posed" | **Not a stop, but the closest of the four.** B11's first two clauses — the 0.74 expected maximum, and how much of the gain selection would explain — are fully computable and are the substance of the check; both are discharged. The third clause is not computable as written, and phase 5 substituted four quantities the protocol *does* state in advance. That substitution is registered as D26 rather than performed silently. |
+
+The reason none of these forces a stop is the same in each case: §7 exists to stop phase 5 using
+holdout knowledge to choose a protocol. Nothing above changed what was measured, how large a cell
+was, or what threshold it was read against. Each is a defect in the protocol's *description* or in a
+*report*, not in a cell, a threshold that decided anything, or a control that was relied on.
+
 **D1**  ADDED CELL -- B5 REF-FROZEN.  The eleven cells B5 names cannot yield a leave-one-out DROP:
     the drop is FROZEN's edge minus the variant's, and FROZEN's own edge on the lattice banks is
     not one of the eleven.  A twelfth cell was added at the lattice size on both lattice banks.
@@ -736,10 +805,12 @@ to the affected result rather than in a footnote. Every entry below also appears
     for the same reason as D5: the seed `runMatch` sees is derived, not the registered one.
     Phase 5 set FISH_UNSEAL_PHASE=5 once and used the seven registered seeds and no others.
 
-**D7**  OBSERVATION -- B0.3 printed no changed-source NOTE.  The protocol expected three engine
-    sources to be listed as changed since the freeze (arena.hpp, main.cpp, v07_side.hpp).  Zero
-    differ on the tree phase 5 ran at.  The stop condition -- a changed source WITH a changed R3
-    digest -- could not fire.
+**D7**  OBSERVATION, **SUPERSEDED BY D19** -- B0.3 printed no changed-source NOTE.  The protocol
+    expected three engine sources to be listed as changed since the freeze (arena.hpp, main.cpp,
+    v07_side.hpp).  Zero differ from the baseline the check actually uses.  D19 explains why that
+    baseline is not the freeze's and gives the correct figure -- nine of 78 sources differ from the
+    freeze commit.  This entry is left standing rather than deleted, because the first reading of
+    B0.3 was reported before it was corrected.
 
 **D8**  ADDED CHECK -- reproducibility, before the material was spent.  `runMatch` schedules deals by
     work-stealing, so the deal-to-thread assignment is not fixed run to run even at a fixed thread
@@ -795,7 +866,7 @@ to the affected result rather than in a footnote. Every entry below also appears
     The magnitude is 0.008 points against a 0.63-point half-width.  Reported in full under
     "Panel duplicates" above.
 
-**D19** CORRECTION -- B0.3's changed-source NOTE could not fire, and reporting zero as
+**D19** CORRECTION TO D7 -- B0.3's changed-source NOTE could not fire, and reporting zero as
     "conservative" was wrong.  `freeze_config_v07.py --verify-only` reads its drift baseline out
     of engine/fishbot_v07.json's own `provenance.srcSha256_16`.  That artifact was REWRITTEN
     after the freeze commit 0fa4a5f -- at d1c6b35 and again at d8c554b -- and each rewrite
@@ -827,38 +898,71 @@ to the affected result rather than in a footnote. Every entry below also appears
     deterministic and reproduced identically, so the artifact records what was checked first --
     but its file timestamps do not show that ordering and this note is what does.
 
-**D22** OBSERVATION -- one action-limit hit in 409 scored cells: the phase-2 composite against
-    SEALED:S-ask-1 on bank 7090001, one game in 12,000 (limitHitRate 8.33e-05).  Zero audit
-    violations in every cell of the battery.  G4 gates the mirror pathology run and not scored
-    cells, so this is not a gate violation, but the corpus standard is zero and it is recorded.
+**D22** OBSERVATION -- one action-limit hit in 428 scored cells: the phase-2 composite against
+    SEALED:S-ask-1 on bank 7090001, one game in 12,000 (limitHitRate 8.33e-05).  G4 gates the mirror
+    pathology run and not scored cells, so this is not a gate violation, but the corpus standard is
+    zero and it is recorded.  NOTE that scored cells carry NO audit evidence: `auditChecks` is 0 in
+    all 428 of them, because `match` runs the audit only under `--audit` and no preregistered cell
+    uses it.  "Zero audit violations" over a scored cell is zero out of zero and means nothing; the
+    engine-wide figure of 0 violations in 6,737,436 checks comes from B0.5's `verify` run.
 
 **D23** CORRECTION -- the throughput columns were printed with median_high (`v[len(v)//2]` on an
     even-length list) rather than the median.  Corrected to the true median; every figure moves by
     at most 0.11x and every one still exceeds the 3.2x the protocol records.
 
+**D25** READING -- section 6 item 3 read per bank.  The protocol states the one-third location rule
+    without a per-bank clause, and section 3's replication rule is written for "a claim whose SIGN
+    does not replicate".  Here the sign of the drop does not change between banks; the VERDICT LABEL
+    does -- LOCATED on 7090001, NOT LOCATED on 7090003.  Applying section 3's rule to a threshold
+    crossing rather than to a sign is an extension, and section 7 requires a deviation for "a
+    threshold it read differently".  The pooled figure alone would have read LOCATED; both readings
+    are printed so either can be applied.
+
+**D26** SUBSTITUTION -- B11's third clause is not computable as written.  It asks phase 5 to confirm
+    "that the holdout estimate is not systematically smaller than the training estimate by about
+    that amount", where the estimate B11 is about is the measured holdout gain -- but the protocol
+    supplies no training figure for B2.1 or B2.2.  Phase 5 substituted the three quantities the
+    protocol DOES state in advance (the B2.4 group at +0.78, the B6 self-play row at +2.94, and B7's
+    +4.51 / +4.48) and labelled the substitution in place.  B11's other two clauses are computable
+    and are discharged exactly as written.  See 15.1.
+
+**D27** ADDED ARTIFACT -- research/v07/results/P5-drift.json.  D19's executed replacement for the
+    vacuous hash-based drift check was performed but not initially recorded, which made it an
+    assertion rather than evidence.  It is now an artifact: the build command, both binaries' SHA-256
+    and byte counts, the pathology argv, the two recomputed digests, and the source sets differing
+    from the artifact's own baseline and from the freeze commit.
+
 **D24** CORRECTION -- per-bank columns were printed unlabelled and sorted by seed NUMBER, which
     inverts the attribution for B5 and B8, whose primary bank is 7090003 and whose replicate is
-    7090001.  Every per-bank value in this document is now printed as `seed:value`.
+    7090001.  Every per-bank column in P5-TABLES.txt is now printed as `seed:value`.  In THIS
+    document the bank order is given in each table's first row and the pairs that follow keep it:
+    section 5's B4 table is (7090001, 7090002) and section 9's B8 table is (7090003, 7090001).  A
+    reader comparing the two must not assume a common order.
 
 ---
 
 ## 16. What the battery cost, and where the raw output is
 
-| battery | cells preregistered | cells measured | games |
-|---|---:|---:|---:|
-| B1 gate + B9.1 | 4 configurations | 4 | 3,200 mirror + 8 `v7side` runs |
-| B2 frontier | 10 | 10 | 180,000 |
-| B3 panel | 248 | 248 | 2,102,400 |
-| B4 fresh adversary search | 8 fits + 16 cells | 8 + 16 | ~188,000 fitting + 192,000 |
-| B5 attribution lattice | 24 | 24 | 288,000 |
-| B6 partner regime | 64 | 64 | 768,000 |
-| B7 cross-play | 24 | 24 | 288,000 |
-| B8 rule dialects | 16 | 16 | 192,000 |
-| B9 controls | 26 + 12 | 26 + 12 | 312,000 + 4 fits |
-| B10 S6 residual | 16 | 16 | 38,400 deals audited |
+| battery | preregistered | added | measured | games |
+|---|---:|---:|---:|---:|
+| B1 gate + B9.1 | 4 configurations | — | 4 | 3,200 mirror + 8 `v7side` runs |
+| B2 frontier | 10 | — | 10 | 180,000 |
+| B3 panel | 248 | — | 248 | 2,102,400 |
+| B4 fresh adversary search | 8 fits + 16 | — | 8 + 16 | 188,160 fitting + 192,000 |
+| B5 attribution lattice | 22 | **2** (D1) | 24 | 288,000 |
+| B6 partner regime | 64 | — | 64 | 768,000 |
+| B7 cross-play | 24 | — | 24 | 288,000 |
+| B8 rule dialects | 16 | — | 16 | 192,000 |
+| B9 controls | 10 + 12 | **16** (D2) | 26 + 12 | 312,000 + 4 fits |
+| B10 S6 residual | 16 | — | 16 | 19,200 deals / 38,400 games audited |
 
-**409 scored match cells, every preregistered cell measured, none dropped.** Zero audit violations
-across the battery; one action-limit hit in one game of 12,000 (D22).
+**428 scored `match` cells and 28 `v7side` cells; every preregistered cell measured, none dropped.**
+One action-limit hit, in one game of 12,000 (D22).
+
+**Scored cells carry no audit evidence.** `auditChecks` is 0 in all 428 of them — `match` runs the
+audit only under `--audit`, which no preregistered cell uses. The engine-wide audit figure this
+corpus quotes, 0 violations in 6,737,436 checks, comes from B0.5's `verify` run and is cited there
+and nowhere else.
 
 Raw output is under `research/v07/results/`:
 
@@ -869,6 +973,7 @@ Raw output is under `research/v07/results/`:
 | `P5-B2.jsonl` … `P5-B10.jsonl` | one JSON row per cell, each carrying the literal `argv` it was produced by and the complete `match --json` object |
 | `P5-Z01.jsonl` … `P5-Z08.jsonl`, `P5-B9-h*.jsonl` | the CEM fitting traces: header, one record per generation, and the final weight vector each adversary spec was rebuilt from |
 | `P5-TABLES.txt` | the reduction, produced by `engine/p5_analyse.py` |
+| `P5-drift.json` | the executed source-drift check of D19/D27: both binaries' SHA-256, the build command, the recomputed mirror digests, and the sources differing from the artifact baseline and from the freeze commit |
 | `MANIFEST-P5.json` | SHA-256, byte count and row count of every artifact above, with the commands and designs that produced them; also `paper/tables/manifest_v07p5.tex` |
 
 Every row carries its own `argv`, so any single cell can be re-run by hand from the artifact without
@@ -883,26 +988,41 @@ rejects the configuration built to be rejected.
 
 It is a **certified advancement over the v0.6 frontier**: +3.33 [+2.88, +3.78] over `F-cheap` on
 48,000 games of sealed material, replicating on both banks, with a lower bound above the
-pre-committed 1.53 bar. It also beats the deployed policy by +4.63 and `F-mid` by +2.89.
+pre-committed 1.53 bar. It also beats the deployed policy by +4.63 [+4.19, +5.06], and `F-mid` by +2.89 [+2.00, +3.78] —
+the latter grazing the protocol's own 2-point restriction on `F-mid` claims rather than clearing it.
 
-It has the **best worst case** of the four arms on a 31-member shared panel, −0.04 against the
-incumbent's −4.24, and it is the only arm that beats the hardest sealed adversary. It does **not**
+Its **worst cell over a 31-member shared panel is −0.04**, far above the incumbent's −4.24, which is
+what S6 tests, and it passes. It does **not** have the best worst case of the four arms: the phase-2
+composite's is higher, at +0.00 with its free self-cell and +1.23 without one. On the hardest sealed
+adversary, `X01xC3f`, `FROZEN` is one of **two** arms that beat it — +1.43 against the composite's
++1.23 — and it does so by the larger margin. It does **not**
 have the best minimax regret: at 4.53 it is third of four, behind `F-cheap` at 4.00 and the composite
 at 4.08, and the difference is concentrated in the far archetypes.
 
-**Nothing exploits it.** Eight fresh adversary searches — including the white-box inverter that
-reads the target's own deterministic policy — all lose, by between 2.9 and 10.7 points, with every
-sign replicating.
+**Nothing in this search budget exploits it.** Eight fresh adversary searches — including the
+white-box inverter that reads the target's own deterministic policy — all lose, by between 2.9 and
+10.7 points, with every sign replicating. Each search is 8 generations × 12 population × 120 deals,
+and the white-box arm searches 37 live coordinates of the 55 it was given (§15 D16). Nothing here
+bounds attacks outside that budget and those classes.
 
 Its advantage is **not a self-play convention**: it survives partner substitution with a minimum of
 −0.19 across eight partner settings, and cross-play between three independently-trained runs shows a
 gap of −0.01. On the median-to-self-play ratio it transfers about as well as v0.6's advantage did,
 and slightly less well.
 
+Its advantage under partner change passes on the point estimate and is **not resolved against the
+threshold**: the minimum row is −0.19 with an interval of [−1.04, +0.67], whose lower bound falls
+below the −1.0 that S1 fails on.
+
 Two prespecified conditions went against it. It **does not beat the phase-2 composite** — +0.15
-[−0.29, +0.59] — so the increment phase 3 reported did not replicate, and on that cell v0.7 reduces
-to the phase-2 composite. And the protocol's own **location test does not replicate**: the gain is
-attributable on one bank and not on the other.
+[−0.29, +0.59] — so the increment phase 3 reported did not replicate. §6 item 2 attaches a mandatory
+consequence to that outcome and it is recorded in the protocol's own terms: **on this cell v0.7
+reduces to the phase-2 composite, which is a phase-2 result and not a v0.7 one, and the v0.7
+contribution is the measurement programme and the four closed ledger entries, not the policy.** That
+does not erase B2.2 and B2.3, which are claims about the v0.6 frontier that the composite cell does
+not touch; both stand. And the protocol's own **location test does not replicate**: the gain is
+attributable on one bank and not on the other, and the difference between the banks is itself
+unresolved.
 
 The **instrument is intact** on every control the protocol specified, including the sub-floor rung
 that must not be recovered and the three planted side channels that must each fail exactly one test.

@@ -43,11 +43,11 @@ was broken. Four results from that cycle are load-bearing for this paper.
 \subsubsection{Exchangeable ties are irreducible, and the tie-break is a coordination decision}
 \label{sec:arc-vsix-ties}
 
-At \vsixTieShareFive\% of ask decisions two or more candidates score \emph{bit-for-bit identically},
-and the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of those ties are
-two cards of one half-suit at one target, and the \emph{exact} posterior --- not merely the
-approximation the policy deploys --- assigns them identical probability in
-\vsixTieExactSepPctFive\% of cases. Every rule that ranks them by that probability therefore
+At \vsixTieShareFive\% of \emph{contested} ask decisions two or more candidates score
+\emph{bit-for-bit identically}, and the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of those ties are
+two cards of one half-suit at one target, and the \emph{exact} posterior --- not merely the approximation the policy
+deploys --- \emph{separates} them in \vsixTieExactSepPctFive\% of cases, i.e. assigns them identical
+probability in every one. Every rule that ranks them by that probability therefore
 realises the same hit rate, and so does enumeration order.
 
 The largest item on the inherited register was not a defect. It was a property of the information
@@ -102,8 +102,7 @@ statistic, not the search: one determinization's return is the final half-suit d
 spread is an order of magnitude larger than genuine differences between candidates, so the argmax
 selects on residual noise and does so more confidently the more candidates it is offered.
 
-A paired lower-confidence-bound deviation rule recovers all of it. Guarded, the search is worth
-\vsixSearchPooled\% against the deployed policy over \vsixSearchPooledN{} games at
+A paired lower-confidence-bound deviation rule recovers all of it. Guarded, the search is worth \vsixSearchPooled\% against \vfive{} over \vsixSearchPooledN{} games at
 \vsixSearchPooledBanks{} banks. The transferable result is the guard rather than the search, and the
 guarded search --- shipped switched off in v0.6 --- is one of the five keys of the configuration
 this paper evaluates.

@@ -112,9 +112,10 @@ which one is selected is not a tie-break. That is the same observation \S\ref{se
 makes about an argmax resolved by array order.
 
 Every method above is published with a caveat that it can increase exploitability, so none can be
-evaluated by win rate alone. Local best response gives a cheap lower bound: a small greedy search,
-at most two actions deep, showed every entrant in a 2016 poker competition to be more than
-3{,}180\,mBB/h exploitable \cite{lisy2017lbr}. Its two documented pitfalls are carried into
+evaluated by win rate alone. Local best response gives a cheap lower bound: a small greedy search
+looking one action ahead and assuming checks thereafter showed each of the 2016 competition entrants
+it evaluated to be more than 3{,}180\,mBB/h exploitable \cite{lisy2017lbr} --- the competition's
+winning submission was not among them, and the authors say why. Its two documented pitfalls are carried into
 \S\ref{sec:exploit} --- restricting where the response may begin deviating understates
 exploitability, and a negative score proves nothing --- and every exploitability figure in this
 paper is a lower bound within its response class.

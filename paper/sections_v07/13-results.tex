@@ -4,9 +4,15 @@
 Every measurement in this section comes from the artifacts listed in Appendix~\ref{app:repro} and is
 emitted into this document by \filepath{engine/build\_tables\_v07.py --paper}. The one exception is
 labelled where it occurs: the two \emph{training} rows of Table~\ref{tab:regimes} are quoted from the
-protocol, which states them in advance, and are the only hand-entered numbers in the section. The battery is
-\vsevenScoredCells{} scored cells over \vsevenScoredGames{} games with
-\vsevenAuditViolations{} audit violations and \vsevenLimitCells{} cell carrying any action-limit hit.
+protocol, which states them in advance, and are the only hand-entered numbers in the section. The battery is \vsevenScoredCells{} scored cells over \vsevenScoredGames{} games, with
+\vsevenLimitCells{} cell carrying any action-limit hit.
+
+\textbf{Scored cells carry no audit evidence, and this paper does not pretend otherwise.} The match
+harness does not run the soundness audit, so \texttt{auditChecks} is \vsevenAuditChecks{} in all
+\vsevenScoredCells{} of them: ``zero audit violations over a scored cell would be zero out of zero.
+The engine-wide audit figure --- \vsevenVerifyViolations{} violations in \vsevenVerifyChecks{} checks
+--- comes from the verification run of \S\ref{sec:engine-verify}, is quoted there and in
+\S\ref{sec:protocol-material}, and is not restated as a property of this battery.
 
 The order of this section is fixed by the project's reporting rule and not by what flatters the
 release: \textbf{the worst case and the minimax regret come first, the aggregate comes last and is
@@ -88,7 +94,9 @@ runner-up, against a half-width orders of magnitude larger, and it flips between
 stable, the name attached to it is not.
 
 \paragraph{The aggregate, printed last and as a diagnostic.}
-Over the \vsevenPanelMembers{} shared cells the panel means are \frozen{} \vsevenPanelMeanFrozen{},
+Over the \vsevenPanelMembers{} shared cells --- \vsevenPanelDistinct{} distinct policies, three of
+which the protocol names twice and which this weighted mean therefore counts twice --- the panel
+means are \frozen{} \vsevenPanelMeanFrozen{},
 \composite{} \vsevenPanelMeanComposite{}, \fcheap{} \vsevenPanelMeanFcheap{} and \incumbent{}
 \vsevenPanelMeanIncumbent{}. The rule forbids leading with this and it has not been led with. It
 points the opposite way from minimax regret, and both are in this paper because neither on its own
@@ -183,11 +191,21 @@ out of its own table and they are restored here (\S\ref{sec:corrections-interval
 \end{table}
 
 \vsevenSonePositive{} of \vsevenSoneRows{} changed-partner rows are positive and the minimum is
-\vsevenSoneMin{}, well above the $\vsevenSoneThreshold{}$ collapse threshold. The single negative row
+\vsevenSoneMin{} $[\vsevenOppFiveWithholderLo, \vsevenOppFiveWithholderHi]$, above the
+$\vsevenSoneThreshold{}$ collapse threshold \emph{on the point estimate and not resolved against
+it}: that interval's lower bound is below the threshold, so this battery does not separate a pass
+from a fail on the row that decides S1. Reading a threshold on a point estimate is the move this
+paper declines one subsection later for the \texttt{0.08} control rung, and it is declined here
+too. The single negative row
 does not replicate across banks and is reported as not replicated. The preregistered claim that the
-advantage does not collapse under partner change \textbf{\vsevenSoneVerdict{}es}. Against a \vsix{}
-opponent, where the protocol predicts more stability, all four rows are positive and clear zero
-(Table~\ref{tab:partnerssix}).
+advantage does not collapse under partner change \textbf{\vsevenSoneVerdict{}es}. Against a \vsix{} opponent, where the protocol predicts more stability, all four rows are positive
+and clear zero (Table~\ref{tab:partnerssix}) --- \textbf{and this is where the measurement disagrees
+with the protocol's advance statement}. The protocol states ``\vsevenTrainOppSixSelf{} self and
+\vsevenTrainOppSixLo{} to \vsevenTrainOppSixHi{} under partner change. Measured:
+\vsevenOppSixItself{} self, and of the three changed rows two fall below the stated range ---
+\vsevenOppSixVthree{} against \texttt{v03}, more than a point under its floor, and
+\vsevenOppSixDetective{} against \texttt{detective}. \S\ref{sec:against-selection} is what the
+selection check makes of shortfalls, and these are not in its table.
 
 \begin{table}[t]\centering
 \caption{The same table against a \vsix{} opponent.}
@@ -248,7 +266,9 @@ Head to head, so that ``these are different policies'' is measured rather than a
 \vsevenHtwohSeparated{} of the three pairs separate from zero (Table~\ref{tab:crossh2h}).
 
 \begin{table}[t]\centering
-\caption{The three runs head to head, establishing that they are distinguishable policies.}
+\caption{The three runs head to head. \vsevenHtwohSeparated{} of the three pairs separate from
+zero, which is what establishes that these are distinguishable policies rather than one policy
+thrice.}
 \label{tab:crossh2h}
 \input{tables_v07/crossh2h}
 \end{table}

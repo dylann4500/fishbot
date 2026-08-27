@@ -171,7 +171,7 @@ Under section 3 -- "a claim whose sign does not replicate across the two banks
 is reported as not replicated, whatever its pooled interval says" -- the pooled
 LOCATED verdict is NOT REPLICATED and must not be reported as though it were.
 The two banks' largest drops differ by 1.325 points, against a half-width on
-that difference of 1.249: the split is real on the point estimates but is not
+that difference of 1.767: the split is real on the point estimates but is not
 itself statistically resolved, so the honest reading is that this battery does
 not settle whether the gain is located by the protocol's one-third rule.
 
@@ -658,7 +658,7 @@ D21 ORDERING -- B0 was performed before anything else, but its ARTIFACT was writ
     deterministic and reproduced identically, so the artifact records what was checked first --
     but its file timestamps do not show that ordering and this note is what does.
 
-D22 OBSERVATION -- one action-limit hit in 409 scored cells: the phase-2 composite against
+D22 OBSERVATION -- one action-limit hit in 428 scored cells: the phase-2 composite against
     SEALED:S-ask-1 on bank 7090001, one game in 12,000 (limitHitRate 8.33e-05).  Zero audit
     violations in every cell of the battery.  G4 gates the mirror pathology run and not scored
     cells, so this is not a gate violation, but the corpus standard is zero and it is recorded.

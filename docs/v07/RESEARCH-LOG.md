@@ -2834,3 +2834,116 @@ The cross-play gap correction was itself softened as a result of the pass: the r
 data "show a small lift", from a difference of 0.0055 points against a per-cell half-width of 0.63.
 That is the same over-reading of a sign the correction was written to criticise, committed inside the
 correction. It now says neither sign is resolved.
+
+---
+
+# 6. Phase 6b — the foundational paper, and the adversarial pass over the restructure
+
+## 6.1 What changed
+
+The v0.7 technical report was reshaped into the project's paper of record: a self-contained account
+for a reader meeting the project cold, 63 pages, 19 sections and 6 appendices. Six sections are new
+— the game from scratch with its dialect, why the domain is worth studying, related work against 71
+verified references, the engine and the exact block-decomposed posterior, the research arc v0.2–v0.6,
+and a methodology section presenting the apparatus as adoptable method with each component paired to
+the failure it prevents. The prior reports are told here rather than cited, which is what makes the
+document self-contained and is why the three FishBot entries were dropped from the bibliography.
+
+`check_provenance.py` gained three capabilities the restructure needed: an earlier cycle's generated
+file counts as generated rather than transcribed; attribution spans inherited placeholder files, so
+a number attributed in the study that first transcribed it is not reported as unattributed merely
+for being old; and a **resolved-value check** that catches an inherited placeholder reaching the
+page. That last one earned itself immediately — `\vsixDialectN` and `\vsixLimitRate` resolve to
+`X` and `X.XX` in the v0.6 numbers file and would have typeset those characters into a table.
+
+## 6.2 The adversarial pass
+
+One reader was run over the full paper, told that restructuring is where true claims quietly widen
+and that the previous pass had found exactly that failure four times. It returned 20 findings, five
+blocking. **Eighteen were accepted.** The brief was right about where to look: four of the five
+blocking findings are in the abstract, the introduction, the arc or the conclusion — the newly
+written sections that summarise sections written earlier.
+
+**The blocking five.**
+
+1. **A sentence inverted between a report's abstract and its body, and the restructure lifted the
+   abstract's version.** The tie result is that the exact posterior *separates* 0.00% of tied
+   candidates — i.e. assigns them identical probability in every case. §6 said it "assigns them
+   identical probability in 0.00% of cases", the exact opposite, and then contradicted itself in the
+   next clause. The v0.6 body sections all had it right; only that report's abstract had it
+   inverted.
+2. **The source-drift figure was five and the artifact says nine.** Worse, it was *transcribed* into
+   the numbers file as a spelled word rather than generated, from prose the phase-5 recording has
+   since superseded. It is now generated from `P5-drift.json`, and the paper says which nine and
+   that four of them arrived mid-battery while five predate it.
+3. **"The one quantity falling short" was neither the only one nor the largest.** The protocol
+   states the v0.6-opponent partner regime in advance as "+4.82 self and +2.50 to +2.88 under
+   partner change"; measured, `v03` comes in at +1.46, more than a point under the floor of the
+   stated range — a larger shortfall than the +0.63 the abstract called the only one. §13 now prints
+   those shortfalls, and the abstract, introduction and conclusion say "the largest of the four the
+   selection check tabulates".
+4. **"Zero audit violations" over the battery is zero out of zero.** `auditChecks` is 0 in all 428
+   scored cells because `match` does not run the audit. The phase-5 recording says so in terms; the
+   paper had put the vacuous zero in the first sentence of its Results section. It now states that
+   scored cells carry no audit evidence and points at the engine-wide figure.
+5. **An unscoped priority claim in the contributions list.** "A domain with no prior computational
+   literature", where §4 insists every novelty statement take the form "we found no prior published
+   work that…". Fixed to the scoped form.
+
+**The two citation findings are the ones worth generalising.** The paper described local best
+response as "at most two actions deep" showing "every entrant in a 2016 poker competition"
+exploitable; the source says one action ahead, "each evaluated bot", and records that the
+competition's winner was *not* evaluated. And `solinas-history` was cited for "history filtering is
+FNP-complete in general" when its theorem is an existence result over a constructed game for the
+*construction* variant, and the same paper remarks that enumeration is trivial in practice for
+poker. Both are now stated as the sources state them. The first error was inherited from an
+annotation in this project's own vetted bibliography, which is corrected in place with the edit
+disclosed in that file's header — and recorded in §16 as a correction, because it is the same
+widening the prose passes kept finding, committed somewhere nobody re-reads.
+
+Also accepted: the conclusion had reinstated the −0.04 worst cell that §13 explicitly retires and
+had dropped the minimax-regret rank the project's own reporting rule ranks first; the tie share was
+quoted against ask decisions in §6 and against *contested* ask decisions in §11, two denominators
+for one quantity; the winner's-curse figure for the tie group was bound to the whole-search macro,
+understating it by 11.5 points; S1's minimum was called "well above" a threshold its interval
+crosses, which is a point-estimate reading the paper declines one subsection later for a control
+rung; the reproducibility appendix's own provenance counts were stale, mis-scoped and mutually
+exclusive; the cost-table divergence was computed by sorting two banks independently before pairing
+them, which can divide one bank's incumbent by the other bank's arm.
+
+## 6.3 What was not accepted
+
+**Nothing, on the substance.** Eighteen findings were accepted as stated; the two not adopted as
+written were adopted in a different form. The reader asked for the transcript-inversion priority
+claim to be scoped to the corpus; it was scoped, but to the corpus *and* to the threat model's
+recorded literature review, because deleting a supported claim is not the same as not overstating
+one. And it flagged the panel mean's denominator as counting three policies twice; that is right, and
+the fix is a disclosure at the point the mean is taken rather than a change to the statistic, which
+is explicitly labelled a diagnostic and is not used for any verdict.
+
+## 6.4 Two defects this pass exposed in the apparatus rather than the prose
+
+**The deviation register's count was the regex's yield, not the document's.** `deviations()` matched
+the deviation *kind* against `[A-Z][A-Z \-0-9]*`, and D7's kind is written `OBSERVATION,
+**SUPERSEDED BY D19**`. The pattern rejected it, D7 vanished from the printed register, and
+`\vsevenDeviations` reported the number of rows the regex produced rather than the number the source
+contains. Another entry in the printed table pointed at the missing row. The generator now asserts
+that every `**Dn**` in the source is captured and fails if one is not — a count derived from a
+parser must be checked against the thing it parsed.
+
+**A comment naming a path silently re-attributed the macros after it.** This file's convention is
+that a transcribed macro's source is the nearest preceding comment naming a path. While deleting the
+superseded drift pair I left an explanatory note mentioning `P5-drift.json`, and three macros whose
+real source is `FINAL-RESULTS.md` silently inherited it. The provenance check reported a pass,
+because the named file exists — the failure mode is invisible to it by construction. The header is
+restored, and the file now states the rule: any explanatory comment mentioning a path must restate
+the block's real header after itself.
+
+## 6.5 A note on the source moving underneath the paper
+
+Between the technical report's commit and this pass, the phase-5 session amended its own recording:
+409 became 428, the drift figure became nine of 78, the partner table gained the intervals this
+paper's corrections register asked for, D7 was marked superseded, and D25–D27 were added. Two of the
+six self-corrections this paper raised have therefore been adopted at source. The corrections
+register now says so — a correction that has been taken up is still a correction, and reporting it
+as outstanding would be its own small inaccuracy.

@@ -14,9 +14,12 @@ allocation whether it succeeds or fails. It follows that the \emph{only} thing a
 know is the initial deal, and that the public record determines every subsequent card position given
 that deal.
 
-This is a stronger property than it sounds. In most hidden-hand card games the reachable-history set
-is what must be filtered, and history filtering is FNP-complete in general
-\cite{solinas-history}. Fish escapes: there is exactly one object to reconstruct, and the
+This is a stronger property than it sounds. In many hidden-hand games the object that must be filtered is the set of reachable
+\emph{histories}, for which constructing even a single consistent history is FNP-complete in the
+worst case, with efficient enumeration available exactly when the public tree is sparse
+\cite{solinas-history} --- the same work notes that in poker enumeration is trivial in practice, so
+the hardness is a worst case rather than a description of every card game. Fish escapes the question
+altogether: there is exactly one object to reconstruct, and the
 constraints on it are logical rather than probabilistic. A player who has been told ``I do not hold
 the seven of hearts'' knows it, forever, with certainty. The observation history is a conjunction of
 hard constraints on a fixed unknown, and the posterior over deals consistent with those constraints
@@ -72,9 +75,10 @@ rather than claiming priority beyond it.
 A Fish deal plays out in roughly a hundred public events. The engine used here plays hundreds of
 complete six-player games per second per core with exact inference running in every seat. This is
 not a boast about engineering; it is what makes the evaluation programme in \S\ref{sec:methodology}
-possible at all. A study that needs 48{,}000 paired games to resolve a three-point effect, two
-disjoint holdout banks for every claim, a 31-member opponent panel scored identically for four arms,
-and eight independent adversary searches, can run all of that on one desktop in a day. In a domain
+possible at all. A study that needs \vsevenBtwoFcheapN{} paired games for one headline cell, two disjoint holdout
+banks for every claim, a \vsevenPanelMembers{}-member opponent panel scored identically for four
+arms, and \vsevenBfourArms{} independent adversary searches, can run all of that on one desktop in a
+day. In a domain
 where a single evaluation cell costs GPU-hours, the honest version of this paper could not have been
 written.
 

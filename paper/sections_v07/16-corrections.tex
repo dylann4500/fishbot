@@ -40,6 +40,15 @@ it.
   \vsevenLthirteenClose{}~win-rate points --- the register's figure corrected \emph{upward} by a factor
   of two, and still a fiftieth of the detection floor. The entry is closed either way.
 
+\item[An annotation in this project's own bibliography overstated its source.] The vetted entry for
+  the local-best-response result annotated it as showing ``every ACPC 2016 entrant'' exploitable
+  above the stated bound. The source says \emph{each evaluated bot}, and states that the
+  competition's winning submission was not evaluated; it also describes the search as looking one
+  action ahead, where the annotation said two. Both are corrected in
+  \S\ref{sec:related-search} and in the bibliography entry, whose header records the edit. This is
+  the same widening this paper's own adversarial passes kept finding in its prose, committed in a
+  place nobody re-reads.
+
 \item[The detection floor does not buy down with evaluation games.] Phase~1 measured
   \vsevenFloorPhaseOne{} and predicted the floor would fall as the inverse square root of evaluation
   games. At exactly four times the games it is \vsevenPrimaryFloor{}, and the sub-floor rung is still
@@ -59,7 +68,9 @@ it.
   refreshing the baseline to the then-current tree. The check therefore compared the tree against a
   baseline taken from the tree, and the sources the protocol predicted would be listed as changed no
   longer differed from it. Measured against the actual freeze commit, \vsevenDriftChanged{} of the
-  \vsevenDriftTotal{} sources differ. \textbf{What is not weakened is the policy identity}: the round-trip assertions and the
+  \vsevenDriftTotal{} engine sources differ --- \vsevenDriftList{} --- of which
+  \vsevenDriftMidBattery{} arrived in the commits that landed while the battery ran and
+  \vsevenDriftPreBattery{} already differed before it began. \textbf{What is not weakened is the policy identity}: the round-trip assertions and the
   mirror digest are computed by \emph{running} the engine, not by comparing file hashes, and all of
   them round-trip. Because the hash-based check was vacuous it was replaced by an executed one --- the
   engine was rebuilt from the tree as it stood at the end of the battery and the mirror digest
@@ -78,21 +89,23 @@ it.
   it, but the earlier claim should be read as ``reproducible at four hundred deals'', not
   ``reproducible''.
 
-\item[The scored-cell count is not the count the artifacts support.]
-  That document states \vsevenScoredCellsRecorded{} scored match cells in three places; the figure is
-  hand-typed in the reduction script rather than computed. Counting rows that carry a match object
-  across every scored battery gives \textbf{\vsevenScoredCells{}}. Nothing turns on it --- it is the
-  denominator of an observation about a single action-limit hit --- but a corpus whose standing rule is
-  that no number is hand-typed should not carry a hand-typed total, and the generator for this paper
-  now computes it.
+\item[The scored-cell count was not the count the artifacts support.] The phase-5 recording stated
+  \vsevenScoredCellsRecorded{} scored match cells in three places; the figure was hand-typed in the
+  reduction script rather than computed. Counting rows that carry a match object across every scored
+  battery gives \textbf{\vsevenScoredCells{}}. Nothing turned on it --- it was the denominator of an
+  observation about a single action-limit hit --- but a corpus whose standing rule is that no number
+  is hand-typed should not carry a hand-typed total. The generator for this paper computes it, and
+  the phase-5 recording has since been corrected to agree.
 
 \item[The partner-regime table was published without its own intervals.]
   \label{sec:corrections-intervals}
-  The phase-5 results document prints the partner deltas as bare point estimates with a
-  replication flag. Every underlying cell carries a deal-clustered interval, and the delta arithmetic
-  is fixed by the protocol, so the intervals are computable and were simply compressed out of a
-  markdown table. Table~\ref{tab:partners} restores them. No verdict changes; a reader's ability to
-  judge the verdict does.
+  The phase-5 results document printed the partner deltas as bare point estimates with a replication
+  flag. Every underlying cell carries a deal-clustered interval, and the delta arithmetic is fixed by
+  the protocol, so the intervals were computable and had simply been compressed out of a markdown
+  table. Table~\ref{tab:partners} carries them, and the phase-5 recording has since been corrected to
+  carry them too --- at which point the row that decides S1 turned out to have an interval crossing
+  its own threshold (\S\ref{sec:results-partners}). No verdict changes; a reader's ability to judge
+  the verdict does, which is the whole argument for printing intervals.
 
 \item[The cross-play gap was printed under the reversed sign convention.] The phase-5 document reports the gap as \vsevenXpGapRecorded{}, which is diagonal minus
   off-diagonal. The claim it settles asks whether the \emph{off}-diagonal collapses, so the informative direction is off-diagonal minus diagonal, which is \vsevenXpGap{}.

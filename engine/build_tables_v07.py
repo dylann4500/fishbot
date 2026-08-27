@@ -515,7 +515,17 @@ def b3_panel_table():
             rs = [r for r in rows if r['arm'] == a and r['opp'] == p]
             if len(rs) == 2:
                 cell[(a, p)] = pool(rs) + (tuple(sorted((r['bank'], _edge(r)) for r in rs)),)
-    emit('vsevenPanelMembers', str(len(panel)), 'P5-B3.jsonl: distinct panel members')
+    emit('vsevenPanelMembers', str(len(panel)), 'P5-B3.jsonl: named panel members')
+    # Three of the named members are the same policy under a sealed alias, so the
+    # panel MEAN counts three policies twice. Minimax regret and the worst cell
+    # are unaffected; a weighted mean is not, and the denominator should say so.
+    specs = {}
+    for p_ in panel:
+        r0 = [r for r in rows if r['arm'] == 'FROZEN' and r['opp'] == p_ and r['bank'] == BANK1]
+        if r0:
+            specs[p_] = r0[0].get('oppSpec', p_)
+    emit('vsevenPanelDistinct', str(len(set(specs.values()))),
+         'P5-B3.jsonl: DISTINCT policies among the named panel members')
     emit('vsevenPanelCells', str(len(rows)), 'P5-B3.jsonl: scored cells, 4 arms x 31 members x 2 banks')
     emit('vsevenPanelNear', str(sum(1 for p in panel if cls[p] == 'near')), 'P5-B3.jsonl: near-class members')
     emit('vsevenPanelFar', str(sum(1 for p in panel if cls[p] == 'far')), 'P5-B3.jsonl: far-class members')
@@ -1214,6 +1224,24 @@ def b0_verification():
          'P5-B0.json: whether all repeat runs were bit-identical at 400 deals')
     emit('vsevenSeedViolations', str(len(d['B0_4_seeds']['registryViolations'])),
          'P5-B0.json: pre-existing seed-registry violations reported')
+    # The source-drift figure has to come from the artifact.  An earlier draft
+    # of this paper transcribed "five" out of prose that the phase-5 recording
+    # has since superseded; the artifact says nine, and which nine matters.
+    dp = os.path.join(_RES, 'P5-drift.json')
+    if os.path.exists(dp):
+        dr = json.load(open(dp))
+        frz = [k for k in dr if k.startswith('sourcesDifferingFromFreezeCommit')]
+        base = dr.get('sourcesDifferingFromArtifactBaseline', [])
+        if frz:
+            diff = dr[frz[0]]
+            emit('vsevenDriftChanged', str(len(diff)), 'P5-drift.json: sources differing from the freeze commit')
+            emit('vsevenDriftTotal', str(dr['nSources']), 'P5-drift.json: engine sources compared')
+            emit('vsevenDriftList', ', '.join('\\texttt{%s}' % _tex(x) for x in diff),
+                 'P5-drift.json: which sources differ from the freeze commit')
+            emit('vsevenDriftMidBattery', str(len(base)),
+                 'P5-drift.json: sources differing from the artifact baseline, i.e. arriving mid-battery')
+            emit('vsevenDriftPreBattery', str(len(diff) - len(base)),
+                 'P5-drift.json: sources that already differed before the battery began')
 
 
 # ---------------------------------------------------------------- B1, the commit gate
@@ -1366,7 +1394,9 @@ def throughput_paper():
                     continue
                 inc = gps[('INCUMBENT', p)]
                 rom.append(med(inc) / med(v))
-                per_bank += [i / j for i, j in zip(sorted(inc), sorted(v))]
+                # pair by bank, not by rank: sorting the two lists independently
+                # can divide one bank's incumbent by the other bank's arm
+                per_bank += [i / j for i, j in zip(inc, v)]
             if rom:
                 worst = max(worst, abs(med(rom) - med(per_bank)))
     emit('vsevenCostAggDelta', _n(worst, 3),
@@ -1386,12 +1416,22 @@ def deviations():
     txt = open(p).read()
     # the kind may itself name a deviation ("CORRECTION TO D8"), so digits are
     # allowed inside it; without that, D18 is silently dropped from the register.
-    ds = _re.findall(r'\*\*(D\d+)\*\*\s+([A-Z][A-Z \-0-9]*?)\s+--\s+(.*?)(?=\n\n\*\*D\d+\*\*|\n\n---)',
+    # The kind may carry emphasis markup and a cross-reference of its own
+    # ("OBSERVATION, **SUPERSEDED BY D19**"), so the character class has to admit
+    # asterisks and commas.  Without that D7 is silently dropped, the register
+    # loses an entry another entry points at, and the printed count is the
+    # regex's yield rather than the document's.
+    ds = _re.findall(r'\*\*(D\d+)\*\*\s+([A-Z][A-Z*, \-0-9]*?)\s+--\s+(.*?)(?=\n\n\*\*D\d+\*\*|\n\n---)',
                      txt, _re.S)
+    found = {d[0] for d in ds}
+    declared = set(_re.findall(r'^\*\*(D\d+)\*\*', txt, _re.M))
+    if declared - found:
+        raise SystemExit('deviation register: %s present in the source but not captured'
+                         % ', '.join(sorted(declared - found)))
     lines = []
     kinds = {}
     for did, kind, body in ds:
-        kind = kind.strip()
+        kind = kind.replace('*', '').strip().rstrip(',')
         kinds[kind] = kinds.get(kind, 0) + 1
         body = ' '.join(body.split())
         body = body.replace('\\', '').replace('&', '\\&').replace('%', '\\%').replace('_', '\\_')
@@ -1402,10 +1442,10 @@ def deviations():
     writeTable('deviations.tex', lines, 'llp{0.62\\linewidth}',
                'ID & Kind & Deviation, addition or correction', longtable=True)
     emit('vsevenDeviations', str(len(ds)), 'docs/v07/FINAL-RESULTS.md section 15: recorded deviations')
-    emit('vsevenDeviationCorrections', str(kinds.get('CORRECTION', 0) + kinds.get('CORRECTION TO D8', 0)),
+    emit('vsevenDeviationCorrections', str(sum(v for k, v in kinds.items() if k.startswith('CORRECTION'))),
          'docs/v07/FINAL-RESULTS.md section 15: entries that are corrections')
-    emit('vsevenDeviationAdded', str(kinds.get('ADDED CELL', 0) + kinds.get('ADDED CELLS', 0) + kinds.get('ADDED CHECK', 0)),
-         'docs/v07/FINAL-RESULTS.md section 15: entries that add a cell or a check')
+    emit('vsevenDeviationAdded', str(sum(v for k, v in kinds.items() if k.startswith('ADDED'))),
+         'docs/v07/FINAL-RESULTS.md section 15: entries that add a cell, a check or an artifact')
 
 
 # ---------------------------------------------------------------- battery totals
@@ -1422,6 +1462,12 @@ def totals():
     emit('vsevenScoredCells', str(cells), 'P5-B2..B9: scored match cells')
     emit('vsevenScoredGames', _commafy(games), 'P5-B2..B9: games played in scored cells')
     emit('vsevenAuditViolations', str(viol), 'P5-B2..B9: audit violations across the whole battery')
+    # `match` does not run the soundness audit, so auditChecks is 0 in every
+    # scored cell and "zero violations" over the battery is zero out of zero.
+    # The engine-wide audit figure comes from B0.5 and is cited there alone.
+    emit('vsevenAuditChecks', str(sum(r['match'].get('auditChecks', 0)
+                                      for fn in files for r in _rows(fn))),
+         'P5-B2..B9: audit CHECKS across the battery -- zero, i.e. no audit evidence')
     emit('vsevenLimitCells', str(limit), 'P5-B2..B9: cells with any action-limit hit')
     lim = [r for fn in files for r in _rows(fn) if r['match'].get('limitHitRate', 0)]
     if lim:
@@ -1534,15 +1580,27 @@ def paper_main():
             usedold |= set(_re.findall(r'\\(vsix[A-Za-z]+|num[A-Za-z]+)', tx))
         gen = set(_re.findall(r'renewcommand\{\\(vseven[A-Za-z]+)\}', '\n'.join(OUT)))
         # emitted below, so they belong to `gen` for the completeness check
-        gen |= {'vsevenProvGenerated', 'vsevenProvTranscribed'}
+        gen |= {'vsevenProvGenerated', 'vsevenProvInherited', 'vsevenProvTranscribed'}
         emit('vsevenProvGenerated', str(len(used7 & gen)),
              'macros used in sections_v07 that this script generates from artifacts')
+        # The earlier cycles' generators emit \vsix and \num macros from their
+        # own artifacts. Those are generated, not transcribed, and counting them
+        # as transcribed understates the discipline while overstating the hand
+        # work; counting them as generated-by-this-cycle would overstate this
+        # cycle. They get their own number.
+        inh = set()
+        for fn in ('numbers_v05_generated.tex', 'numbers_v06_generated.tex'):
+            fp = os.path.join(_PAPER, fn)
+            if os.path.exists(fp):
+                inh |= set(_re.findall(r'renewcommand\{\\((?:vsix|num)[A-Za-z]+)\}', open(fp).read()))
+        emit('vsevenProvInherited', str(len(usedold & inh)),
+             'macros used in sections_v07 generated from artifacts by an EARLIER cycle')
         # A v0.7 transcribed number carries the \vseven prefix like every other
         # macro in this manuscript, so counting by prefix returns zero and
         # asserts that nothing is transcribed.  The count is used-minus-generated,
         # which is what paper/check_provenance.py reports.
-        emit('vsevenProvTranscribed', str(len((used7 | usedold) - gen)),
-             'macros used in sections_v07 that this script does NOT generate, i.e. transcribed')
+        emit('vsevenProvTranscribed', str(len((used7 | usedold) - gen - inh)),
+             'macros used in sections_v07 that no generator emits, i.e. transcribed by hand')
         # A macro that numbers_v07.tex declares under a source header is
         # TRANSCRIBED from an earlier phase on purpose, so it is not missing.
         # Only a \vseven macro that nothing declares is a typesetting bug.

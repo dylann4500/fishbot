@@ -93,6 +93,13 @@ RUNS = [
   'fish7 v7side --a=ARM --b=v06 --games=1200 --seed=BANK --tests=s6 --threads=1 [--freshagents]',
   'the S6 residual on holdout material, in both conditions: one thread alone, and one thread '
   'with agents rebuilt per deal'),
+ ('DR',  'P5-drift.json',
+  'clang++ ... src/main.cpp -o fish7-rebuild -pthread ; fish7 pathology --a=FROZEN --b=FROZEN '
+  '--games=400 --rotations=2 --seed=31 --threads=2, with both binaries',
+  'the EXECUTED source-drift check: B0.3 compares the tree against a baseline stored inside the '
+  'freeze artifact, and that artifact was rewritten after the freeze, so the hash check could not '
+  'fire.  The engine is rebuilt from the tree and the frozen R3 mirror digest recomputed with the '
+  'fresh binary; both binaries must return the frozen digest'),
  ('T',   'P5-TABLES.txt', 'python3 engine/p5_analyse.py',
   'the reduction of every artifact above to the tables the report prints'),
 ]

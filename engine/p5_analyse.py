@@ -72,6 +72,7 @@ def pool(rows):
     hw = Z * se
     return dict(edge=e, lo=e - hw, hi=e + hw, se=se, hw=hw, banks=len(cs),
                 byBank={r['bank']: c[0] for r, c in zip(rows, cs)},
+                seByBank={r['bank']: c[3] for r, c in zip(rows, cs)},
                 per=[dict(bank=r['bank'], edge=c[0], lo=c[1], hi=c[2], n=c[4]) for r, c in zip(rows, cs)],
                 threads=sorted({c[5] for c in cs}),
                 replicated=(len(cs) >= 2 and len({sign(c[0]) for c in cs}) == 1),
@@ -360,7 +361,10 @@ def b5():
                 say('is reported as not replicated, whatever its pooled interval says" -- the pooled')
                 say('LOCATED verdict is NOT REPLICATED and must not be reported as though it were.')
                 bd = sorted(ref['byBank'][bk] - P[big[0]]['byBank'][bk] for bk in ref['byBank'])
-                hw = Z * math.sqrt(2) * math.sqrt(sum(c['se'] ** 2 for c in (ref, P[big[0]])))
+                # each bank's drop is itself a difference of two single-bank cells, so the
+                # difference BETWEEN the two banks' drops combines four per-bank errors.
+                hw = Z * math.sqrt(sum(ref['seByBank'][bk] ** 2 + P[big[0]]['seByBank'][bk] ** 2
+                                       for bk in ref['byBank']))
                 say('The two banks\' largest drops differ by %.3f points, against a half-width on'
                     % (bd[-1] - bd[0]))
                 say('that difference of %.3f: the split is real on the point estimates but is not'
@@ -1132,7 +1136,7 @@ DEVIATIONS = [
  '    deterministic and reproduced identically, so the artifact records what was checked first --',
  '    but its file timestamps do not show that ordering and this note is what does.',
  '',
- 'D22 OBSERVATION -- one action-limit hit in 409 scored cells: the phase-2 composite against',
+ 'D22 OBSERVATION -- one action-limit hit in 428 scored cells: the phase-2 composite against',
  '    SEALED:S-ask-1 on bank 7090001, one game in 12,000 (limitHitRate 8.33e-05).  Zero audit',
  '    violations in every cell of the battery.  G4 gates the mirror pathology run and not scored',
  '    cells, so this is not a gate violation, but the corpus standard is zero and it is recorded.',

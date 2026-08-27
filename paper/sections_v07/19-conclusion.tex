@@ -11,9 +11,10 @@ failure.
 
 One configuration is a certified advancement over the \vsix{} frontier:
 \vsevenBtwoFcheap{}~points $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ against \fcheap{} over
-\vsevenBtwoFcheapN{} games of sealed material, replicating on both banks, gate-clean, and with a
-worst cell on the shared \vsevenPanelMembers{}-member panel (\vsevenWorstFrozen{}) far better than
-the incumbent's \vsevenWorstIncumbent{}. Nothing built to exploit it
+\vsevenBtwoFcheapN{} games of sealed material, replicating on both banks, gate-clean, and with a worst cell on the shared \vsevenPanelMembers{}-member panel far better than
+\incumbent{}'s \vsevenWorstIncumbent{} on both banks --- though not the best of the four arms, and
+its pooled value does not replicate in sign, and on minimax regret it is
+\vsevenRegretFrozenRank{}rd of four. Nothing built to exploit it
 succeeds --- eight independent searches, the white-box inverter included, every one losing, the largest
 upper bound \vsevenBfourWorstUpper{}. It is not a private convention: a single seat's upgrade is worth
 \vsevenOneSeatFive{}~points of the \vsevenSoneSelf{}-point three-seat gain, partner substitution
@@ -23,10 +24,10 @@ leaves a minimum of \vsevenSoneMin{}, and three independently-trained runs cross
 \textbf{And it adds nothing measurable to the configuration phase~2 already had}
 (\vsevenBtwoComposite{} $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$). The gain that exists was
 found by an unfitted coordinate sweep, not by architecture work. The three phases of architecture work
-that followed produced four kills and one configuration change. The one quantity that falls short of
-its training value is the group of keys the freeze was selected over, by
-\vsevenSelWorstShortfall{}~points against an expected maximum under the null of
-\vsevenSelExpectedMax{}. And the protocol's own test for whether the gain is located does not replicate
+that followed produced four kills and one configuration change. Of the four quantities the selection check tabulates, the largest shortfall falls on the group of
+keys the freeze was selected over, by \vsevenSelWorstShortfall{}~points against an expected maximum
+under the null of \vsevenSelExpectedMax{}. It is not the only shortfall the protocol's advance
+figures produce, and \S\ref{sec:results-partners} prints the others. And the protocol's own test for whether the gain is located does not replicate
 across banks.
 
 So the contribution of this cycle is the closed directions and the named barrier, and the protocol
@@ -40,7 +41,8 @@ fitted \vsevenKoneFold$\times$ better in the only statistic its consumer can use
 that consumer is nearly leaf-invariant. Fitting against any self-oriented per-decision objective
 produces a worse policy while moving its own proxy the right way, because the two per-decision channels
 trade against each other. Nothing learned survives a free random tie-break inside the exchangeable tie
-group, whose selection signal is $\sim$\vsevenCurseShare\% winner's curse. Two further directions
+group, whose selection signal is $\sim$\vsevenCurseTieShare\% winner's curse against
+$\sim$\vsevenCurseShare\% for the search as a whole. Two further directions
 closed on arithmetic before they were built. None of these is a null anyone need re-run.
 
 \paragraph{The barrier.} It is not that the mechanisms were badly built --- three of the four moved
