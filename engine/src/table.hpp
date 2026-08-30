@@ -22,12 +22,22 @@ struct SeatCfg {
 inline bool knownPolicy(const std::string& spec) {
   std::string base;
   parseOpts(spec, base);
+  // An uploaded package is seatable exactly when it is installed and the spec
+  // names the dialect its manifest declares.  This is the whitelist that keeps
+  // /api/table from being able to construct anything the host did not put on
+  // disk, so it is a registry lookup and not a pattern match.
+  if (base == "bot" || base == "kvbot") {
+    botpkg::Installed b;
+    std::string id = botpkg::idFromSpec(spec);
+    if (id.empty() || !botpkg::registry().get(id, b)) return false;
+    return botpkg::specFor(b).rfind(base + ":", 0) == 0;
+  }
   static const char* ok[] = {"v07", "fishbot_v07", "v06", "fishbot_v06", "v05", "fishbot_v05",
                              "v04", "fishbot_v04", "v03", "fishbot_v03", "v02", "fishbot_v02",
                              "random", "hunter", "diversifier", "detective", "lockout", "bluffer",
                              "silent", "feint", "withholder",
                              // External engines ported into this one (src/kv.hpp).
-                             "kv", "kvsearch"};
+                             "kv", "kvsearch", "kv6", "kvfishbot", "kraken"};
   for (const char* n : ok) if (base == n) return true;
   return false;
 }
@@ -71,6 +81,20 @@ inline std::string policyLabel(const std::string& spec) {
     name = "KV Search";
     if (optI(o, "part", 96) > 96 || optI(o, "det", 48) > 48) name = "KV Search-Deep";
   }
+  else if (base == "kv6" || base == "kvfishbot") name = "KV's FishBot v0.6";
+  else if (base == "kraken") name = "KRAKEN v1.0";
+  // An uploaded package names itself.  Its own manifest is the only authority
+  // on what to call it, so the label is read from the registry rather than
+  // guessed from the id -- "kv-fishbot-v08" on the felt would be this project
+  // naming somebody else's bot for them.
+  else if (base == "bot" || base == "kvbot") {
+    botpkg::Installed b;
+    std::string id = botpkg::idFromSpec(spec);
+    if (botpkg::registry().get(id, b)) {
+      name = b.man.name;
+      if (!b.man.version.empty() && b.man.version != "0") name += " " + b.man.version;
+    } else name = id.empty() ? "Uploaded bot" : id;
+  }
   else if (base.empty()) name = "Detective";
   else { name = base; name[0] = char(toupper((unsigned char)name[0])); }
   return name;
@@ -112,6 +136,11 @@ struct Snap {
   bool isHuman[NPLAY] = {false,false,false,false,false,false};
   uint64_t seed = 0;
   int deckSets = 9;
+  // Why the last game stopped, when it stopped because a seated bot broke its
+  // side of the protocol.  Shown on the table rather than only in the server's
+  // terminal, because the person who has to fix it is usually one of the
+  // players and not the host.
+  std::string fault;
 };
 
 struct Table {
@@ -327,6 +356,14 @@ struct Table {
       for (int s = 0; s < NSET; s++) { snap.setActive[s] = false; snap.setWinner[s] = game.g.setWinner[s]; }
       for (int p = 0; p < NPLAY; p++) io.slot[p].need = Need::None;
       io.bump();
+    } catch (const BotFault& f) {
+      std::lock_guard<std::mutex> lk(io.mu);
+      snap.running = false;
+      snap.fault = f.text;
+      // Whoever was waiting on a prompt is no longer being asked for anything.
+      for (int p = 0; p < NPLAY; p++) io.slot[p].need = Need::None;
+      fprintf(stderr, "fish serve: %s\n", f.what());
+      io.bump();
     } catch (const Abandoned&) {
       std::lock_guard<std::mutex> lk(io.mu);
       snap.running = false;
@@ -353,6 +390,7 @@ struct Table {
        << ",\"finished\":" << (snap.finished ? "true" : "false")
        << ",\"everStarted\":" << (snap.everStarted ? "true" : "false")
        << ",\"hitLimit\":" << (snap.hitLimit ? "true" : "false")
+       << ",\"fault\":" << (snap.fault.empty() ? std::string("null") : jesc(snap.fault))
        << ",\"paused\":" << (io.paused ? "true" : "false")
        << ",\"pace\":" << io.paceMs
        << ",\"seed\":" << snap.seed

@@ -10,6 +10,8 @@
 #include "v07_learn.hpp"   // phase 3 K5: the amortised (learned) policy
 #include "probe_deception.hpp"   // appended: P3 deception archetypes
 #include "kv.hpp"          // external engine: KV's sampled-world search (fish-researchp12)
+#include "kv6.hpp"         // external engine: KV's FishBot v0.6, over their JSON bridge
+#include "extbot.hpp"      // uploaded bot packages, over the FishLab bot protocol
 #include <memory>
 #include <map>
 #include <sstream>
@@ -477,6 +479,128 @@ inline std::unique_ptr<Agent> makeAgent(const std::string& spec) {
   }
 
   // ---- external engines --------------------------------------------------
+  // KV's FishBot v0.6, run as their own process over the JSON protocol they
+  // ship in fishbot_v06/.  Nothing of their policy lives in this repository.
+  //   kv6:py=<python>,dir=<repo>,log=<file>,offturn=0|1,onfail=stop|declared
+  // py/dir default to $FISH_KV6_PYTHON and $FISH_KV6_DIR.
+  // KRAKEN v1.0 -- KV's later configuration, same JSON protocol, its own
+  // package under engine/external/kraken.  Its SPEC is v0.6's six parameters
+  // plus claim_forced_exhaustive=1, on updated fish4 policy code.
+  if (base == "kraken") {
+    auto a = std::make_unique<kv6::KV6Agent>();
+    a->label = "kraken";
+    a->cfg.module = "kraken.decide";
+    const char* envPy = getenv("FISH_KV6_PYTHON");
+    a->cfg.python = envPy ? envPy : "external/kv-venv/bin/python";
+    a->cfg.dir = "external/kraken";
+    { auto it = o.find("py");  if (it != o.end()) a->cfg.python = it->second; }
+    { auto it = o.find("dir"); if (it != o.end()) a->cfg.dir = it->second; }
+    { auto it = o.find("log"); if (it != o.end()) a->cfg.logPath = it->second; }
+    { auto it = o.find("onfail"); if (it != o.end()) a->cfg.onFail = it->second; }
+    a->cfg.offTurn = optI(o, "offturn", 1) != 0;
+    { char cwd[4096];
+      if (getcwd(cwd, sizeof(cwd))) {
+        if (!a->cfg.python.empty() && a->cfg.python[0] != '/')
+          a->cfg.python = std::string(cwd) + "/" + a->cfg.python;
+        if (!a->cfg.dir.empty() && a->cfg.dir[0] != '/')
+          a->cfg.dir = std::string(cwd) + "/" + a->cfg.dir;
+      } }
+    return a;
+  }
+
+  if (base == "kv6" || base == "kvfishbot") {
+    auto a = std::make_unique<kv6::KV6Agent>();
+    // Their package and its interpreter are vendored under engine/external/ and
+    // gitignored, so the table needs no environment set up to offer this seat.
+    const char* envPy = getenv("FISH_KV6_PYTHON");
+    const char* envDir = getenv("FISH_KV6_DIR");
+    a->cfg.python = envPy ? envPy : "external/kv-venv/bin/python";
+    a->cfg.dir = envDir ? envDir : "external/kv-fishbot-v06";
+    { auto it = o.find("py");  if (it != o.end()) a->cfg.python = it->second; }
+    { auto it = o.find("dir"); if (it != o.end()) a->cfg.dir = it->second; }
+    // The child chdir()s into `dir` before exec, so both must be absolute.
+    { char cwd[4096];
+      if (getcwd(cwd, sizeof(cwd))) {
+        if (!a->cfg.python.empty() && a->cfg.python[0] != '/')
+          a->cfg.python = std::string(cwd) + "/" + a->cfg.python;
+        if (!a->cfg.dir.empty() && a->cfg.dir[0] != '/')
+          a->cfg.dir = std::string(cwd) + "/" + a->cfg.dir;
+      } }
+    { auto it = o.find("log"); if (it != o.end()) a->cfg.logPath = it->second; }
+    { auto it = o.find("onfail"); if (it != o.end()) a->cfg.onFail = it->second; }
+    a->cfg.offTurn = optI(o, "offturn", 1) != 0;
+    return a;
+  }
+  // An uploaded bot package: `bot:<id>`, or `bot:id=<id>`.  The id names a
+  // directory under the bots root (engine/bots by default, $FISH_BOTS_DIR or
+  // `fish serve --bots=DIR` to move it); the manifest there says how to launch
+  // it and which protocol it speaks.  docs/BOT_PACKAGE.md is the format.
+  //
+  // Nothing about the bot is compiled in, so this branch is the entire cost of
+  // supporting arbitrarily many outside engines -- and `fish match
+  // --a=bot:someone --b=v07` measures one exactly like any policy of ours.
+  if (base == "bot") {
+    std::string id = botpkg::idFromSpec(spec);
+    auto a = std::make_unique<extbot::ExternAgent>();
+    botpkg::Installed pkg;
+    if (id.empty()) {
+      a->label = "bot";
+      a->missing = "the spec names no package: write bot:<id>, where <id> is an installed bot";
+    } else if (!botpkg::registry().get(id, pkg)) {
+      a->label = "bot:" + id;
+      a->missing = "no bot package called '" + id + "' is installed under " +
+                   botpkg::registry().rootDir();
+    } else {
+      a->pkg = pkg;
+      a->label = pkg.man.name.empty() ? id : pkg.man.name;
+    }
+    return a;
+  }
+
+  // A package that declares KV's dialect is launched through the bridge already
+  // written for it (kv6.hpp) rather than through the native protocol, so their
+  // existing packages upload and play with nothing to rewrite on their side.
+  if (base == "kvbot") {
+    std::string id = botpkg::idFromSpec(spec);
+    botpkg::Installed pkg;
+    if (!botpkg::registry().get(id, pkg)) {
+      auto a = std::make_unique<extbot::ExternAgent>();
+      a->label = "kvbot:" + id;
+      a->missing = "no bot package called '" + id + "' is installed";
+      return a;
+    }
+    auto a = std::make_unique<kv6::KV6Agent>();
+    a->label = pkg.man.name.empty() ? id : pkg.man.name;
+    std::vector<std::string> argv = pkg.argv();
+    // Their bridge takes an interpreter and a module rather than an argv, which
+    // is exactly the shape their own packages ship, so the manifest is required
+    // to spell it that way and told so plainly if it does not.
+    a->cfg.python = argv.empty() ? std::string("python3") : argv[0];
+    if (a->cfg.python.find('/') == std::string::npos) {
+      // kv6.hpp execl()s the interpreter by path rather than searching PATH the
+      // way execvp does, so a bare name has to be made into one or the child
+      // dies at exec with nothing to show for it.  The package's own virtualenv
+      // wins when there is one; otherwise the interpreter is looked up the way
+      // the shell would.
+      if (botpkg::isFilePath(pkg.venvPython())) a->cfg.python = pkg.venvPython();
+      else {
+        std::string found = botpkg::whichProgram(a->cfg.python);
+        if (!found.empty()) a->cfg.python = found;
+      }
+    }
+    // Somebody else's package, arriving over HTTP: a hang must not park the
+    // table's game thread forever.  Left at 0 -- wait forever, as before -- for
+    // the vendored `kv6`/`kraken` specs, which are unchanged.
+    a->cfg.timeoutMs = pkg.man.timeoutMs;
+    a->cfg.stderrPath = pkg.logPath();
+    a->cfg.module = "";
+    for (size_t i = 1; i + 1 < argv.size(); i++) if (argv[i] == "-m") { a->cfg.module = argv[i + 1]; break; }
+    a->cfg.dir = pkg.dir;
+    a->cfg.logPath = optI(o, "log", 0) ? (pkg.home + "/bridge.jsonl") : std::string();
+    a->cfg.offTurn = pkg.man.pollOffTurn;
+    return a;
+  }
+
   // KV's sampled-world determinization search, ported from
   // github.com/kv1514/fish-researchp12.  `kv` is his shipped configuration
   // (96 particles, 48 determinizations, depth 2); the options expose the same

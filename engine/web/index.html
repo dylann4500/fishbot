@@ -77,6 +77,44 @@ label.f{display:block;font-size:11px;letter-spacing:.07em;text-transform:upperca
   background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
 .pres{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 
+/* ------------------------------------------------------------------- bots */
+/* The bot library: somebody else's engine, uploaded as a .zip and seated like
+   any of ours.  Present on the setup screen for the host and on the join screen
+   for everybody else, because a guest waiting for the deal is exactly who wants
+   to put their bot on the table.  docs/BOT_PACKAGE.md is the format. */
+.botbox{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bothead{display:flex;align-items:flex-start;gap:12px}
+.bothead .grow{flex:1;min-width:0}
+.botdrop{margin-top:12px;border:1.5px dashed #38455c;border-radius:10px;padding:16px;text-align:center;
+  color:var(--dim);font-size:13px;cursor:pointer;transition:border-color .12s,background .12s}
+.botdrop:hover,.botdrop.over{border-color:var(--accent);background:#1b2740;color:var(--ink)}
+.botlist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.botrow{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.botrow .who{flex:1;min-width:180px}
+.botrow .nm{font-weight:650}
+.botrow .meta{font-size:11.5px;color:var(--dim);margin-top:2px}
+.botrow .acts{display:flex;gap:6px;flex-wrap:wrap}
+.botrow button{padding:4px 9px;font-size:12px;border-radius:7px}
+.pill{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+  border-radius:999px;padding:2px 8px;border:1px solid transparent;white-space:nowrap}
+.pill.ok{background:rgba(67,201,160,.14);color:var(--good);border-color:rgba(67,201,160,.4)}
+.pill.bad{background:rgba(239,107,115,.14);color:var(--bad);border-color:rgba(239,107,115,.4)}
+.pill.busy{background:rgba(236,196,95,.14);color:var(--warn);border-color:rgba(236,196,95,.4)}
+.pill.idle{background:#26324a;color:var(--dim);border-color:#33405a}
+.botmsg{margin-top:10px;font-size:12.5px;color:var(--dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.botmsg.bad{color:var(--bad)}
+.botmsg button{padding:3px 9px;font-size:12px}
+.alert{background:rgba(239,107,115,.1);border:1px solid rgba(239,107,115,.45);border-radius:12px;
+  padding:12px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.alert .grow{flex:1;min-width:0}
+.alert h4{font-size:13px;color:var(--bad);margin-bottom:4px}
+.alert pre{margin:6px 0 0;font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--dim);white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto}
+.modal pre.log{background:#eef1f5;border:1px solid #ccd4de;border-radius:8px;padding:12px;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;
+  max-height:52vh;overflow:auto;margin:0}
+
 /* ------------------------------------------------------------------- game */
 #game{display:flex}
 .arena{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px 14px 0}
@@ -101,6 +139,14 @@ label.f{display:block;font-size:11px;letter-spacing:.07em;text-transform:upperca
   box-shadow:0 3px 8px rgba(0,0,0,.5)}
 .bub.no{background:#c04049}.bub.yes{background:#2f8f5b}.bub.info{background:#3c4d66}
 .stack{position:absolute;transform:translate(-50%,-50%) }
+/* A successful ask physically moves a card, so show it moving: the card flies
+   face up from the seat that gave it to the seat that asked.  Purely cosmetic,
+   and it reveals nothing -- the card, the giver and the taker are all in the
+   public event stream already, and are printed in the log and the speech
+   bubbles either way. */
+.flycard{position:absolute;z-index:40;pointer-events:none;will-change:left,top,opacity,transform;
+  filter:drop-shadow(0 10px 20px rgba(0,0,0,.65))}
+@media (prefers-reduced-motion:reduce){.flycard{display:none}}
 #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
   pointer-events:none;color:#cfe6dc}
 #center .sc{font-size:26px;font-weight:700;letter-spacing:.02em}
@@ -299,6 +345,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
       <div class="joinrow" style="margin-top:14px"><button id="joinWatch">Watch instead</button></div>
     </div>
 
+    <div id="botsJoin"></div>
+
     <div id="waitline" hidden></div>
   </div>
 </div>
@@ -309,12 +357,15 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
     <h1>FishLab table</h1>
     <div class="sub">Six seats, alternating teams. Choose an engine and a name for each seat, then deal.
       Distinct names matter — a table of six identically-labelled bots is impossible to read.</div>
+    <div id="setupAlert"></div>
     <div class="pres">
       <button id="p0">3 players vs 3× v0.6</button>
       <button id="p1">You + 2× v0.6 vs 3× v0.6</button>
       <button id="p2">You + 2× v0.6 vs 3× v0.6-Search</button>
       <button id="p3">You + 2× v0.3 vs 3× v0.6</button>
       <button id="p4">Watch six v0.6s</button>
+      <button id="p5">You + 2× v0.7 vs 3× KRAKEN</button>
+      <button id="p6">Watch: v0.7 vs KRAKEN</button>
       <button id="pn">Shuffle names</button>
     </div>
     <div class="teams">
@@ -329,6 +380,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
       <div><label class="f">You are viewing</label><select id="viewSel"></select></div>
       <div style="display:flex;align-items:end"><button class="pri" id="dealBtn" style="width:100%">Deal</button></div>
     </div>
+    <div id="botsSetup"></div>
     <div class="sharebox" id="shareBox" hidden>
       <label class="f">Send this to the other players</label>
       <div class="joinrow"><input id="shareLink" readonly><button id="shareCopy">Copy</button></div>
@@ -438,8 +490,10 @@ const POLICY_GROUPS=[
   // search (github.com/kv1514/fish-researchp12, fish/agents.py::SearchAgent),
   // at his shipped 96-particle / 48-determinization settings.
   ['External engines',[
-    ['kv','KV Search'],
-    ['kv:part=256,det=256','KV Search-Deep']]]];
+    ['kraken','KRAKEN v1.0'],
+    ['kv6',"KV's FishBot v0.6"],
+    ['kv','KV Search (v0.1 baseline)'],
+    ['kv:part=256,det=256','KV Search-Deep (v0.1)']]]];
 const NAMEPOOL=['Nova','Orion','Lyra','Rigel','Vega','Atlas','Juno','Mira','Draco','Pavo',
                 'Sirius','Altair','Cygnus','Perseus','Tycho','Kepler'];
 
@@ -669,6 +723,7 @@ function renderJoin(){
   const need=!st||!st.auth;
   document.getElementById('joinInvite').hidden=!need;
   document.getElementById('joinSeats').hidden=need;
+  renderBots();
   const sub=document.getElementById('joinSub');
   const wl=document.getElementById('waitline');
   if(need){
@@ -774,6 +829,7 @@ function render(){
   const ps=document.getElementById('paceSlider');
   if(document.activeElement!==ps&&Date.now()-paceLocalAt>1500&&st.pace!==paceMs) setPace(st.pace,false);
   renderFelt(); renderHand(); renderRoster(); renderBanner(); renderLog(); syncModal();
+  maybeHandoff();
   // The switcher offers the seats this browser holds -- which at a shared table
   // is one, and at a local table is every human seat, as before.
   const mine=mySeats(st);
@@ -797,6 +853,53 @@ function lastBubbles(){
   }
   return null;
 }
+// Where renderFelt() puts a seat, in the same felt percentage coordinates, so
+// the animation lands exactly on the avatars rather than near them.
+function seatXY(p){
+  const anchor = view>=0?view:0;
+  const k=((p-anchor)%6+6)%6;
+  const th=(90+60*k)*Math.PI/180;
+  return {x:50+41*Math.cos(th), y:50+43*Math.sin(th)};
+}
+
+let handoffKey=null, handoffSeed=null;
+function handoffFor(e,n){ return n+':'+e.a+':'+e.t+':'+e.c; }
+
+// Animate the most recent successful ask, once.  Keyed on the history length
+// and the move, so a re-render for any other reason (a pace change, a poll that
+// carried no new event) does not replay it, and a spectator who joins midway
+// through a deal adopts the current move as its baseline instead of animating
+// something that already happened.
+function maybeHandoff(){
+  const h=st.history||[];
+  const last=h.length?h[h.length-1]:null;
+  const key=(last&&last.k==='ask'&&last.ok)?handoffFor(last,h.length):null;
+  if(handoffSeed!==st.seed){ handoffSeed=st.seed; handoffKey=key; return; }
+  if(!key||key===handoffKey) return;
+  handoffKey=key;
+  flyCard(last.t,last.a,last.c);
+}
+
+function flyCard(from,to,card){
+  const f=document.getElementById('felt');
+  if(!f||from===to) return;
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  if(typeof Element.prototype.animate!=='function') return;   // no WAAPI: skip quietly
+  const a=seatXY(from), b=seatXY(to);
+  const node=cardFace(card,'sm');
+  node.classList.add('flycard');
+  node.style.left=a.x+'%'; node.style.top=a.y+'%';
+  f.appendChild(node);
+  const anim=node.animate([
+    {left:a.x+'%', top:a.y+'%', opacity:0, transform:'translate(-50%,-50%) scale(.5) rotate(-8deg)'},
+    {opacity:1, transform:'translate(-50%,-50%) scale(1) rotate(0deg)', offset:.18},
+    {opacity:1, offset:.72},
+    {left:b.x+'%', top:b.y+'%', opacity:0, transform:'translate(-50%,-50%) scale(.62) rotate(6deg)'}
+  ],{duration:820, easing:'cubic-bezier(.33,.85,.35,1)', fill:'both'});
+  const done=()=>node.remove();
+  anim.onfinish=done; anim.oncancel=done;
+}
+
 function renderFelt(){
   const f=document.getElementById('felt');
   [...f.querySelectorAll('.seat,.stack')].forEach(n=>n.remove());
@@ -1497,6 +1600,279 @@ document.getElementById('paceSlider').oninput=e=>setPace(msFromPos(e.target.valu
 document.getElementById('paceIn').oninput=e=>setPace(msFromPos(e.target.value),false);
 
 /* ================================================================= setup */
+
+/* ==================================================================== bots */
+// Somebody else's engine, uploaded as a .zip and seated like one of ours.  The
+// server does the work (engine/src/botpkg.hpp); this is the panel, and it is
+// mounted twice -- on the setup screen for the host, and on the join screen for
+// everybody else, who never sees the setup screen at all and is exactly the
+// person with a bot to contribute.
+//
+// The asymmetry it renders is the server's, not a UI decision: uploading a
+// package runs nothing and is open to any invited player, while checking,
+// installing dependencies, seating and removing run somebody's code on the
+// host's machine and stay with the host.
+let botSig='', botMsgText='', botMsgBad=false, botPending=null;
+
+function fmtBytes(n){
+  if(!n&&n!==0) return '';
+  if(n<1024) return n+' B';
+  if(n<1024*1024) return (n/1024).toFixed(0)+' KB';
+  return (n/1024/1024).toFixed(n<10*1024*1024?1:0)+' MB';
+}
+function setBotMsg(text,bad,pending){
+  botMsgText=text||''; botMsgBad=!!bad; botPending=pending||null;
+  renderBots();
+}
+
+async function botAction(path,id){
+  const j=await post(path,{id:id});
+  if(j&&j.error) setBotMsg(j.error,true);
+  else setBotMsg('');
+}
+
+// The upload is the raw file as the request body rather than a multipart form:
+// there is nothing else to send, and the server would otherwise have to grow a
+// multipart parser to receive one field.
+async function uploadBot(file,replace){
+  if(!file) return;
+  if(!/\.zip$/i.test(file.name)) return setBotMsg('A bot package is a .zip file.',true);
+  const cap=st&&st.maxUpload?st.maxUpload:64*1024*1024;
+  if(file.size>cap) return setBotMsg('That package is '+fmtBytes(file.size)+'; the limit is '+fmtBytes(cap)+'.',true);
+  setBotMsg('Uploading '+file.name+' ('+fmtBytes(file.size)+')…');
+  const qs=new URLSearchParams();
+  if(cred.invite) qs.set('j',cred.invite);
+  if(replace) qs.set('replace','1');
+  let j={},ok=false;
+  try{
+    const r=await fetch('/api/bots/upload?'+qs.toString(),{
+      method:'POST',
+      headers:authHeaders({'Content-Type':'application/octet-stream'}),
+      body:file});
+    try{j=await r.json();}catch(e){}
+    ok=r.ok;
+  }catch(e){ return setBotMsg('The upload did not reach the table.',true); }
+  await poll(0);
+  if(!ok){
+    // A name that is already taken is a question, not an error: the same person
+    // uploading a new build of their bot is the common case.
+    if(j.clash) return setBotMsg(j.error + (amHost()
+        ? '.' : ' — only the host can replace it, so give yours a different name or id.'),
+        true, {file:file});
+    return setBotMsg(j.error||'The table would not accept that package.',true);
+  }
+  let note='Added '+(j.name||j.id)+'.';
+  if(j.needsVenv&&!j.prepared) note+=' It needs its dependencies installed before it can play — ask the host.';
+  else if(amHost()) note+=' Check it before you seat it.';
+  setBotMsg(note,false);
+}
+
+async function showBotLog(b,which,title){
+  const qs=new URLSearchParams({id:b.id,which:which});
+  if(cred.invite) qs.set('j',cred.invite);
+  let text='(could not read it)';
+  try{
+    const r=await fetch('/api/bots/log?'+qs.toString(),{headers:authHeaders()});
+    text=await r.text();
+  }catch(e){}
+  const body=el('div');
+  const pre=el('pre','log',text);
+  body.appendChild(pre);
+  showModal(title+' — '+b.name,body,null,{wide:true});
+}
+
+function botStatusPill(b){
+  if(b.status==='checking') return ['busy','playing a test game'];
+  if(b.status==='preparing') return ['busy','installing'];
+  if(b.status==='failed')    return ['bad','failed'];
+  if(b.status==='ok')        return ['ok','checked'];
+  if(b.needsVenv&&!b.prepared) return ['idle','needs dependencies'];
+  return ['idle','not checked'];
+}
+
+function buildBots(){
+  const bots=(st&&st.bots)||[];
+  const host=amHost(), canUpload=!!(st&&st.canUpload);
+  const box=el('div','botbox');
+
+  const head=el('div','bothead');
+  const grow=el('div','grow');
+  grow.appendChild(el('label','f','Bots at this table'));
+  const hint=el('div','sub tiny');
+  hint.style.margin='4px 0 0';
+  hint.textContent = canUpload
+    ? 'Upload a .zip package and it appears in every seat’s engine list. Nothing in a package runs until the host seats it.'
+    : 'The host has kept uploading to themselves at this table.';
+  grow.appendChild(hint);
+  head.appendChild(grow);
+  if(canUpload){
+    const pick=el('button',null,'Upload a bot…');
+    const file=el('input'); file.type='file'; file.accept='.zip,application/zip'; file.hidden=true;
+    file.onchange=()=>{const f=file.files[0]; file.value=''; uploadBot(f,false);};
+    pick.onclick=()=>file.click();
+    const acts=el('div'); acts.appendChild(pick); acts.appendChild(file);
+    head.appendChild(acts);
+  }
+  box.appendChild(head);
+
+  if(canUpload){
+    const drop=el('div','botdrop');
+    drop.innerHTML='Drop a <b>.zip</b> package here — see <b>docs/BOT_PACKAGE.md</b> for the format';
+    drop.ondragover=e=>{e.preventDefault();drop.classList.add('over');};
+    drop.ondragleave=()=>drop.classList.remove('over');
+    drop.ondrop=e=>{
+      e.preventDefault(); drop.classList.remove('over');
+      const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+      if(f) uploadBot(f,false);
+    };
+    box.appendChild(drop);
+  }
+
+  const list=el('div','botlist');
+  if(!bots.length){
+    const none=el('div','sub tiny','No bots uploaded yet.');
+    none.style.margin='10px 0 0';
+    list.appendChild(none);
+  }
+  bots.forEach(b=>{
+    const row=el('div','botrow');
+    const who=el('div','who');
+    const line=el('div','nm',b.name+(b.version&&b.version!=='0'?' '+b.version:''));
+    who.appendChild(line);
+    const bits=[];
+    if(b.author) bits.push('by '+b.author);
+    bits.push(b.protocol==='kv-json-v1'?'KV dialect':'fishlab-json-v1');
+    if(b.uploader) bits.push('uploaded by '+b.uploader);
+    bits.push(fmtBytes(b.bytes));
+    const meta=el('div','meta',bits.join(' · '));
+    who.appendChild(meta);
+    if(b.description){const d=el('div','meta',b.description);who.appendChild(d);}
+    if(b.note){const n=el('div','meta',b.note);n.style.color=b.status==='failed'?'var(--bad)':'var(--dim)';who.appendChild(n);}
+    row.appendChild(who);
+
+    const [cls,label]=botStatusPill(b);
+    row.appendChild(el('span','pill '+cls,label));
+
+    const acts=el('div','acts');
+    const busy=b.status==='checking'||b.status==='preparing';
+    if(host){
+      const chk=el('button',null,'Check');
+      chk.title='Play complete games against a baseline and report what it actually answered.';
+      chk.disabled=busy||!!(st&&st.running);
+      chk.onclick=()=>botAction('/api/bots/check',b.id);
+      acts.appendChild(chk);
+      if(b.needsVenv){
+        const prep=el('button',null,b.prepared?'Reinstall deps':'Install deps');
+        prep.title='Build a virtualenv inside the package and pip install its requirements.';
+        prep.disabled=busy;
+        prep.onclick=()=>botAction('/api/bots/prepare',b.id);
+        acts.appendChild(prep);
+      }
+    }
+    if(b.status==='ok'||b.status==='failed'){
+      const rep=el('button',null,'Report');
+      rep.onclick=()=>showBotLog(b,'check','Self-check');
+      acts.appendChild(rep);
+    }
+    const log=el('button',null,'Log');
+    log.title='What the bot itself printed while playing.';
+    log.onclick=()=>showBotLog(b,'bot','Output');
+    acts.appendChild(log);
+    if(b.needsVenv){
+      const plog=el('button',null,'pip');
+      plog.title='The dependency install transcript.';
+      plog.onclick=()=>showBotLog(b,'prepare','Dependency install');
+      acts.appendChild(plog);
+    }
+    const dl=el('button',null,'Download');
+    dl.title='The package exactly as it was uploaded.';
+    // Fetched and handed to the browser as a blob rather than opened as a URL:
+    // window.open cannot carry a header, so the host token would have had to
+    // travel in the query string, and this client never puts one there.
+    dl.onclick=async()=>{
+      const qs=new URLSearchParams({id:b.id});
+      if(cred.invite) qs.set('j',cred.invite);
+      try{
+        const r=await fetch('/api/bots/package?'+qs.toString(),{headers:authHeaders()});
+        if(!r.ok) return setBotMsg('That package could not be downloaded.',true);
+        const url=URL.createObjectURL(await r.blob());
+        const a=document.createElement('a');
+        a.href=url; a.download=b.id+'.zip';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),20000);
+      }catch(e){ setBotMsg('That package could not be downloaded.',true); }
+    };
+    acts.appendChild(dl);
+    if(host){
+      const rm=el('button','dang','Remove');
+      rm.disabled=busy||!!(st&&st.running);
+      rm.onclick=()=>botAction('/api/bots/remove',b.id);
+      acts.appendChild(rm);
+    }
+    row.appendChild(acts);
+    list.appendChild(row);
+  });
+  box.appendChild(list);
+
+  if(botMsgText){
+    const m=el('div','botmsg'+(botMsgBad?' bad':''));
+    m.appendChild(el('span',null,botMsgText));
+    if(botPending){
+      // Only the host may overwrite a package that is already installed --
+      // a seat holds bot:<id> and re-resolves it every deal, so replacing one
+      // swaps the code under a seat the host approved for something else.
+      if(host){
+        const rep=el('button',null,'Replace it');
+        rep.onclick=()=>{const f=botPending.file; setBotMsg(''); uploadBot(f,true);};
+        m.appendChild(rep);
+      }
+      const no=el('button',null,'Cancel');
+      no.onclick=()=>setBotMsg('');
+      m.appendChild(no);
+    }
+    box.appendChild(m);
+  }
+  return box;
+}
+
+function renderBots(){
+  ['botsSetup','botsJoin'].forEach(id=>{
+    const slot=document.getElementById(id);
+    if(!slot) return;
+    slot.innerHTML='';
+    // Before the invite code is accepted the server sends no bot list at all,
+    // and an empty panel would be a promise it cannot keep.
+    if(!st||!st.bots) return;
+    slot.appendChild(buildBots());
+  });
+}
+
+// A seated bot that broke the protocol ends its game rather than the server, and
+// this is where that is said -- on the screen the host lands back on, with the
+// request and the reply that caused it, which is the bug report its author needs.
+// Keyed on the deal as well as the text: the same bot breaking the same way
+// twice produces the identical message, and a dismissal that matched on text
+// alone would silently swallow every later occurrence -- the host would be
+// dropped back to the setup screen with no explanation at all.
+let faultSeen='';
+const faultKey=()=>st?String(st.seed)+'|'+String(st.fault||''):'';
+function renderSetupAlert(){
+  const slot=document.getElementById('setupAlert');
+  if(!slot) return;
+  slot.innerHTML='';
+  if(!st||!st.fault||faultKey()===faultSeen) return;
+  const a=el('div','alert');
+  const grow=el('div','grow');
+  grow.appendChild(el('h4',null,'The last game stopped: a bot broke the protocol'));
+  grow.appendChild(el('div','sub tiny','Nothing was substituted for its move, so the game ended instead. Send this to whoever wrote it.'));
+  grow.appendChild(el('pre',null,st.fault));
+  a.appendChild(grow);
+  const x=el('button',null,'Dismiss');
+  x.onclick=()=>{faultSeen=faultKey();renderSetupAlert();};
+  a.appendChild(x);
+  slot.appendChild(a);
+}
+
 let cfg=[];
 function defaultCfg(){
   return [0,1,2,3,4,5].map(i=>({spec:'v06',name:i===0?'You':NAMEPOOL[i-1],human:i===0}));
@@ -1557,9 +1933,24 @@ function renderSetup(){
         list.forEach(([v,n])=>{const o=el('option',null,n);o.value=v;og.appendChild(o);});
         s.appendChild(og);
       });
+      // Uploaded packages, offered exactly like the engines compiled in: the
+      // server names the spec, because whether a package plays through the
+      // native protocol or KV's bridge is its manifest's business and not this
+      // page's.
+      const uploaded=(st&&st.bots)||[];
+      if(uploaded.length){
+        const og=document.createElement('optgroup'); og.label='Uploaded bots';
+        uploaded.forEach(b=>{
+          const o=el('option',null,b.name+(b.version&&b.version!=='0'?' '+b.version:''));
+          o.value=b.spec; og.appendChild(o);
+        });
+        s.appendChild(og);
+      }
       // A seat may carry a spec typed on the command line that is not in the
       // list; show it rather than silently snapping the seat to something else.
-      if(!c.human&&!POLICY_GROUPS.some(([g,l])=>l.some(([v])=>v===c.spec))){
+      const listed=POLICY_GROUPS.some(([g,l])=>l.some(([v])=>v===c.spec))||
+                   uploaded.some(b=>b.spec===c.spec);
+      if(!c.human&&!listed){
         const og=document.createElement('optgroup'); og.label='Custom';
         const o=el('option',null,c.spec); o.value=c.spec; og.appendChild(o); s.appendChild(og);
       }
@@ -1590,6 +1981,8 @@ function renderSetup(){
   // At a shared table the host does not choose who is looking at what; each
   // browser sees the seat it claimed.
   document.getElementById('viewSel').parentElement.hidden=!!(st&&st.guard);
+  renderBots();
+  renderSetupAlert();
   syncSetup();
 }
 
@@ -1605,6 +1998,12 @@ function syncSetup(){
   // and only that case, or a poll landing mid-keystroke would steal the caret.
   const sig=JSON.stringify(((st&&st.lobby)||[]).map((l,i)=>[!!l.taken,l.taken?st.seats[i].name:'']));
   if(sig!==claimSig){ claimSig=sig; renderSetup(); return; }
+  // The same guard for the bot library: another player's upload has to reach
+  // this screen, and a check finishing has to stop saying "playing a test game",
+  // but neither may rebuild the seat rows on every poll and steal the caret.
+  const bsig=JSON.stringify(((st&&st.bots)||[]).map(b=>[b.spec,b.name,b.status,b.prepared,b.note])) +
+             '|' + faultKey() + '|' + String(st&&st.canUpload);
+  if(bsig!==botSig){ botSig=bsig; renderSetup(); return; }
   let waiting=0;
   for(let p=0;p<6;p++){
     const r=rowEl[p]; if(!r) continue;
@@ -1652,6 +2051,12 @@ function preset(n){
   if(n===2){[1,3,5].forEach(p=>cfg[p].spec=SEARCH_SPEC);}
   if(n===3){cfg[2].spec='v03';cfg[4].spec='v03';}
   if(n===4){cfg.forEach((c,i)=>{c.human=false;c.spec='v06';c.name=NAMEPOOL[i];});}
+  // KV's engine, seated against ours. Their bot runs as its own process behind
+  // engine/src/kv6.hpp, so these two need engine/external/kraken present.
+  if(n===5){cfg[2].spec=V07_SPEC;cfg[4].spec=V07_SPEC;
+            [1,3,5].forEach(p=>{cfg[p].human=false;cfg[p].spec='kraken';});}
+  if(n===6){cfg.forEach((c,i)=>{c.human=false;c.name=NAMEPOOL[i];
+                                c.spec=(i%2===0)?V07_SPEC:'kraken';});}
   renderSetup(); publishTable();
 }
 function shuffleNames(){
@@ -1665,6 +2070,8 @@ document.getElementById('p1').onclick=()=>preset(1);
 document.getElementById('p2').onclick=()=>preset(2);
 document.getElementById('p3').onclick=()=>preset(3);
 document.getElementById('p4').onclick=()=>preset(4);
+document.getElementById('p5').onclick=()=>preset(5);
+document.getElementById('p6').onclick=()=>preset(6);
 document.getElementById('pn').onclick=shuffleNames;
 document.getElementById('dealBtn').onclick=async()=>{
   const p=seatParams();

@@ -47,3 +47,8 @@ yarn-error.log*
 __pycache__/
 *.pyc
 research/v07/results/K5-capture-7030004.csv
+engine/external/
+
+# uploaded bot packages -- other people's code and their virtualenvs, installed
+# at run time by `fish serve` / `fish bots add`.  See docs/BOT_PACKAGE.md.
+engine/bots/

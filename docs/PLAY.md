@@ -36,6 +36,7 @@ opponents at 1, 3, 5. Each seat takes two things:
   | FishBot | `v06` — the deployed v0.6 policy and the default at every bot seat; **v0.6-Search** (`v06:s1=1,det=12,cand=4,kappa=2.5,roll=v06`) — v0.6 plus determinized information-set search, the strongest configuration measured; `v05`; `v04` (the v0.4-Fast configuration behind the v0.4 paper); `v04:belief=block` (the exact reference belief); `v03`; `v02` |
   | Deceptive archetypes | `withholder`, `feint`, `silent` — the opponent styles v0.6 was fitted against |
   | Baselines | `lockout`, `detective`, `hunter`, `diversifier`, `bluffer`, `random` |
+  | Uploaded bots | `bot:<id>` — a package somebody dropped on this table; see below |
 
   A seat's label on the table is derived from its spec, so a v0.6 seat with
   search on reads "FishBot v0.6-Search" rather than being indistinguishable from
@@ -115,6 +116,40 @@ slider is on the setup screen, and the last value you chose is remembered.
 at a time. Pause applies to every seat including yours — pausing means the table
 is frozen, whoever moved last. Pause is the reliable way to compose a declaration in the middle of a
 long bot run — at *instant* pace the bots can chain many asks before you finish.
+
+## Bringing a bot that is not ours
+
+The **Bots** panel takes a `.zip` and puts somebody else's engine in every seat's
+engine list. It is the standardised replacement for what this used to cost: a
+GitHub link, a day of reading, and a hand-written bridge in `engine/src/` for
+each new opponent. The package format and the protocol are
+[`docs/BOT_PACKAGE.md`](BOT_PACKAGE.md); the worked example is
+`examples/fishlab-bot-python`.
+
+The host sees the panel on the setup screen and everybody else sees it on the
+join screen, which is deliberate — a guest waiting for the deal is exactly the
+person with a bot to contribute — and so is the split in what the two can do:
+
+* **Uploading executes nothing.** A package is unzipped and sits inert, so any
+  invited player may add one. `--lock-bots` narrows that to the host.
+* **Seating, checking and installing dependencies run somebody's code on the
+  host's machine**, with the host's permissions and no sandbox. Those stay with
+  the host. It is the same trust as `git clone && python bot.py`, which is what
+  everyone was doing by hand before; the difference is that it is now one drag,
+  so it is worth saying rather than leaving implied.
+
+**Check** plays complete games against a baseline and reports what the bot
+actually answered — how many asks, how many declaration polls, whether the
+forced endgame was ever reached — or the exact request and reply that broke.
+Nothing is ever substituted for a bad move: a bot that answers illegally ends
+its game with the diagnostic on the setup screen, which is a bug report its
+author can act on. At the table that ends the game; in `fish match` it ends the
+run, because a measured number must never come from a game a bot could not play.
+
+Everything the panel does is also on the command line — `fish bots list | add |
+check | prepare | remove` — and an installed package is a policy spec like any
+other, so `fish match --a=bot:<id> --b=v07` measures it the way every number in
+the papers was measured.
 
 ## Playing with other people
 
@@ -306,5 +341,9 @@ is part of what playing them measures, and the Rules dialog says so.
 | `engine/src/table.hpp` | Session lifecycle, the public snapshot, the JSON the browser reads, and the allow-list of playable engines (`knownPolicy`) with their table labels (`policyLabel`). |
 | `engine/src/lobby.hpp` | The three secrets, seat claims, presence, and the one function — `holdsSeat` — that decides whether a hand is disclosed. |
 | `engine/src/tunnel.hpp` | `--public`: spawning cloudflared, reading its address out of the log, and refusing to report one until the tunnel is really connected. |
-| `engine/src/serve.hpp` | HTTP routes and request validation. |
+| `engine/src/serve.hpp` | HTTP routes and request validation, including the bot library's upload, check, prepare and remove. |
+| `engine/src/botpkg.hpp` | The bot package: manifest, zip install, the on-disk library, and the virtualenv step. |
+| `engine/src/extbot.hpp` | The FishLab bot protocol — the subprocess, the JSON, and every check that stops a bad answer from becoming a substituted move. |
+| `engine/src/botcheck.hpp` | The self-check: complete games against a baseline, and the report an uploader gets back. |
+| `engine/src/zip.hpp`, `minijson.hpp` | A zip reader and a JSON reader, so an upload needs no dependency the engine binary does not already have. |
 | `engine/src/httpd.hpp` | Minimal socket server: loopback by default, every interface under `--lan`, with the request and deadline limits that go with being reachable. |

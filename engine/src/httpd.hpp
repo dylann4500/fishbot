@@ -58,6 +58,10 @@ struct HttpResponse {
   int status = 200;
   std::string type = "text/plain; charset=utf-8";
   std::string body;
+  // Extra response headers, already formatted as "Name: value\r\n" lines.  The
+  // only current use is a Content-Disposition on a downloaded bot package; the
+  // header block is otherwise fixed on purpose.
+  std::string extra;
 };
 
 using HttpHandler = std::function<HttpResponse(const HttpRequest&)>;
@@ -124,6 +128,31 @@ inline const char* statusText(int s) {
 static constexpr size_t MAX_BODY = 64 * 1024;
 static constexpr size_t MAX_HEAD = 32 * 1024;
 
+// One route legitimately carries megabytes -- a bot package upload -- and the
+// limit has to be known before the body is read, which is before any handler
+// runs.  So the server installs a hook that is shown the request line, the
+// query and the headers -- everything except the body -- and answers with the
+// ceiling for that request; anything it does not recognise stays at MAX_BODY.
+//
+// The credentials are in that set on purpose.  Deciding the ceiling from the
+// path alone would let anyone who can reach the port make the process allocate
+// 64 MB before a handler has looked at who they are, which is a worse trade
+// than making them present the invite first.
+using BodyLimitFn = std::function<size_t(const HttpRequest&)>;
+inline BodyLimitFn& bodyLimit() { static BodyLimitFn f; return f; }
+
+// How many requests are currently allowed to be reading an oversized body.  The
+// hook above reads it to decide whether to grant the raised ceiling at all, and
+// the guard below holds a slot for exactly as long as one such request lives --
+// including when the connection dies half way, which is the case a plain
+// counter in the handler would leak.
+inline std::atomic<int>& bigBodiesInFlight() { static std::atomic<int> n{0}; return n; }
+struct BigBodyGuard {
+  bool held = false;
+  void take() { if (!held) { held = true; bigBodiesInFlight().fetch_add(1); } }
+  ~BigBodyGuard() { if (held) bigBodiesInFlight().fetch_sub(1); }
+};
+
 inline void httpServeConn(int fd, const HttpHandler* handler, std::string peer) {
   // A read deadline is what makes a stalled or malicious client cost one socket
   // for a few seconds rather than one thread forever.  The write deadline is
@@ -178,12 +207,18 @@ inline void httpServeConn(int fd, const HttpHandler* handler, std::string peer) 
       at = e + 2;
     }
   }
+  size_t bodyCap = MAX_BODY;
+  BigBodyGuard bigBody;
+  if (bodyLimit()) {
+    size_t granted = bodyLimit()(req);
+    if (granted > bodyCap) { bodyCap = granted; bigBody.take(); }
+  }
   size_t contentLength = 0;
   {
     auto it = req.headers.find("content-length");
     if (it != req.headers.end()) {
       long long n = atoll(it->second.c_str());
-      if (n < 0 || size_t(n) > MAX_BODY) {
+      if (n < 0 || size_t(n) > bodyCap) {
         const char* over = "HTTP/1.1 413 Payload Too Large\r\nContent-Length: 0\r\n"
                            "Connection: close\r\n\r\n";
         sendAll(fd, over, strlen(over));
@@ -197,11 +232,20 @@ inline void httpServeConn(int fd, const HttpHandler* handler, std::string peer) 
     ssize_t r = ::recv(fd, tmp, sizeof(tmp), 0);
     if (r <= 0) break;
     body.append(tmp, size_t(r));
-    if (body.size() > MAX_BODY) { ::close(fd); return; }
+    if (body.size() > bodyCap) { ::close(fd); return; }
   }
   body.resize(std::min(body.size(), contentLength ? contentLength : body.size()));
-  req.body = body;
-  if (!body.empty()) parseForm(body, req.params);
+  req.body = std::move(body);
+  // A form body becomes parameters.  A binary one -- an uploaded zip -- must
+  // not be: urlDecode over a few megabytes of compressed data produces a
+  // nonsense parameter map and costs the same again in memory.  A body with no
+  // content-type is still treated as a form, because that is what a hand-driven
+  // curl call sends and those have always worked.
+  {
+    std::string ctype = req.header("content-type");
+    bool formish = ctype.empty() || ctype.rfind("application/x-www-form-urlencoded", 0) == 0;
+    if (!req.body.empty() && formish) parseForm(req.body, req.params);
+  }
 
   HttpResponse res;
   try {
@@ -210,12 +254,14 @@ inline void httpServeConn(int fd, const HttpHandler* handler, std::string peer) 
     res.status = 500;
     res.body = "internal error";
   }
-  char hdr[512];
-  int n = snprintf(hdr, sizeof(hdr),
-                   "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %zu\r\n"
-                   "Cache-Control: no-store\r\nConnection: close\r\n\r\n",
-                   res.status, statusText(res.status), res.type.c_str(), res.body.size());
-  if (sendAll(fd, hdr, size_t(n))) sendAll(fd, res.body.data(), res.body.size());
+  // Built as a string rather than into a fixed buffer: `extra` is caller-
+  // supplied, and a snprintf that truncates a header block emits a malformed
+  // response instead of an error.
+  std::string hdr = "HTTP/1.1 " + std::to_string(res.status) + " " + statusText(res.status) +
+                    "\r\nContent-Type: " + res.type +
+                    "\r\nContent-Length: " + std::to_string(res.body.size()) +
+                    "\r\nCache-Control: no-store\r\n" + res.extra + "Connection: close\r\n\r\n";
+  if (sendAll(fd, hdr.data(), hdr.size())) sendAll(fd, res.body.data(), res.body.size());
   ::shutdown(fd, SHUT_WR);
   ::close(fd);
 }

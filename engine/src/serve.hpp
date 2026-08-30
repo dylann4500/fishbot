@@ -3,6 +3,9 @@
 #include "table.hpp"
 #include "lobby.hpp"
 #include "tunnel.hpp"
+#include "botpkg.hpp"
+#include "botcheck.hpp"
+#include <set>
 #include <fstream>
 #include <sstream>
 #include <libgen.h>
@@ -74,6 +77,25 @@ struct Server {
   // no Copy button.  Set once the listener (and any tunnel) is up.
   std::string shareUrl;
   std::mutex ctl;            // serialises new/abandon against each other
+
+  // Who may put a bot package on this machine.  Uploading is inert -- nothing
+  // in a package is executed by installing it -- so an invited player may do
+  // it, which is the whole point: everybody at the table brings their own bot.
+  // RUNNING one is a different power and stays with the host, who decides what
+  // to seat, what to check and what to install dependencies for.  --lock-bots
+  // narrows uploading to the host as well.
+  bool lockBots = false;
+  std::mutex jobMu;                    // guards `jobs`
+  std::set<std::string> jobs;          // bot ids with a background job running
+
+  bool jobBegin(const std::string& id) {
+    std::lock_guard<std::mutex> lk(jobMu);
+    return jobs.insert(id).second;
+  }
+  void jobEnd(const std::string& id) {
+    std::lock_guard<std::mutex> lk(jobMu);
+    jobs.erase(id);
+  }
 
   static HttpResponse json(const std::string& body, int status = 200) {
     HttpResponse r;
@@ -200,7 +222,13 @@ struct Server {
   // The fields the browser needs that are about *who is asking* rather than
   // about the game: appended to the game snapshot rather than mixed into it.
   std::string authJson(const std::string& tok, bool host, bool authed) {
-    std::string o = ",\"guard\":" + std::string(lobby.guard ? "true" : "false")
+    // The bot library rides along with the game state rather than sitting on a
+    // route of its own, so that an upload appears in five other browsers the
+    // moment it lands -- the long poll is already watching.
+    std::string o = ",\"bots\":" + botpkg::registry().json()
+                  + ",\"canUpload\":" + std::string((host || (authed && !lockBots)) ? "true" : "false")
+                  + ",\"maxUpload\":" + std::to_string(botpkg::MAX_ZIP_BYTES)
+                  + ",\"guard\":" + std::string(lobby.guard ? "true" : "false")
                   + ",\"auth\":" + std::string(authed ? "true" : "false")
                   + ",\"host\":" + std::string(host ? "true" : "false")
                   + ",\"lobby\":" + lobby.json(tok)
@@ -214,7 +242,198 @@ struct Server {
     return o;
   }
 
+
+  // ---------------------------------------------------------------- bots
+  // The bot library.  Uploading installs a package and runs nothing; checking,
+  // preparing and seating run the package's own code and are the host's calls.
+  // docs/BOT_PACKAGE.md is what to send somebody who wants to bring a bot.
+  std::string uploaderName(const std::string& tok, const HttpRequest& req) {
+    for (int p = 0; p < NPLAY; p++)
+      if (lobby.holdsSeat(tok, p) && !lobby.nameOf(p).empty()) return lobby.nameOf(p);
+    std::string given = cleanName(req.get("who"));
+    return given.empty() ? std::string("a player") : given;
+  }
+
+  HttpResponse handleBots(const HttpRequest& req, const std::string& tok, bool host, bool authed) {
+    auto& reg = botpkg::registry();
+    if (!authed) return deny("this table needs an invite code");
+
+    if (req.path == "/api/bots") return json("{\"bots\":" + reg.json() + "}");
+
+    if (req.path == "/api/bots/upload") {
+      if (!host && lockBots) return deny("only the host may add bots to this table", 403);
+      // Adding a NEW bot is open; REPLACING one is not.  A seat holds the spec
+      // `bot:<id>` and re-resolves it against the registry on every deal, so
+      // overwriting an id the host has already checked and seated would swap
+      // the code under a seat they approved for something else -- which is the
+      // one thing the "installing never executes" boundary exists to prevent.
+      if (!host && req.getb("replace", false))
+        return deny("only the host may replace a bot that is already installed; "
+                    "give yours a different name or id", 403);
+      // A content type that forces a CORS preflight, so a page on another site
+      // cannot post a package here as a "simple" request.  The Origin check
+      // above already covers this; requiring it as well means neither has to be
+      // the only thing standing between a visited web page and an install.
+      {
+        std::string ct = req.header("content-type");
+        if (ct.rfind("application/octet-stream", 0) != 0 && ct.rfind("application/zip", 0) != 0)
+          return err("send the package as application/octet-stream", 415);
+      }
+      if (req.body.empty()) return err("no package arrived -- send the .zip as the request body");
+      {
+        // Replacing a package whose process is mid-game would pull the files out
+        // from under a running bot, so the library is only rearranged between
+        // games -- the same rule /api/bots/remove follows.
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (table.snap.running && req.getb("replace", false))
+          return err("not while a game is running", 409);
+      }
+      // A bounded library, so that a rude guest costs a bounded amount of disk.
+      std::vector<botpkg::Installed> have = reg.all();
+      long long total = 0;
+      for (const auto& b : have) total += b.zipBytes;
+      const bool replace = req.getb("replace", false);
+      if (have.size() >= 32 && !replace)
+        return err("this table already holds 32 bots; remove one first", 409);
+      if (total + (long long)req.body.size() > 1024LL * 1024 * 1024)
+        return err("the bot library is full; remove one first", 409);
+
+      std::string id, why;
+      if (!reg.install(req.body, uploaderName(tok, req), replace, id, why)) {
+        // Distinguishable, because the page offers to replace rather than
+        // making somebody rename their bot to get past it.
+        bool clash = why.rfind("a bot called", 0) == 0;
+        return json("{\"error\":" + jesc(why) + (clash ? ",\"clash\":true" : "") + "}", clash ? 409 : 400);
+      }
+      botpkg::Installed b;
+      reg.get(id, b);
+      { std::lock_guard<std::mutex> lk(table.io.mu); table.io.bump(); }
+      printf("fish serve: %s uploaded the bot '%s' (%zu bytes)\n",
+             uploaderName(tok, req).c_str(), id.c_str(), req.body.size());
+      fflush(stdout);
+      return json("{\"ok\":true,\"id\":" + jesc(id) + ",\"name\":" + jesc(b.man.name) +
+                  ",\"spec\":" + jesc(botpkg::specFor(b)) +
+                  ",\"needsVenv\":" + std::string(b.man.venv ? "true" : "false") +
+                  ",\"prepared\":" + std::string(b.prepared ? "true" : "false") + "}");
+    }
+
+    // Everything below either runs the package or changes the library, so it is
+    // the host's.
+    const std::string id = req.get("id");
+    if (!botpkg::validId(id)) return err("bad bot id");
+    botpkg::Installed bot;
+    if (!reg.get(id, bot)) return err("no bot called '" + id + "' is installed", 404);
+
+    if (req.path == "/api/bots/log") {
+      std::string which = req.get("which", "bot");
+      std::string path = which == "prepare" ? bot.preparePath()
+                       : which == "check"   ? bot.checkPath()
+                                            : bot.logPath();
+      std::string body = botpkg::readWhole(path);
+      // The tail, because a bot that prints per decision produces megabytes and
+      // the interesting part is always the end.
+      if (body.size() > 64 * 1024) body = "(earlier output omitted)\n" + body.substr(body.size() - 64 * 1024);
+      HttpResponse r;
+      r.type = "text/plain; charset=utf-8";
+      r.body = body.empty() ? "(nothing yet)\n" : body;
+      return r;
+    }
+
+    if (req.path == "/api/bots/package") {
+      std::string body = botpkg::readWhole(bot.zipPath());
+      if (body.empty()) return err("that package's zip is no longer on disk", 404);
+      HttpResponse r;
+      r.type = "application/zip";
+      r.extra = "Content-Disposition: attachment; filename=\"" + id + ".zip\"\r\n";
+      r.body = body;
+      return r;
+    }
+
+    if (!host) return deny("only the host may run, prepare or remove a bot", 403);
+
+    if (req.path == "/api/bots/remove") {
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (table.snap.running) return err("not while a game is running", 409);
+      }
+      std::string why;
+      if (!reg.erase(id, why)) return err(why);
+      // A seat still pointing at the bot that just left would fail the policy
+      // check on the next deal, so it is put back to the house engine now.
+      { std::lock_guard<std::mutex> ck(ctl);
+        for (int p = 0; p < NPLAY; p++)
+          if (botpkg::idFromSpec(table.seats[p].spec) == id) table.seats[p].spec = "v06";
+        table.publishConfig(); }
+      return okj();
+    }
+
+    if (req.path == "/api/bots/prepare" || req.path == "/api/bots/check") {
+      const bool checking = req.path == "/api/bots/check";
+      // Neither is safe mid-game: check seats the bot in a game of its own, and
+      // prepare deletes and rebuilds the virtualenv that a seated bot may be
+      // running out of right now.
+      {
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        if (table.snap.running) return err("not while a game is running", 409);
+      }
+      if (!checking && !bot.man.venv)
+        return err("this package does not ask for a virtualenv, so there is nothing to install");
+      if (!jobBegin(id)) return err("that bot is already busy", 409);
+      reg.setStatus(id, checking ? "checking" : "preparing", checking ? "playing a game" : "installing");
+      { std::lock_guard<std::mutex> lk(table.io.mu); table.io.bump(); }
+      // Detached, because pip takes minutes and a game takes seconds-to-a-minute
+      // and neither should be holding an HTTP connection open.  Progress is read
+      // back through the status in the bot list and the logs above.
+      std::thread([this, id, checking] {
+        auto& r = botpkg::registry();
+        std::string log, why;
+        if (checking) {
+          botpkg::Installed b;
+          std::string report;
+          bool ok = r.get(id, b) && botcheck::run(b, report, why);
+          botpkg::writeWhole(b.checkPath(), report);
+          r.setStatus(id, ok ? "ok" : "failed",
+                      ok ? botcheck::oneLine(report, 200) : botcheck::oneLine(why, 200));
+        } else {
+          bool ok = r.prepare(id, log, why);
+          if (!ok) r.setStatus(id, "failed", why);
+        }
+        jobEnd(id);
+        std::lock_guard<std::mutex> lk(table.io.mu);
+        table.io.bump();
+      }).detach();
+      return okj();
+    }
+
+    return err("not found", 404);
+  }
+
+  // A request the browser made on behalf of ANOTHER site.
+  //
+  // On a loopback table there are no credentials -- that has always been fine,
+  // because the only thing a stranger's web page could make the table do was
+  // deal a hand.  That stopped being true the moment /api/bots/upload existed:
+  // a page the host happens to visit can POST a zip to 127.0.0.1 and then POST
+  // /api/new to seat it, and the host's machine runs the stranger's code
+  // without a click.  Browsers volunteer the Origin header on exactly these
+  // requests, so refusing a mismatched one costs the real client nothing (its
+  // Origin is this table) and closes the whole class.
+  //
+  // Absent Origin is allowed on purpose: curl sends none, and every
+  // hand-driven call in docs/PLAY.md is a curl call.
+  static bool crossOrigin(const HttpRequest& req) {
+    std::string origin = req.header("origin");
+    if (origin.empty() || origin == "null") return false;
+    size_t scheme = origin.find("://");
+    std::string oh = scheme == std::string::npos ? origin : origin.substr(scheme + 3);
+    std::string host = req.header("host");
+    if (host.empty()) return true;
+    return oh != host;
+  }
+
   HttpResponse handle(const HttpRequest& req) {
+    if (req.path.rfind("/api/", 0) == 0 && crossOrigin(req))
+      return err("that request came from another site", 403);
     if (req.path == "/" || req.path == "/index.html") {
       std::string p = webDir + "/index.html";
       if (!fileExists(p)) {
@@ -276,6 +495,8 @@ struct Server {
       }
       return json(table.stateJson(viewSeat, authJson(tok, host, true), host && allBots));
     }
+
+    if (req.path.rfind("/api/bots", 0) == 0) return handleBots(req, tok, host, authed);
 
     // ------------------------------------------------------------- lobby
     if (req.path == "/api/claim") {
@@ -502,6 +723,8 @@ struct Server {
 struct ServeOptions {
   int port = 8173;
   std::string webDir;
+  std::string botsDir;       // --bots=DIR: where uploaded packages live
+  bool lockBots = false;     // --lock-bots: only the host may upload one
   bool bindAll = false;      // --lan / --public
   bool forceAuth = false;    // --auth: credentials even on loopback
   bool publicTunnel = false; // --public: borrow an https address from a tunnel
@@ -522,6 +745,39 @@ inline int runServe(const ServeOptions& opt, const char* argv0) {
       else srv.webDir = "web";
     }
   }
+  // The bot library sits beside the web assets, so a server started from
+  // anywhere finds the same one: engine/web -> engine/bots.
+  std::string botsDir = opt.botsDir;
+  if (botsDir.empty()) {
+    const std::string tail = "/web";
+    botsDir = (srv.webDir.size() > tail.size() &&
+               srv.webDir.compare(srv.webDir.size() - tail.size(), tail.size(), tail) == 0)
+                  ? srv.webDir.substr(0, srv.webDir.size() - tail.size()) + "/bots"
+                  : "bots";
+  }
+  botpkg::registry().setRoot(botsDir);
+  botpkg::registry().rescan();
+  srv.lockBots = opt.lockBots;
+  // At a table, a foreign bot that breaks the protocol ends its game and is
+  // reported; it does not end the server.  Every batch path leaves this off and
+  // still stops dead, because a measured number must never come from a game a
+  // bot could not actually play.  (botfault.hpp.)
+  botFaultsThrow() = true;
+  // One route carries megabytes; the rest keep the 64 KB ceiling they had.  And
+  // only for a caller who has already presented a credential: the invite is
+  // cheap to check and the alternative is letting anyone who can reach the port
+  // make this process allocate 64 MB before a handler runs.
+  bodyLimit() = [&srv](const HttpRequest& r) -> size_t {
+    if (r.method != "POST" || r.path != "/api/bots/upload") return MAX_BODY;
+    if (Server::crossOrigin(r)) return MAX_BODY;
+    const bool host = srv.lobby.isHost(Server::hostTokenOf(r));
+    if (!host && !srv.lobby.inviteOk(r.get("j"), Server::tokenOf(r))) return MAX_BODY;
+    // The body is read into memory before any handler runs, and the socket
+    // server will serve MAX_CONNS of them at once, so the ceiling has to be
+    // paired with a limit on how many can be climbing it together.  Two: a
+    // table is six people taking turns, not a fleet.
+    return bigBodiesInFlight() < 2 ? botpkg::MAX_ZIP_BYTES : MAX_BODY;
+  };
   // Reachable from another machine means reachable by somebody who was not
   // invited, so the credentials come on automatically rather than by being
   // remembered.  A loopback table stays exactly as open as it always was.
@@ -551,6 +807,20 @@ inline int runServe(const ServeOptions& opt, const char* argv0) {
     }
     printf("  Players see only their own hand; the host token is not a card-visibility\n"
            "  credential and is never sent to anybody else.\n");
+  }
+  {
+    size_t n = botpkg::registry().all().size();
+    printf("\n  Bots        %s  (%zu installed)\n", botpkg::registry().rootDir().c_str(), n);
+    if (!guard)
+      printf("              you may upload a .zip package from the setup screen.\n");
+    else if (opt.lockBots)
+      printf("              --lock-bots: only you may upload. Guests can see and download\n"
+             "              what you add, but not contribute one of their own.\n");
+    else
+      printf("              anyone with the invite code may UPLOAD a package; only you can\n"
+             "              seat, check or install one, and nothing in a package runs until\n"
+             "              you do.  --lock-bots to keep uploading to yourself.\n");
+    printf("              format: docs/BOT_PACKAGE.md\n");
   }
   fflush(stdout);
 

@@ -1,0 +1,11 @@
+{
+  "format": "fishlab-bot/1",
+  "id": "sherlock",
+  "name": "Sherlock",
+  "version": "1.0",
+  "author": "FishLab",
+  "description": "Reference bot: declares only what the public record proves, and asks for cards it can show an opponent holds.",
+  "protocol": "fishlab-json-v1",
+  "run": ["python3", "bot.py"],
+  "timeout_ms": 10000
+}

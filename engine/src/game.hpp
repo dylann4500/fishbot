@@ -142,6 +142,16 @@ struct Agent {
     seat = s; k.init(s, hand, r.deckSets); (void)seed;
   }
   virtual void observe(const Event& e) { k.onEvent(e); }
+  // Ground truth at the moment a half-suit resolved: who actually held card
+  // set*6+i, delivered just before the resolving event.  The default body is
+  // empty and NO policy in this repository overrides it, so nothing measured
+  // here can read it, and it is deliberately NOT part of Event or of
+  // PublicState::history so that it cannot be observed by accident.  It exists
+  // for an external engine bridged in over src/kv6.hpp whose belief has no way
+  // to represent "resolved, holders unrevealed": this engine publishes nothing
+  // on a wrong declaration, KV's dialect settles one face-up, and without this
+  // the bridge would have to invent the holders and quietly corrupt their bot.
+  virtual void observeResolution(int set, const uint8_t* trueOwner) { (void)set; (void)trueOwner; }
   // v0.7 T1 (c).  A rollout reconstructs six agents at their information sets
   // KC x D times per searched decision and then OVERWRITES `k` on every one of
   // them, so the `k.init` inside reset() is pure waste -- 54 cards of setup
@@ -339,6 +349,14 @@ public:
     // v0.7 phase 3 (K4).  Must be read HERE: the half-suit is stripped from every
     // hand thirty lines below, so `teamOwnsAll` past that point is always false.
     const bool ownLockedNow = teamOwnsAll(d.set, team);
+    // Read here for the same reason ownLockedNow is: thirty lines below, the
+    // half-suit is gone from every hand.
+    uint8_t trueOwner[SETSZ];
+    for (int i = 0; i < SETSZ; i++) {
+      int c = cardOf(d.set, i);
+      trueOwner[i] = 0;
+      for (int p = 0; p < NPLAY; p++) if (g.hand[p] & bit(c)) { trueOwner[i] = uint8_t(p); break; }
+    }
     if (wantRecord(actor)) {
       DecisionRecord r; baseRecord(r, actor);
       r.kind = forced ? 2 : 1;
@@ -398,6 +416,7 @@ public:
            if (actor != g.turn) res.outOfTurnDecls[team]++; }
     Event e{}; e.kind = forced ? Kind::ForcedDeclare : Kind::Declare;
     e.actor = uint8_t(actor); e.set = d.set; e.success = correct; e.decl = d; e.confidence = conf;
+    for (int p = 0; p < NPLAY; p++) agents[p]->observeResolution(d.set, trueOwner);
     emit(e);
   }
 

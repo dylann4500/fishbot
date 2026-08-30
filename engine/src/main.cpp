@@ -10,6 +10,10 @@
 #ifndef FISH_NO_SERVE
 #include "serve.hpp"
 #endif
+// The bot library itself is not part of the server: `fish bots` manages it from
+// the command line, and `fish match --a=bot:<id>` measures one, both in a build
+// with -DFISH_NO_SERVE.
+#include "botcheck.hpp"
 #include "diag.hpp"
 #include "probe_deadlock.hpp"
 #include "probe_vdeadlock.hpp"
@@ -1333,6 +1337,75 @@ mc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see MatchCo
     return 0;
   }
 
+  // ---- uploaded bot packages ---------------------------------------------
+  // The same library `fish serve` offers on the setup screen, from the command
+  // line: docs/BOT_PACKAGE.md is the format, and a package installed either way
+  // is seatable and measurable as `bot:<id>`.
+  if (cmd == "bots") {
+    std::vector<std::string> pos;
+    for (int i = 2; i < argc; i++) if (strncmp(argv[i], "--", 2) != 0) pos.push_back(argv[i]);
+    const std::string sub = pos.empty() ? std::string("list") : pos[0];
+    const std::string arg = pos.size() > 1 ? pos[1] : std::string();
+    std::string dir = argVal(argc, argv, "dir", "");
+    if (!dir.empty()) fish::botpkg::registry().setRoot(dir);
+    auto& reg = fish::botpkg::registry();
+    reg.rescan();
+
+    if (sub == "list") {
+      auto all = reg.all();
+      printf("bots in %s\n", reg.rootDir().c_str());
+      if (all.empty()) printf("  (none installed -- fish bots add <package.zip>)\n");
+      for (const auto& b : all)
+        printf("  %-20s %-24s %-16s %s%s\n", fish::botpkg::specFor(b).c_str(),
+               b.man.name.c_str(), b.man.protocol.c_str(),
+               b.man.venv ? (b.prepared ? "[prepared] " : "[needs prepare] ") : "",
+               b.note.c_str());
+      return 0;
+    }
+    if (sub == "add") {
+      if (arg.empty()) { fprintf(stderr, "usage: fish bots add <package.zip> [--replace]\n"); return 2; }
+      std::string zip = fish::botpkg::readWhole(arg);
+      if (zip.empty()) { fprintf(stderr, "fish bots: cannot read %s\n", arg.c_str()); return 2; }
+      std::string id, why;
+      if (!reg.install(zip, argVal(argc, argv, "who", "the host"),
+                       argFlag(argc, argv, "replace"), id, why)) {
+        fprintf(stderr, "fish bots: %s\n", why.c_str());
+        return 1;
+      }
+      fish::botpkg::Installed b;
+      reg.get(id, b);
+      printf("installed '%s' as %s\n", b.man.name.c_str(), fish::botpkg::specFor(b).c_str());
+      if (b.man.venv && !b.prepared) printf("  it wants a virtualenv: fish bots prepare %s\n", id.c_str());
+      printf("  check it: fish bots check %s\n", id.c_str());
+      return 0;
+    }
+    if (sub == "remove") {
+      std::string why;
+      if (!reg.erase(arg, why)) { fprintf(stderr, "fish bots: %s\n", why.c_str()); return 1; }
+      printf("removed %s\n", arg.c_str());
+      return 0;
+    }
+    if (sub == "prepare") {
+      std::string log, why;
+      if (!reg.prepare(arg, log, why)) {
+        fprintf(stderr, "%s\nfish bots: %s\n", log.c_str(), why.c_str());
+        return 1;
+      }
+      printf("%s\nprepared %s\n", log.c_str(), arg.c_str());
+      return 0;
+    }
+    if (sub == "check") {
+      fish::botpkg::Installed b;
+      if (!reg.get(arg, b)) { fprintf(stderr, "fish bots: no bot called '%s'\n", arg.c_str()); return 1; }
+      std::string report, why;
+      bool ok = fish::botcheck::run(b, report, why);
+      printf("%s\n", report.c_str());
+      return ok ? 0 : 1;
+    }
+    fprintf(stderr, "usage: fish bots <list|add|check|prepare|remove> [arg] [--dir=DIR]\n");
+    return 2;
+  }
+
 #ifndef FISH_NO_SERVE
   if (cmd == "serve") {
     ServeOptions o;
@@ -1343,6 +1416,8 @@ mc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see MatchCo
     o.forceAuth    = argFlag(argc, argv, "auth");
     o.tunnel       = argVal(argc, argv, "tunnel", "auto");
     o.invite       = argVal(argc, argv, "invite", "");
+    o.botsDir      = argVal(argc, argv, "bots", "");
+    o.lockBots     = argFlag(argc, argv, "lock-bots");
     return runServe(o, argv[0]);
   }
 
@@ -1814,6 +1889,11 @@ mc.freshAgents = argFlag(argc, argv, "freshagents");  // diagnostic, see MatchCo
   std::cout << "         --tunnel=NAME     which tunnel to use: cloudflared, ssh, or auto (default)\n";
   std::cout << "         --auth            require credentials even on loopback\n";
   std::cout << "         --invite=CODE     fix the invite code instead of generating one\n";
+  std::cout << "         --bots=DIR        where uploaded bot packages live (default engine/bots)\n";
+  std::cout << "         --lock-bots       only the host may upload a bot package\n";
+  std::cout << "       fish bots <list|add|check|prepare|remove> [arg]   uploaded bot packages\n";
+  std::cout << "         a package installed here is seatable and measurable as bot:<id>\n";
+  std::cout << "         format: docs/BOT_PACKAGE.md\n";
   std::cout << "         (--lan/--public mint a host token and per-seat tokens: see docs/PLAY.md)\n";
   return 0;
 }

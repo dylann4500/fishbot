@@ -258,6 +258,25 @@ every ask, declaration and turn aloud through the browser's own voice, which is
 useful when you are reading your hand rather than the log. You are sent your own
 hand and the public event stream and nothing else.
 
+**Bring your own bot.** Somebody else's engine plays here without a fork, a
+patch or a pull request: zip it with a `fishbot.json` manifest, drop it on the
+setup screen, and it appears in every seat's engine list. A bot is any program
+that reads a game state and writes a move as one line of JSON — the reference
+implementation is 200 lines of dependency-free Python in
+`examples/fishlab-bot-python`, and the format is `docs/BOT_PACKAGE.md`.
+
+```bash
+./fish bots add mybot.zip
+./fish bots check mybot          # plays complete games and reports what it answered
+./fish match --a=bot:mybot --b=v06 --games=400 --rotations=6
+```
+
+An installed package is a policy spec like any other, so the whole measurement
+apparatus — duplicate blocks, rotations, confidence intervals — points at it
+unchanged. Uploading runs nothing; only the host can seat a bot or install its
+dependencies, because running one is running somebody's code on the host's
+machine.
+
 **Three of you against three bots.** `--lan` and `--public` put the six seats on
 the network: the host gets a link that runs the table, everybody else gets one
 invite link, types a name and takes a seat, and the "3 players vs 3× v0.6" preset
