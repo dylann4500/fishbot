@@ -1,6 +1,6 @@
 Six-player Canadian Fish is a decentralised imperfect-information team game in which every action is
 public, so the hidden state reduces to the initial deal and the posterior over that deal can be
-computed exactly. We develop and evaluate \fishseven{}, the strongest configuration produced in this
+computed exactly. We develop and evaluate \sestina{}, the strongest configuration produced in this
 project's FishBot lineage. It combines an approximate Sinkhorn fit to that posterior, started from a fitted
 policy prior, with a linear ask and declaration policy, a public-history tie-breaking rule that preserves
 common knowledge among teammates, a half-suit contestation weighting, a
@@ -11,7 +11,7 @@ replication across two disjoint deal banks as an advance-specified criterion, ca
 floors, and mechanical side-channel controls.
 
 Against \fcheap{}, the cheapest configuration genuinely on the \vsix{} frontier and the registered
-comparison target, \fishseven{} achieves a \vsevenBtwoFcheap{} percentage-point win-rate edge
+comparison target, \sestina{} achieves a \vsevenBtwoFcheap{} percentage-point win-rate edge
 (95\% CI $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$) over \vsevenBtwoFcheapN{} sealed games, with
 the sign replicating on both banks. The advantage persists under cross-play between independently trained runs and
 \vsevenDiaRowsWord{} rule dialects. Under partner substitution against a v0.5 opponent
@@ -21,11 +21,11 @@ against the registered $\vsevenSoneThreshold{}$ collapse threshold. Separately, 
 \vsevenBfourArmsWord{} independently constructed adversarial searches found a positive edge at the
 tested budgets.
 
-\fishseven{} does not, however, measurably outperform a composite configuration assembled earlier in
+\sestina{} does not, however, measurably outperform a composite configuration assembled earlier in
 the same programme (\vsevenBtwoComposite{} pp, 95\% CI
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$), indicating that the architecture work which
 followed added no measurable strength. Over a shared \vsevenPanelMembers{}-member opponent panel
-\fishseven{}'s worst cell is \vsevenWorstFrozen{}~pp
+\sestina{}'s worst cell is \vsevenWorstFrozen{}~pp
 $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$, which does not replicate in sign, and it is
 \vsevenRegretFrozenRank{}rd of four on minimax regret. Four candidate mechanisms failed to produce
 measurable improvement at this resolution. At the calibrated resolution of this evaluation the tested policy

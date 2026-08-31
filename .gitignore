@@ -52,3 +52,6 @@ engine/external/
 # uploaded bot packages -- other people's code and their virtualenvs, installed
 # at run time by `fish serve` / `fish bots add`.  See docs/BOT_PACKAGE.md.
 engine/bots/
+output/pdf/*.log
+output/pdf/*.aux
+output/pdf/*.out

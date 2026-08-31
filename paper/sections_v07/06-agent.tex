@@ -1,7 +1,7 @@
-\section{FishBot v0.7}
+\section{\sestina{}}
 \label{sec:agent}
 
-\fishseven{} is a configuration of the \vsix{} policy family rather than a new architecture. That
+\sestina{} is a configuration of the \vsix{} policy family rather than a new architecture. That
 sentence was written into the evaluation protocol before any holdout result was known, and the
 evaluation did not disturb it. This section describes the agent conceptually: Figure~\ref{fig:pipeline} shows the decision
 pipeline, and Table~\ref{tab:components} sets its components against \vsix{}'s. The literal
@@ -33,7 +33,7 @@ are in Appendix~\ref{app:parameters}.
 \node[draw=fishgreen,dashed,rounded corners=3pt,inner sep=6pt,fit=(hist)(hand)] (iset) {};
 \node[font=\scriptsize,fishgreen,below=2pt of iset] {information set};
 \end{tikzpicture}
-\caption{The information structure of a Fish seat and the \fishseven{} decision pipeline. A seat
+\caption{The information structure of a Fish seat and the \sestina{} decision pipeline. A seat
 observes the public event stream and its own hand, and nothing else; there is no path from a policy to
 the deal or to another seat's hand (\S\ref{sec:inference-engine}). Because every card movement is public, that information set
 determines an exact posterior over the initial deal (\S\ref{sec:inference}). The deployed path does
@@ -45,7 +45,7 @@ justifies it (\S\ref{sec:agent-search}).}
 \end{figure}
 
 \begin{table}[!ht]\centering
-\caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
+\caption{Components of \sestina{} against \vsix{}. Harness identifiers appear in parentheses and
 are used in the paper only where a command must be reproduced.}
 \label{tab:components}
 {\tabfont\input{tables_v07/components}}
@@ -73,11 +73,11 @@ What the policy actually enumerates is a strict subset of \eqref{eq:legal}. A \e
 those whose target is excluded by a certificate, $q \notin \mathcal{M}(c)$. It is this filter, rather
 than any weighting inside \eqref{eq:askscore}, that keeps a provably dead ask off the score. It
 binds: it removes what would otherwise have been the argmax at roughly \vsevenGateBindRate\% of
-\vsevenGateBindN{} ask decisions captured from \fishseven{}'s own seats. If no candidate survives the filter the full legal set is
+\vsevenGateBindN{} ask decisions captured from \sestina{}'s own seats. If no candidate survives the filter the full legal set is
 restored, so the guarantee is not absolute.
 
 \paragraph{The score.} Each candidate is scored by a fitted linear function of a
-$20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \fishseven{}, three
+$20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \sestina{}, three
 additional ownership terms:
 \begin{equation}
   u(a) \;=\; \lambda\, w^{\!\top}\phi(a) \;+\; \beta\, V_{\mathrm{ask}}(a)
@@ -85,7 +85,7 @@ additional ownership terms:
   + w_{\mathrm{last}}\, g_3(a)\bigr),
   \label{eq:askscore}
 \end{equation}
-with $\lambda = \vsevenLinearWeight{}$ and $\beta$ scale parameters of the fit. \fishseven{} adds a
+with $\lambda = \vsevenLinearWeight{}$ and $\beta$ scale parameters of the fit. \sestina{} adds a
 fourth block of \vsevenResponderTotal{} extended coordinates, of which
 \vsevenResponderNonzero{} is non-zero; that one is \eqref{eq:contest} and
 \S\ref{sec:agent-contest} gives it. Writing $p_a = \hat\mu(c,q)$ for the modelled
@@ -120,7 +120,7 @@ target's right to ask in it.
   \label{eq:argmax}
 \end{equation}
 
-\fishseven{} inherits $w$, $\lambda$, $\beta$ and the three extra weights from \vsix{} unchanged.
+\sestina{} inherits $w$, $\lambda$, $\beta$ and the three extra weights from \vsix{} unchanged.
 \textbf{No gradient or population fit was run in this cycle}: the one coordinate that is not
 inherited, \eqref{eq:contest}, had its value chosen as the argmax of a measured dose response, which
 is a one-dimensional selection on win rate and is reported as such in
@@ -146,7 +146,7 @@ Order the candidates by score and let the tied set be
   \mathcal{E}_t \;=\; \bigl\{a \in \mathcal{A}_t \;:\; u(a) \ge u(a_{(1)}) - \varepsilon \bigr\},
   \label{eq:tieset}
 \end{equation}
-where $a_{(1)}$ is the top-ranked candidate and $\varepsilon$ is a fixed tolerance. \fishseven{}
+where $a_{(1)}$ is the top-ranked candidate and $\varepsilon$ is a fixed tolerance. \sestina{}
 replaces enumeration order with a deterministic draw keyed by the public record:
 \begin{equation}
   a^\star \;=\; \mathcal{E}_t\bigl[\,\iota(\rho,\,|\mathcal{E}_t|)\,\bigr],
@@ -228,7 +228,7 @@ own team,
   \label{eq:bestalloc}
 \end{equation}
 with $\pi_{\mathrm{alloc}}$ from \eqref{eq:alloc}. \eqref{eq:bestalloc} is the object; it is not what the deployed path computes.
-\fishseven{} enumerates the capacity-feasible assignments of the unresolved cards of $h$ to its own
+\sestina{} enumerates the capacity-feasible assignments of the unresolved cards of $h$ to its own
 team and takes the argmax of the \emph{product of per-card marginals},
 $\prod_{c} \hat\mu(c,\alpha(c))$. That product is the selection score only. The winner is then priced
 separately, by sequential conditioning: the belief is refit after each card of the allocation is
@@ -265,7 +265,7 @@ cardless and the acting team must resolve the remaining half-suits among itself,
 on a threshold, $\pi_{\mathrm{alloc}}^\star \ge \tau$, and on a lower threshold once $\pi_{\mathrm{team}} > 1 - 5\times10^{-4}$, since a half-suit the team certainly owns will have to be
 claimed eventually and delay only costs information. Under \emph{pressure}, the escalation described next, stage 1 lowers the thresholds and stage 2
 removes them: the best available allocation is declared unconditionally, whatever its probability.
-\fishseven{} removes the mechanism that used to raise pressure in ordinary play, and
+\sestina{} removes the mechanism that used to raise pressure in ordinary play, and
 \S\ref{sec:agent-stall} is what now supplies stage 2.
 
 \subsection{Removing the urgency escalation}
@@ -277,7 +277,7 @@ close to a coin flip, which costs \vsevenCliff{}~pp to a policy held in that reg
 reaches it, since the longest game any adversarial search produced against an unmodified opponent is
 \vsevenCliffIncumbentTail{} events, but the machinery is defective in ordinary play as well:
 \S\ref{sec:development-alloc} reports that removing it eliminates \vsevenLoneUrgencyShare\% of the
-entire declaration allocation-error class. \fishseven{} disables it
+entire declaration allocation-error class. \sestina{} disables it
 (\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}).
 
 The escalation was, however, also the policy's termination safeguard, so removing it creates an
@@ -286,7 +286,7 @@ obligation.
 \subsection{A stall detector as the replacement termination safeguard}
 \label{sec:agent-stall}
 
-The escalation \fishseven{} removes was keyed to a clock. The condition the clock stood in for is
+The escalation \sestina{} removes was keyed to a clock. The condition the clock stood in for is
 ``nothing is happening any more'', and that condition is directly observable from the seat's own
 deduction state, which is both tighter and safer.
 
@@ -305,7 +305,7 @@ no-progress counter
   \label{eq:stall}
 \end{equation}
 and escalate to pressure stage 1 when $\nu_t \ge K$ and to stage 2 when $\nu_t \ge 2K$, with
-$K = \texttt{\vsevenOptStallK{}}$ and $2K = \texttt{\vsevenOptStallTwo{}}$ in \fishseven{}.
+$K = \texttt{\vsevenOptStallK{}}$ and $2K = \texttt{\vsevenOptStallTwo{}}$ in \sestina{}.
 
 \paragraph{Why it is a safeguard and not a guarantee.} Consider
 $\Phi_t = \sum_{c \in U_t}\bigl(|\mathcal{M}_t(c)| - 1\bigr) + |U_t| + |\mathcal{H}_t|$. Certificates
@@ -332,7 +332,7 @@ channel.
 \subsection{Guarded determinized test-time search}
 \label{sec:agent-search}
 
-\fishseven{} enables the search \vsix{} built, measured, and then deployed switched off. It runs only
+\sestina{} enables the search \vsix{} built, measured, and then deployed switched off. It runs only
 in the endgame, when at most \texttt{\vsevenOptMaxq{}} cards remain unresolved, and it revises the
 blueprint's choice only when a paired statistical test says it should.
 
@@ -402,7 +402,7 @@ which is precisely where its selection signal is most noise-dominated.
 \subsection{How three teammates coordinate without communicating}
 \label{sec:agent-coordination}
 
-\fishseven{} deploys as three identical agents. They hold different private hands, they may not
+\sestina{} deploys as three identical agents. They hold different private hands, they may not
 signal, and the only channels the dialect leaves are the forced-endgame willingness bit and the
 successor a cardless turn-holder names (\S\ref{sec:game-dialect}), both of which
 \S\ref{sec:game-dialect} measures as empty or near-empty. So all coordination has to come from
@@ -426,7 +426,7 @@ held \emph{some} card of the half-suit, while \eqref{eq:coord} says the asker he
 $\Pi$ preferred that ask. The deployed approximation does not evaluate \eqref{eq:coord} in full,
 which would require enumerating hands; it captures the first-order part of it through the ask-tally
 prior \eqref{eq:prior}. The white-box adversary of \S\ref{sec:results-whitebox} is the construction
-that evaluates \eqref{eq:coord} against \fishseven{} rather than for it, and
+that evaluates \eqref{eq:coord} against \sestina{} rather than for it, and
 \S\ref{sec:development-instrument} reports what that inversion is worth.
 
 Two conditions make this work, and both are engineering constraints rather than assumptions. $\Pi$
@@ -453,7 +453,7 @@ configuration was frozen would defeat the purpose of freezing.
 \subsection{The complete decision procedure}
 \label{sec:agent-full}
 
-Collecting the pieces, one turn of \fishseven{} at seat $s$ and time $t$ runs as follows.
+Collecting the pieces, one turn of \sestina{} at seat $s$ and time $t$ runs as follows.
 
 \begin{enumerate}
 \item \textbf{Update beliefs.} Fold the new public events into the candidate sets

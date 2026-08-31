@@ -1,7 +1,6 @@
 # FishLab
 
-**A research workbench for six-player Canadian Fish (Literature), and the FishBot agents built in
-it.**
+**A research workbench for six-player Canadian Fish (Literature), and the agents built in it.**
 
 Every action in Fish is public, so the entire hidden state is the initial deal and the posterior over
 that deal is exactly computable. That makes the game an unusually clean testbed for
@@ -9,20 +8,20 @@ imperfect-information team play: exact inference is available as an oracle, the 
 enough that one desktop plays hundreds of complete six-seat games a second, and a claim can be
 checked rather than argued.
 
-This repository holds the C++ engine, the FishBot lineage from v0.2 to v0.7, the measurement
-apparatus, every artifact the reported numbers were computed from, and the technical reports that
-describe them.
+This repository holds the C++ engine, seven agent releases — the FishBot lineage from v0.2 to v0.6
+and its successor **SESTINA v1.0** — the measurement apparatus, every artifact the reported numbers
+were computed from, and the technical reports that describe them.
 
 **Start here**
 
-- **Read it** — FishBot v0.7's technical report, 72 pages: [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf)
+- **Read it** — SESTINA v1.0's technical report, 72 pages: [`output/pdf/sestina_v10.pdf`](output/pdf/sestina_v10.pdf)
 - **Play it** — `cd engine && make && ./fish serve`, then open `http://127.0.0.1:8173`
 - **Check it** — `cd engine && make && ./fish verify --games=600`
 - **Bring your own bot** — any language, one JSON line per decision: [`docs/BOT_PACKAGE.md`](docs/BOT_PACKAGE.md)
 
 ---
 
-## FishBot v0.7
+## SESTINA v1.0
 
 The frozen configuration is a single spec string, recorded with its 55-coordinate parameter vector in
 [`engine/fishbot_v07.json`](engine/fishbot_v07.json):
@@ -31,6 +30,13 @@ The frozen configuration is a single spec string, recorded with its 55-coordinat
 v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,
     s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
 ```
+
+**On the name.** SESTINA v1.0 was developed and evaluated as **FishBot v0.7**, the seventh cycle of
+the lineage, and was renamed at release; its predecessors keep the names they were published under.
+Every seed, deal bank, digest, directory and configuration string still carries a `v07` identifier —
+including `engine/fishbot_v07.json` and the spec string above — because that is what they were
+committed and sealed as, and renaming them would break the provenance chain the results rest on.
+Throughout, *SESTINA v1.0* names the agent and *the v0.7 cycle* names the programme that produced it.
 
 It combines an approximate Sinkhorn fit to the deal posterior started from a fitted policy prior, a
 linear ask and declaration policy, a public-history tie-break that preserves common knowledge among
@@ -58,14 +64,14 @@ does not buy down with games, so a larger cell does not lower it — a sign that
 banks, and a pass of the soundness gate. All three were satisfied; the banks read +3.67 and +2.99.
 
 The last row is the paper's central qualification and is stated at the same weight as the first:
-**FishBot v0.7 does not measurably outperform a composite configuration assembled earlier in the same
+**SESTINA v1.0 does not measurably outperform a composite configuration assembled earlier in the same
 programme**, so the architecture work that followed added no measurable strength. That was one of
 seven conditions of non-confirmation named in the protocol before any holdout was played, and it is
 recorded as having been met.
 
 Also measured, and also reported:
 
-- Over a shared **31-member opponent panel**, v0.7's worst cell is **−0.04 pp** [−1.41, +1.33], which
+- Over a shared **31-member opponent panel**, SESTINA's worst cell is **−0.04 pp** [−1.41, +1.33], which
   does not replicate in sign — +1.62 on one bank and −1.75 on the other, at a different panel member
   each time — and it is **3rd of four** on minimax regret, at 4.53 against `F-cheap`'s best-of-four
   4.00.
@@ -78,7 +84,7 @@ Also measured, and also reported:
   worst is −0.19, which that battery does not resolve.
 - The advantage persists under cross-play between independently trained runs and across eight rule
   dialects.
-- v0.7 costs **at least 4.52×** the non-searching blueprint. Every cost figure in the report is a
+- SESTINA v1.0 costs **at least 4.52×** the non-searching blueprint. Every cost figure in the report is a
   lower bound, because the harness measures whole-match throughput.
 - Four candidate mechanisms failed to produce measurable improvement at this resolution.
 
@@ -94,7 +100,7 @@ The report keeps three senses of "strongest" apart, and claims only the first:
 | **Robustness** — does that strength survive panels, partners, dialects and fitted adversaries | evaluated extensively; **mixed results**, reported above |
 | **Global standing** — strongest Canadian Fish agent anyone has built | **not established, not claimed** |
 
-FishBot v0.7 is not shown to be near-optimal and is not shown to be unexploitable. The comparison
+SESTINA v1.0 is not shown to be near-optimal and is not shown to be unexploitable. The comparison
 class contains only agents written here.
 
 ### How the evaluation was run
@@ -110,7 +116,7 @@ The methodological difference between this cycle and the earlier ones is the poi
   set, which was set once and recorded. The protocol states the seal's two limits in advance.
 - **Preregistration.** [`docs/v07/PREREGISTRATION.md`](docs/v07/PREREGISTRATION.md), 728 lines, fixes
   the battery, every cell and its sample size, every threshold, the replication rule, and the seven
-  results that would mean v0.7 is not an advancement — committed before any holdout bank had been
+  results that would mean the cycle is not an advancement — committed before any holdout bank had been
   played. The evaluation phase read only that document. It also fixes an amendment rule: if that
   phase finds a genuine flaw in the protocol it stops and reports it, because an amended protocol is
   a training run. Two of the seven conditions arose and are reported as such.
@@ -130,9 +136,9 @@ The methodological difference between this cycle and the earlier ones is the poi
 
 | what | where |
 |---|---|
-| Technical report (built) | [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf) — 72 pages |
-| Report source | [`paper/fishbot_v07.tex`](paper/fishbot_v07.tex), sections in `paper/sections_v07/` |
-| Single-file copy for Overleaf | `paper/fishbot_v07_standalone.tex` |
+| Technical report (built) | [`output/pdf/sestina_v10.pdf`](output/pdf/sestina_v10.pdf) — 72 pages |
+| Report source | [`paper/sestina_v10.tex`](paper/sestina_v10.tex), sections in `paper/sections_v07/` |
+| Single-file copy for Overleaf | `paper/sestina_v10_standalone.tex` |
 | Registered protocol | [`docs/v07/PREREGISTRATION.md`](docs/v07/PREREGISTRATION.md) |
 | Results of record | [`docs/v07/FINAL-RESULTS.md`](docs/v07/FINAL-RESULTS.md) |
 | Phase reports | `docs/v07/` — `INSTRUMENT.md` (what the instrument can see), `ADVERSARIES.md` (what beats the v0.6 frontier), `CANDIDATES.md` (five architectures, what survived), `THREAT-MODEL.md`, `SUBOPTIMALITY-LEDGER.md` |
@@ -181,7 +187,7 @@ probes from earlier cycles, still compiled in and still runnable. The ones worth
 things at once: out-of-turn declaration off, cardless declaration off, `maxAsks` 360, and the
 forced-declaration ladder collapsed to a single threshold.
 
-### Playing the frozen v0.7 policy
+### Playing the frozen SESTINA policy
 
 ```bash
 ./fish match \
@@ -202,7 +208,7 @@ cd engine
 BIN=./fish ./experiments_v07.sh                  # phase-1 instrument battery, 1-2 min
 python3 build_tables_v07.py --paper              # artifacts -> paper/numbers_v07_generated.tex
 python3 ../paper/check_provenance.py --version v07
-cd ../paper && tectonic -X compile fishbot_v07.tex --outdir ../output/pdf
+cd ../paper && tectonic -X compile sestina_v10.tex --outdir ../output/pdf
 ```
 
 The batteries default to `BIN=./fish7`, the binary of the original run, which a clone does not have;
@@ -230,9 +236,9 @@ FISH=./fish ./gate_v07.sh --spec='<your spec>' --id=mine   # exit 0 = PASS, 1 = 
 `fish serve` opens a browser table where any mix of humans and bots takes the six seats. It is the
 same `Game` driver every published number came from — a human seat is just another `Agent` — so what
 you are playing is the deployed policy, not a reimplementation of it. Each seat picks its engine from
-a list spanning FishBot v0.2 through the frozen v0.7 spec, the three deceptive archetypes, the
+a list spanning FishBot v0.2 through the frozen SESTINA v1.0 spec, the three deceptive archetypes, the
 baseline population, and any outside engine that has been ported or installed as a package. Give the
-seats names before you deal: six seats all labelled "FishBot v0.7" are impossible to track.
+seats names before you deal: six seats all labelled "SESTINA v1.0" are impossible to track.
 
 ```bash
 ./fish serve                                     # loopback
@@ -297,7 +303,7 @@ lineage.
 
 | release | what it established | headline |
 |---|---|---|
-| **v0.7** | Strongest configuration in the lineage, on sealed material under a registered protocol — and no measurable gain over a composite the same cycle had already assembled | +3.33 pp [+2.88, +3.78] over `F-cheap`, 48,000 games |
+| **SESTINA v1.0** | Strongest configuration in the lineage, on sealed material under a registered protocol — and no measurable gain over a composite the same cycle had already assembled | +3.33 pp [+2.88, +3.78] over `F-cheap`, 48,000 games |
 | **v0.6** | A repaired optimiser. The strength gain is *entirely parametric*: exact-posterior tie resolution, three extra ask terms and the deliberate miss all measured null, and guarded test-time search was the single positive mechanism | beats v0.5 50.89% [50.61, 51.16] over 126,000 games, 7 of 7 banks above parity |
 | **v0.5** | Not meaningfully stronger than v0.4. What it delivered was the elimination of a failure mode, and reporting that honestly is the result | provably dead asks in mirror play fall from **39.04%** of v0.4's asks to **0.011%**; head to head, pooled 50.77% with every bank's interval containing 50% |
 | **v0.4** | The move to C++, the exact posterior over the initial deal, the locked-half-suit theorem, and the evaluation apparatus still in use: duplicate rotation blocks with a cluster bootstrap over deals | beats v0.3 75.07% [73.71, 76.40] over 4,200 games |
@@ -306,7 +312,7 @@ lineage.
 
 | release | specification | report |
 |---|---|---|
-| v0.7 | *the report itself* | [`paper/fishbot_v07.tex`](paper/fishbot_v07.tex) → [PDF](output/pdf/fishbot_v07.pdf) |
+| SESTINA v1.0 | *the report itself* | [`paper/sestina_v10.tex`](paper/sestina_v10.tex) → [PDF](output/pdf/sestina_v10.pdf) |
 | v0.6 | [`docs/FISHBOT_V06.md`](docs/FISHBOT_V06.md) | [`paper/fishbot_v06.tex`](paper/fishbot_v06.tex) → [PDF](output/pdf/fishbot_v06.pdf), results of record [`research/v06/RESULTS-SUMMARY.md`](research/v06/RESULTS-SUMMARY.md) |
 | v0.5 | [`docs/FISHBOT_V05.md`](docs/FISHBOT_V05.md) | [`paper/fishbot_v05.tex`](paper/fishbot_v05.tex) → [PDF](output/pdf/fishbot_v05.pdf), study design [`docs/V05_FINDINGS.md`](docs/V05_FINDINGS.md) |
 | v0.4 | [`docs/FISHBOT_V04.md`](docs/FISHBOT_V04.md) | [`paper/fishbot_v04.tex`](paper/fishbot_v04.tex) → [PDF](output/pdf/fishbot_v04.pdf), results [`docs/V04_RESULTS.md`](docs/V04_RESULTS.md) |
@@ -315,7 +321,7 @@ lineage.
 
 ### Later cycles correct earlier ones, in writing
 
-Corrections are recorded rather than quietly applied, and the v0.7 report's Appendix E lists this
+Corrections are recorded rather than quietly applied, and the SESTINA report's Appendix E lists this
 cycle's. Three that a reader of the older documents should know about:
 
 - **The cost of the frontier's search was wrong in both directions.** The "three orders of magnitude"
@@ -371,11 +377,11 @@ output/pdf/      Built technical reports.
 
 ## Citing
 
-The current work is the FishBot v0.7 technical report:
+The current work is the SESTINA v1.0 technical report:
 
-> Dylan Nguyen. *FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing in
+> Dylan Nguyen. *SESTINA v1.0: Exact Inference, Robust Evaluation, and Adversarial Testing in
 > Six-Player Canadian Fish.* FishLab, 2026.
-> [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf)
+> [`output/pdf/sestina_v10.pdf`](output/pdf/sestina_v10.pdf)
 
 The report's reproducibility appendix carries the repository and the commit each battery ran at.
 

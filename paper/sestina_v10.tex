@@ -52,7 +52,7 @@
 \definecolor{fishlight}{HTML}{EAF4EF}
 \definecolor{fishgray}{HTML}{4B5954}
 \hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen,
-            pdftitle={FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing
+            pdftitle={SESTINA v1.0: Exact Inference, Robust Evaluation, and Adversarial Testing
                       in Six-Player Canadian Fish},
             pdfauthor={Dylan Nguyen}}
 % nosep zeroes topsep as well as itemsep, which ran every list straight into
@@ -140,7 +140,7 @@
 \renewcommand{\floatpagefraction}{0.72}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small FishBot v0.7}
+\lhead{\small SESTINA v1.0}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.2pt}
 
@@ -165,9 +165,9 @@
 % declared here from its number audit for that reason.  They appear inside
 % captions and section titles, which are moving arguments, so they must be
 % robust, and they reach PDF bookmarks, so \texorpdfstring supplies a plain
-% spelling.  Latin Modern has no bold small caps in any weight, so an agent name
-% must never be nested inside \textbf: bold the rest of the sentence instead.
-\DeclareRobustCommand{\fishseven}{\texorpdfstring{\mbox{FishBot v0.7}}{FishBot v0.7}}
+% spelling.  The agent name is set in plain capitals rather than small caps
+% because Latin Modern has no bold small caps in any weight and \S1 bolds it.
+\DeclareRobustCommand{\sestina}{\texorpdfstring{\mbox{SESTINA v1.0}}{SESTINA v1.0}}
 \DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{v0.6}}{v0.6}}
 \DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{v0.5}}{v0.5}}
 \DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{v0.4}}{v0.4}}
@@ -177,11 +177,11 @@
 \DeclareRobustCommand{\composite}{\texorpdfstring{\mbox{the phase-2 composite}}{the phase-2 composite}}
 % Retained so that any surviving reference to the harness identifiers still
 % typesets as the agent it names.
-\DeclareRobustCommand{\frozen}{\fishseven{}}
+\DeclareRobustCommand{\frozen}{\sestina{}}
 \DeclareRobustCommand{\incumbent}{\texorpdfstring{\mbox{v0.6 deployed}}{v0.6 deployed}}
-\DeclareRobustCommand{\vseven}{\fishseven{}}
+\DeclareRobustCommand{\vseven}{\sestina{}}
 
-\title{\textbf{FishBot v0.7: Exact Inference, Robust Evaluation,\\
+\title{\textbf{SESTINA v1.0: Exact Inference, Robust Evaluation,\\
 and Adversarial Testing in Six-Player Canadian Fish}}
 \author{Dylan Nguyen}
 \date{\today}

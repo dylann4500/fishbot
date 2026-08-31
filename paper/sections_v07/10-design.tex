@@ -8,7 +8,7 @@ what was frozen, and what was measured against sealed material.
 \label{sec:design-configs}
 
 Table~\ref{tab:configs} is worth reading before any result, because the paper's central nuance
-depends on the distinction between two of its rows. \fishseven{} is compared against \fcheap{}, a
+depends on the distinction between two of its rows. \sestina{} is compared against \fcheap{}, a
 configuration that existed before this cycle, and improves on it. It is also compared against
 \composite{}, which was assembled \emph{during} this cycle by the adversary-generation phase, and
 does not measurably improve on it. Those are different claims about different objects and
@@ -17,7 +17,7 @@ does not measurably improve on it. Those are different claims about different ob
 \begin{table}[!ht]
 \centering
 \caption{Every configuration this paper compares. Configurations marked pre-existing were available
-before the v0.7 programme began; the phase-2 composite was assembled during it. Only \fishseven{} was
+before the v0.7 programme began; the phase-2 composite was assembled during it. Only \sestina{} was
 frozen for holdout evaluation.}
 \label{tab:configs}
 \tabfont
@@ -25,7 +25,7 @@ frozen for holdout evaluation.}
 \toprule
 Name & What it is & Origin & Role in this paper \\
 \midrule
-\fishseven{} & the evaluated configuration of \S\ref{sec:agent} & frozen in this cycle &
+\sestina{} & the evaluated configuration of \S\ref{sec:agent} & frozen in this cycle &
 the subject; evaluated on sealed holdout material \\
 v0.6 deployed & the previous release, search disabled & pre-existing &
 lineage baseline and reference opponent for ablations \\
@@ -126,7 +126,7 @@ fails exactly the tests named for it and no others, identically on both banks, o
 \subsection{The soundness gate}
 \label{sec:design-gate}
 
-\fishseven{} passes all \vsevenGateRulesWord{} rules of Table~\ref{tab:gate}: \vsevenGateDeadAsks\% provably dead asks against a
+\sestina{} passes all \vsevenGateRulesWord{} rules of Table~\ref{tab:gate}: \vsevenGateDeadAsks\% provably dead asks against a
 0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail maximum \vsevenGateTailMax{} with
 99th percentile \vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches over
 \vsevenGateSsixNodes{} audited decisions. Reported but not gated: \vsevenGateEvents{} events per game,
@@ -160,7 +160,7 @@ would be recorded as no advance.
 
 The protocol also fixed in advance the sentence to be used if the partner-regime comparison retained
 a particular ordering, so that its direction could not be chosen after the fact, and recorded that on
-training material that comparison ran \emph{against} \fishseven{}. \S\ref{sec:results-partners}
+training material that comparison ran \emph{against} \sestina{}. \S\ref{sec:results-partners}
 reports the outcome and uses the registered wording.
 
 \subsection{The battery}

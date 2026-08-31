@@ -48,7 +48,7 @@ VERSIONS = {
                 inherited_generated=()),
     'v06': dict(generated='vsix', inherited=('num',), master='fishbot_v06.tex',
                 inherited_generated=('numbers_v05_generated.tex',)),
-    'v07': dict(generated='vseven', inherited=('num', 'vsix'), master='fishbot_v07.tex',
+    'v07': dict(generated='vseven', inherited=('num', 'vsix'), master='sestina_v10.tex',
                 inherited_generated=('numbers_v05_generated.tex',
                                      'numbers_v06_generated.tex')),
 }

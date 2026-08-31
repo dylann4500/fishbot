@@ -52,7 +52,7 @@
 \definecolor{fishlight}{HTML}{EAF4EF}
 \definecolor{fishgray}{HTML}{4B5954}
 \hypersetup{colorlinks=true, linkcolor=fishgreen, citecolor=fishgreen, urlcolor=fishgreen,
-            pdftitle={FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing
+            pdftitle={SESTINA v1.0: Exact Inference, Robust Evaluation, and Adversarial Testing
                       in Six-Player Canadian Fish},
             pdfauthor={Dylan Nguyen}}
 % nosep zeroes topsep as well as itemsep, which ran every list straight into
@@ -140,7 +140,7 @@
 \renewcommand{\floatpagefraction}{0.72}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small FishBot v0.7}
+\lhead{\small SESTINA v1.0}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.2pt}
 
@@ -165,9 +165,9 @@
 % declared here from its number audit for that reason.  They appear inside
 % captions and section titles, which are moving arguments, so they must be
 % robust, and they reach PDF bookmarks, so \texorpdfstring supplies a plain
-% spelling.  Latin Modern has no bold small caps in any weight, so an agent name
-% must never be nested inside \textbf: bold the rest of the sentence instead.
-\DeclareRobustCommand{\fishseven}{\texorpdfstring{\mbox{FishBot v0.7}}{FishBot v0.7}}
+% spelling.  The agent name is set in plain capitals rather than small caps
+% because Latin Modern has no bold small caps in any weight and \S1 bolds it.
+\DeclareRobustCommand{\sestina}{\texorpdfstring{\mbox{SESTINA v1.0}}{SESTINA v1.0}}
 \DeclareRobustCommand{\vsix}{\texorpdfstring{\mbox{v0.6}}{v0.6}}
 \DeclareRobustCommand{\vfive}{\texorpdfstring{\mbox{v0.5}}{v0.5}}
 \DeclareRobustCommand{\vfour}{\texorpdfstring{\mbox{v0.4}}{v0.4}}
@@ -177,11 +177,11 @@
 \DeclareRobustCommand{\composite}{\texorpdfstring{\mbox{the phase-2 composite}}{the phase-2 composite}}
 % Retained so that any surviving reference to the harness identifiers still
 % typesets as the agent it names.
-\DeclareRobustCommand{\frozen}{\fishseven{}}
+\DeclareRobustCommand{\frozen}{\sestina{}}
 \DeclareRobustCommand{\incumbent}{\texorpdfstring{\mbox{v0.6 deployed}}{v0.6 deployed}}
-\DeclareRobustCommand{\vseven}{\fishseven{}}
+\DeclareRobustCommand{\vseven}{\sestina{}}
 
-\title{\textbf{FishBot v0.7: Exact Inference, Robust Evaluation,\\
+\title{\textbf{SESTINA v1.0: Exact Inference, Robust Evaluation,\\
 and Adversarial Testing in Six-Player Canadian Fish}}
 \author{Dylan Nguyen}
 \date{\today}
@@ -4782,7 +4782,7 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 % MANIFEST-P5.json: the frozen spec
 \providecommand{\vsevenManifestFrozenSpec}{}\renewcommand{\vsevenManifestFrozenSpec}{v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26}
 % git rev-parse HEAD: the commit this build was made at
-\providecommand{\vsevenHeadCommit}{}\renewcommand{\vsevenHeadCommit}{9a6cfa9}
+\providecommand{\vsevenHeadCommit}{}\renewcommand{\vsevenHeadCommit}{2c3267c}
 % P5-B0.json: the commit recorded at generation time, pre-rewrite
 \providecommand{\vsevenBzeroCommitRecorded}{}\renewcommand{\vsevenBzeroCommitRecorded}{d920f5b}
 % git log: the same commit after the history rewrite, found by subject line
@@ -4825,7 +4825,7 @@ and Adversarial Testing in Six-Player Canadian Fish}}
 %% --- begin sections_v07/abstract ---
 Six-player Canadian Fish is a decentralised imperfect-information team game in which every action is
 public, so the hidden state reduces to the initial deal and the posterior over that deal can be
-computed exactly. We develop and evaluate \fishseven{}, the strongest configuration produced in this
+computed exactly. We develop and evaluate \sestina{}, the strongest configuration produced in this
 project's FishBot lineage. It combines an approximate Sinkhorn fit to that posterior, started from a fitted
 policy prior, with a linear ask and declaration policy, a public-history tie-breaking rule that preserves
 common knowledge among teammates, a half-suit contestation weighting, a
@@ -4836,7 +4836,7 @@ replication across two disjoint deal banks as an advance-specified criterion, ca
 floors, and mechanical side-channel controls.
 
 Against \fcheap{}, the cheapest configuration genuinely on the \vsix{} frontier and the registered
-comparison target, \fishseven{} achieves a \vsevenBtwoFcheap{} percentage-point win-rate edge
+comparison target, \sestina{} achieves a \vsevenBtwoFcheap{} percentage-point win-rate edge
 (95\% CI $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$) over \vsevenBtwoFcheapN{} sealed games, with
 the sign replicating on both banks. The advantage persists under cross-play between independently trained runs and
 \vsevenDiaRowsWord{} rule dialects. Under partner substitution against a v0.5 opponent
@@ -4846,11 +4846,11 @@ against the registered $\vsevenSoneThreshold{}$ collapse threshold. Separately, 
 \vsevenBfourArmsWord{} independently constructed adversarial searches found a positive edge at the
 tested budgets.
 
-\fishseven{} does not, however, measurably outperform a composite configuration assembled earlier in
+\sestina{} does not, however, measurably outperform a composite configuration assembled earlier in
 the same programme (\vsevenBtwoComposite{} pp, 95\% CI
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$), indicating that the architecture work which
 followed added no measurable strength. Over a shared \vsevenPanelMembers{}-member opponent panel
-\fishseven{}'s worst cell is \vsevenWorstFrozen{}~pp
+\sestina{}'s worst cell is \vsevenWorstFrozen{}~pp
 $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$, which does not replicate in sign, and it is
 \vsevenRegretFrozenRank{}rd of four on minimax regret. Four candidate mechanisms failed to produce
 measurable improvement at this resolution. At the calibrated resolution of this evaluation the tested policy
@@ -4879,25 +4879,37 @@ planning or a working learner for it, and no coverage in RLCard \cite{rlcard}
 (\S\ref{sec:related-fish}). The nearest published agent plays a four-player,
 48-card variant that does not raise the six-player allocation problem.
 
-This paper presents \textbf{\fishseven{}}, the strongest agent produced in this project's FishBot
+This paper presents \textbf{\sestina{}}, the strongest agent produced in this project's FishBot
 lineage, and reports a rigorous evaluation of it. Earlier versions established the engine, the exact
 inference machinery and a sequence of progressively stronger policies, but their development also
 exposed serious evaluation problems: comparisons that could not resolve a one-point effect, an
 optimiser that could not move a policy, and at least two published conclusions that turned out to be
 artefacts of the measurement rather than properties of the agent (\S\ref{sec:background}).
-\fishseven{} therefore asks a question that only becomes answerable once those failures are
+\sestina{} therefore asks a question that only becomes answerable once those failures are
 corrected: whether further measurable progress in this policy class is available at all.
+
+\paragraph{A note on the name.} \sestina{} was developed and evaluated as \textbf{FishBot v0.7},
+the seventh cycle of the lineage, and was renamed at release; its predecessors keep the names they
+were published under. Every seed, deal bank, digest, directory and configuration string in the
+evidence base still carries a \texttt{v07} identifier, including the frozen configuration
+\texttt{v07:r12=25,\ldots} of \S\ref{sec:agent} and the sealed banks of \S\ref{sec:evaluation}.
+Those names are load-bearing: the banks were committed under them, the freeze artifact round-trips
+through them, and the digests in Appendix~\ref{app:repro} are digests of objects named that
+way. Renaming them after the fact would break the provenance chain this paper's claims rest on, so
+they are left exactly as they were sealed. Throughout, \emph{\sestina{}} names the agent and
+\emph{the v0.7 cycle} names the programme that produced and measured it. The name changed at
+release; nothing measured did.
 
 \subsection{Research questions}
 \label{sec:intro-rq}
 
 \begin{description}
-\item[RQ1] Does \fishseven{} achieve a replicated improvement over \fcheap{}, the cheapest
+\item[RQ1] Does \sestina{} achieve a replicated improvement over \fcheap{}, the cheapest
   configuration genuinely on the \vsix{} frontier and the target registered in advance, measured on
-  material sealed before \fishseven{} existed?
+  material sealed before \sestina{} existed?
 \item[RQ2] Does that improvement survive changes of partner, cross-play against independently trained
   policies, alternative rule dialects, and adversarial responses fitted against it?
-\item[RQ3] Which of \fishseven{}'s changes account for the improvement, and which candidate
+\item[RQ3] Which of \sestina{}'s changes account for the improvement, and which candidate
   mechanisms fail to produce measurable strength?
 \item[RQ4] What do the results imply about the headroom remaining in the current policy class?
 \end{description}
@@ -4912,19 +4924,19 @@ This paper makes a comparative claim of a specific and limited kind, and the dis
 enough to state before any number appears.
 
 \begin{description}
-\item[Lineage strength.] \fishseven{} is the strongest configuration this project has produced,
+\item[Lineage strength.] \sestina{} is the strongest configuration this project has produced,
   measured against its own predecessors and against the frontier of configurations available at the
   end of the \vsix{} cycle. This is what the paper establishes.
 \item[Robustness.] Whether that strength persists against a fixed opponent panel, under substituted
   partners, across rule dialects, and against adversaries fitted to exploit it. This the paper
   evaluates extensively, and reports mixed results.
-\item[Global standing.] Whether \fishseven{} is the strongest Canadian Fish agent anyone has built.
+\item[Global standing.] Whether \sestina{} is the strongest Canadian Fish agent anyone has built.
   \textbf{This the paper does not establish and does not claim.} The comparison class contains only
   agents this project wrote, and every exploitability figure here is a lower bound produced by a
   search rather than a bound on what a search could find.
 \end{description}
 
-Accordingly the paper never describes \fishseven{} as near-optimal, unexploitable, or the strongest
+Accordingly the paper never describes \sestina{} as near-optimal, unexploitable, or the strongest
 known Fish-playing team. \S\ref{sec:discussion-future} states what evidence those claims would
 require, none of which currently exists.
 
@@ -4932,7 +4944,7 @@ require, none of which currently exists.
 \label{sec:intro-contributions}
 
 \begin{enumerate}
-\item \textbf{\fishseven{}} (\S\ref{sec:agent}), the strongest configuration in the FishBot lineage,
+\item \textbf{\sestina{}} (\S\ref{sec:agent}), the strongest configuration in the FishBot lineage,
   described at the level of its inference, ask and declaration policy, coordination assumptions,
   termination rule and test-time search.
 
@@ -4947,7 +4959,7 @@ require, none of which currently exists.
   a soundness gate applied before any strength measurement, calibrated detection floors, and
   mechanical side-channel controls with planted positive instances.
 
-\item \textbf{A comprehensive evaluation of \fishseven{}} (\S\ref{sec:results}) covering frontier
+\item \textbf{A comprehensive evaluation of \sestina{}} (\S\ref{sec:results}) covering frontier
   comparisons, attribution of the gain to components, partner substitution, cross-play, rule
   dialects, adversarial search including a white-box transcript-inversion adversary, negative
   controls, and computational cost.
@@ -5306,9 +5318,9 @@ sealing discipline of \S\ref{sec:evaluation-seal}, which this project adopted in
 \section{Background: the evolution of FishBot}
 \label{sec:background}
 
-\fishseven{} is the seventh configuration in a lineage, and several of its components and most of its
+\sestina{} is the seventh configuration in a lineage, and several of its components and most of its
 evaluation machinery exist because of what earlier versions found. This section is deliberately
-short. Its purpose is to explain why \fishseven{} looks the way it does, not to re-report earlier
+short. Its purpose is to explain why \sestina{} looks the way it does, not to re-report earlier
 studies; the detailed corrections those studies require are collected in Appendix~\ref{app:corrections}.
 
 \subsection{v0.2 to v0.4: engine, inference and policy foundations}
@@ -5342,7 +5354,7 @@ opposite responses.
 
 The v0.6 cycle set out to recover several points of headroom that the accumulated design register
 described. It found almost none of it, and discovered in the process that much of the measurement
-machinery was unsound. Four results from that cycle bear directly on \fishseven{}.
+machinery was unsound. Four results from that cycle bear directly on \sestina{}.
 
 \paragraph{Exchangeable ties are irreducible, so the tie-break is a coordination decision rather than
 a strength decision.} Measured in the \vfive{} mirror, the policy that cycle set out to diagnose, \vsixTieShareFive\% of
@@ -5351,12 +5363,12 @@ the winner is whichever the enumerator emitted first. \vsixTieSameSuitFive\% of 
 cards of one half-suit at one target, and the exact posterior \emph{separates} them in
 \vsixTieExactSepPctFive\% of cases, meaning it assigns them equal probability in every case. The
 same measurement on the \vsix{} mirror gives \vsevenTieContested\%, and that is the figure
-\S\ref{sec:agent-tiebreak} and \S\ref{sec:development-tie} use, because \fishseven{} modifies
+\S\ref{sec:agent-tiebreak} and \S\ref{sec:development-tie} use, because \sestina{} modifies
 \vsix{} rather than \vfive{}. Every rule that ranks tied candidates by that probability therefore
 realises the same hit rate, and so does enumeration order. The largest item on the inherited design
 register was not a defect but a property of the information set. What remains addressable is the
 dependence on enumeration order itself, which is a correctness problem, and
-\S\ref{sec:agent-tiebreak} is how \fishseven{} addresses it.
+\S\ref{sec:agent-tiebreak} is how \sestina{} addresses it.
 
 \paragraph{The exact posterior is a worse predictor than the deployed approximation.} Scored as
 predictors on identical states in the \vfive{} mirror, the ranking is:
@@ -5395,7 +5407,7 @@ sample size. The cause is the statistic rather than the search: one determinizat
 final half-suit differential, whose spread is an order of magnitude larger than genuine differences
 between candidates, so the argmax selects on residual noise and does so more confidently the more
 candidates it is offered. A paired lower-confidence-bound deviation rule recovers all of it. The
-guarded search, which v0.6 measured and then deployed switched off, is a component of \fishseven{}
+guarded search, which v0.6 measured and then deployed switched off, is a component of \sestina{}
 (\S\ref{sec:agent-search}).
 
 \paragraph{The evaluation could not resolve a one-point effect, and the optimiser could not move a
@@ -5699,10 +5711,10 @@ run; once enabled it reports \vsixGateFalseNeg{} false negatives over \vsixGateO
 declaration opportunities. Appendix~\ref{app:corrections} carries the full register.
 %% --- end sections_v07/05-inference ---
 %% --- begin sections_v07/06-agent ---
-\section{FishBot v0.7}
+\section{\sestina{}}
 \label{sec:agent}
 
-\fishseven{} is a configuration of the \vsix{} policy family rather than a new architecture. That
+\sestina{} is a configuration of the \vsix{} policy family rather than a new architecture. That
 sentence was written into the evaluation protocol before any holdout result was known, and the
 evaluation did not disturb it. This section describes the agent conceptually: Figure~\ref{fig:pipeline} shows the decision
 pipeline, and Table~\ref{tab:components} sets its components against \vsix{}'s. The literal
@@ -5734,7 +5746,7 @@ are in Appendix~\ref{app:parameters}.
 \node[draw=fishgreen,dashed,rounded corners=3pt,inner sep=6pt,fit=(hist)(hand)] (iset) {};
 \node[font=\scriptsize,fishgreen,below=2pt of iset] {information set};
 \end{tikzpicture}
-\caption{The information structure of a Fish seat and the \fishseven{} decision pipeline. A seat
+\caption{The information structure of a Fish seat and the \sestina{} decision pipeline. A seat
 observes the public event stream and its own hand, and nothing else; there is no path from a policy to
 the deal or to another seat's hand (\S\ref{sec:inference-engine}). Because every card movement is public, that information set
 determines an exact posterior over the initial deal (\S\ref{sec:inference}). The deployed path does
@@ -5746,12 +5758,12 @@ justifies it (\S\ref{sec:agent-search}).}
 \end{figure}
 
 \begin{table}[!ht]\centering
-\caption{Components of \fishseven{} against \vsix{}. Harness identifiers appear in parentheses and
+\caption{Components of \sestina{} against \vsix{}. Harness identifiers appear in parentheses and
 are used in the paper only where a command must be reproduced.}
 \label{tab:components}
 {\tabfont\begin{tabularx}{\linewidth}{@{}Q{0.77} Q{0.92} Q{1.31} l@{}}
 \toprule
-Component & v0.6 & FishBot v0.7 & Section \\
+Component & v0.6 & SESTINA v1.0 & Section \\
 \midrule
 Deal inference & Sinkhorn fit to the deal posterior, from a fitted policy prior & unchanged & \S\ref{sec:inference} \\
 Ask and declaration policy & fitted linear score, 37 coordinates & unchanged; no refit in this cycle & \S\ref{sec:agent-policy} \\
@@ -5786,11 +5798,11 @@ What the policy actually enumerates is a strict subset of \eqref{eq:legal}. A \e
 those whose target is excluded by a certificate, $q \notin \mathcal{M}(c)$. It is this filter, rather
 than any weighting inside \eqref{eq:askscore}, that keeps a provably dead ask off the score. It
 binds: it removes what would otherwise have been the argmax at roughly \vsevenGateBindRate\% of
-\vsevenGateBindN{} ask decisions captured from \fishseven{}'s own seats. If no candidate survives the filter the full legal set is
+\vsevenGateBindN{} ask decisions captured from \sestina{}'s own seats. If no candidate survives the filter the full legal set is
 restored, so the guarantee is not absolute.
 
 \paragraph{The score.} Each candidate is scored by a fitted linear function of a
-$20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \fishseven{}, three
+$20$-dimensional feature vector $\phi(a)$, plus a learned value term and, in \sestina{}, three
 additional ownership terms:
 \begin{equation}
   u(a) \;=\; \lambda\, w^{\!\top}\phi(a) \;+\; \beta\, V_{\mathrm{ask}}(a)
@@ -5798,7 +5810,7 @@ additional ownership terms:
   + w_{\mathrm{last}}\, g_3(a)\bigr),
   \label{eq:askscore}
 \end{equation}
-with $\lambda = \vsevenLinearWeight{}$ and $\beta$ scale parameters of the fit. \fishseven{} adds a
+with $\lambda = \vsevenLinearWeight{}$ and $\beta$ scale parameters of the fit. \sestina{} adds a
 fourth block of \vsevenResponderTotal{} extended coordinates, of which
 \vsevenResponderNonzero{} is non-zero; that one is \eqref{eq:contest} and
 \S\ref{sec:agent-contest} gives it. Writing $p_a = \hat\mu(c,q)$ for the modelled
@@ -5833,7 +5845,7 @@ target's right to ask in it.
   \label{eq:argmax}
 \end{equation}
 
-\fishseven{} inherits $w$, $\lambda$, $\beta$ and the three extra weights from \vsix{} unchanged.
+\sestina{} inherits $w$, $\lambda$, $\beta$ and the three extra weights from \vsix{} unchanged.
 \textbf{No gradient or population fit was run in this cycle}: the one coordinate that is not
 inherited, \eqref{eq:contest}, had its value chosen as the argmax of a measured dose response, which
 is a one-dimensional selection on win rate and is reported as such in
@@ -5859,7 +5871,7 @@ Order the candidates by score and let the tied set be
   \mathcal{E}_t \;=\; \bigl\{a \in \mathcal{A}_t \;:\; u(a) \ge u(a_{(1)}) - \varepsilon \bigr\},
   \label{eq:tieset}
 \end{equation}
-where $a_{(1)}$ is the top-ranked candidate and $\varepsilon$ is a fixed tolerance. \fishseven{}
+where $a_{(1)}$ is the top-ranked candidate and $\varepsilon$ is a fixed tolerance. \sestina{}
 replaces enumeration order with a deterministic draw keyed by the public record:
 \begin{equation}
   a^\star \;=\; \mathcal{E}_t\bigl[\,\iota(\rho,\,|\mathcal{E}_t|)\,\bigr],
@@ -5941,7 +5953,7 @@ own team,
   \label{eq:bestalloc}
 \end{equation}
 with $\pi_{\mathrm{alloc}}$ from \eqref{eq:alloc}. \eqref{eq:bestalloc} is the object; it is not what the deployed path computes.
-\fishseven{} enumerates the capacity-feasible assignments of the unresolved cards of $h$ to its own
+\sestina{} enumerates the capacity-feasible assignments of the unresolved cards of $h$ to its own
 team and takes the argmax of the \emph{product of per-card marginals},
 $\prod_{c} \hat\mu(c,\alpha(c))$. That product is the selection score only. The winner is then priced
 separately, by sequential conditioning: the belief is refit after each card of the allocation is
@@ -5978,7 +5990,7 @@ cardless and the acting team must resolve the remaining half-suits among itself,
 on a threshold, $\pi_{\mathrm{alloc}}^\star \ge \tau$, and on a lower threshold once $\pi_{\mathrm{team}} > 1 - 5\times10^{-4}$, since a half-suit the team certainly owns will have to be
 claimed eventually and delay only costs information. Under \emph{pressure}, the escalation described next, stage 1 lowers the thresholds and stage 2
 removes them: the best available allocation is declared unconditionally, whatever its probability.
-\fishseven{} removes the mechanism that used to raise pressure in ordinary play, and
+\sestina{} removes the mechanism that used to raise pressure in ordinary play, and
 \S\ref{sec:agent-stall} is what now supplies stage 2.
 
 \subsection{Removing the urgency escalation}
@@ -5990,7 +6002,7 @@ close to a coin flip, which costs \vsevenCliff{}~pp to a policy held in that reg
 reaches it, since the longest game any adversarial search produced against an unmodified opponent is
 \vsevenCliffIncumbentTail{} events, but the machinery is defective in ordinary play as well:
 \S\ref{sec:development-alloc} reports that removing it eliminates \vsevenLoneUrgencyShare\% of the
-entire declaration allocation-error class. \fishseven{} disables it
+entire declaration allocation-error class. \sestina{} disables it
 (\texttt{pool}, \texttt{oppfloor}, \texttt{force}, \texttt{askfloor}).
 
 The escalation was, however, also the policy's termination safeguard, so removing it creates an
@@ -5999,7 +6011,7 @@ obligation.
 \subsection{A stall detector as the replacement termination safeguard}
 \label{sec:agent-stall}
 
-The escalation \fishseven{} removes was keyed to a clock. The condition the clock stood in for is
+The escalation \sestina{} removes was keyed to a clock. The condition the clock stood in for is
 ``nothing is happening any more'', and that condition is directly observable from the seat's own
 deduction state, which is both tighter and safer.
 
@@ -6018,7 +6030,7 @@ no-progress counter
   \label{eq:stall}
 \end{equation}
 and escalate to pressure stage 1 when $\nu_t \ge K$ and to stage 2 when $\nu_t \ge 2K$, with
-$K = \texttt{\vsevenOptStallK{}}$ and $2K = \texttt{\vsevenOptStallTwo{}}$ in \fishseven{}.
+$K = \texttt{\vsevenOptStallK{}}$ and $2K = \texttt{\vsevenOptStallTwo{}}$ in \sestina{}.
 
 \paragraph{Why it is a safeguard and not a guarantee.} Consider
 $\Phi_t = \sum_{c \in U_t}\bigl(|\mathcal{M}_t(c)| - 1\bigr) + |U_t| + |\mathcal{H}_t|$. Certificates
@@ -6045,7 +6057,7 @@ channel.
 \subsection{Guarded determinized test-time search}
 \label{sec:agent-search}
 
-\fishseven{} enables the search \vsix{} built, measured, and then deployed switched off. It runs only
+\sestina{} enables the search \vsix{} built, measured, and then deployed switched off. It runs only
 in the endgame, when at most \texttt{\vsevenOptMaxq{}} cards remain unresolved, and it revises the
 blueprint's choice only when a paired statistical test says it should.
 
@@ -6115,7 +6127,7 @@ which is precisely where its selection signal is most noise-dominated.
 \subsection{How three teammates coordinate without communicating}
 \label{sec:agent-coordination}
 
-\fishseven{} deploys as three identical agents. They hold different private hands, they may not
+\sestina{} deploys as three identical agents. They hold different private hands, they may not
 signal, and the only channels the dialect leaves are the forced-endgame willingness bit and the
 successor a cardless turn-holder names (\S\ref{sec:game-dialect}), both of which
 \S\ref{sec:game-dialect} measures as empty or near-empty. So all coordination has to come from
@@ -6139,7 +6151,7 @@ held \emph{some} card of the half-suit, while \eqref{eq:coord} says the asker he
 $\Pi$ preferred that ask. The deployed approximation does not evaluate \eqref{eq:coord} in full,
 which would require enumerating hands; it captures the first-order part of it through the ask-tally
 prior \eqref{eq:prior}. The white-box adversary of \S\ref{sec:results-whitebox} is the construction
-that evaluates \eqref{eq:coord} against \fishseven{} rather than for it, and
+that evaluates \eqref{eq:coord} against \sestina{} rather than for it, and
 \S\ref{sec:development-instrument} reports what that inversion is worth.
 
 Two conditions make this work, and both are engineering constraints rather than assumptions. $\Pi$
@@ -6166,7 +6178,7 @@ configuration was frozen would defeat the purpose of freezing.
 \subsection{The complete decision procedure}
 \label{sec:agent-full}
 
-Collecting the pieces, one turn of \fishseven{} at seat $s$ and time $t$ runs as follows.
+Collecting the pieces, one turn of \sestina{} at seat $s$ and time $t$ runs as follows.
 
 \begin{enumerate}
 \item \textbf{Update beliefs.} Fold the new public events into the candidate sets
@@ -6479,7 +6491,7 @@ what a fitted responder achieves. They are different objects and this paper keep
 subsections.
 %% --- end sections_v07/08-threat-model ---
 %% --- begin sections_v07/09-development ---
-\section{Developing FishBot v0.7}
+\section{Developing \sestina{}}
 \label{sec:development}
 
 This section reports the development phases: what the instrument was shown to be capable of
@@ -6556,10 +6568,10 @@ a better policy rather than an exploit: the target's own test-time search at
 \vsevenSearchAsExploit{}~pp, and a single out-of-class coordinate at \vsevenOneSwitchArm{}~pp whose
 gain survives against opponents sharing none of the target's machinery. The second of those is the
 contestation weight of \S\ref{sec:agent-contest}; \S\ref{sec:results-attribution} measures on
-holdout what it contributes and finds it the largest of the five components \fishseven{} carries,
+holdout what it contributes and finds it the largest of the five components \sestina{} carries,
 rather than the whole of the gain.
 
-Two further results from this phase bear on \fishseven{}'s design. The declaration-urgency channel
+Two further results from this phase bear on \sestina{}'s design. The declaration-urgency channel
 that the phase expected to be its headline has a measured ceiling of \vsevenUrgencyCeiling{}~pp
 $[\vsevenUrgencyCeilingLo, \vsevenUrgencyCeilingHi]$ and is dead as an attack, but the same channel is
 worth \vsevenUrgencyWorthLo{} to \vsevenUrgencyWorthHi{}~pp to a configuration that simply disables
@@ -6602,7 +6614,7 @@ off. Second, \vsevenJointFlatLo\% to \vsevenJointFlatHi\% of the error class occ
 states in which the exact object is provably a coin flip, so most of the apparent headroom is an
 information limit rather than a policy defect.
 
-The channel is also largely downstream of a defect that \fishseven{} removes for other reasons.
+The channel is also largely downstream of a defect that \sestina{} removes for other reasons.
 Disabling the urgency escalation eliminates \vsevenLoneUrgencyShare\% of the entire allocation-error
 class and drops the oracle ceiling for a perfect allocator from \vsevenLoneCeilingBefore{} to
 \vsevenLoneCeilingAfter{}~pp, which is below the detection floor. The consequence is a composition
@@ -6720,7 +6732,7 @@ what was frozen, and what was measured against sealed material.
 \label{sec:design-configs}
 
 Table~\ref{tab:configs} is worth reading before any result, because the paper's central nuance
-depends on the distinction between two of its rows. \fishseven{} is compared against \fcheap{}, a
+depends on the distinction between two of its rows. \sestina{} is compared against \fcheap{}, a
 configuration that existed before this cycle, and improves on it. It is also compared against
 \composite{}, which was assembled \emph{during} this cycle by the adversary-generation phase, and
 does not measurably improve on it. Those are different claims about different objects and
@@ -6729,7 +6741,7 @@ does not measurably improve on it. Those are different claims about different ob
 \begin{table}[!ht]
 \centering
 \caption{Every configuration this paper compares. Configurations marked pre-existing were available
-before the v0.7 programme began; the phase-2 composite was assembled during it. Only \fishseven{} was
+before the v0.7 programme began; the phase-2 composite was assembled during it. Only \sestina{} was
 frozen for holdout evaluation.}
 \label{tab:configs}
 \tabfont
@@ -6737,7 +6749,7 @@ frozen for holdout evaluation.}
 \toprule
 Name & What it is & Origin & Role in this paper \\
 \midrule
-\fishseven{} & the evaluated configuration of \S\ref{sec:agent} & frozen in this cycle &
+\sestina{} & the evaluated configuration of \S\ref{sec:agent} & frozen in this cycle &
 the subject; evaluated on sealed holdout material \\
 v0.6 deployed & the previous release, search disabled & pre-existing &
 lineage baseline and reference opponent for ablations \\
@@ -6858,7 +6870,7 @@ fails exactly the tests named for it and no others, identically on both banks, o
 \subsection{The soundness gate}
 \label{sec:design-gate}
 
-\fishseven{} passes all \vsevenGateRulesWord{} rules of Table~\ref{tab:gate}: \vsevenGateDeadAsks\% provably dead asks against a
+\sestina{} passes all \vsevenGateRulesWord{} rules of Table~\ref{tab:gate}: \vsevenGateDeadAsks\% provably dead asks against a
 0.10\% bar, longest dead run \vsevenGateLongestDead{}, mirror tail maximum \vsevenGateTailMax{} with
 99th percentile \vsevenGateTailPnn{}, and \vsevenGateSsix{} seat-isolation mismatches over
 \vsevenGateSsixNodes{} audited decisions. Reported but not gated: \vsevenGateEvents{} events per game,
@@ -6872,7 +6884,7 @@ a configuration constructed to be rejected.}
 \label{tab:gate}
 {\tabfont\begin{tabular}{lcccc}
 \toprule
-Rule & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Negative control \\
+Rule & SESTINA v1.0 & v0.6 & \texttt{F-cheap} & Negative control \\
 \midrule
 provably-dead asks $\le 0.10\%$ & ok & ok & ok & \textbf{fail} \\
 longest dead run $\le 5$ & ok & ok & ok & \textbf{fail} \\
@@ -6907,7 +6919,7 @@ would be recorded as no advance.
 
 The protocol also fixed in advance the sentence to be used if the partner-regime comparison retained
 a particular ordering, so that its direction could not be chosen after the fact, and recorded that on
-training material that comparison ran \emph{against} \fishseven{}. \S\ref{sec:results-partners}
+training material that comparison ran \emph{against} \sestina{}. \S\ref{sec:results-partners}
 reports the outcome and uses the registered wording.
 
 \subsection{The battery}
@@ -6962,7 +6974,7 @@ controls and the computational cost.
 \subsection{RQ1: strength against the v0.6 frontier}
 \label{sec:results-primary}
 
-Against \fcheap{}, the registered primary target, \fishseven{} gains
+Against \fcheap{}, the registered primary target, \sestina{} gains
 \textbf{\vsevenBtwoFcheapMag{}~pp} of win-rate edge $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over
 \vsevenBtwoFcheapN{} games, with the sign replicating on both banks
 (\vsevenBtwoFcheapBankOne{} and \vsevenBtwoFcheapBankTwo{}) and the lower bound above the registered
@@ -7025,8 +7037,8 @@ comparison and the others on one axis, and Table~\ref{tab:frontier} gives the ce
   \draw[fishgray] (9.419,-4.870) -- (9.419,-4.970) node[below,font=\scriptsize] {6};
   \node[font=\scriptsize,anchor=north] at (4.900,-5.320) {win-rate edge (percentage points)};
 \end{tikzpicture}}
-\caption{Principal comparisons for \fishseven{}, pooled over both holdout banks with 95\%
-deal-clustered bootstrap confidence intervals. Positive values favour \fishseven{}. The registered
+\caption{Principal comparisons for \sestina{}, pooled over both holdout banks with 95\%
+deal-clustered bootstrap confidence intervals. Positive values favour \sestina{}. The registered
 primary comparison is highlighted. The bottom two rows place two robustness results on the same
 axis: the worst partner substitution of \S\ref{sec:results-partners}, and the most successful of the
 \vsevenBfourArms{} adversarial searches of \S\ref{sec:results-adversarial}.}
@@ -7050,7 +7062,7 @@ B2.5 & v0.5 & $+5.18$ & $[+4.56, +5.81]$ & 24,000 & yes \\
 \end{tabular}}
 \end{table}
 
-Against the lineage baselines, \fishseven{} gains \vsevenBtwoIncumbent{}~pp over the deployed
+Against the lineage baselines, \sestina{} gains \vsevenBtwoIncumbent{}~pp over the deployed
 \vsix{} policy $[\vsevenBtwoIncumbentLo, \vsevenBtwoIncumbentHi]$, \vsevenBtwoFmid{}~pp over \fmid{}
 $[\vsevenBtwoFmidLo, \vsevenBtwoFmidHi]$, and \vsevenBtwoVfive{}~pp over v0.5.
 
@@ -7062,7 +7074,7 @@ condition of non-confirmation.
 \paragraph{Declaration accuracy is reported without a claim.} The declaration-family floor applies to
 the declaration-accuracy column. The harness emits declaration accuracy as a bare rate with no
 interval of any kind, so no interval can be quoted and no claim about the declaration channel is
-made. \fishseven{} runs \vsevenDeclFrozenLo{} to \vsevenDeclFrozenHi{} across the five cells against
+made. \sestina{} runs \vsevenDeclFrozenLo{} to \vsevenDeclFrozenHi{} across the five cells against
 opponents' \vsevenDeclOppLo{} to \vsevenDeclOppHi{}. That is a diagnostic.
 
 \subsection{Non-confirmatory results}
@@ -7072,20 +7084,20 @@ The protocol named seven conditions in advance that would constitute non-confirm
 the data are in every one of them admits a reading that makes it sound like something else. Two arose,
 and they are reported here rather than in a discussion of caveats.
 
-\subsubsection{FishBot v0.7 does not measurably outperform the phase-2 composite}
+\subsubsection{\sestina{} does not measurably outperform the phase-2 composite}
 \label{sec:results-composite}
 
-\fishseven{} against \composite{} is \vsevenBtwoComposite{}~pp
+\sestina{} against \composite{} is \vsevenBtwoComposite{}~pp
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$ over \vsevenBtwoCompositeN{} games. Both banks are
 positive, so the sign replicates, but the interval contains zero.
 
 The registered interpretation is explicit, and this paper adopts it. The increment that an earlier
 phase had reported over the composite, \vsevenKthreeOverComposite{}
 $[\vsevenKthreeOverCompositeLo, \vsevenKthreeOverCompositeHi]$ on a single bank, did not replicate;
-on this comparison \fishseven{} reduces to a configuration that development phase 2 had already
+on this comparison \sestina{} reduces to a configuration that development phase 2 had already
 assembled.
 
-The arithmetic makes the cell interpretable rather than merely disappointing. \fishseven{} minus
+The arithmetic makes the cell interpretable rather than merely disappointing. \sestina{} minus
 \composite{} is exactly the tie-break repair, the urgency removal and the stall detector added, with
 one further switch removed. \S\ref{sec:results-attribution} measures the stall detector's
 contribution as identically zero, and the removed switch's leave-one-out drop was zero on training
@@ -7096,7 +7108,7 @@ $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$.
 What this does and does not license is worth stating precisely, because \fcheap{} and \composite{}
 are different objects (Table~\ref{tab:configs}). It does not retract
 \S\ref{sec:results-primary}: \fcheap{} is a configuration of the \vsix{} frontier that existed before
-this cycle, and \fishseven{} improves on it by a replicated margin. What it licenses is the narrower
+this cycle, and \sestina{} improves on it by a replicated margin. What it licenses is the narrower
 statement that \textbf{the strength gain in this cycle is real and was produced in development phase
 2, and the architecture work that followed added no measurable strength on top of it}.
 
@@ -7220,7 +7232,7 @@ configuration's worst cell.
 \toprule
 Configuration & Worst cell & Edge (pp) & 95\% CI & Per bank \\
 \midrule
-FishBot v0.7 & phase-2 composite & $-0.04$ & $[-1.41, +1.33]$ & $+1.67$ / $-1.75$ \\
+SESTINA v1.0 & phase-2 composite & $-0.04$ & $[-1.41, +1.33]$ & $+1.67$ / $-1.75$ \\
 v0.6 deployed & \texttt{SEALED:X01xC3f} & $-4.24$ & $[-4.86, -3.62]$ & $-3.86$ / $-4.63$ \\
 \texttt{F-cheap} & phase-2 composite & $-2.08$ & $[-3.48, -0.69]$ & $-2.21$ / $-1.96$ \\
 phase-2 composite & phase-2 composite & $+0.00$ & $[+0.00, +0.00]$ & $+0.00$ / $+0.00$ \\
@@ -7228,25 +7240,25 @@ phase-2 composite & phase-2 composite & $+0.00$ & $[+0.00, +0.00]$ & $+0.00$ / $
 \end{tabular}}
 \end{table}
 
-\fishseven{}'s worst cell is \vsevenWorstFrozen{}~pp
+\sestina{}'s worst cell is \vsevenWorstFrozen{}~pp
 $[\vsevenWorstFrozenLo, \vsevenWorstFrozenHi]$ against the deployed policy's \vsevenWorstIncumbent{}
 $[\vsevenWorstIncumbentLo, \vsevenWorstIncumbentHi]$, satisfying the registered secondary claim that
 the worst case not be catastrophic.
 
-Two qualifications belong with that number, and both go against \fishseven{}.
+Two qualifications belong with that number, and both go against \sestina{}.
 
-First, \textbf{it does not replicate in sign}. \fishseven{}'s worst cell is
+First, \textbf{it does not replicate in sign}. \sestina{}'s worst cell is
 \vsevenWorstFrozenBankOne{} on the first bank and \vsevenWorstFrozenBankTwo{} on the second, attained
 at a different panel member on each (\texttt{\vsevenWorstFrozenBankOneOpp{}} and
-\texttt{\vsevenWorstFrozenBankTwoOpp{}}); on one bank \fishseven{} has no negative cell anywhere on
+\texttt{\vsevenWorstFrozenBankTwoOpp{}}); on one bank \sestina{} has no negative cell anywhere on
 the panel. Under the criterion of \S\ref{sec:evaluation-replication} the pooled value is not
 replicated. What survives replication is the comparison the protocol actually gated on, since
-\fishseven{}'s worst cell is far above the deployed policy's on both banks, rather than the pooled
+\sestina{}'s worst cell is far above the deployed policy's on both banks, rather than the pooled
 value itself.
 
 Second, \textbf{it is not the best worst case of the four}. Configurations that are themselves panel
 members carry a free zero cell against themselves, so the worst case is printed both ways;
-\composite{} is ahead of \fishseven{} on both readings, at \vsevenWorstComposite{} with its self-cell
+\composite{} is ahead of \sestina{} on both readings, at \vsevenWorstComposite{} with its self-cell
 and \vsevenWorstCompositeExSelf{} without.
 
 \begin{table}[!ht]\centering
@@ -7259,13 +7271,13 @@ Configuration & Minimax regret (pp) & Attained against \\
 \midrule
 \texttt{F-cheap} & 4.00 & v0.3 \\
 phase-2 composite & 4.08 & \texttt{withholder} \\
-FishBot v0.7 & 4.53 & \texttt{withholder} \\
+SESTINA v1.0 & 4.53 & \texttt{withholder} \\
 v0.6 deployed & 5.67 & \texttt{SEALED:X01xC3f} \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\fishseven{} is \textbf{\vsevenRegretFrozenRank{}rd of four} on minimax regret (Table~\ref{tab:regret}), at
+\sestina{} is \textbf{\vsevenRegretFrozenRank{}rd of four} on minimax regret (Table~\ref{tab:regret}), at
 \vsevenRegretFrozen{} against \vsevenRegretBest{}'s \vsevenRegretFcheap{} and \composite{}'s
 \vsevenRegretComposite{}. The configuration with the best worst case is not the configuration with the
 best regret, and this paper does not resolve the tension by selecting whichever statistic favours the
@@ -7278,7 +7290,7 @@ which is a reason to weight it less but not a reason to discount it.
 \label{tab:farpanel}
 {\tabfont\begin{tabular}{lrrrr}
 \toprule
-Far archetype & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
+Far archetype & SESTINA v1.0 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
 v0.3 & +28.72 & +25.47 & +24.72 & +28.40 \\
 v0.2 & +34.32 & +31.68 & +32.67 & +33.17 \\
@@ -7295,14 +7307,14 @@ v0.2 & +34.32 & +31.68 & +32.67 & +33.17 \\
 \end{table}
 
 Against the hardest sealed adversary the ordering reverses: on
-\texttt{\vsevenHardSealed{}}, \fishseven{} scores \vsevenHardFrozen{}
+\texttt{\vsevenHardSealed{}}, \sestina{} scores \vsevenHardFrozen{}
 $[\vsevenHardFrozenLo, \vsevenHardFrozenHi]$ where the deployed policy scores
 \vsevenHardIncumbent{} and \fcheap{} scores \vsevenHardFcheap{}. \vsevenHardBeaters{} of the four
 configurations beat that member with a lower bound above zero, namely \vsevenHardBeaterNames{}.
 
 \paragraph{The panel mean, reported last and as a diagnostic.} Over the \vsevenPanelMembers{} shared
 cells, which comprise \vsevenPanelDistinct{} distinct policies since three are named twice and are
-therefore double-counted by any mean, the figures are \fishseven{} \vsevenPanelMeanFrozen{},
+therefore double-counted by any mean, the figures are \sestina{} \vsevenPanelMeanFrozen{},
 \composite{} \vsevenPanelMeanComposite{}, \fcheap{} \vsevenPanelMeanFcheap{} and the deployed policy
 \vsevenPanelMeanIncumbent{}. The reporting rule of \S\ref{sec:evaluation-panel} forbids leading with
 this, and it points the opposite way from minimax regret. Appendix~\ref{app:panel} gives every cell.
@@ -7320,7 +7332,7 @@ location test failing to replicate. Table~\ref{tab:attribution} is the lattice.
 
 \begin{table}[!ht]\centering
 \caption{The attribution lattice. Add-one-in is measured from the deployed \vsix{} policy;
-leave-one-out is the drop from \fishseven{}. Reference cell \fishseven{} against the deployed policy
+leave-one-out is the drop from \sestina{}. Reference cell \sestina{} against the deployed policy
 on the lattice banks: \vsevenBfiveWhole{} $[\vsevenBfiveWholeLo, \vsevenBfiveWholeHi]$.}
 \label{tab:attribution}
 {\tabfont\begin{tabular}{lrcrc}
@@ -7341,17 +7353,17 @@ The stall detector behaves exactly as predicted. It is worth \vsevenAddInStall{}
 $[\vsevenAddInStallLo, \vsevenAddInStallHi]$ added and \vsevenLooStall{} removed, bit-identical on
 holdout in win rate and in events per game alike: the rule does not fire.
 
-The naive sum of the five components \fishseven{} carries is \vsevenBfiveSum{}~pp against a measured
+The naive sum of the five components \sestina{} carries is \vsevenBfiveSum{}~pp against a measured
 whole of \vsevenBfiveWhole{}~pp, a sub-additivity ratio of \vsevenSubAdditivity{}
 $[\vsevenSubAdditivityLo, \vsevenSubAdditivityHi]$, which contains the phase-2 composition figure of
 \vsevenSubAddPhaseTwo{}. Quoting the sum would overstate the configuration by
 \vsevenSubAdditivityOverstate{}~pp. The registered attribution claim, that components are
 sub-additive and no single leave-one-out drop exceeds the whole, is satisfied.
 
-One component was measured but is not carried by \fishseven{}. The \texttt{m2} switch is worth
+One component was measured but is not carried by \sestina{}. The \texttt{m2} switch is worth
 \vsevenAddInMtwo{} $[\vsevenAddInMtwoLo, \vsevenAddInMtwoHi]$ added to the blueprint, an interval
 excluding zero and larger than the tie-break's add-one-in. Its zero leave-one-out drop was measured
-on training material and is not re-measured here, because \fishseven{} does not carry the switch and
+on training material and is not re-measured here, because \sestina{} does not carry the switch and
 the protocol directs that it not be added back; there is no leave-one-out cell for it and there could
 not be.
 
@@ -7374,7 +7386,7 @@ bank order, 7090001 then 7090002.}
 \label{tab:partners}
 {\tabfont\begin{tabular}{lrcrc}
 \toprule
-Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Repl. \\
+Partners & SESTINA $-$ v0.6 & 95\% CI & Per bank & Repl. \\
 \midrule
 itself & $+4.49$ & $[+3.61, +5.38]$ & $+4.18$ / $+4.81$ & yes \\
 v0.6 & $+1.93$ & $[+1.04, +2.82]$ & $+2.07$ / $+1.79$ & yes \\
@@ -7402,7 +7414,7 @@ namely \vsevenOppSixVthree{} against \texttt{v03}, more than a point below its f
 \label{tab:partnerssix}
 {\tabfont\begin{tabular}{lrcrc}
 \toprule
-Partners & v0.7 $-$ v0.6 & 95\% CI & Per bank & Repl. \\
+Partners & SESTINA $-$ v0.6 & 95\% CI & Per bank & Repl. \\
 \midrule
 itself & $+4.55$ & $[+3.92, +5.18]$ & $+4.88$ / $+4.21$ & yes \\
 v0.6 & $+2.75$ & $[+2.14, +3.37]$ & $+2.97$ / $+2.54$ & yes \\
@@ -7413,7 +7425,7 @@ v0.3 & $+1.46$ & $[+0.63, +2.29]$ & $+1.25$ / $+1.67$ & yes \\
 \end{table}
 
 \begin{table}[!ht]\centering
-\caption{Transfer across partners: \fishseven{} over \vsix{} against \vsix{} over v0.5, on the same
+\caption{Transfer across partners: \sestina{} over \vsix{} against \vsix{} over v0.5, on the same
 eight settings and the same banks. The two training rows are quoted from the registered
 protocol; the protocol records that its v0.6-over-v0.5
 training row is computed on three of seven changed settings, so that row is not directly comparable
@@ -7423,19 +7435,19 @@ with the holdout row above it. Reported and not gated.}
 \toprule
 Comparison & Min & Median & Self & Median/self \\
 \midrule
-v0.7 over v0.6 --- holdout & $-0.19$ & $+1.40$ & $+4.49$ & 0.313 \\
+SESTINA over v0.6 --- holdout & $-0.19$ & $+1.40$ & $+4.49$ & 0.313 \\
 v0.6 over v0.5 --- holdout & $-0.40$ & $+0.26$ & $+0.69$ & 0.380 \\
-v0.7 over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\
+SESTINA over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\
 v0.6 over v0.5 --- training, stated in advance & $-0.61$ & $+0.64$ & $+1.35$ & 0.472 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 The protocol stated in advance that if the ordering in Table~\ref{tab:regimes} survived, the
-appropriate summary is that \fishseven{}'s advantage transfers across partners about as well as
+appropriate summary is that \sestina{}'s advantage transfers across partners about as well as
 \vsix{}'s did and, on the median-to-self-play ratio, slightly less well. The ordering survived
 (\vsevenSoneRatio{} against \vsevenBaseRatio{}), so that is the paper's summary. The fact it omits is
-that \fishseven{}'s absolute changed-partner median is \vsevenSoneMedian{} against \vsix{}'s
+that \sestina{}'s absolute changed-partner median is \vsevenSoneMedian{} against \vsix{}'s
 \vsevenBaseMedian{}, and the ratio is smaller mainly because the self-play row it divides by is more
 than six times larger.
 
@@ -7528,18 +7540,18 @@ components rather than three; it is \vsevenLegacyResidual{}
 $[\vsevenLegacyResidualLo, \vsevenLegacyResidualHi]$, an interval \vsevenLegacyResidualRatio{} times
 the size of the residual, so the data are equally consistent with the ladder contributing nothing.
 
-\subsection{RQ2: adversarial search against FishBot v0.7}
+\subsection{RQ2: adversarial search against \sestina{}}
 \label{sec:results-adversarial}
 
 \vsevenBfourFits{} of \vsevenBfourArmsWord{} searches produced a weight vector and all
 \vsevenBfourArmsWord{} were evaluated. \textbf{None of the \vsevenBfourArmsWord{} searches found a positive
-edge against \fishseven{} at the tested budgets.} Every one loses, by between
+edge against \sestina{} at the tested budgets.} Every one loses, by between
 \vsevenBfourBestLoss{} and \vsevenBfourWorstLoss{}~pp; every sign replicates; and the largest upper
 bound anywhere is \vsevenBfourWorstUpper{}, which is \vsevenBfourFloorGap{}~pp below the detection
 floor. The registered claim is satisfied. Table~\ref{tab:adversaries} gives every search.
 
 \begin{table}[!ht]\centering
-\caption{\vsevenBfourArms{} independently constructed adversarial searches against \fishseven{}. A
+\caption{\vsevenBfourArms{} independently constructed adversarial searches against \sestina{}. A
 positive edge would mean the adversary beats the target. Each was fitted on a deal stream disjoint
 from the banks it is evaluated on. Per-bank values are given in bank order, 7090001 then 7090002.}
 \label{tab:adversaries}
@@ -7569,7 +7581,7 @@ not one search repeated. The declaration-objective arm is read against the decla
 
 This is a lower bound on exploitability and not an upper bound. It is evidence about these searches
 at these budgets in these classes, and \S\ref{sec:discussion-exploit} states what would be required
-to convert it into a statement about \fishseven{}.
+to convert it into a statement about \sestina{}.
 
 \subsubsection{The white-box transcript-inversion adversary}
 \label{sec:results-whitebox}
@@ -7590,7 +7602,7 @@ is unquantified. \vsevenZeightInert{} of its fitted coordinates are inert, becau
 \vsix{} agent and reads only that policy's \vsevenVsixCoords{} coordinates while the search extends
 its vector to \vsevenCoordinates{}; the effective search is therefore over \vsevenZeightLive{} live
 coordinates plus the inverter the base fixes. And the budget is small. The result is evidence that
-this inverter, at this budget, does not exploit \fishseven{}; it is not evidence that no white-box
+this inverter, at this budget, does not exploit \sestina{}; it is not evidence that no white-box
 attack can.
 
 \paragraph{Fitting performance is not evaluation performance.} The in-class arm reaches
@@ -7613,7 +7625,7 @@ target minus its edge against the unhandicapped one. The sub-floor rung must \em
 \label{tab:controls}
 {\tabfont\begin{tabularx}{\linewidth}{@{}l C C C C@{}}
 \toprule
-Planted handicap & Planted cost & vs.\ handicapped & vs.\ v0.7 & Recovered excess \\
+Planted handicap & Planted cost & vs.\ handicapped & vs.\ SESTINA & Recovered excess \\
 \midrule
 0.05 \textit{(sub-floor)} & \ci{$+0.78$}{+0.25, +1.32} & \ci{$-3.62$}{-4.26, -2.99} & \ci{$-4.32$}{-4.94, -3.69} & \ci{$\mathbf{+0.70}$}{-0.20, +1.59} \\\addlinespace[0.9ex]
 0.08 & \ci{$+1.59$}{+1.05, +2.13} & \ci{$-2.29$}{-2.92, -1.67} & \ci{$-4.67$}{-5.30, -4.05} & \ci{$\mathbf{+2.38}$}{+1.50, +3.26} \\\addlinespace[0.9ex]
@@ -7640,9 +7652,9 @@ the same conclusion from a point estimate a little under half a point higher, an
 here grazes the floor. The protocol had named a different phase-2 row for this comparison;
 Appendix~\ref{app:corrections-self} records the correction.
 
-The identity control is exact: \fishseven{} against itself is \vsevenIdentityRate{} with a
+The identity control is exact: \sestina{} against itself is \vsevenIdentityRate{} with a
 zero-width interval on both banks over \vsevenIdentityN{} games each. The responders fitted for these
-controls also lose to unhandicapped \fishseven{} in all four rows, a second sample of
+controls also lose to unhandicapped \sestina{} in all four rows, a second sample of
 \S\ref{sec:results-adversarial}'s finding from a different bank and against a handicapped target;
 they maximise win rate as five of the \vsevenBfourArmsWord{} adversarial searches do, so this is a second sample
 rather than an independent method. Table~\ref{tab:residual} is the seat-isolation residual.
@@ -7656,8 +7668,8 @@ left column is the deployed mode.}
 \toprule
 Configuration & Bank & \texttt{-{}-threads=1} & \begin{tabular}[b]{@{}r@{}}\texttt{-{}-threads=1}\\\texttt{-{}-freshagents}\end{tabular} \\
 \midrule
-FishBot v0.7 & 7090001 & 0 / 813,512 & \textbf{0} / 813,512 \\
-FishBot v0.7 & 7090002 & 3 / 816,049 & \textbf{0} / 816,016 \\
+SESTINA v1.0 & 7090001 & 0 / 813,512 & \textbf{0} / 813,512 \\
+SESTINA v1.0 & 7090002 & 3 / 816,049 & \textbf{0} / 816,016 \\
 v0.6 deployed & 7090001 & 0 / 791,530 & \textbf{0} / 791,530 \\
 v0.6 deployed & 7090002 & 0 / 792,734 & \textbf{0} / 792,734 \\
 \texttt{F-cheap} & 7090001 & 1 / 792,140 & \textbf{0} / 792,140 \\
@@ -7682,7 +7694,7 @@ play.
 
 The record priced the frontier's search at \vsevenCostRecorded$\times$ the blueprint, a figure that
 describes \fcheap{}. On a like-for-like basis \fcheap{} measures at least
-\vsevenCostFcheapTight$\times$, and \fishseven{} at least \vsevenCostFrozenTight$\times$. All three
+\vsevenCostFcheapTight$\times$, and \sestina{} at least \vsevenCostFrozenTight$\times$. All three
 tight bounds exceed \vsevenCostRecorded$\times$, so the record understates the cost. The whole-panel
 column is lower only because expensive panel members place a large common term on both sides of the
 ratio, and it is the most diluted of the three. Table~\ref{tab:cost} gives the figures.
@@ -7699,7 +7711,7 @@ cells.}
 \toprule
 Configuration & vs \texttt{random} (tightest) & Far archetypes (median) & Whole panel (median) \\
 \midrule
-FishBot v0.7 & 4.52$\times$ & 4.72$\times$ & 2.72$\times$ \\
+SESTINA v1.0 & 4.52$\times$ & 4.72$\times$ & 2.72$\times$ \\
 \texttt{F-cheap} & 4.10$\times$ & 4.36$\times$ & 2.63$\times$ \\
 phase-2 composite & 4.20$\times$ & 4.51$\times$ & 2.69$\times$ \\
 \bottomrule
@@ -7710,10 +7722,10 @@ phase-2 composite & 4.20$\times$ & 4.51$\times$ & 2.69$\times$ \\
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{What FishBot v0.7 improves}
+\subsection{What \sestina{} improves}
 \label{sec:discussion-improves}
 
-\fishseven{} is the strongest configuration this project has produced. Against \fcheap{}, the
+\sestina{} is the strongest configuration this project has produced. Against \fcheap{}, the
 cheapest configuration genuinely on the \vsix{} frontier and the target registered in advance, it
 gains \vsevenBtwoFcheapMag{}~pp of win-rate edge over \vsevenBtwoFcheapN{} games of material sealed
 before it existed, with the sign replicating on both banks and every advance-specified validity check
@@ -7736,10 +7748,10 @@ architecture work; its value was chosen as the argmax of a measured dose respons
 it turned out to express is not the one it was designed for (\S\ref{sec:agent-contest}). Its
 provenance matters for the next subsection.
 
-\subsection{What FishBot v0.7 does not improve}
+\subsection{What \sestina{} does not improve}
 \label{sec:discussion-notimproves}
 
-Against \composite{}, \fishseven{} gains \vsevenBtwoComposite{}~pp
+Against \composite{}, \sestina{} gains \vsevenBtwoComposite{}~pp
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$, an interval containing zero
 (\S\ref{sec:results-composite}). The composite is not an external baseline; it was assembled during
 this cycle's own development, from the \vsix{} frontier's search, the contestation weight and one
@@ -7794,7 +7806,7 @@ provide.
 \subsection{Exploitability, and what the adversarial results do and do not show}
 \label{sec:discussion-exploit}
 
-None of the \vsevenBfourArmsWord{} adversarial searches found a positive edge against \fishseven{} at the
+None of the \vsevenBfourArmsWord{} adversarial searches found a positive edge against \sestina{} at the
 tested budgets, in the tested classes, controlling all three opposing seats in the synchronised
 correlation regime. Every one of those qualifiers is load-carrying, and the result is a \emph{lower
 bound} on exploitability rather than an upper bound.
@@ -7807,7 +7819,7 @@ itself (\S\ref{sec:results-whitebox}). Its failure is evidence about that search
 reading error the v0.4 record in this corpus committed, having reported a null exploitability result
 as a demonstration of robustness, and naming it here is how this paper avoids repeating it.
 
-Converting any of this into a statement about \fishseven{} rather than about the searches would
+Converting any of this into a statement about \sestina{} rather than about the searches would
 require a bound in the other direction, and \S\ref{sec:discussion-future} explains why none exists.
 
 \subsection{External validity}
@@ -7917,7 +7929,7 @@ configuration is frozen.
 \section{Conclusion}
 \label{sec:conclusion}
 
-\fishseven{} is the strongest agent this project has produced. Against \fcheap{}, the cheapest
+\sestina{} is the strongest agent this project has produced. Against \fcheap{}, the cheapest
 configuration genuinely on the \vsix{} frontier and the comparison target registered before any
 holdout deal was played, it gains \vsevenBtwoFcheapMag{}~pp of team win-rate edge
 $[\vsevenBtwoFcheapLo, \vsevenBtwoFcheapHi]$ over \vsevenBtwoFcheapN{} games of sealed material, with
@@ -7934,13 +7946,13 @@ found a positive edge at the tested budgets. Two of those tests are not clean: t
 decides the coordination claim is \vsevenSoneMin{}
 $[\vsevenOppFiveWithholderLo, \vsevenOppFiveWithholderHi]$, above the registered
 $\vsevenSoneThreshold{}$ collapse threshold on the point estimate but not resolved against it
-(\S\ref{sec:results-partners}); and over the shared panel \fishseven{} is
+(\S\ref{sec:results-partners}); and over the shared panel \sestina{} is
 \vsevenRegretFrozenRank{}rd of four on minimax regret with a worst cell that does not replicate in
 sign (\S\ref{sec:results-panel}).
 
 Two further findings qualify that picture and are the reason this paper is worth more than its
 headline. The
-first is that \fishseven{} does not measurably outperform a composite configuration assembled during
+first is that \sestina{} does not measurably outperform a composite configuration assembled during
 its own development, at \vsevenBtwoComposite{}~pp
 $[\vsevenBtwoCompositeLo, \vsevenBtwoCompositeHi]$. The improvement in this cycle is therefore real,
 but it was produced during adversary generation by a coordinate sweep whose value was the argmax of
@@ -7961,7 +7973,7 @@ of small mechanisms that compound remains consistent with everything reported he
 possibility is the clearest next step.
 
 Finally, the limits of what this study establishes are worth restating, because they are what the
-evidence permits. \fishseven{} is the strongest configuration in this project's lineage. It is not
+evidence permits. \sestina{} is the strongest configuration in this project's lineage. It is not
 shown to be near-optimal, it is not shown to be unexploitable, and it is not shown to be the strongest
 Fish-playing agent in existence. The comparison class contains only agents this project wrote, no
 human evaluation exists, and every exploitability figure here is a lower bound produced by a search
@@ -8454,7 +8466,7 @@ default row is \vsevenDiaMaxExcursion{}~pp, on \vsevenDiaMaxExcursionRow{}.
   declarations, all but one of them with a single live half-suit. It is also
   policy-dependent: the source
   records that a policy made more patient about declaring would begin to produce multi-half-suit
-  forced endgames, at which point the ordering would start to matter. \fishseven{} is a change in
+  forced endgames, at which point the ordering would start to matter. \sestina{} is a change in
   that direction, since it disables the urgency escalation entirely
   (\S\ref{sec:agent-urgency}), and no measurement of live-half-suit multiplicity at forced-endgame
   entry exists for it.
@@ -8592,7 +8604,7 @@ played and before the sealed adversary half had been decoded. The verdicts are
 
 \subsection*{The primary claim}
 
-\fishseven{} beats \fcheap{} on both primary holdout banks, pooled over \vsevenBtwoFcheapN{} games.
+\sestina{} beats \fcheap{} on both primary holdout banks, pooled over \vsevenBtwoFcheapN{} games.
 
 \begin{center}\tabfont
 \begin{tabularx}{\linewidth}{@{}l L@{}}
@@ -8625,7 +8637,7 @@ S2 & not a private convention & the off-diagonal is within \vsevenStwoThreshold{
 S3 & no fresh adversary exploits it & every arm's upper bound below its floor & PASS \\
 S4 & the gain is attributable & components sub-additive, no single drop exceeding the whole & PASS \\
 S5 & it survives the rule dialect & every row keeps its sign, none more than \vsevenSfiveTolerance{}~pp below default & \vsevenSfiveVerdict{} \\
-S6 & the worst case is not catastrophic & \fishseven{}'s worst panel cell no worse than the deployed \vsix{} policy's & PASS \\
+S6 & the worst case is not catastrophic & \sestina{}'s worst panel cell no worse than the deployed \vsix{} policy's & PASS \\
 S7 & the instrument is intact & the planted edges recover, the sub-floor rung does not, the cheats fail exactly their own tests & PASS \\
 \bottomrule
 \end{tabularx}
@@ -8636,7 +8648,7 @@ reports \vsevenSonePositive{} of the \vsevenSoneRows{} genuinely changed rows. B
 the phase-5 recording carries the ambiguity as deviation D9.
 
 A failure of S1, S2 or S6 would have been a substantive failure, and the paper would report
-\fishseven{} as brittle in that named way. A failure of S7 would have been procedural and the evaluation would have
+\sestina{} as brittle in that named way. A failure of S7 would have been procedural and the evaluation would have
 stopped.
 
 \subsection*{What would mean v0.7 is not an advancement}
@@ -8667,11 +8679,11 @@ positive number means the arm beats that member.
 
 {\tabfont\begin{longtable}{@{}l l r r r r@{}}
 \toprule
-Panel member & Class & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
+Panel member & Class & SESTINA v1.0 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
 \endfirsthead
 \toprule
-Panel member & Class & FishBot v0.7 & v0.6 & \texttt{F-cheap} & Composite \\
+Panel member & Class & SESTINA v1.0 & v0.6 & \texttt{F-cheap} & Composite \\
 \midrule
 \endhead
 \texttt{F-fast} & near & $+4.55$ & $+0.00$ & $+1.83$ & $+4.17$ \\
@@ -8716,7 +8728,7 @@ Earlier work in this lineage contains measurement and implementation errors that
 The project's convention is that these are stated as corrections rather than silently patched into the
 artifacts they correct, and the itemised register is placed here so that it does not compete with the
 subject of the paper. \S\ref{sec:background} summarises the consequences that bear on
-\fishseven{}: earlier evaluation lacked the power to resolve the effects it reported on, one
+\sestina{}: earlier evaluation lacked the power to resolve the effects it reported on, one
 exploitability interpretation was substantially too strong, an exact-belief implementation was unsound
 in multi-agent configurations, and the cost of the frontier's search was mischaracterised by two
 orders of magnitude. Those discoveries are why the evaluation framework of \S\ref{sec:evaluation}
@@ -8735,7 +8747,7 @@ exists in the form it does.
   The endgame-restricted operating point was re-measured at $\sim$\vsevenCostRecorded$\times$ during
   phase~3, and that correction was carried into the protocol. \textbf{This report corrects the correction}: measured on the shared panel at a fixed thread count,
   \fcheap{}, the configuration the \vsevenCostRecorded$\times$ describes, costs at least
-  \vsevenCostFcheapTight$\times$ the blueprint, and \fishseven{} at least
+  \vsevenCostFcheapTight$\times$ the blueprint, and \sestina{} at least
   \vsevenCostFrozenTight$\times$ (\S\ref{sec:results-cost}). Every figure in that table is a lower
   bound and none carries an interval. The record has now been wrong in both directions and the reason is the
   same both times, a ratio quoted without the basis it was computed on.
@@ -8886,7 +8898,7 @@ exists in the form it does.
   measured on \vsix{}. Its rate column comes from a 4,000-deal mirror cell and its
   \texttt{n} column from the 3,000-deal treatment cell, so the pair
   $0.00994$ over $260{,}987$ decisions is not any one cell. The quantity also does not carry over:
-  the gate acts on the argmax of an ask score that \fishseven{} extends with a coordinate
+  the gate acts on the argmax of an ask score that \sestina{} extends with a coordinate
   \vsix{} does not have, so the rate at which it displaces that argmax is a different number.
   \S\ref{sec:agent-policy} now quotes a capture of the frozen configuration from its own seats on the
   same diagnostic bank, which binds at \vsevenGateBindRate\% of \vsevenGateBindN{} ask decisions,

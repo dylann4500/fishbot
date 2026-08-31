@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FishBot v0.7 -- generate every table in docs/v07/INSTRUMENT.md from the artifacts.
+"""SESTINA v1.0 (FishBot v0.7 cycle) -- generate every table in docs/v07/INSTRUMENT.md from the artifacts.
 
 The project convention is that no number in a report is hand-typed: `build_tables_v06.py`
 emits the v0.6 paper's macros from `research/v06/results/`, and the v0.6 audit found four
@@ -498,7 +498,7 @@ def replicates(rs):
 # Display names.  Harness identifiers (FROZEN, INCUMBENT) are how the artifacts
 # label the arms; the paper names them consistently as the agents they are, and
 # uses the harness spelling only where a command has to be reproduced.
-DISPLAY = {'FROZEN': 'FishBot v0.7', 'INCUMBENT': 'v0.6 deployed', 'v06': 'v0.6',
+DISPLAY = {'FROZEN': 'SESTINA v1.0', 'INCUMBENT': 'v0.6 deployed', 'v06': 'v0.6',
            'F-cheap': '\\texttt{F-cheap}', 'F-mid': '\\texttt{F-mid}',
            'composite': 'phase-2 composite', 'v05': 'v0.5', 'v04': 'v0.4',
            'v03': 'v0.3', 'v02': 'v0.2', 'F-fast': '\\texttt{F-fast}',
@@ -675,7 +675,7 @@ def b3_panel_table():
     fars = [cell[(a, p)][0] for p in panel if cls[p] == 'far' for a in arms if (a, p) in cell]
     emit('vsevenFarSpanLo', _n(min(fars)), 'P5-B3.jsonl: smallest edge any arm takes on a far archetype')
     emit('vsevenFarSpanHi', _n(max(fars)), 'P5-B3.jsonl: largest edge any arm takes on a far archetype')
-    TABLE_SPEC['farpanel.tex'] = ('lrrrr', 'Far archetype & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite')
+    TABLE_SPEC['farpanel.tex'] = ('lrrrr', 'Far archetype & SESTINA v1.0 & v0.6 & \\texttt{F-cheap} & Composite')
     writeTable('farpanel.tex', far_lines)
 
     # the hardest sealed adversary, where the ordering reverses
@@ -705,7 +705,7 @@ def b3_panel_table():
         full.append('%s & %s & %s \\\\' % (disp(p), cls[p], ' & '.join(
             ('$%s$' % _sg(cell[(a, p)][0])) if (a, p) in cell else '---' for a in arms)))
     writeTable('panelfull.tex', full, '@{}l l r r r r@{}',
-               'Panel member & Class & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Composite',
+               'Panel member & Class & SESTINA v1.0 & v0.6 & \\texttt{F-cheap} & Composite',
                longtable=True)
     return cell, panel, cls
 
@@ -928,7 +928,7 @@ def b6_partners():
                           _sg(per[BANK2]), 'yes' if rep else '\\textbf{no}'))
             out[(opp, p)] = d
         writeTable('partners_%s.tex' % opp, lines, 'lrcrc',
-                   'Partners & v0.7 $-$ v0.6 & 95\\% CI & Per bank & Repl.')
+                   'Partners & SESTINA $-$ v0.6 & 95\\% CI & Per bank & Repl.')
     # S1 as PREREGISTRATION 5.2 draft 3 states it: min, median, self, ratio, and
     # the incumbent's own baseline over v05 on the same eight rows.
     ch = [out[('v05', p)] for p in PORDER if p != 'itself' and ('v05', p) in out]
@@ -958,11 +958,11 @@ def b6_partners():
     emit('vsevenBaseRatio', _n(bmed / base['itself'], 3), 'P5-B6.jsonl: v0.6 over v0.5 median/self ratio')
     TABLE_SPEC['regimes.tex'] = ('lrrrr', 'Comparison & Min & Median & Self & Median/self')
     writeTable('regimes.tex', [
-        'v0.7 over v0.6 --- holdout & $%s$ & $%s$ & $%s$ & %s \\\\' %
+        'SESTINA over v0.6 --- holdout & $%s$ & $%s$ & $%s$ & %s \\\\' %
         (_sg(min(ch)), _sg(med), _sg(self7), _n(med / self7, 3)),
         'v0.6 over v0.5 --- holdout & $%s$ & $%s$ & $%s$ & %s \\\\' %
         (_sg(min(bch)), _sg(bmed), _sg(base['itself']), _n(bmed / base['itself'], 3)),
-        'v0.7 over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\\\',
+        'SESTINA over v0.6 --- training, stated in advance & $-0.15$ & $+1.26$ & $+2.94$ & 0.428 \\\\',
         'v0.6 over v0.5 --- training, stated in advance & $-0.61$ & $+0.64$ & $+1.35$ & 0.472 \\\\'])
     emit('vsevenOneSeatFive', _sg(out[('v05', 'v06')]),
          'P5-B6.jsonl: a one-seat upgrade among v06 partners, v05 opponent')
@@ -1119,7 +1119,7 @@ def b9_controls():
     # separate the rungs, but not the last row from \bottomrule
     lines = [l + '\\addlinespace[0.9ex]' for l in lines[:-1]] + lines[-1:]
     writeTable('controls.tex', lines, '@{}l C C C C@{}',
-               'Planted handicap & Planted cost & vs.\\ handicapped & vs.\\ v0.7 & Recovered excess',
+               'Planted handicap & Planted cost & vs.\\ handicapped & vs.\\ SESTINA & Recovered excess',
                xtab=True)
     ident = [r for r in rows if r.get('kind') == 'identity']
     wr = {r['match']['winRateA'] for r in ident}
@@ -1342,7 +1342,7 @@ def b0_verification():
     writeTable('components.tex',
                ['%s & %s & %s & %s \\\\' % r for r in COMPONENTS_TABLE],
                '@{}Q{0.77} Q{0.92} Q{1.31} l@{}',
-               'Component & v0.6 & FishBot v0.7 & Section', xtab=True)
+               'Component & v0.6 & SESTINA v1.0 & Section', xtab=True)
     lay = fz['allparamsLayout']
     lay_lines = []
     for k, v in lay.items():
@@ -1417,7 +1417,7 @@ def b1_gate():
         lines.append('%s & %s \\\\' % (GNAME[g], ' & '.join(cells)))
     lines.append('\\midrule\n\\textbf{verdict} & %s \\\\' %
                  ' & '.join('\\textbf{%s}' % by[c]['verdict'] for c in order))
-    TABLE_SPEC['gate.tex'] = ('lcccc', 'Rule & FishBot v0.7 & v0.6 & \\texttt{F-cheap} & Negative control')
+    TABLE_SPEC['gate.tex'] = ('lcccc', 'Rule & SESTINA v1.0 & v0.6 & \\texttt{F-cheap} & Negative control')
     writeTable('gate.tex', lines)
     for c in order:
         emit('vsevenGate%sVerdict' % CTAG[c], by[c]['verdict'], 'P5-gate.jsonl: %s gate verdict' % c)
