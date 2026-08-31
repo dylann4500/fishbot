@@ -1,329 +1,385 @@
 # FishLab
 
-FishLab is a Canadian Fish simulation and research workbench. **FishBot v0.6** is the current
-release. It combines an exact observer-conditioned posterior over the initial deal — used as a
-reference and validation oracle — with a faster approximate inference path that the deployed policy
-runs. v0.4 and v0.5 stay byte-identical and remain the reference opponents. All three live in the
-C++ engine under `engine/`. The browser lab (`app/`, `lib/fish-engine.ts`) hosts the earlier v0.3
-population and the interactive replay.
+**A research workbench for six-player Canadian Fish (Literature), and the FishBot agents built in
+it.**
 
-## FishBot v0.6
+Every action in Fish is public, so the entire hidden state is the initial deal and the posterior over
+that deal is exactly computable. That makes the game an unusually clean testbed for
+imperfect-information team play: exact inference is available as an oracle, the domain is cheap
+enough that one desktop plays hundreds of complete six-seat games a second, and a claim can be
+checked rather than argued.
 
-Two configurations ship, following this project's convention of naming both:
+This repository holds the C++ engine, the FishBot lineage from v0.2 to v0.7, the measurement
+apparatus, every artifact the reported numbers were computed from, and the technical reports that
+describe them.
 
-- **FishBot v0.6** — the deployed policy. Same mechanisms as v0.5, a parameter vector found by a
-  repaired optimiser, and **303 games/s** (v0.5: 276, v0.4: 148).
-- **FishBot v0.6-Search** — v0.6 plus a determinized information-set search at test time. The
-  strongest configuration measured, at three orders of magnitude less throughput.
+**Start here**
 
-### What is established
+- **Read it** — FishBot v0.7's technical report, 72 pages: [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf)
+- **Play it** — `cd engine && make && ./fish serve`, then open `http://127.0.0.1:8173`
+- **Check it** — `cd engine && make && ./fish verify --games=600`
+- **Bring your own bot** — any language, one JSON line per decision: [`docs/BOT_PACKAGE.md`](docs/BOT_PACKAGE.md)
 
-- **Robustness across playstyles.** Pooled over three disjoint seed banks and a thirteen-style set,
-  **minimax regret 3.06 for v0.6 against 8.60 for v0.5 and 11.65 for v0.4**. v0.6 is ahead of v0.5 on
-  **7** of the thirteen styles, behind on **5** and equal on **1**, with a largest single-style loss
-  of 1.72 points, and its worst cell equals v0.5's.
-- **Against the withholder** — the deception manoeuvre the project owner brought here from live play
-  (hold cards of a half-suit you were asked for, then decline to ask back in it) — **+8.60 points**
-  over 4,800 games, replicating at all three banks (+9.06, +8.33, +8.34).
-- **Head to head, at the sample size it takes to see it.** v0.6 beats v0.5 **50.89%**
-  [50.61, 51.16] over **126,000 games** with **7 of 7** banks above parity, and v0.4 **51.11%**
-  [50.59, 51.63] over 36,000 games with 3 of 3. At the 1,800-game cells this project normally uses
-  the same comparison reads as a null and two cells read as a loss — both of which return *above*
-  parity at 18,000 games. The margin is about nine tenths of a point: real, replicated on every
-  bank, and small.
-- **Test-time search is the one place a multi-step method beats a static rule.** On v0.5's vector it
-  takes **52.64%** against v0.5 over 2,160 games and three banks, none below 52.08%. On v0.6's own
-  vector it takes **52.08%** against v0.6 over 2,880 games, **all four cells above parity**, worst
-  50.83%. That second number is why v0.6-Search is a configuration worth naming.
-- **The optimizer's curse is worth 35.69 points.** An unguarded argmax over the rollout means scores
-  13.61% against a 49.31% blueprint-forced control at identical budget, seed and sample size. A
-  paired lower-confidence-bound deviation rule recovers all of it. This is the largest single effect
-  measured anywhere in this codebase.
-- **Two negative controls make the search result about information, not variety.** Resolving the
-  55%-of-decisions tie group uniformly at random, seeded from the public event stream, is worth
-  *exactly* nothing — 50.00%, mean half-suits 4.500 to 4.500. One sampled deal is worth nothing.
-  Twelve are worth points. The signal is in the **joint** posterior, which every marginal discards.
-- **Exploitability, measured for the first time in this project.** A best response fitted from the
-  same policy family with the same budget reaches parity against v0.4 (50.69% [49.06, 52.31],
-  reproducing the published 51.19% control) and against v0.5 (50.31% [48.75, 51.89]), and **fails to
-  reach parity against v0.6 (48.36% [46.75, 49.97])**. It is a lower bound within the searched
-  class, so the comparison is the result, not the level.
-- **The advantage is a self-play advantage.** Against three v0.5 opponents, v0.6 beats v0.5 by 2.25
-  points with two copies of itself as partners, by 1.4 with v0.3 partners, by −0.1 with detective
-  partners and by −0.8 with withholder partners. A refit scored in self-play buys coordination with
-  copies of itself, and it does not transfer. This is the owner's decision D2 measured rather than
-  asserted, and it is the sharpest limitation on everything above.
-- v0.6 passes the pathology commit gate identically to v0.5 (0 games at the action limit, longest
-  dead run 1) and declares more accurately: 98.50% against 97.47% over 9,000 games.
+---
 
-**The deployed gain is entirely parametric, and three of the four things built are negative results.**
+## FishBot v0.7
 
-| what was built | verdict |
+The frozen configuration is a single spec string, recorded with its 55-coordinate parameter vector in
+[`engine/fishbot_v07.json`](engine/fishbot_v07.json):
+
+```
+v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,
+    s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26
+```
+
+It combines an approximate Sinkhorn fit to the deal posterior started from a fitted policy prior, a
+linear ask and declaration policy, a public-history tie-break that preserves common knowledge among
+teammates, a half-suit contestation weighting, a deduction-state stall detector in place of an
+event-count termination rule, and a guarded determinized test-time search.
+
+### What was measured
+
+All figures below are on **sealed holdout material**, under a protocol registered before any of it
+was played, with deal-clustered bootstrap intervals and replication across two disjoint deal banks
+required in advance. The registered target was `F-cheap` rather than the deployed v0.6 policy on
+purpose: the deployed policy ships its search off, so beating it is the easier claim.
+
+| comparison | edge | 95% CI | games |
+|---|---:|---|---:|
+| **vs `F-cheap`** — the registered target: the v0.6 policy with its endgame-truncated search switched on, the cheapest configuration genuinely on the v0.6 frontier | **+3.33 pp** | [+2.88, +3.78] | 48,000 |
+| vs the deployed v0.6 policy | +4.63 pp | [+4.19, +5.06] | 48,000 |
+| vs `F-mid` | +2.89 pp | [+2.00, +3.78] | 12,000 |
+| vs v0.5 | +5.18 pp | [+4.56, +5.81] | 24,000 |
+| **vs the phase-2 composite** | **+0.15 pp** | **[−0.29, +0.59]** | 48,000 |
+
+The registered decision rule for the primary comparison was three things at once: a pooled lower
+bound above **1.53 pp** — a detection floor calibrated with planted edges, which the protocol states
+does not buy down with games, so a larger cell does not lower it — a sign that replicates on both
+banks, and a pass of the soundness gate. All three were satisfied; the banks read +3.67 and +2.99.
+
+The last row is the paper's central qualification and is stated at the same weight as the first:
+**FishBot v0.7 does not measurably outperform a composite configuration assembled earlier in the same
+programme**, so the architecture work that followed added no measurable strength. That was one of
+seven conditions of non-confirmation named in the protocol before any holdout was played, and it is
+recorded as having been met.
+
+Also measured, and also reported:
+
+- Over a shared **31-member opponent panel**, v0.7's worst cell is **−0.04 pp** [−1.41, +1.33], which
+  does not replicate in sign — +1.62 on one bank and −1.75 on the other, at a different panel member
+  each time — and it is **3rd of four** on minimax regret, at 4.53 against `F-cheap`'s best-of-four
+  4.00.
+- The **attribution location test does not replicate**: one bank locates the gain in a single
+  component, the other does not.
+- **Eight independently constructed adversarial searches** were fitted against it; none found a
+  positive edge at the tested budgets. That is a lower bound produced by a search, not a bound on
+  what a search could find.
+- Under partner substitution against a v0.5 opponent, 6 of 7 changed-partner rows stay positive; the
+  worst is −0.19, which that battery does not resolve.
+- The advantage persists under cross-play between independently trained runs and across eight rule
+  dialects.
+- v0.7 costs **at least 4.52×** the non-searching blueprint. Every cost figure in the report is a
+  lower bound, because the harness measures whole-match throughput.
+- Four candidate mechanisms failed to produce measurable improvement at this resolution.
+
+The phase-5 evaluation is **428 scored cells over 4,322,400 games**.
+
+### What it does not claim
+
+The report keeps three senses of "strongest" apart, and claims only the first:
+
+| sense of "strongest" | status |
 |---|---|
-| a **repaired optimiser** — per-coordinate step sizes, a paired per-deal objective, an explicit minimax-regret dispatch | **this is the strength change.** v0.5's own 40-generation refit was indistinguishable from sampling noise (OLS slope +0.00049/gen, t = 1.60), so its shipped vector was v0.4's |
-| **exact-posterior tie resolution** | **null.** 54.74% of v0.5's ask decisions end in a bit-for-bit tie; 93.77% are two cards of one half-suit at one target; the **exact** posterior separates **0.00%** of them, and enumeration order, the deployed marginal, v0.5's own two-ply pass and the exact posterior all hit at 43.81/43.81/43.76/43.81%. The ties are exchangeable and irreducible, so the mechanism was never wired into the policy |
-| **exactness in the ask marginal** | **worse.** Scored as predictors on 140,661 unresolved cards from identical states, the exact count law hits 47.94% at 1.42246 nats against the deployed approximation's 51.49% at 1.38218. The policy prior is worth about 1.5 points of that; the rest survives with the prior deleted, so the approximation's max-entropy smoothing is itself the better predictor |
-| **determinized information-set search** | **the one positive mechanism.** Unguarded it is −35.69 points; guarded by a paired lower-confidence-bound rule it takes 52.64% against v0.5 over 2,160 games and 52.08% against v0.6 over 2,880 games with all four cells above parity. Shipped as the separate **v0.6-Search** configuration, off by default, because it costs three orders of magnitude in throughput |
-| three extra ask terms (void creation, team-ownership discount, last-live split) | **null**; the fit gives them small weights (0.171, −0.477, −0.777) and removing them is −0.13 points [−1.92, +1.67] |
-| the **deliberate miss** that M1 deletes | raises the win rate to 51.17% [48.34, 53.99] and fails the commit gate: 35.85% dead asks, longest dead run 365, 10% of games killed by the action limit |
+| **Lineage strength** — strongest configuration this project has produced | **established** |
+| **Robustness** — does that strength survive panels, partners, dialects and fitted adversaries | evaluated extensively; **mixed results**, reported above |
+| **Global standing** — strongest Canadian Fish agent anyone has built | **not established, not claimed** |
 
-Five mechanisms in this study cleared a 95% paired interval at 400–1,600 games per cell — the budget
-most published ablation rows in this project were collected at — and returned **exactly zero** at
-3,000 on two disjoint banks. Repairing the evidence standard is why the refit was worth anything,
-and it is also why the head-to-head claim above is stated as a null.
+FishBot v0.7 is not shown to be near-optimal and is not shown to be unexploitable. The comparison
+class contains only agents written here.
 
-**Engine corrections shipped**: the exact block dynamic program parked every instance's tables in one
-per-thread pool, so a second construction silently repointed the first instance's tables (**285
-mismatches in 294 checks**) — harmless under the deployed approximate belief, fatal under any exact
-one, which is exactly how it survived three studies; and the declaration pre-gate audit, dead code
-for v0.5 because the option was parsed only in the v0.4 branch, now reports **0 false negatives in
-14,449,770 gate rejections over 5,472,906 declaration opportunities**.
+### How the evaluation was run
 
-Specification: `docs/FISHBOT_V06.md`. Results of record: `research/v06/RESULTS-SUMMARY.md`. Design
-spec, recon reports R0–R12 and fitting artifacts: `research/v06/`. Paper: `paper/fishbot_v06.tex`.
+The methodological difference between this cycle and the earlier ones is the point of the cycle:
+
+- **Sealed holdout.** Seven deal banks of 24,000 deals were committed by digest, and the adversary
+  half encrypted, before the configuration was frozen. Deals are generated from their index and never
+  stored, so sealing is a public commitment rather than secrecy: `fish bankdigest` folds the six
+  hands and the dealer of every deal into a rolling hash without constructing a policy or playing a
+  game. The seal is enforced by the binary rather than by the battery script — every match goes
+  through `runMatch`, which refuses a sealed seed and exits unless an explicit environment variable is
+  set, which was set once and recorded. The protocol states the seal's two limits in advance.
+- **Preregistration.** [`docs/v07/PREREGISTRATION.md`](docs/v07/PREREGISTRATION.md), 728 lines, fixes
+  the battery, every cell and its sample size, every threshold, the replication rule, and the seven
+  results that would mean v0.7 is not an advancement — committed before any holdout bank had been
+  played. The evaluation phase read only that document. It also fixes an amendment rule: if that
+  phase finds a genuine flaw in the protocol it stops and reports it, because an amended protocol is
+  a training run. Two of the seven conditions arose and are reported as such.
+- **A freeze artifact.** [`engine/fishbot_v07.json`](engine/fishbot_v07.json) round-trips through the
+  engine's own factory: verifying it re-executes the configuration rather than comparing strings.
+- **Calibrated detection floors.** The battery's resolution was measured with planted edges of known
+  size, including a sub-floor control that must *not* be recovered — and is not.
+- **Mechanical side-channel controls**, a soundness gate applied before any strength number is
+  computed, and identity controls certifying that the extended policy class with every new
+  coordinate at zero is v0.6 bit for bit.
+- **Provenance.** Every number in the report is a macro, not a typed digit: 274 are generated
+  directly from artifacts and 146 are transcribed under a comment header naming the source document.
+  [`paper/check_provenance.py --version v07`](paper/check_provenance.py) fails the build if any
+  number lacks an attributed artifact that exists on disk.
+
+### Where to read it
+
+| what | where |
+|---|---|
+| Technical report (built) | [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf) — 72 pages |
+| Report source | [`paper/fishbot_v07.tex`](paper/fishbot_v07.tex), sections in `paper/sections_v07/` |
+| Single-file copy for Overleaf | `paper/fishbot_v07_standalone.tex` |
+| Registered protocol | [`docs/v07/PREREGISTRATION.md`](docs/v07/PREREGISTRATION.md) |
+| Results of record | [`docs/v07/FINAL-RESULTS.md`](docs/v07/FINAL-RESULTS.md) |
+| Phase reports | `docs/v07/` — `INSTRUMENT.md` (what the instrument can see), `ADVERSARIES.md` (what beats the v0.6 frontier), `CANDIDATES.md` (five architectures, what survived), `THREAT-MODEL.md`, `SUBOPTIMALITY-LEDGER.md` |
+| Pre-submission audit and its disposition | `docs/v07/AUDIT-REPORT-PRESUBMISSION.md` and `docs/v07/AUDIT-DISPOSITION.md` |
+| Raw artifacts | `research/v07/` — seed banks, run logs and result files; the 31 `P5-*` files are the phase-5 evaluation of record, digested in `research/v07/results/MANIFEST-P5.json` |
+
+There is no `docs/FISHBOT_V07.md`; for this cycle the technical report *is* the specification.
+
+---
+
+## Quick start
 
 ```bash
-cd engine && make                        # clang++ -std=c++20 -O3, produces ./fish
+cd engine && make          # clang++ -std=c++20 -O3, produces ./fish
+```
 
-./fish verify --games=600                # rules + information safety + belief soundness
-./fish pathology --a=v06 --b=v06 --games=300 --seed=31       # the commit-gate KPIs
+```bash
+./fish verify --games=600                        # rules, information safety, belief soundness
 ./fish match --a=v06 --b=v05 --games=300 --rotations=6 --seed=90210
-./fish v6probe --mode=ties   --a=v05 --b=v05 --games=150 --seed=31   # the tie structure
-./fish v6probe --mode=belief --a=v05 --b=v05 --games=120 --seed=31   # belief as a predictor
-./fish v6probe --mode=search --a="v06:s1=1,det=12,cand=4,kappa=2.5" --b=v05 --games=20
-
-./experiments_v06.sh                     # the full battery E0-E15
-./exploitability_v06.sh                  # best-response probe, positive-controlled on v0.4
-python3 build_tables_v06.py              # artifacts -> paper/numbers_v06_generated.tex
-cd .. && npm run paper:v06               # -> output/pdf/fishbot_v06.pdf
+./fish serve                                     # play, at http://127.0.0.1:8173
 ```
 
-## FishBot v0.5 (previous release)
+`--games` counts **deals**, not games. `--rotations` is the duplicate-block size — each deal is
+replayed that many times — so `--games=300` is 600 games and `--games=300 --rotations=6` is 1,800.
+Use 2 or 6 and nothing else: 2 swaps which team holds A's policy, and 6 plays every cyclic seat
+rotation so each policy holds every hand-triple exactly three times, cancelling the deal's intrinsic
+luck. Every deal and every decision is reproducible from `--seed`.
 
-**v0.5 is not meaningfully stronger than v0.4.** It is +1.11 points head-to-head
-at the profile seed and +0.79 pooled over five held-out banks (one of the five
-below 50%, and every bank's interval contains 50%), the nine-opponent means are a wash (83.60% against 83.57%), and v0.4
-is marginally better on minimax regret over the style set (1.61 against 1.78). What v0.5
-delivers is the **elimination of a failure mode**, plus a large replicated gain
-against the deception archetype that motivated the work and a smaller, equally
-replicated loss against a different one. Read the per-opponent table below; there
-is no headline win rate here.
+The usage line advertises five subcommands; `engine/src/main.cpp` dispatches 46. Most of the rest are
+probes from earlier cycles, still compiled in and still runnable. The ones worth knowing:
 
-v0.4 had a failure mode its published evaluation could not see. Against a weak
-opponent it is fine; in **mirror play** 39.04% of its asks are ones it could prove
-are guaranteed misses, 40.03% are exact repeats, 34.33% of games contain a run of
-six or more consecutive dead asks, and 100% of its forced-endgame declarations are
-wrong. A strong human is closer to the mirror case than v0.3 is, which is why the
-user report that started v0.5 — bots looping forever, then misdeclaring at the end
-— matches the mirror numbers and not the published ones.
+| command | what it does |
+|---|---|
+| `match` | one A team against one B team, with a deal-clustered bootstrap interval and a power line |
+| `verify` | rules, information safety and belief soundness across a round-robin of baselines |
+| `pathology` | the commit-gate KPIs: dead asks, dead runs, action-limit games, declaration accuracy |
+| `selftest`, `oracle` | cross-check the exact belief engines against each other and against exhaustive enumeration |
+| `gateaudit` | re-run the full evaluation on every half-suit the cheap declaration pre-gate rejects, and count false negatives |
+| `seeds` | the reserved-seed registry, which is what makes a sealed bank refuse to play |
+| `bankdigest` | a bank's commitment digest, computed without constructing a policy or playing a game |
+| `v7through`, `v7decide`, `v7side` | throughput on both bases; per-decision metrics; the mechanical side-channel gate |
+| `bots`, `serve` | third-party bot packages, and the browser table |
 
-**What was fixed** (`engine/src/v05.hpp`, registered as `v05`): **M1** live-ask
-gating, which restricts the candidate set to asks the actor cannot prove are dead;
-**M2** a capacity-feasible joint allocation for every declaration path; **M8**
-removal of v0.4's event-count forcing guillotine. Mechanisms M3–M7, M9 and M10 are
-designed and **not built**. Two further mechanisms were built, measured and
-**rejected**: scaling the ownership features by hit probability (`m1p`, −1.33
-points) and a (card, target) repetition guard (`norepeat`, −6.13 points).
+`--audit` turns on a per-event check that every agent's deduced knowledge still contains the truth;
+`verify` forces it on. `--legacy` is a rule dialect rather than a policy switch, and changes four
+things at once: out-of-turn declaration off, cardless declaration off, `maxAsks` 360, and the
+forced-declaration ladder collapsed to a single threshold.
 
-**The failure mode is gone** (600 mirror games per arm, seed 31,
-`research/v05/results/E2-pathology.txt`):
-
-| | v0.4 mirror | v0.5 mirror |
-|---|---:|---:|
-| provably dead asks | 39.04% of asks | **0%** |
-| dead runs (longest) | 2,610 (**286**) | **0** |
-| games with a dead run ≥ 6 | 34.33% | **0%** |
-| exact repeat asks | 40.03% | **2.63%** |
-| declarations wrong | 10.44% | **2.07%** |
-| declarations at/after event 220 | 768, 58.59% wrong | **0** |
-| ask hit rate | 34.25% | **55.47%** |
-| events/game (p90, p99) | 143.6 (312, 321) | **96.6 (112, 125)** |
-
-Forced-endgame declarations, read per declaring team over 24,000 games per arm
-(`E8-forced-endgame.txt`): v0.4 enters one 0.0307 times per game and is right
-**0.14%** of the time; v0.5 enters one 0.0048 times per game and is right
-**24.35%** of the time, against a measured feasible ceiling of ≈ 40.6%.
-
-**Per-opponent, with the worst case stated** (300 deals × 6 rotations per cell,
-seed 515253, `E4-perstyle.jsonl`; the deception panel is 400 × 6 at two seed
-banks, `E10-deception.md`):
-
-| opponent | v0.5 | v0.4 | delta |
-|---|---:|---:|---:|
-| v0.4 (mirror strength) | 51.11% | 50.00% | +1.11 |
-| v0.3 | 72.33% | 73.33% | −1.00 |
-| v0.2 | 81.28% | 83.06% | −1.78 |
-| lockout | 79.56% | 77.94% | +1.61 |
-| detective | 76.78% | 77.28% | −0.50 |
-| diversifier | 93.78% | 92.89% | +0.89 |
-| hunter | 97.72% | 97.67% | +0.06 |
-| bluffer | 99.89% | 99.94% | −0.06 |
-| random | 100.00% | 100.00% | 0.00 |
-| **withholder** (deception) | **73.63% / 71.42%** | 66.25% / 64.46% | **+7.2** |
-| silent (deception) | 80.42% / 83.17% | 79.96% / 79.00% | +2.3 |
-| **feint** (deception) | **50.96% / 52.08%** | 54.13% / 53.29% | **−2.2** |
-| **worst case over all twelve** | **50.96% (feint)** | **50.00% (mirror)** | |
-| mean over the nine standard styles | 83.60% | 83.57% | |
-| minimax regret over the nine | 1.78 (on v0.2) | **1.61** (on lockout) | |
-
-The withholder is the project owner's own manoeuvre — hold cards of a half-suit
-you were asked for, then decline to ask back in it — and v0.5 gains 7.2 points on
-it at both seed banks, not because it models the opponent (M7 is unbuilt) but
-because it no longer spends turns on asks it can prove will miss, so a misleading
-*absence* of asks has far less leverage. The feint manufactures a false ask-legality
-certificate instead, and v0.5 is 2.2 points worse against it at both banks, because
-the fit raised `priorTheta` from 0.2638 to 0.4446. Both directions replicate; both
-are reported.
-
-Specification: `docs/FISHBOT_V05.md`. Study design, seed banks and artifact index:
-`docs/V05_FINDINGS.md`. Corrections the v0.5 study makes to the v0.4 study:
-`research/v05/results/C1-v04-corrections.md`. Design spec, diagnosis reports and
-literature refresh: `research/v05/`.
+### Playing the frozen v0.7 policy
 
 ```bash
-cd engine && make                        # clang++ -std=c++20 -O3, ~6 s, produces ./fish
-
-./fish verify --games=600                # rules + information safety + belief soundness
-./fish pathology --a=v05 --b=v05 --games=300 --seed=31    # the commit-gate KPIs
-./fish match --a=v05 --b=v04 --games=300 --rotations=6 --seed=90210
-
-./experiments_v05.sh                     # the full battery E1-E9, ~7 min
-python3 build_tables_v05.py              # artifacts -> paper/numbers_v05_generated.tex
-python3 build_manifest.py v05            # artifact digests -> research/v05/results/MANIFEST.json
-cd .. && npm run paper:v05               # -> output/pdf/fishbot_v05.pdf
-
-cd engine && ./fish serve                # then open http://127.0.0.1:8173
+./fish match \
+  --a='v07:r12=25,rtie=1,pool=-1,oppfloor=-1,force=1000000,askfloor=-1,stall=12,s1=1,det=12,cand=4,kappa=2.5,rbelief=indep,depth=12,maxq=26' \
+  --b=v06 --games=400 --rotations=6 --seed=90210 --json
 ```
 
-`--games` counts *deals* and `--rotations` defaults to 2, so `--games=300` alone
-is 600 games and `--games=300 --rotations=6` is 1,800. Re-running
-`./experiments_v05.sh` from a clean rebuild reproduces E1, E2, E6 and E8
-byte-for-byte; E3, E4, E5 and E7 reproduce identically in every reported quantity
-but carry a wall-clock `seconds` field, so their digests move; E9 is a throughput
-measurement and is machine-dependent. `MANIFEST.json` pins the artifacts of
-record, not the re-run.
+The published evaluation was run with a separate build of the same source (`-DFISH_NO_SERVE`), whose
+SHA-256 and byte count the report records. Binaries are not committed. A fresh `make` reproduces that
+build's play on the frozen spec: across six cells against v0.6 and v0.5 at three seeds, all 34
+reported fields agree exactly. So a clone reproduces the *policy* even though it cannot reproduce the
+*binary*.
 
-## FishBot v0.4 (published)
-
-Because every card movement in Fish is public, the entire hidden state is the
-initial deal. That makes the posterior exactly computable, including the
-certificate that an ask carries about the asker's own hand, and it yields a
-theorem: a half-suit held entirely by one team can never be asked in by the
-other, so its ownership can never change, so waiting to claim it carries no
-ownership risk.
-
-Two configurations are distinguished throughout:
-
-- **v0.4-Fast** — the default, deployed and primarily evaluated policy
-  (`BeliefMode::Fast`). Every reported performance number is this one.
-- **v0.4-Block** — the same fitted policy with the exact reference belief
-  substituted (`v04:belief=block`). It validates the probabilities and serves as
-  an ablation; it does not run in the inner loop.
-
-See `docs/FISHBOT_V04.md` for the specification and `paper/fishbot_v04.tex` for
-the full study.
+### Reproducing the study
 
 ```bash
-cd engine && make
-./fish verify    --games=600                    # rules + belief soundness audit
-./fish selftest  --games=40                     # reference engine vs card DP vs sampling
-./fish oracle    --games=150                    # brute-force allocation oracle
-./fish gateaudit --games=700 --rotations=6      # declaration pre-gate false-negative audit
-./fish match --a=v04 --b=v03 --games=700 --rotations=6 --seed=90210
-./experiments.sh                                # the full battery
-python3 build_manifest.py                       # artifact checksums + MANIFEST.json
+cd engine
+BIN=./fish ./experiments_v07.sh                  # phase-1 instrument battery, 1-2 min
+python3 build_tables_v07.py --paper              # artifacts -> paper/numbers_v07_generated.tex
+python3 ../paper/check_provenance.py --version v07
+cd ../paper && tectonic -X compile fishbot_v07.tex --outdir ../output/pdf
 ```
+
+The batteries default to `BIN=./fish7`, the binary of the original run, which a clone does not have;
+point them at your own build as above. `experiments_v07.sh` opens with gates rather than
+measurements — the reserved-seed registry, then identity controls that must reproduce v0.5 and v0.6
+*bit for bit*, then the pathology KPIs — because a battery ordered by win rate first selects broken
+policies: an earlier cycle's ablation table contains configurations scoring six points higher than
+the shipped policy while carrying a 373-ask dead run and killing 14% of games at the action limit.
+
+The full phase-5 evaluation is `python3 p5_battery.py <B2|B3|…|B10>`, which reads the protocol and
+nothing else, is resumable, and takes on the order of twelve hours; `p5_analyse.py` reduces it to the
+results tables. **Every recorded row carries the literal `argv` it was produced by**, so any single
+cell in the study can be re-run by hand from the artifact that reports it.
+
+To put a configuration of your own through the same commit gate:
+
+```bash
+FISH=./fish ./gate_v07.sh --spec='<your spec>' --id=mine   # exit 0 = PASS, 1 = FAIL
+```
+
+---
 
 ## Play it yourself
 
-`fish serve` opens a browser table where any mix of humans and bots takes the six
-seats. It is the same `Game` driver every published number came from — a human
-seat is just another `Agent` — so what you are playing is the deployed policy,
-not a reimplementation of it.
+`fish serve` opens a browser table where any mix of humans and bots takes the six seats. It is the
+same `Game` driver every published number came from — a human seat is just another `Agent` — so what
+you are playing is the deployed policy, not a reimplementation of it. Each seat picks its engine from
+a list spanning FishBot v0.2 through the frozen v0.7 spec, the three deceptive archetypes, the
+baseline population, and any outside engine that has been ported or installed as a package. Give the
+seats names before you deal: six seats all labelled "FishBot v0.7" are impossible to track.
 
 ```bash
-cd engine && make
-./fish serve                                    # then open http://127.0.0.1:8173
-./fish serve --lan                              # players on the same wifi
-./fish serve --public                           # players anywhere: prints one link to send
+./fish serve                                     # loopback
+./fish serve --lan                               # players on the same wifi
+./fish serve --public                            # players anywhere: prints one link to send
 ```
 
-Give each seat an engine and a name — six seats all labelled "FishBot v0.6" are
-impossible to track — then deal. The engine list is the same one `fish match --a=`
-takes: **v0.6** (the deployed policy, the default at every bot seat), **v0.6-Search**,
-v0.5, v0.4, v0.4-Block, v0.3, v0.2, the three deceptive archetypes and the baseline
-population. Presets cover you plus two v0.6 teammates against three v0.6s, against
-three v0.6-Searches, and a v0.3 partnership against three v0.6s. **Speak** reads
-every ask, declaration and turn aloud through the browser's own voice, which is
-useful when you are reading your hand rather than the log. You are sent your own
-hand and the public event stream and nothing else.
+Off loopback the table is credentialed, because Fish is a hidden-information game and a shared
+address without per-seat secrets would hand every player the other five hands. The host token governs
+the table and confers no card visibility; a seat token is the only thing that discloses that seat's
+cards. **Speak** reads every ask, declaration, turn pass and prompt aloud, which helps when you are
+reading your hand rather than the log. See [`docs/PLAY.md`](docs/PLAY.md).
 
-**Bring your own bot.** Somebody else's engine plays here without a fork, a
-patch or a pull request: zip it with a `fishbot.json` manifest, drop it on the
-setup screen, and it appears in every seat's engine list. A bot is any program
-that reads a game state and writes a move as one line of JSON — the reference
-implementation is 200 lines of dependency-free Python in
-`examples/fishlab-bot-python`, and the format is `docs/BOT_PACKAGE.md`.
+### Bring your own bot
+
+Somebody else's engine plays here without a fork, a patch or a pull request. A bot is any program
+that reads a game state and writes a move as one line of JSON.
 
 ```bash
 ./fish bots add mybot.zip
-./fish bots check mybot          # plays complete games and reports what it answered
+./fish bots check mybot                          # plays complete games, reports what it answered
 ./fish match --a=bot:mybot --b=v06 --games=400 --rotations=6
 ```
 
-An installed package is a policy spec like any other, so the whole measurement
-apparatus — duplicate blocks, rotations, confidence intervals — points at it
-unchanged. Uploading runs nothing; only the host can seat a bot or install its
-dependencies, because running one is running somebody's code on the host's
+The manifest format is `fishlab-bot/1` and the wire protocol is `fishlab-json-v1`, both specified in
+[`docs/BOT_PACKAGE.md`](docs/BOT_PACKAGE.md). The reference implementation is 249 lines of
+dependency-free Python in [`examples/fishlab-bot-python`](examples/fishlab-bot-python). An installed
+package is a policy spec like any other, so the whole measurement apparatus — duplicate blocks,
+rotations, confidence intervals — points at it unchanged. Uploading runs nothing: only the host can
+seat a bot or install its dependencies, because running one is running somebody's code on the host's
 machine.
 
-**Three of you against three bots.** `--lan` and `--public` put the six seats on
-the network: the host gets a link that runs the table, everybody else gets one
-invite link, types a name and takes a seat, and the "3 players vs 3× v0.6" preset
-does the rest. Off loopback the table is credentialed, because Fish is a hidden
-information game and a shared address without per-seat secrets would hand every
-player the other five hands. The host token governs the table and confers no card
-visibility; a seat token is the only thing that will disclose that seat's cards.
-See `docs/PLAY.md`.
+---
 
-## Run locally
+## The browser lab
+
+Separately from the C++ engine, `app/` is a Next.js research console over a TypeScript engine
+(`lib/fish-engine.ts`). It runs experiments, ranks games by how much they turn on a single decision,
+and replays them action by action. Its policy population is FishBot v0.2 and v0.3, the archetype
+opponents (lockout, hunter, diversifier, detective, bluffer, random), and a port of an independently
+written external engine — KV's sampled-world determinization search (`lib/kv-search-agent.ts`). The
+port reproduces every formula, constant and tie-break rule rather than the random stream, and the
+repository carries the harness for checking its deterministic quantities against the Python original:
+`fish kvparity`, `scripts/kv-parity-dump.ts` and `scripts/kv_parity_ref.py`.
 
 ```bash
 npm install
-npm run dev
+npm run dev                                      # http://localhost:3000
+npm run research -- --games=1000                 # headless pairwise strategy matrix
 ```
 
-Open `http://localhost:3000`.
+This is a different engine from `engine/`. Published FishBot numbers from v0.4 onward come from the
+C++ engine; the browser lab is where the v0.2/v0.3 work was done and where replays are inspected.
 
-## Headless research
+---
 
-Run a full pairwise strategy matrix:
+## Release history
 
-```bash
-npm run research -- --games=1000
+Each release is specified by its own document and evaluated in its own report. Numbers below are the
+single most defensible headline for each, and each is a *comparative* claim within this project's own
+lineage.
+
+| release | what it established | headline |
+|---|---|---|
+| **v0.7** | Strongest configuration in the lineage, on sealed material under a registered protocol — and no measurable gain over a composite the same cycle had already assembled | +3.33 pp [+2.88, +3.78] over `F-cheap`, 48,000 games |
+| **v0.6** | A repaired optimiser. The strength gain is *entirely parametric*: exact-posterior tie resolution, three extra ask terms and the deliberate miss all measured null, and guarded test-time search was the single positive mechanism | beats v0.5 50.89% [50.61, 51.16] over 126,000 games, 7 of 7 banks above parity |
+| **v0.5** | Not meaningfully stronger than v0.4. What it delivered was the elimination of a failure mode, and reporting that honestly is the result | provably dead asks in mirror play fall from **39.04%** of v0.4's asks to **0.011%**; head to head, pooled 50.77% with every bank's interval containing 50% |
+| **v0.4** | The move to C++, the exact posterior over the initial deal, the locked-half-suit theorem, and the evaluation apparatus still in use: duplicate rotation blocks with a cluster bootstrap over deals | beats v0.3 75.07% [73.71, 76.40] over 4,200 games |
+| **v0.3** | Count-conditioned beliefs by Sinkhorn scaling, held-out weight tuning, and an information-safety fix — v0.2's reply-risk term had indirectly consulted the target's hidden hand | beats the posterior detective 57.20% [55.02, 59.35] over 2,000 held-out games |
+| **v0.2** | The first search policy, and a negative result: it does not beat the posterior-greedy detective baseline | 47.58% [46.20, 48.97] against the detective |
+
+| release | specification | report |
+|---|---|---|
+| v0.7 | *the report itself* | [`paper/fishbot_v07.tex`](paper/fishbot_v07.tex) → [PDF](output/pdf/fishbot_v07.pdf) |
+| v0.6 | [`docs/FISHBOT_V06.md`](docs/FISHBOT_V06.md) | [`paper/fishbot_v06.tex`](paper/fishbot_v06.tex) → [PDF](output/pdf/fishbot_v06.pdf), results of record [`research/v06/RESULTS-SUMMARY.md`](research/v06/RESULTS-SUMMARY.md) |
+| v0.5 | [`docs/FISHBOT_V05.md`](docs/FISHBOT_V05.md) | [`paper/fishbot_v05.tex`](paper/fishbot_v05.tex) → [PDF](output/pdf/fishbot_v05.pdf), study design [`docs/V05_FINDINGS.md`](docs/V05_FINDINGS.md) |
+| v0.4 | [`docs/FISHBOT_V04.md`](docs/FISHBOT_V04.md) | [`paper/fishbot_v04.tex`](paper/fishbot_v04.tex) → [PDF](output/pdf/fishbot_v04.pdf), results [`docs/V04_RESULTS.md`](docs/V04_RESULTS.md) |
+| v0.3 | [`docs/FISHBOT_V03.md`](docs/FISHBOT_V03.md) | [`paper/fishbot_v03.tex`](paper/fishbot_v03.tex) → [PDF](output/pdf/fishbot_v03.pdf), findings [`docs/V03_FINDINGS.md`](docs/V03_FINDINGS.md) |
+| v0.2 | [`docs/FISHBOT_V02.md`](docs/FISHBOT_V02.md) | findings [`docs/V02_FINDINGS.md`](docs/V02_FINDINGS.md) |
+
+### Later cycles correct earlier ones, in writing
+
+Corrections are recorded rather than quietly applied, and the v0.7 report's Appendix E lists this
+cycle's. Three that a reader of the older documents should know about:
+
+- **The cost of the frontier's search was wrong in both directions.** The "three orders of magnitude"
+  figure divided an all-threads timing by a single-thread one, and it describes the *unrestricted*
+  search, which is not the operating point anything was measured at. On a common basis the frontier
+  point costs ~4.1× the non-searching blueprint, and every such figure is a lower bound.
+- **v0.6's exploitability probe was mis-specified.** It reported that a fitted best response fails to
+  reach parity against v0.6. Re-run with the responder in the target's own class and seeded at the
+  incumbent's own vector, the exploiter reaches **+0.79 pp [+0.48, +1.10]** over 96,000 games, and an
+  earlier, weaker run of the same repair had already found +0.76 [+0.15, +1.37] over 24,000. v0.6's
+  in-class exploitability is *at least* 0.79 points. Every exploitability number in this project is a
+  lower bound produced by a search, not a bound on what a search could find.
+- **v0.6's "the tie group is worth exactly nothing" was measured against itself.** That cell was a
+  self-mirror rather than a contrast. Run as a contrast, a free public-history tie-break is worth
+  **+1.14 pp [+0.52, +1.77]** over v0.6.
+
+If an older document and a newer one disagree, the newer one and its correction note are the record.
+
+---
+
+## Repository layout
+
 ```
-
-The browser interface supports 100–5,000 games per experiment. The engine is in `lib/fish-engine.ts`; FishBot v0.2 is specified in `docs/FISHBOT_V02.md`, and the path toward equilibrium play is documented in `docs/METHODOLOGY.md`. Reproducible findings from the initial 85,000-game study and the 46,000-game v0.2 study are in `docs/BASELINE_FINDINGS.md` and `docs/V02_FINDINGS.md`.
-
-FishBot v0.3 is specified in `docs/FISHBOT_V03.md`; its held-out results are in `docs/V03_FINDINGS.md`. The v0.3 paper is `paper/fishbot_v03.tex` with a verified PDF at `output/pdf/fishbot_v03.pdf`. FishBot v0.4 is specified in `docs/FISHBOT_V04.md`, its study design in `docs/V04_FINDINGS.md`, its generated result tables in `docs/V04_RESULTS.md`, and its paper in `paper/fishbot_v04.tex` (single-file Overleaf copy: `paper/fishbot_v04_standalone.tex`, built PDF: `output/pdf/fishbot_v04.pdf`).
-
-FishBot v0.5 is specified in `docs/FISHBOT_V05.md`, its study design in `docs/V05_FINDINGS.md`, and its paper in `paper/fishbot_v05.tex` (built PDF: `output/pdf/fishbot_v05.pdf`). Its investigation brief, design spec and paper plan are `research/v05/BRIEF.md`, `research/v05/DESIGN.md` and `research/v05/PAPER_PLAN.md`; the diagnosis reports P0–P8 (each headline finding adversarially re-verified at independent seeds), the battery artifacts E1–E10 and the corrections register C1 are in `research/v05/results/`, with digests in `research/v05/results/MANIFEST.json`; the literature refresh is `research/v05/lit/v05-refresh.md`.
-
-## Reproduce v0.3
-
-```bash
-npm run verify:engine
-npm run optimize:fishbot
-npm run evaluate:fishbot
-npm run refine:fishbot
-npm run ablations:fishbot
-npm run paper:markdown
+engine/          C++ engine: the policies, the match harness, the browser table server,
+                 the experiment drivers and the table generators.  src/ is the engine
+                 proper; factory.hpp is the authority on how a spec string is applied.
+paper/           LaTeX sources for every technical report, the generated number macros,
+                 and check_provenance.py.
+docs/            Per-release specifications, findings documents, PLAY.md, BOT_PACKAGE.md,
+                 METHODOLOGY.md.  docs/v07/ holds the current cycle's phase reports.
+research/        Every artifact the reported numbers were computed from: seed banks, run
+                 logs, result files and digest manifests, one directory per release
+                 (v04-v07), plus the v0.3-era browser-lab runs in research/results.
+app/  lib/       The browser lab: a Next.js research console over a separate TypeScript
+components/      engine, deployed as a Cloudflare Worker (worker/).
+scripts/         TypeScript drivers for the browser-lab experiments, and the KV
+                 parity-check harness.
+examples/        Reference third-party bot package (Python).
+output/pdf/      Built technical reports.
 ```
 
 ## Design principles
 
 - Hidden information stays hidden from acting agents.
 - Every deal and decision is reproducible from a seed.
-- Strategy is expressed through inspectable numeric policies, not opaque prose calls in the hot loop.
-- LLMs are best used outside the loop for policy ideation and replay interpretation; deterministic simulation supplies the evidence.
-- Final claims use held-out, orientation-balanced seeds; matrix row averages are descriptive, not substitutes for direct tests.
+- Strategy is expressed as inspectable numeric policies, not opaque calls in the hot loop.
+- Soundness is gated before strength is measured; a policy that scores well while making provably
+  dead asks is a broken policy, not a strong one.
+- Final claims use held-out, orientation-balanced seeds, and a claim replicates on two disjoint banks
+  or it is reported as not replicating.
+- Negative results are results. A mechanism that was built, measured and found worthless is reported
+  at the same weight as one that worked.
+
+## Citing
+
+The current work is the FishBot v0.7 technical report:
+
+> Dylan Nguyen. *FishBot v0.7: Exact Inference, Robust Evaluation, and Adversarial Testing in
+> Six-Player Canadian Fish.* FishLab, 2026.
+> [`output/pdf/fishbot_v07.pdf`](output/pdf/fishbot_v07.pdf)
+
+The report's reproducibility appendix carries the repository and the commit each battery ran at.
+
+## Status
+
+Research code, actively developed, single author. There is currently **no license file**, so default
+copyright applies and the code is not open source; if you want to use any of it, open an issue.
